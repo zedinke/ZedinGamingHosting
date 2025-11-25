@@ -25,7 +25,17 @@ async function readLog(): Promise<string> {
 }
 
 async function updateProgress(progress: any) {
-  await writeFile(PROGRESS_FILE, JSON.stringify(progress, null, 2));
+  try {
+    // Biztosítjuk, hogy a progress mindig tartalmazza a timestamp-et
+    const progressWithTimestamp = {
+      ...progress,
+      timestamp: progress.timestamp || new Date().toISOString(),
+    };
+    await writeFile(PROGRESS_FILE, JSON.stringify(progressWithTimestamp, null, 2), 'utf-8');
+  } catch (error) {
+    console.error('Error writing progress file:', error);
+    throw error;
+  }
 }
 
 async function appendLog(message: string) {
