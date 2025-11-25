@@ -6,11 +6,11 @@ import { UserRole } from '@prisma/client';
 import { z } from 'zod';
 
 const slideshowSlideSchema = z.object({
-  title: z.string().optional(),
-  subtitle: z.string().optional(),
-  image: z.string().url('Érvényes URL szükséges'),
-  link: z.string().url().optional().or(z.literal('')),
-  buttonText: z.string().optional(),
+  title: z.string().optional().nullable(),
+  subtitle: z.string().optional().nullable(),
+  image: z.string().url('Érvényes URL szükséges').or(z.literal('')),
+  link: z.string().url().optional().or(z.literal('')).nullable(),
+  buttonText: z.string().optional().nullable(),
   isActive: z.boolean(),
   order: z.number().int().min(0),
   locale: z.enum(['hu', 'en']),

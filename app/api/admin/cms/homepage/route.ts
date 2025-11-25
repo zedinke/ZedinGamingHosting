@@ -7,12 +7,12 @@ import { z } from 'zod';
 
 const homepageSectionSchema = z.object({
   type: z.enum(['hero', 'features', 'stats', 'cta', 'slideshow']),
-  title: z.string().optional(),
-  subtitle: z.string().optional(),
-  content: z.any().optional(),
-  image: z.string().url().optional().or(z.literal('')),
-  buttonText: z.string().optional(),
-  buttonLink: z.string().optional(),
+  title: z.string().optional().nullable(),
+  subtitle: z.string().optional().nullable(),
+  content: z.any().optional().nullable(),
+  image: z.string().url().optional().or(z.literal('')).nullable(),
+  buttonText: z.string().optional().nullable(),
+  buttonLink: z.string().url().optional().or(z.literal('')).nullable(),
   isActive: z.boolean(),
   order: z.number().int().min(0),
   locale: z.enum(['hu', 'en']),

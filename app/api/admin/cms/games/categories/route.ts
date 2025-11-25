@@ -8,9 +8,9 @@ import { z } from 'zod';
 const gameCategorySchema = z.object({
   name: z.string().min(1, 'Név megadása kötelező'),
   slug: z.string().min(1, 'Slug megadása kötelező'),
-  description: z.string().optional(),
-  icon: z.string().optional(),
-  color: z.string().regex(/^#[0-9A-F]{6}$/i, 'Érvényes hex szín szükséges').optional(),
+  description: z.string().optional().nullable(),
+  icon: z.string().optional().nullable(),
+  color: z.string().regex(/^#[0-9A-F]{6}$/i, 'Érvényes hex szín szükséges').optional().nullable(),
   isActive: z.boolean(),
   order: z.number().int().min(0),
   locale: z.enum(['hu', 'en']),

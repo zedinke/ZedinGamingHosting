@@ -12,9 +12,12 @@ import { Card } from '@/components/ui/Card';
 const gameSchema = z.object({
   name: z.string().min(1, 'Név megadása kötelező'),
   slug: z.string().min(1, 'Slug megadása kötelező'),
-  description: z.string().optional(),
-  image: z.string().url().optional().or(z.literal('')),
-  categoryId: z.string().optional(),
+  description: z.string().optional().or(z.literal('')),
+  image: z.string().optional().or(z.literal('')).refine(
+    (val) => !val || val === '' || z.string().url().safeParse(val).success,
+    { message: 'Érvényes URL szükséges' }
+  ),
+  categoryId: z.string().optional().or(z.literal('')),
   isActive: z.boolean(),
   order: z.number().int().min(0),
   locale: z.enum(['hu', 'en']),

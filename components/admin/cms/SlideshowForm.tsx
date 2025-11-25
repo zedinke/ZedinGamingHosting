@@ -10,11 +10,17 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 
 const slideshowSlideSchema = z.object({
-  title: z.string().optional(),
-  subtitle: z.string().optional(),
-  image: z.string().url('Érvényes URL szükséges'),
-  link: z.string().url().optional().or(z.literal('')),
-  buttonText: z.string().optional(),
+  title: z.string().optional().or(z.literal('')),
+  subtitle: z.string().optional().or(z.literal('')),
+  image: z.string().min(1, 'Kép URL megadása kötelező').refine(
+    (val) => z.string().url().safeParse(val).success,
+    { message: 'Érvényes URL szükséges' }
+  ),
+  link: z.string().optional().or(z.literal('')).refine(
+    (val) => !val || val === '' || z.string().url().safeParse(val).success,
+    { message: 'Érvényes URL szükséges' }
+  ),
+  buttonText: z.string().optional().or(z.literal('')),
   isActive: z.boolean(),
   order: z.number().int().min(0),
   locale: z.enum(['hu', 'en']),
