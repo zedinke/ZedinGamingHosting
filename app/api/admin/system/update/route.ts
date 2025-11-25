@@ -258,7 +258,7 @@ async function startUpdateProcess() {
             cwd: PROJECT_ROOT,
             maxBuffer: 1024 * 1024 * 10,
             timeout: 600000, // 10 minutes
-            env: env,
+            env: env as any,
           });
           await appendLog('  ✓ NPM install sikeres');
         } catch (error: any) {
