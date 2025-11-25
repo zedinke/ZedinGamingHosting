@@ -7,6 +7,10 @@ import crypto from 'crypto';
 
 // GET - Webhook konfigurációk listája
 export async function GET(request: NextRequest) {
+  // Rate limit ellenőrzés
+  const rateLimitResult = rateLimitMiddleware(50, 60 * 1000)(request);
+  if (rateLimitResult) return rateLimitResult;
+
   try {
     const session = await getServerSession(authOptions);
 
