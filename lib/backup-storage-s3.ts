@@ -14,6 +14,7 @@ async function getS3Client() {
   }
   
   try {
+    // @ts-ignore - @aws-sdk/client-s3 is an optional dependency, may not be installed
     const { S3Client } = await import('@aws-sdk/client-s3');
     s3Client = new S3Client({
       region: process.env.AWS_REGION || 'eu-central-1',
@@ -40,6 +41,7 @@ export async function uploadBackupToS3(
 ): Promise<{ success: boolean; s3Key?: string; error?: string }> {
   try {
     const client = await getS3Client();
+    // @ts-ignore - @aws-sdk/client-s3 is an optional dependency, may not be installed
     const { PutObjectCommand } = await import('@aws-sdk/client-s3');
     const { readFile } = await import('fs/promises');
     const { existsSync } = await import('fs');
@@ -95,6 +97,7 @@ export async function downloadBackupFromS3(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const client = await getS3Client();
+    // @ts-ignore - @aws-sdk/client-s3 is an optional dependency, may not be installed
     const { GetObjectCommand } = await import('@aws-sdk/client-s3');
     const { writeFile } = await import('fs/promises');
     const { createWriteStream } = await import('fs');
@@ -148,6 +151,7 @@ export async function deleteBackupFromS3(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const client = await getS3Client();
+    // @ts-ignore - @aws-sdk/client-s3 is an optional dependency, may not be installed
     const { DeleteObjectCommand } = await import('@aws-sdk/client-s3');
 
     const command = new DeleteObjectCommand({
@@ -183,6 +187,7 @@ export async function listBackupsFromS3(
 ): Promise<Array<{ key: string; size: number; lastModified: Date }>> {
   try {
     const client = await getS3Client();
+    // @ts-ignore - @aws-sdk/client-s3 is an optional dependency, may not be installed
     const { ListObjectsV2Command } = await import('@aws-sdk/client-s3');
 
     const command = new ListObjectsV2Command({
@@ -220,7 +225,9 @@ export async function generateBackupDownloadUrl(
 ): Promise<string> {
   try {
     const client = await getS3Client();
+    // @ts-ignore - @aws-sdk/client-s3 is an optional dependency, may not be installed
     const { GetObjectCommand } = await import('@aws-sdk/client-s3');
+    // @ts-ignore - @aws-sdk/s3-request-presigner is an optional dependency, may not be installed
     const { getSignedUrl } = await import('@aws-sdk/s3-request-presigner');
 
     const command = new GetObjectCommand({
