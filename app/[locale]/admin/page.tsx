@@ -33,26 +33,26 @@ export default async function AdminDashboardPage({
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Admin Vezérlőpult</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Vezérlőpult</h1>
         <p className="text-gray-600">Üdvözöljük az admin felületen</p>
       </div>
 
       {/* Statisztikák */}
       <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-        <div className="card">
-          <h3 className="text-sm font-medium text-gray-600 mb-1">Összes Felhasználó</h3>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+          <h3 className="text-sm font-medium text-gray-600 mb-2">Összes Felhasználó</h3>
           <p className="text-3xl font-bold text-primary-600">{totalUsers}</p>
         </div>
-        <div className="card">
-          <h3 className="text-sm font-medium text-gray-600 mb-1">Összes Szerver</h3>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+          <h3 className="text-sm font-medium text-gray-600 mb-2">Összes Szerver</h3>
           <p className="text-3xl font-bold text-primary-600">{totalServers}</p>
         </div>
-        <div className="card">
-          <h3 className="text-sm font-medium text-gray-600 mb-1">Aktív Előfizetések</h3>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+          <h3 className="text-sm font-medium text-gray-600 mb-2">Aktív Előfizetések</h3>
           <p className="text-3xl font-bold text-green-600">{activeSubscriptions}</p>
         </div>
-        <div className="card">
-          <h3 className="text-sm font-medium text-gray-600 mb-1">Összes Bevétel</h3>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+          <h3 className="text-sm font-medium text-gray-600 mb-2">Összes Bevétel</h3>
           <p className="text-3xl font-bold text-green-600">
             {new Intl.NumberFormat('hu-HU', {
               style: 'currency',
@@ -60,20 +60,20 @@ export default async function AdminDashboardPage({
             }).format(revenue)}
           </p>
         </div>
-        <div className="card">
-          <h3 className="text-sm font-medium text-gray-600 mb-1">Nyitott Ticketek</h3>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+          <h3 className="text-sm font-medium text-gray-600 mb-2">Nyitott Ticketek</h3>
           <p className="text-3xl font-bold text-yellow-600">{openTickets}</p>
         </div>
       </div>
 
       {/* Legutóbbi aktivitások */}
       <div className="grid md:grid-cols-2 gap-6">
-        <div className="card">
-          <h2 className="text-xl font-bold mb-4">Legutóbbi Felhasználók</h2>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-6">Legutóbbi Felhasználók</h2>
           <RecentUsers />
         </div>
-        <div className="card">
-          <h2 className="text-xl font-bold mb-4">Legutóbbi Szerverek</h2>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-6">Legutóbbi Szerverek</h2>
           <RecentServers />
         </div>
       </div>

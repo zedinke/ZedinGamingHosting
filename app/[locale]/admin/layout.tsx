@@ -15,8 +15,10 @@ export default async function AdminLayout({
   return (
     <div className="min-h-screen bg-gray-50">
       <AdminNavigation locale={locale} />
-      <main className="container mx-auto px-4 py-8">
-        {children}
+      <main className="lg:ml-64 min-h-screen">
+        <div className="p-6 lg:p-8">
+          {children}
+        </div>
       </main>
     </div>
   );

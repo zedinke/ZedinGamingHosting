@@ -5,6 +5,23 @@ import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import { loadTranslations, getNestedValue } from '@/lib/translations';
+import {
+  LayoutDashboard,
+  Users,
+  Server,
+  CreditCard,
+  FileText,
+  Ticket,
+  FileEdit,
+  BarChart3,
+  Palette,
+  Settings,
+  Bug,
+  LogOut,
+  User,
+  Menu,
+  X,
+} from 'lucide-react';
 
 interface AdminNavigationProps {
   locale: string;
@@ -13,6 +30,7 @@ interface AdminNavigationProps {
 export function AdminNavigation({ locale }: AdminNavigationProps) {
   const pathname = usePathname();
   const [translations, setTranslations] = useState<any>({});
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     loadTranslations(locale, 'common').then(setTranslations);
@@ -21,65 +39,160 @@ export function AdminNavigation({ locale }: AdminNavigationProps) {
   const t = (key: string) => getNestedValue(translations, key) || key;
 
   const isActive = (path: string) => {
-    return pathname?.includes(path);
+    return pathname === path || (path !== `/${locale}/admin` && pathname?.startsWith(path));
   };
 
   const menuItems = [
-    { href: `/${locale}/admin`, label: 'Vezérlőpult', icon: '📊' },
-    { href: `/${locale}/admin/users`, label: 'Felhasználók', icon: '👥' },
-    { href: `/${locale}/admin/servers`, label: 'Szerverek', icon: '🖥️' },
-    { href: `/${locale}/admin/subscriptions`, label: 'Előfizetések', icon: '💳' },
-    { href: `/${locale}/admin/invoices`, label: 'Számlák', icon: '📄' },
-    { href: `/${locale}/admin/tickets`, label: 'Ticketek', icon: '🎫' },
-    { href: `/${locale}/admin/cms`, label: 'CMS', icon: '📝' },
-    { href: `/${locale}/admin/analytics`, label: 'Analytics', icon: '📈' },
-    { href: `/${locale}/admin/theme`, label: 'Téma', icon: '🎨' },
-    { href: `/${locale}/admin/system`, label: 'Rendszer', icon: '⚙️' },
-    { href: `/${locale}/admin/debug`, label: 'Debug', icon: '🐛' },
+    { href: `/${locale}/admin`, label: 'Vezérlőpult', icon: LayoutDashboard },
+    { href: `/${locale}/admin/users`, label: 'Felhasználók', icon: Users },
+    { href: `/${locale}/admin/servers`, label: 'Szerverek', icon: Server },
+    { href: `/${locale}/admin/subscriptions`, label: 'Előfizetések', icon: CreditCard },
+    { href: `/${locale}/admin/invoices`, label: 'Számlák', icon: FileText },
+    { href: `/${locale}/admin/tickets`, label: 'Ticketek', icon: Ticket },
+    { href: `/${locale}/admin/cms`, label: 'CMS', icon: FileEdit },
+    { href: `/${locale}/admin/analytics`, label: 'Analytics', icon: BarChart3 },
+    { href: `/${locale}/admin/theme`, label: 'Téma', icon: Palette },
+    { href: `/${locale}/admin/system`, label: 'Rendszer', icon: Settings },
+    { href: `/${locale}/admin/debug`, label: 'Debug', icon: Bug },
   ];
 
   return (
-    <nav className="bg-white border-b shadow-sm">
-      <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center h-16">
-          <div className="flex items-center space-x-8">
-            <Link href={`/${locale}/admin`} className="text-xl font-bold text-primary-600">
-              Admin Panel
+    <div className="min-h-screen bg-gray-50">
+      {/* Sidebar */}
+      <aside className="fixed left-0 top-0 h-full w-64 bg-gradient-to-b from-gray-900 to-gray-800 text-white shadow-xl z-50">
+        <div className="flex flex-col h-full">
+          {/* Logo */}
+          <div className="p-6 border-b border-gray-700">
+            <Link href={`/${locale}/admin`} className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
+                <LayoutDashboard className="w-6 h-6" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold">Admin Panel</h1>
+                <p className="text-xs text-gray-400">ZedinGaming</p>
+              </div>
             </Link>
-            <div className="flex space-x-4">
-              {menuItems.map((item) => (
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 overflow-y-auto p-4 space-y-1">
+            {menuItems.map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item.href);
+              return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isActive(item.href)
-                      ? 'bg-primary-100 text-primary-700'
-                      : 'text-gray-600 hover:bg-gray-100'
+                  className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
+                    active
+                      ? 'bg-primary-600 text-white shadow-lg'
+                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
                   }`}
                 >
-                  <span className="mr-2">{item.icon}</span>
-                  {item.label}
+                  <Icon className="w-5 h-5" />
+                  <span className="font-medium">{item.label}</span>
                 </Link>
-              ))}
-            </div>
-          </div>
-          <div className="flex items-center space-x-4">
+              );
+            })}
+          </nav>
+
+          {/* Footer */}
+          <div className="p-4 border-t border-gray-700 space-y-2">
             <Link
               href={`/${locale}/dashboard`}
-              className="text-gray-600 hover:text-primary-600 text-sm"
+              className="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all"
             >
-              Felhasználói felület
+              <User className="w-5 h-5" />
+              <span className="font-medium">Felhasználói felület</span>
             </Link>
             <button
               onClick={() => signOut({ callbackUrl: `/${locale}` })}
-              className="text-gray-600 hover:text-red-600 text-sm"
+              className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-red-600 hover:text-white transition-all"
             >
-              Kijelentkezés
+              <LogOut className="w-5 h-5" />
+              <span className="font-medium">Kijelentkezés</span>
             </button>
           </div>
         </div>
-      </div>
-    </nav>
+      </aside>
+
+      {/* Mobile menu button */}
+      <button
+        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        className="fixed top-4 left-4 z-50 lg:hidden p-2 bg-gray-900 text-white rounded-lg shadow-lg"
+      >
+        {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+      </button>
+
+      {/* Mobile sidebar overlay */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Mobile sidebar */}
+      <aside
+        className={`fixed left-0 top-0 h-full w-64 bg-gradient-to-b from-gray-900 to-gray-800 text-white shadow-xl z-50 transform transition-transform lg:hidden ${
+          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <div className="flex flex-col h-full">
+          <div className="p-6 border-b border-gray-700 flex items-center justify-between">
+            <Link href={`/${locale}/admin`} className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
+                <LayoutDashboard className="w-6 h-6" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold">Admin Panel</h1>
+              </div>
+            </Link>
+            <button onClick={() => setMobileMenuOpen(false)} className="lg:hidden">
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+          <nav className="flex-1 overflow-y-auto p-4 space-y-1">
+            {menuItems.map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
+                    active
+                      ? 'bg-primary-600 text-white shadow-lg'
+                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                  }`}
+                >
+                  <Icon className="w-5 h-5" />
+                  <span className="font-medium">{item.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
+          <div className="p-4 border-t border-gray-700 space-y-2">
+            <Link
+              href={`/${locale}/dashboard`}
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all"
+            >
+              <User className="w-5 h-5" />
+              <span className="font-medium">Felhasználói felület</span>
+            </Link>
+            <button
+              onClick={() => signOut({ callbackUrl: `/${locale}` })}
+              className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-red-600 hover:text-white transition-all"
+            >
+              <LogOut className="w-5 h-5" />
+              <span className="font-medium">Kijelentkezés</span>
+            </button>
+          </div>
+        </div>
+      </aside>
+    </div>
   );
 }
 

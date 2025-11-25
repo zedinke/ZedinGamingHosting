@@ -55,9 +55,11 @@ export default async function AdminUsersPage({
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Felhasználókezelés</h1>
-        <p className="text-gray-600">Összes felhasználó: {totalUsers}</p>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Felhasználókezelés</h1>
+        <p className="text-gray-600">
+          Összes felhasználó: <span className="font-semibold text-gray-900">{totalUsers}</span>
+        </p>
       </div>
 
       <UserManagement
