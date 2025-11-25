@@ -41,56 +41,60 @@ export const POST = withPerformanceMonitoring(
     let newStatus: ServerStatus;
     let taskType: 'START' | 'STOP' | 'RESTART';
 
-    // Művelet végrehajtása
-    switch (action) {
-      case 'start':
-        if (server.status === 'ONLINE' || server.status === 'STARTING') {
-          return NextResponse.json(
-            { error: 'A szerver már fut vagy indítás alatt van' },
-            { status: 400 }
+      // Művelet végrehajtása
+      switch (action) {
+        case 'start':
+          if (server.status === 'ONLINE' || server.status === 'STARTING') {
+            throw new AppError(
+              ErrorCodes.VALIDATION_ERROR,
+              'A szerver már fut vagy indítás alatt van',
+              400
+            );
+          }
+          newStatus = 'STARTING';
+          taskType = 'START';
+          break;
+
+        case 'stop':
+          if (server.status === 'OFFLINE' || server.status === 'STOPPING') {
+            throw new AppError(
+              ErrorCodes.VALIDATION_ERROR,
+              'A szerver már le van állítva vagy leállítás alatt van',
+              400
+            );
+          }
+          newStatus = 'STOPPING';
+          taskType = 'STOP';
+          break;
+
+        case 'restart':
+          if (server.status !== 'ONLINE') {
+            throw new AppError(
+              ErrorCodes.VALIDATION_ERROR,
+              'Csak online szerver indítható újra',
+              400
+            );
+          }
+          newStatus = 'RESTARTING';
+          taskType = 'RESTART';
+          break;
+
+        default:
+          throw new AppError(
+            ErrorCodes.VALIDATION_ERROR,
+            'Érvénytelen művelet',
+            400
           );
-        }
-        newStatus = 'STARTING';
-        taskType = 'START';
-        break;
+      }
 
-      case 'stop':
-        if (server.status === 'OFFLINE' || server.status === 'STOPPING') {
-          return NextResponse.json(
-            { error: 'A szerver már le van állítva vagy leállítás alatt van' },
-            { status: 400 }
-          );
-        }
-        newStatus = 'STOPPING';
-        taskType = 'STOP';
-        break;
+      // Státusz frissítése
+      const updatedServer = await prisma.server.update({
+        where: { id },
+        data: { status: newStatus },
+      });
 
-      case 'restart':
-        if (server.status !== 'ONLINE') {
-          return NextResponse.json(
-            { error: 'Csak online szerver indítható újra' },
-            { status: 400 }
-          );
-        }
-        newStatus = 'RESTARTING';
-        taskType = 'RESTART';
-        break;
-
-      default:
-        return NextResponse.json(
-          { error: 'Érvénytelen művelet' },
-          { status: 400 }
-        );
-    }
-
-    // Státusz frissítése
-    const updatedServer = await prisma.server.update({
-      where: { id },
-      data: { status: newStatus },
-    });
-
-    // Task létrehozása a művelethez
-    if (server.agentId) {
+      // Task létrehozása a művelethez
+      if (server.agentId) {
       const task = await prisma.task.create({
         data: {
           agentId: server.agentId,
@@ -111,51 +115,57 @@ export const POST = withPerformanceMonitoring(
           taskId: task.id,
           serverId: server.id,
         });
+        });
+      }
+
+      // Audit log
+      const auditAction =
+        action === 'start'
+          ? AuditAction.SERVER_START
+          : action === 'stop'
+          ? AuditAction.SERVER_STOP
+          : AuditAction.SERVER_RESTART;
+
+      await createAuditLog({
+        userId: (session.user as any).id,
+        action: auditAction,
+        resourceType: 'Server',
+        resourceId: server.id,
+        details: {
+          serverName: server.name,
+          oldStatus: server.status,
+          newStatus: newStatus,
+          action,
+        },
+        ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined,
+        userAgent: request.headers.get('user-agent') || undefined,
       });
-    }
 
-    // Audit log
-    const auditAction =
-      action === 'start'
-        ? AuditAction.SERVER_START
-        : action === 'stop'
-        ? AuditAction.SERVER_STOP
-        : AuditAction.SERVER_RESTART;
-
-    await createAuditLog({
-      userId: (session.user as any).id,
-      action: auditAction,
-      resourceType: 'Server',
-      resourceId: server.id,
-      details: {
+      // Webhook esemény küldése
+      sendWebhookEvent('server_status_change', {
+        serverId: server.id,
         serverName: server.name,
         oldStatus: server.status,
         newStatus: newStatus,
         action,
-      },
-      ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined,
-      userAgent: request.headers.get('user-agent') || undefined,
-    });
-
-    // Webhook esemény küldése
-    sendWebhookEvent('server_status_change', {
-      serverId: server.id,
-      serverName: server.name,
-      oldStatus: server.status,
-      newStatus: newStatus,
-      action,
-    }).catch((error) => {
-      logger.error('Webhook send error', error as Error, {
-        serverId: server.id,
-        event: 'server_status_change',
+      }).catch((error) => {
+        logger.error('Webhook send error', error as Error, {
+          serverId: server.id,
+          event: 'server_status_change',
+        });
       });
-    });
 
-    return NextResponse.json({
-      success: true,
-      status: newStatus,
-      message: `Szerver ${action} művelet elindítva`,
-    });
+      logger.info('Server action completed', {
+        serverId: server.id,
+        action,
+        newStatus,
+      });
+
+      return NextResponse.json({
+        success: true,
+        status: newStatus,
+        message: `Szerver ${action} művelet elindítva`,
+      });
     } catch (error) {
       logger.error('Server action error', error as Error, {
         serverId: params.id,

@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma';
 import { TaskStatus, TaskType, ServerStatus } from '@prisma/client';
 import { generateServerPort } from './server-provisioning';
+import { logger } from './logger';
+import { AppError, ErrorCodes } from './error-handler';
 
 /**
  * Feladat végrehajtása
@@ -19,12 +21,22 @@ export async function executeTask(taskId: string): Promise<void> {
   });
 
   if (!task) {
-    throw new Error('Feladat nem található');
+    throw new AppError(ErrorCodes.TASK_NOT_FOUND, 'Feladat nem található', 404);
   }
 
   if (task.status !== 'PENDING') {
-    throw new Error('Csak PENDING státuszú feladat hajtható végre');
+    throw new AppError(
+      ErrorCodes.TASK_ALREADY_RUNNING,
+      'Csak PENDING státuszú feladat hajtható végre',
+      400
+    );
   }
+
+  logger.info('Executing task', {
+    taskId,
+    type: task.type,
+    serverId: task.serverId,
+  });
 
   // Task státusz frissítése RUNNING-re
   await prisma.task.update({
@@ -65,7 +77,11 @@ export async function executeTask(taskId: string): Promise<void> {
         result = { message: 'Agent telepítés folyamatban' };
         break;
       default:
-        throw new Error(`Ismeretlen feladat típus: ${task.type}`);
+        throw new AppError(
+          ErrorCodes.TASK_EXECUTION_FAILED,
+          `Ismeretlen feladat típus: ${task.type}`,
+          400
+        );
     }
 
     // Task sikeresen befejezve
@@ -85,7 +101,12 @@ export async function executeTask(taskId: string): Promise<void> {
         taskId: task.id,
         serverId: task.serverId,
         backupName: result.backupPath,
-      }).catch(console.error);
+      }).catch((error) => {
+        logger.error('Webhook send error', error as Error, {
+          taskId: task.id,
+          event: 'backup_created',
+        });
+      });
       
       // Értesítés küldése
       if (task.serverId) {
@@ -102,7 +123,12 @@ export async function executeTask(taskId: string): Promise<void> {
             `A(z) ${server.name} szerver backup-ja sikeresen létrejött.`,
             'medium',
             { serverId: task.serverId, backupPath: result.backupPath }
-          ).catch(console.error);
+          ).catch((error) => {
+            logger.error('Notification send error', error as Error, {
+              taskId: task.id,
+              serverId: task.serverId,
+            });
+          });
         }
       }
     } else {
@@ -111,7 +137,12 @@ export async function executeTask(taskId: string): Promise<void> {
         taskId: task.id,
         taskType: task.type,
         serverId: task.serverId,
-      }).catch(console.error);
+      }).catch((error) => {
+        logger.error('Webhook send error', error as Error, {
+          taskId: task.id,
+          event: 'backup_created',
+        });
+      });
     }
   } catch (error: any) {
     // Task hibával befejezve
@@ -134,7 +165,11 @@ export async function executeTask(taskId: string): Promise<void> {
 
     // Email értesítés küldése
     const { sendTaskCompletionNotification } = await import('./email-notifications');
-    sendTaskCompletionNotification(taskId).catch(console.error);
+    sendTaskCompletionNotification(taskId).catch((error) => {
+      logger.error('Email notification send error', error as Error, {
+        taskId,
+      });
+    });
 
     // Webhook esemény küldése
     const { sendWebhookEvent } = await import('./webhook-sender');
@@ -417,7 +452,9 @@ export async function processPendingTasks(): Promise<void> {
     try {
       await executeTask(task.id);
     } catch (error) {
-      console.error(`Task ${task.id} végrehajtási hiba:`, error);
+      logger.error(`Task ${task.id} végrehajtási hiba`, error as Error, {
+        taskId: task.id,
+      });
     }
   }
 }

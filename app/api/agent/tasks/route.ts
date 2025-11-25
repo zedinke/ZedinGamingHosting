@@ -36,9 +36,24 @@ export async function GET(request: NextRequest) {
     }
 
     // Feladatok lekérdezése
+    // validation.agentId az Agent.agentId (egyedi azonosító)
+    // task.agentId az Agent.id (Prisma primary key)
+    // Ezért lekérdezzük az Agent-et az agentId alapján
+    const agent = await prisma.agent.findUnique({
+      where: { agentId: validation.agentId! },
+      select: { id: true },
+    });
+
+    if (!agent) {
+      return NextResponse.json(
+        { error: 'Agent nem található' },
+        { status: 404 }
+      );
+    }
+
     const tasks = await prisma.task.findMany({
       where: {
-        agentId: validation.agent?.id,
+        agentId: agent.id,
         status: status as any,
       },
       include: {

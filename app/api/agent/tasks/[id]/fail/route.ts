@@ -47,7 +47,22 @@ export async function POST(
     }
 
     // Ellenőrizzük, hogy az agent jogosult-e erre a feladatra
-    if (task.agentId !== validation.agent?.id) {
+    // validation.agentId az Agent.agentId (egyedi azonosító)
+    // task.agentId az Agent.id (Prisma primary key)
+    // Ezért lekérdezzük az Agent-et az agentId alapján
+    if (validation.agentId && task.agent) {
+      const agent = await prisma.agent.findUnique({
+        where: { agentId: validation.agentId },
+        select: { id: true },
+      });
+      
+      if (!agent || task.agentId !== agent.id) {
+        return NextResponse.json(
+          { error: 'Nincs jogosultság ehhez a feladathoz' },
+          { status: 403 }
+        );
+      }
+    } else {
       return NextResponse.json(
         { error: 'Nincs jogosultság ehhez a feladathoz' },
         { status: 403 }

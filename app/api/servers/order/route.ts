@@ -66,14 +66,18 @@ export const POST = withPerformanceMonitoring(
       gameType: gameType as GameType,
       maxPlayers: parseInt(maxPlayers),
       planId,
-    }).catch((error) => {
-      console.error('Server provisioning error:', error);
-      // Szerver státusz frissítése hibára
-      prisma.server.update({
-        where: { id: server.id },
-        data: { status: 'ERROR' },
+      }).catch((error) => {
+        logger.error('Server provisioning error', error as Error, {
+          serverId: server.id,
+        });
+        // Szerver státusz frissítése hibára
+        prisma.server.update({
+          where: { id: server.id },
+          data: { status: 'ERROR' },
+        }).catch((updateError) => {
+          logger.error('Failed to update server status', updateError as Error);
+        });
       });
-    });
 
     // Előfizetés létrehozása (fizetési integrációval)
     // A fizetés a checkout API-n keresztül történik
@@ -106,14 +110,14 @@ export const POST = withPerformanceMonitoring(
       serverId: server.id,
       subscriptionId: subscription.id,
       invoiceId: invoice.id,
-      message: 'Szerver sikeresen létrehozva',
-    });
-  } catch (error) {
-    console.error('Server order error:', error);
-    return NextResponse.json(
-      { error: 'Hiba történt a szerver rendelése során' },
-      { status: 500 }
-    );
-  }
-}
+        message: 'Szerver sikeresen létrehozva',
+      });
+    } catch (error) {
+      logger.error('Server order error', error as Error);
+      return handleApiError(error);
+    }
+  },
+  '/api/servers/order',
+  'POST'
+);
 
