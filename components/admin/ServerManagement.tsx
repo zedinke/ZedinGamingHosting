@@ -69,13 +69,23 @@ export function ServerManagement({
   };
 
   const getGameTypeLabel = (gameType: GameType) => {
-    const labels: Record<GameType, string> = {
-      ARK: 'ARK: Survival Evolved',
+    const labels: Partial<Record<GameType, string>> = {
+      ARK_EVOLVED: 'ARK: Survival Evolved',
+      ARK_ASCENDED: 'ARK: Survival Ascended',
       MINECRAFT: 'Minecraft',
-      CSGO: 'Counter-Strike: Global Offensive',
       RUST: 'Rust',
       VALHEIM: 'Valheim',
       SEVEN_DAYS_TO_DIE: '7 Days to Die',
+      CONAN_EXILES: 'Conan Exiles',
+      DAYZ: 'DayZ',
+      PROJECT_ZOMBOID: 'Project Zomboid',
+      PALWORLD: 'Palworld',
+      ENSHROUDED: 'Enshrouded',
+      SONS_OF_THE_FOREST: 'Sons of the Forest',
+      THE_FOREST: 'The Forest',
+      GROUNDED: 'Grounded',
+      V_RISING: 'V Rising',
+      DONT_STARVE_TOGETHER: "Don't Starve Together",
       OTHER: 'Egyéb',
     };
     return labels[gameType] || gameType;

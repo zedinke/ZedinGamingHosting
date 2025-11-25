@@ -56,7 +56,8 @@ export async function GET(
     // Log fájl útvonala (játék típus alapján)
     const logPaths: Record<string, string> = {
       MINECRAFT: `${serverPath}/logs/latest.log`,
-      ARK: `${serverPath}/ShooterGame/Saved/Logs/ShooterGame.log`,
+      ARK_EVOLVED: `${serverPath}/ShooterGame/Saved/Logs/ShooterGame.log`,
+      ARK_ASCENDED: `${serverPath}/ShooterGame/Saved/Logs/ShooterGame.log`,
       CSGO: `${serverPath}/csgo/logs/console.log`,
       RUST: `${serverPath}/RustDedicated.log`,
       VALHEIM: `${serverPath}/valheim_server.log`,

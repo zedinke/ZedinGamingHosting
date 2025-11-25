@@ -123,8 +123,17 @@ function getDefaultConfig(gameType: string, maxPlayers: number): any {
       spawnProtection: 16,
       whitelist: false,
     },
-    ARK: {
-      serverName: 'ARK Server',
+    ARK_EVOLVED: {
+      serverName: 'ARK: Survival Evolved Server',
+      maxPlayers: maxPlayers,
+      difficultyOffset: 0.2,
+      harvestAmountMultiplier: 1.0,
+      tamingSpeedMultiplier: 1.0,
+      xpMultiplier: 1.0,
+      pvp: false,
+    },
+    ARK_ASCENDED: {
+      serverName: 'ARK: Survival Ascended Server',
       maxPlayers: maxPlayers,
       difficultyOffset: 0.2,
       harvestAmountMultiplier: 1.0,

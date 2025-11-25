@@ -89,7 +89,8 @@ export function ServerReports({
             >
               <option value="">Összes</option>
               <option value="MINECRAFT">Minecraft</option>
-              <option value="ARK">ARK</option>
+              <option value="ARK_EVOLVED">ARK: Survival Evolved</option>
+              <option value="ARK_ASCENDED">ARK: Survival Ascended</option>
               <option value="CSGO">CS:GO</option>
               <option value="RUST">Rust</option>
               <option value="VALHEIM">Valheim</option>

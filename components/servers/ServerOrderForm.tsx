@@ -13,7 +13,7 @@ import { Gamepad2, Users, Server, Check } from 'lucide-react';
 
 const serverOrderSchema = z.object({
   name: z.string().min(3, 'A névnek legalább 3 karakter hosszúnak kell lennie'),
-  gameType: z.enum(['ARK', 'MINECRAFT', 'CSGO', 'RUST', 'VALHEIM', 'SEVEN_DAYS_TO_DIE', 'OTHER']),
+  gameType: z.enum(['ARK_EVOLVED', 'ARK_ASCENDED', 'MINECRAFT', 'RUST', 'VALHEIM', 'SEVEN_DAYS_TO_DIE', 'CONAN_EXILES', 'DAYZ', 'PROJECT_ZOMBOID', 'PALWORLD', 'ENSHROUDED', 'SONS_OF_THE_FOREST', 'THE_FOREST', 'GROUNDED', 'V_RISING', 'DONT_STARVE_TOGETHER', 'OTHER']),
   planId: z.string().min(1, 'Válassz egy csomagot'),
   maxPlayers: z.number().min(1).max(200),
 });
@@ -36,12 +36,22 @@ interface ServerOrderFormProps {
 }
 
 const gameTypes = {
-  ARK: { label: 'ARK: Survival Evolved', icon: '🦖', description: 'Dinosszauruszokkal teli túlélő játék' },
+  ARK_EVOLVED: { label: 'ARK: Survival Evolved', icon: '🦖', description: 'Dinosszauruszokkal teli túlélő játék' },
+  ARK_ASCENDED: { label: 'ARK: Survival Ascended', icon: '🦖', description: 'ARK új generációs verziója' },
   MINECRAFT: { label: 'Minecraft', icon: '🧱', description: 'Végtelen lehetőségek sandbox játék' },
-  CSGO: { label: 'Counter-Strike: Global Offensive', icon: '🎯', description: 'Kompetitív FPS játék' },
   RUST: { label: 'Rust', icon: '🦀', description: 'Túlélő játék építéssel és rablással' },
   VALHEIM: { label: 'Valheim', icon: '⚔️', description: 'Viking túlélő játék' },
   SEVEN_DAYS_TO_DIE: { label: '7 Days to Die', icon: '🧟', description: 'Zombi túlélő játék' },
+  CONAN_EXILES: { label: 'Conan Exiles', icon: '⚔️', description: 'Barbár túlélő játék' },
+  DAYZ: { label: 'DayZ', icon: '🧟', description: 'Zombi túlélő játék' },
+  PROJECT_ZOMBOID: { label: 'Project Zomboid', icon: '🧟', description: 'Izometrikus zombi túlélő játék' },
+  PALWORLD: { label: 'Palworld', icon: '🐾', description: 'Pokémon-stílusú túlélő játék' },
+  ENSHROUDED: { label: 'Enshrouded', icon: '🗡️', description: 'Action RPG túlélő játék' },
+  SONS_OF_THE_FOREST: { label: 'Sons of the Forest', icon: '🌲', description: 'Horror túlélő játék' },
+  THE_FOREST: { label: 'The Forest', icon: '🌲', description: 'Horror túlélő játék' },
+  GROUNDED: { label: 'Grounded', icon: '🐜', description: 'Mikro túlélő játék' },
+  V_RISING: { label: 'V Rising', icon: '🧛', description: 'Vampír túlélő játék' },
+  DONT_STARVE_TOGETHER: { label: "Don't Starve Together", icon: '🔥', description: 'Túlélő játék együtt' },
   OTHER: { label: 'Egyéb', icon: '🎮', description: 'Egyéb játék' },
 };
 
@@ -194,7 +204,7 @@ export function ServerOrderForm({ plans, selectedPlan, locale }: ServerOrderForm
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
             />
             <p className="text-xs text-gray-500 mt-1">
-              Ajánlott: {selectedGameType === 'MINECRAFT' ? '20-50' : selectedGameType === 'ARK' ? '10-70' : '10-32'}
+              Ajánlott: {selectedGameType === 'MINECRAFT' ? '20-50' : (selectedGameType === 'ARK_EVOLVED' || selectedGameType === 'ARK_ASCENDED') ? '10-70' : '10-32'}
             </p>
             {errors.maxPlayers && (
               <p className="text-red-500 text-sm mt-1">{errors.maxPlayers.message}</p>

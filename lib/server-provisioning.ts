@@ -135,13 +135,25 @@ export async function findBestMachine(
  * Játék típus alapján erőforrás követelmények
  */
 function getGameRequirements(gameType: GameType, maxPlayers: number) {
-  const baseRequirements: Record<GameType, { cpu: number; ram: number; disk: number }> = {
+  const arkRequirements = { cpu: 2, ram: 8 * 1024 * 1024 * 1024, disk: 20 * 1024 * 1024 * 1024 }; // 8GB RAM, 20GB Disk
+  
+  const baseRequirements: Partial<Record<GameType, { cpu: number; ram: number; disk: number }>> = {
     MINECRAFT: { cpu: 1, ram: 2 * 1024 * 1024 * 1024, disk: 5 * 1024 * 1024 * 1024 }, // 2GB RAM, 5GB Disk
-    ARK: { cpu: 2, ram: 8 * 1024 * 1024 * 1024, disk: 20 * 1024 * 1024 * 1024 }, // 8GB RAM, 20GB Disk
-    CSGO: { cpu: 1, ram: 2 * 1024 * 1024 * 1024, disk: 10 * 1024 * 1024 * 1024 }, // 2GB RAM, 10GB Disk
+    ARK_EVOLVED: arkRequirements,
+    ARK_ASCENDED: arkRequirements,
     RUST: { cpu: 2, ram: 4 * 1024 * 1024 * 1024, disk: 15 * 1024 * 1024 * 1024 }, // 4GB RAM, 15GB Disk
     VALHEIM: { cpu: 1, ram: 2 * 1024 * 1024 * 1024, disk: 5 * 1024 * 1024 * 1024 }, // 2GB RAM, 5GB Disk
     SEVEN_DAYS_TO_DIE: { cpu: 2, ram: 4 * 1024 * 1024 * 1024, disk: 10 * 1024 * 1024 * 1024 }, // 4GB RAM, 10GB Disk
+    CONAN_EXILES: { cpu: 2, ram: 4 * 1024 * 1024 * 1024, disk: 15 * 1024 * 1024 * 1024 },
+    DAYZ: { cpu: 2, ram: 4 * 1024 * 1024 * 1024, disk: 15 * 1024 * 1024 * 1024 },
+    PROJECT_ZOMBOID: { cpu: 2, ram: 4 * 1024 * 1024 * 1024, disk: 10 * 1024 * 1024 * 1024 },
+    PALWORLD: { cpu: 2, ram: 4 * 1024 * 1024 * 1024, disk: 10 * 1024 * 1024 * 1024 },
+    ENSHROUDED: { cpu: 2, ram: 4 * 1024 * 1024 * 1024, disk: 10 * 1024 * 1024 * 1024 },
+    SONS_OF_THE_FOREST: { cpu: 2, ram: 4 * 1024 * 1024 * 1024, disk: 10 * 1024 * 1024 * 1024 },
+    THE_FOREST: { cpu: 1, ram: 2 * 1024 * 1024 * 1024, disk: 5 * 1024 * 1024 * 1024 },
+    GROUNDED: { cpu: 1, ram: 2 * 1024 * 1024 * 1024, disk: 5 * 1024 * 1024 * 1024 },
+    V_RISING: { cpu: 2, ram: 4 * 1024 * 1024 * 1024, disk: 10 * 1024 * 1024 * 1024 },
+    DONT_STARVE_TOGETHER: { cpu: 1, ram: 2 * 1024 * 1024 * 1024, disk: 5 * 1024 * 1024 * 1024 },
     OTHER: { cpu: 1, ram: 2 * 1024 * 1024 * 1024, disk: 5 * 1024 * 1024 * 1024 }, // 2GB RAM, 5GB Disk
   };
 
@@ -271,13 +283,23 @@ export async function provisionServer(
  */
 export async function generateServerPort(gameType: GameType): Promise<number> {
   // Alapértelmezett portok játék típusonként
-  const defaultPorts: Record<GameType, number> = {
+  const defaultPorts: Partial<Record<GameType, number>> = {
     MINECRAFT: 25565,
-    ARK: 7777,
-    CSGO: 27015,
+    ARK_EVOLVED: 7777,
+    ARK_ASCENDED: 7777,
     RUST: 28015,
     VALHEIM: 2456,
     SEVEN_DAYS_TO_DIE: 26900,
+    CONAN_EXILES: 7777,
+    DAYZ: 2302,
+    PROJECT_ZOMBOID: 16261,
+    PALWORLD: 8211,
+    ENSHROUDED: 15636,
+    SONS_OF_THE_FOREST: 8766,
+    THE_FOREST: 8766,
+    GROUNDED: 7777,
+    V_RISING: 9876,
+    DONT_STARVE_TOGETHER: 10999,
     OTHER: 25565,
   };
 
