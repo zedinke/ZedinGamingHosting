@@ -54,7 +54,7 @@ export async function triggerAutoInstallOnPayment(
     }
 
     // Ellenőrizzük, hogy van-e már fizetett számla
-    const hasPaidInvoice = server.subscription?.invoices.length > 0 || invoiceId;
+    const hasPaidInvoice = (server.subscription?.invoices?.length ?? 0) > 0 || invoiceId;
 
     if (!hasPaidInvoice) {
       logger.warn('No paid invoice found for server', { serverId });
@@ -76,13 +76,12 @@ export async function triggerAutoInstallOnPayment(
     const provisioningResult = await provisionServer(serverId, {
       gameType: server.gameType,
       maxPlayers: server.maxPlayers,
-      planId: server.subscription?.id || undefined,
+      planId: server.subscription?.id,
     });
 
     if (!provisioningResult.success) {
-      logger.error('Server provisioning failed', {
+      logger.error('Server provisioning failed', new Error(provisioningResult.error || 'Unknown error'), {
         serverId,
-        error: provisioningResult.error,
       });
 
       // Értesítés küldése a felhasználónak
@@ -146,9 +145,8 @@ export async function triggerAutoInstallOnPayment(
     });
 
     if (!installResult.success) {
-      logger.error('Game server installation failed', {
+      logger.error('Game server installation failed', new Error(installResult.error || 'Unknown error'), {
         serverId,
-        error: installResult.error,
       });
 
       // Szerver státusz frissítése hibára

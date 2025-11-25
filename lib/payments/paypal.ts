@@ -32,10 +32,16 @@ async function getPayPalAccessToken(): Promise<string> {
   }
 
   const data = await response.json();
-  accessToken = data.access_token;
+  const token = data.access_token;
+  
+  if (!token) {
+    throw new Error('PayPal access token not received');
+  }
+  
+  accessToken = token;
   tokenExpiry = Date.now() + (data.expires_in * 1000) - 60000; // 1 perc buffer
 
-  return accessToken;
+  return token;
 }
 
 /**

@@ -215,7 +215,7 @@ export async function getClusterServers(clusterId: string) {
         in: ['ARK_EVOLVED', 'ARK_ASCENDED'],
       },
       configuration: {
-        path: ['clusterId'],
+        path: 'clusterId',
         equals: clusterId,
       },
     },

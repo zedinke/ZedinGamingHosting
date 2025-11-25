@@ -20,7 +20,7 @@ export interface GameServerConfig {
   requiresWine?: boolean;
 }
 
-export const GAME_SERVER_CONFIGS: Record<GameType, GameServerConfig> = {
+export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = {
   // ARK játékok
   ARK_EVOLVED: {
     steamAppId: 376030,
@@ -646,8 +646,8 @@ export const GAME_SERVER_CONFIGS: Record<GameType, GameServerConfig> = {
 };
 
 // Összevonjuk a két konfigurációt (alap 30 + kiterjesztett 30)
-export const ALL_GAME_SERVER_CONFIGS: Record<GameType, GameServerConfig> = {
+export const ALL_GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = {
   ...GAME_SERVER_CONFIGS,
   ...EXTENDED_GAME_SERVER_CONFIGS,
-} as Record<GameType, GameServerConfig>;
+};
 

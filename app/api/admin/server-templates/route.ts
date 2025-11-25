@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
  * Alapértelmezett sablon konfiguráció
  */
 function getDefaultTemplateConfig(gameType: GameType): any {
-  const arkConfig = {
+  const arkConfig: any = {
     difficultyOffset: 0.2,
     harvestAmountMultiplier: 1.0,
     tamingSpeedMultiplier: 1.0,
@@ -51,7 +51,7 @@ function getDefaultTemplateConfig(gameType: GameType): any {
     pvp: false,
   };
 
-  const configs: Partial<Record<GameType, any>> = {
+  const configs: Record<string, any> = {
     MINECRAFT: {
       difficulty: 'normal',
       gamemode: 'survival',
@@ -98,7 +98,7 @@ function getDefaultTemplateConfig(gameType: GameType): any {
  * Alapértelmezett max játékosok száma
  */
 function getDefaultMaxPlayers(gameType: GameType): number {
-  const defaults: Partial<Record<GameType, number>> = {
+  const defaults: Record<string, number> = {
     MINECRAFT: 20,
     ARK_EVOLVED: 70,
     ARK_ASCENDED: 70,

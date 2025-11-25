@@ -245,7 +245,7 @@ async function executeProvisionTask(task: any): Promise<any> {
 
   const installResult = await installGameServer(task.serverId, server.gameType, {
     maxPlayers: server.maxPlayers,
-    ram: plan?.ram || 2048,
+      ram: (plan?.features as any)?.ram || 2048,
     port: server.port || 25565,
     name: server.name,
   });

@@ -117,8 +117,8 @@ export async function downloadBackupFromS3(
     const writeStream = createWriteStream(localPath);
     stream.pipe(writeStream);
 
-    await new Promise((resolve, reject) => {
-      writeStream.on('finish', resolve);
+    await new Promise<void>((resolve, reject) => {
+      writeStream.on('finish', () => resolve());
       writeStream.on('error', reject);
     });
 
@@ -196,7 +196,7 @@ export async function listBackupsFromS3(
       return [];
     }
 
-    return response.Contents.map((object) => ({
+    return response.Contents.map((object: any) => ({
       key: object.Key || '',
       size: object.Size || 0,
       lastModified: object.LastModified || new Date(),

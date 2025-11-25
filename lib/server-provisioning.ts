@@ -5,7 +5,7 @@ import { executeTask } from './task-executor';
 interface ProvisioningOptions {
   gameType: GameType;
   maxPlayers: number;
-  planId: string;
+  planId?: string;
 }
 
 interface MachineResources {
@@ -159,6 +159,15 @@ function getGameRequirements(gameType: GameType, maxPlayers: number) {
 
   const base = baseRequirements[gameType] || baseRequirements.OTHER;
 
+  if (!base) {
+    // Fallback ha nincs konfiguráció
+    return {
+      cpu: 1,
+      ram: 2 * 1024 * 1024 * 1024,
+      disk: 5 * 1024 * 1024 * 1024,
+    };
+  }
+
   // Játékosok száma alapján skálázás
   const playerMultiplier = Math.max(1, maxPlayers / 10);
 
@@ -228,7 +237,7 @@ export async function provisionServer(
     const { installGameServer } = await import('./game-server-installer');
     const installResult = await installGameServer(serverId, options.gameType, {
       maxPlayers: options.maxPlayers,
-      ram: plan?.ram || 2048,
+      ram: (plan?.features as any)?.ram || 2048,
       port: server.port || 25565,
       name: server.name,
     });

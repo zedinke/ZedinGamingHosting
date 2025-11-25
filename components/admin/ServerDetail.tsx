@@ -112,7 +112,7 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
   };
 
   const getGameTypeLabel = (gameType: GameType) => {
-    const labels: Partial<Record<GameType, string>> = {
+    const labels: Record<string, string> = {
       ARK_EVOLVED: 'ARK: Survival Evolved',
       ARK_ASCENDED: 'ARK: Survival Ascended',
       MINECRAFT: 'Minecraft',

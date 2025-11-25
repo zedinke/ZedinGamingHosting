@@ -22,7 +22,7 @@ export function ServerScaling({ serverId, locale }: ServerScalingProps) {
       if (response.ok) {
         setResult(data);
         if (data.action !== 'none') {
-          toast.info(`Skálázás ajánlott: ${data.reason}`);
+          toast(`Skálázás ajánlott: ${data.reason}`, { icon: 'ℹ️' });
         } else {
           toast.success('Erőforrás használat normális');
         }

@@ -32,7 +32,6 @@ export async function authenticateAgent(request: NextRequest): Promise<{
   return {
     valid: true,
     agentId: validation.agentId,
-    agent: validation.agent,
   };
 }
 

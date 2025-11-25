@@ -185,9 +185,9 @@ export async function listBackupsFromFTP(
     client.close();
 
     return files
-      .filter((file) => file.name.endsWith('.tar.gz'))
-      .map((file) => ({
-        name: file.name,
+      .filter((file: any) => file.name?.endsWith('.tar.gz'))
+      .map((file: any) => ({
+        name: file.name || '',
         size: file.size || 0,
         modified: file.modifiedAt || new Date(),
       }));
