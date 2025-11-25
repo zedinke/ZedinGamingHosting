@@ -9,6 +9,7 @@ import { ServerBackupManager } from './ServerBackupManager';
 import { ServerResourceMonitor } from './ServerResourceMonitor';
 import { ServerConfigEditor } from './ServerConfigEditor';
 import { ServerLogsViewer } from './ServerLogsViewer';
+import { ServerMetrics } from './ServerMetrics';
 
 interface Server {
   id: string;
@@ -372,6 +373,9 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
         serverId={server.id}
         initialResourceUsage={server.resourceUsage}
       />
+
+      {/* Teljesítmény metrikák */}
+      <ServerMetrics serverId={server.id} period={24} interval={1} />
     </div>
   );
 }
