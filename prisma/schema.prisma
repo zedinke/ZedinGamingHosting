@@ -42,6 +42,7 @@ enum UserRole {
   USER
   MODERATOR
   ADMIN
+  PROBA // Próba rang - ingyenes próba, de tényleges értékű számla
 }
 
 // OAuth fiókok (Google, Discord)

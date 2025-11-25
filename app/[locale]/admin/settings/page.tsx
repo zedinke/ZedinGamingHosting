@@ -1,6 +1,7 @@
 import { getTranslations } from '@/lib/i18n';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { BackupStorageSettings } from '@/components/admin/BackupStorageSettings';
+import { InvoiceSettings } from '@/components/admin/InvoiceSettings';
 
 export default async function AdminSettingsPage({
   params: { locale },
@@ -16,6 +17,11 @@ export default async function AdminSettingsPage({
         <h1 className="text-3xl font-bold mb-8">Rendszer Beállítások</h1>
 
         <div className="space-y-6">
+          <div className="card">
+            <h2 className="text-xl font-bold mb-4">Számlázási Beállítások</h2>
+            <InvoiceSettings />
+          </div>
+          
           <BackupStorageSettings />
         </div>
       </div>

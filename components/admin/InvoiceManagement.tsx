@@ -166,9 +166,18 @@ export function InvoiceManagement({
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <Button
-                        size="sm"
-                        variant="outline"
+                      <div className="flex gap-2">
+                        <a
+                          href={`/api/invoices/${invoice.id}/pdf`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                        >
+                          PDF
+                        </a>
+                        <Button
+                          size="sm"
+                          variant="outline"
                         onClick={() => handleResend(invoice.id)}
                         disabled={resendingIds.has(invoice.id)}
                         className="text-gray-700 border-gray-300 hover:bg-gray-50"

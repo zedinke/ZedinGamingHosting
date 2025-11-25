@@ -27,9 +27,78 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = (session.user as any).id;
+    const userRole = (session.user as any).role;
+    
+    // Próba rang esetén ingyenes próba, de tényleges értékű számla generálása
+    const isProba = userRole === 'PROBA';
+    
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
     const successUrl = `${baseUrl}/dashboard/billing?success=true`;
     const cancelUrl = `${baseUrl}/dashboard/billing?canceled=true`;
+
+    // Próba rang esetén nem kell fizetési gateway, közvetlenül sikeres
+    if (isProba) {
+      const { prisma } = await import('@/lib/prisma');
+      const { generateInvoiceNumber } = await import('@/lib/invoice-generator');
+      const { getInvoiceSettings } = await import('@/lib/invoice-generator');
+      
+      // Számla beállítások lekérdezése
+      const invoiceSettings = await getInvoiceSettings();
+      if (!invoiceSettings) {
+        return NextResponse.json(
+          { error: 'Számla beállítások hiányoznak' },
+          { status: 500 }
+        );
+      }
+
+      // Számla szám generálása
+      const sequenceNumber = await prisma.invoice.count() + 1;
+      const invoiceNumber = generateInvoiceNumber(
+        invoiceSettings.invoicePrefix,
+        invoiceSettings.invoiceNumberFormat,
+        sequenceNumber
+      );
+
+      // Számla létrehozása (tényleges értékkel, de fizetés nélkül)
+      const invoice = await prisma.invoice.create({
+        data: {
+          userId,
+          subscriptionId: (await prisma.subscription.findFirst({
+            where: { serverId },
+          }))?.id,
+          paymentProvider: 'STRIPE', // Próba esetén is STRIPE-ként jelöljük
+          amount: amount || 0,
+          currency: currency || invoiceSettings.defaultCurrency,
+          status: 'PAID', // Próba esetén automatikusan fizetett
+          invoiceNumber,
+          paidAt: new Date(),
+          taxRate: invoiceSettings.defaultVatRate,
+          subtotal: amount ? amount / (1 + invoiceSettings.defaultVatRate / 100) : 0,
+          taxAmount: amount ? amount - (amount / (1 + invoiceSettings.defaultVatRate / 100)) : 0,
+          items: JSON.stringify([{
+            name: planName || 'Game Server Subscription (Próba)',
+            quantity: 1,
+            unitPrice: amount ? amount / (1 + invoiceSettings.defaultVatRate / 100) : 0,
+            vatRate: invoiceSettings.defaultVatRate,
+          }]),
+        },
+      });
+
+      // Automatikus telepítés triggerelése
+      const { triggerAutoInstallOnPayment } = await import('@/lib/auto-install-on-payment');
+      triggerAutoInstallOnPayment(serverId, invoice.id).catch((error) => {
+        console.error('Auto-install error:', error);
+      });
+
+      return NextResponse.json({
+        success: true,
+        provider: 'PROBA',
+        isProba: true,
+        invoiceId: invoice.id,
+        invoiceNumber: invoice.invoiceNumber,
+        message: 'Próba rendelés sikeresen létrehozva',
+      });
+    }
 
     let checkoutData: any;
 
