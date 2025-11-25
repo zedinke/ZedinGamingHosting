@@ -96,6 +96,10 @@ export async function executeTask(taskId: string): Promise<void> {
       });
     }
 
+    // Email értesítés küldése
+    const { sendTaskCompletionNotification } = await import('./email-notifications');
+    sendTaskCompletionNotification(taskId).catch(console.error);
+
     throw error;
   }
 }

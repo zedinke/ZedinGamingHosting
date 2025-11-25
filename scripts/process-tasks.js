@@ -103,10 +103,22 @@ async function checkOfflineAgents() {
   }
 }
 
+// Automatikus backupok ütemezése
+async function scheduleAutomaticBackups() {
+  try {
+    const { scheduleAutomaticBackups, cleanupOldBackups } = require('../lib/backup-scheduler');
+    await scheduleAutomaticBackups();
+    await cleanupOldBackups();
+  } catch (error) {
+    console.error('Schedule automatic backups error:', error);
+  }
+}
+
 // Fő folyamat
 async function main() {
   await processPendingTasks();
   await checkOfflineAgents();
+  await scheduleAutomaticBackups();
   process.exit(0);
 }
 
