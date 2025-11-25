@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { UserRole } from '@prisma/client';
+import { UserRole, GameType } from '@prisma/client';
 
 // GET - Szerver statisztikák és jelentések
 export async function GET(request: NextRequest) {
@@ -18,7 +18,17 @@ export async function GET(request: NextRequest) {
 
     const searchParams = request.nextUrl.searchParams;
     const period = searchParams.get('period') || '30'; // napok száma
-    const gameType = searchParams.get('gameType') || '';
+    const gameTypeParam = searchParams.get('gameType') || '';
+
+    // Validáljuk és konvertáljuk a gameType-ot enum-ra
+    let gameTypeFilter: GameType | undefined = undefined;
+    if (gameTypeParam) {
+      if (Object.values(GameType).includes(gameTypeParam as GameType)) {
+        gameTypeFilter = gameTypeParam as GameType;
+      } else {
+        console.warn(`Invalid gameType: ${gameTypeParam}`);
+      }
+    }
 
     const daysAgo = new Date();
     daysAgo.setDate(daysAgo.getDate() - parseInt(period));
@@ -39,11 +49,13 @@ export async function GET(request: NextRequest) {
       prisma.server.groupBy({
         by: ['gameType'],
         _count: { id: true },
-        ...(gameType ? { where: { gameType } } : {}),
+        orderBy: { _count: { id: 'desc' } },
+        ...(gameTypeFilter ? { where: { gameType: gameTypeFilter } } : {}),
       }),
       prisma.server.groupBy({
         by: ['status'],
         _count: { id: true },
+        orderBy: { _count: { id: 'desc' } },
       }),
       prisma.server.count({
         where: {
@@ -53,6 +65,7 @@ export async function GET(request: NextRequest) {
       prisma.server.groupBy({
         by: ['machineId'],
         _count: { id: true },
+        orderBy: { _count: { id: 'desc' } },
         where: {
           machineId: { not: null },
         },
