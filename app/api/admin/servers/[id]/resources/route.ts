@@ -7,9 +7,13 @@ import { UserRole } from '@prisma/client';
 // PUT - Szerver erőforrás használat frissítése (agent hívja)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
+    // Resolve params if it's a Promise
+    const resolvedParams = params instanceof Promise ? await params : params;
+    const { id } = resolvedParams;
+    
     const session = await getServerSession(authOptions);
 
     // Agent autentikáció (API key) vagy admin jogosultság
@@ -46,8 +50,6 @@ export async function PUT(
         { status: 403 }
       );
     }
-
-    const { id } = params;
     const body = await request.json();
     const { resourceUsage } = body;
 

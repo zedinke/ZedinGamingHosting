@@ -5,13 +5,26 @@ import { join } from 'path';
 import { pipeline } from 'stream/promises';
 import { createGzip } from 'zlib';
 
+// Backup storage típus
+type BackupStorageType = 'local' | 's3' | 'ftp';
+
+/**
+ * Backup storage típus lekérdezése beállításokból
+ */
+async function getBackupStorageType(): Promise<BackupStorageType> {
+  const setting = await prisma.setting.findUnique({
+    where: { key: 'backup_storage_type' },
+  });
+  return (setting?.value as BackupStorageType) || 'local';
+}
+
 /**
  * Backup készítése egy szerverhez
  */
 export async function createServerBackup(
   serverId: string,
   backupName?: string
-): Promise<{ success: boolean; backupPath?: string; error?: string }> {
+): Promise<{ success: boolean; backupPath?: string; s3Key?: string; ftpPath?: string; error?: string }> {
   try {
     const server = await prisma.server.findUnique({
       where: { id: serverId },
@@ -87,9 +100,57 @@ export async function createServerBackup(
     // Szerver újraindítása (ha leállítottuk)
     // await startServer(serverId);
 
+    // Backup tárolás típusa szerint másolás
+    const storageType = await getBackupStorageType();
+    let s3Key: string | undefined;
+    let ftpPath: string | undefined;
+
+    if (storageType === 's3') {
+      const { uploadBackupToS3 } = await import('./backup-storage-s3');
+      const uploadResult = await uploadBackupToS3(serverId, backupPath, backupNameFinal);
+      if (uploadResult.success) {
+        s3Key = uploadResult.s3Key;
+        // Lokális backup törlése (opcionális)
+        if (process.env.DELETE_LOCAL_BACKUP_AFTER_S3 === 'true') {
+          await executeSSHCommand(
+            {
+              host: machine.ipAddress,
+              port: machine.sshPort,
+              user: machine.sshUser,
+              keyPath: machine.sshKeyPath || undefined,
+            },
+            `rm -f "${backupPath}"`
+          );
+        }
+      }
+    } else if (storageType === 'ftp') {
+      const { uploadBackupToFTP } = await import('./backup-storage-ftp');
+      // Először letöltjük a backupot a szerverről
+      const tempPath = `/tmp/backup-${serverId}-${Date.now()}.tar.gz`;
+      await downloadFileViaSSH(
+        {
+          host: machine.ipAddress,
+          port: machine.sshPort,
+          user: machine.sshUser,
+          keyPath: machine.sshKeyPath || undefined,
+        },
+        backupPath,
+        tempPath
+      );
+      const uploadResult = await uploadBackupToFTP(serverId, tempPath, backupNameFinal);
+      if (uploadResult.success) {
+        ftpPath = uploadResult.ftpPath;
+        // Temp fájl törlése
+        const { unlink } = await import('fs/promises');
+        await unlink(tempPath).catch(() => {});
+      }
+    }
+
     return {
       success: true,
-      backupPath,
+      backupPath: storageType === 'local' ? backupPath : undefined,
+      s3Key,
+      ftpPath,
     };
   } catch (error: any) {
     console.error('Create backup error:', error);
