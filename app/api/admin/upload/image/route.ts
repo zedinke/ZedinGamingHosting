@@ -132,7 +132,38 @@ export async function POST(request: NextRequest) {
       console.log('✓ Uploads directory is writable');
     } catch (error: any) {
       console.error('✗ Uploads directory is not writable:', error);
-      throw new Error(`Az uploads mappa nem írható: ${error.message}`);
+      console.error('Directory path:', uploadsDir);
+      console.error('Directory exists:', existsSync(uploadsDir));
+      
+      // Try to get directory stats for debugging
+      try {
+        const { statSync } = require('fs');
+        const dirStats = statSync(uploadsDir);
+        console.error('Directory stats:', {
+          mode: dirStats.mode.toString(8),
+          uid: dirStats.uid,
+          gid: dirStats.gid,
+        });
+      } catch (statError) {
+        console.error('Could not get directory stats:', statError);
+      }
+      
+      // Try to fix permissions
+      try {
+        const { chmodSync } = require('fs');
+        chmodSync(uploadsDir, 0o777); // Try 777 for maximum permissions
+        console.log('⚠ Tried to set permissions to 777');
+        
+        // Test again
+        const testFile2 = join(uploadsDir, '.test-write-2');
+        await writeFile(testFile2, 'test2');
+        const { unlink } = await import('fs/promises');
+        await unlink(testFile2);
+        console.log('✓ Directory is now writable after permission fix');
+      } catch (fixError) {
+        console.error('Could not fix permissions:', fixError);
+        throw new Error(`Az uploads mappa nem írható. Kérjük, futtasd le: bash scripts/set-uploads-permissions.sh vagy manuálisan: chmod -R 755 public/uploads. Hiba: ${error.message}`);
+      }
     }
 
     // Generate unique filename
@@ -147,6 +178,7 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(bytes);
     
     try {
+      // Try to write the file
       await writeFile(filePath, buffer);
       console.log('✓ File saved:', filePath);
       
@@ -165,11 +197,29 @@ export async function POST(request: NextRequest) {
       if (stats.size !== buffer.length) {
         throw new Error(`Fájl méret eltérés: várt ${buffer.length}, kapott ${stats.size}`);
       }
+      
+      // Set file permissions to 644 (rw-r--r--)
+      try {
+        const { chmodSync } = require('fs');
+        chmodSync(filePath, 0o644);
+        console.log('✓ Set file permissions (644)');
+      } catch (permError) {
+        console.warn('⚠ Could not set file permissions (non-critical):', permError);
+      }
     } catch (error: any) {
       console.error('Error saving file:', error);
       console.error('File path:', filePath);
       console.error('Directory exists:', existsSync(uploadsDir));
-      throw new Error(`Nem sikerült menteni a fájlt: ${error.message}`);
+      console.error('Directory writable check passed:', true); // We already checked this
+      
+      // Try to get more info about the error
+      if (error.code === 'EACCES') {
+        throw new Error(`Nincs írási jogosultság a mappához: ${uploadsDir}. Kérjük, futtasd le: bash scripts/set-uploads-permissions.sh vagy chmod -R 755 public/uploads`);
+      } else if (error.code === 'ENOENT') {
+        throw new Error(`A mappa nem létezik: ${uploadsDir}. Próbáld meg újra létrehozni.`);
+      } else {
+        throw new Error(`Nem sikerült menteni a fájlt: ${error.message} (code: ${error.code || 'unknown'})`);
+      }
     }
 
     // Return URL (relative to public directory)

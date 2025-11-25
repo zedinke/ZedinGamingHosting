@@ -443,11 +443,17 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
                         return;
                       }
                       console.log('Direct upload button clicked:', file.name, file.size, file.type);
+                      
+                      // Show loading immediately
+                      toast.loading('Feltöltés folyamatban...', { id: 'upload-toast' });
+                      
                       const url = await handleImageUpload(file);
                       if (url) {
                         console.log('Direct upload completed, URL:', url);
+                        toast.success('Kép sikeresen feltöltve!', { id: 'upload-toast' });
                       } else {
                         console.error('Direct upload failed');
+                        toast.error('A feltöltés sikertelen. Ellenőrizd a konzolt a részletekért.', { id: 'upload-toast' });
                       }
                     }}
                     disabled={uploading}
