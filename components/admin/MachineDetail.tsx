@@ -109,6 +109,27 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
     }
   };
 
+  const handleTestSSH = async () => {
+    try {
+      const response = await fetch(`/api/admin/machines/${machine.id}/test-ssh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        toast.error(result.error || 'SSH kapcsolat sikertelen');
+        return;
+      }
+
+      toast.success('SSH kapcsolat sikeres');
+    } catch (error) {
+      toast.error('Hiba történt az SSH tesztelése során');
+    }
+  };
+
   const getStatusBadgeColor = (status: MachineStatus) => {
     switch (status) {
       case 'ONLINE':
@@ -275,6 +296,27 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
               )}
             </dl>
           )}
+        </div>
+
+        {/* Műveletek */}
+        <div className="card">
+          <h2 className="text-xl font-bold mb-4">Műveletek</h2>
+          <div className="space-y-2">
+            <button
+              onClick={handleTestSSH}
+              className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+            >
+              SSH Kapcsolat Tesztelése
+            </button>
+            {machine.agents.length === 0 && (
+              <button
+                onClick={handleInstallAgent}
+                className="w-full bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700"
+              >
+                Agent Telepítés
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Erőforrások */}
