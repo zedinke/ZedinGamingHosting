@@ -45,6 +45,8 @@ interface SlideshowFormProps {
 export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(slide?.image || null);
 
   const {
     register,
@@ -76,15 +78,53 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
         },
   });
 
+  const handleImageUpload = async (file: File) => {
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/admin/upload/image', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        toast.error(result.error || 'Hiba történt a kép feltöltése során');
+        return null;
+      }
+
+      toast.success('Kép sikeresen feltöltve');
+      setImagePreview(result.url);
+      return result.url;
+    } catch (error) {
+      toast.error('Hiba történt a kép feltöltése során');
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const onSubmit = async (data: SlideshowSlideFormData) => {
     setIsLoading(true);
     try {
+      // Ha van imagePreview, azt használjuk (feltöltött kép)
+      const imageUrl = imagePreview || data.image;
+
+      if (!imageUrl || imageUrl.trim() === '') {
+        toast.error('Kép megadása kötelező');
+        setIsLoading(false);
+        return;
+      }
+
       const payload = {
-        title: data.title || null,
-        subtitle: data.subtitle || null,
-        image: data.image,
-        link: data.link || null,
-        buttonText: data.buttonText || null,
+        title: data.title && data.title.trim() !== '' ? data.title : null,
+        subtitle: data.subtitle && data.subtitle.trim() !== '' ? data.subtitle : null,
+        image: imageUrl,
+        link: data.link && data.link.trim() !== '' ? data.link : null,
+        buttonText: data.buttonText && data.buttonText.trim() !== '' ? data.buttonText : null,
         isActive: data.isActive,
         order: data.order,
         locale: data.locale,
@@ -151,24 +191,73 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Kép URL *</label>
-            <input
-              {...register('image')}
-              type="url"
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
-            />
-            {errors.image && (
-              <p className="text-red-500 text-sm mt-1">{errors.image.message}</p>
-            )}
-            {watch('image') && (
-              <img
-                src={watch('image')}
-                alt="Preview"
-                className="mt-2 w-full max-w-2xl rounded-lg"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
+            <label className="block text-sm font-medium mb-2">Kép *</label>
+            
+            {/* Képfeltöltés */}
+            <div className="mb-4">
+              <label className="block text-sm text-gray-600 mb-2">
+                Vagy tölts fel egy képet:
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    const url = await handleImageUpload(file);
+                    if (url) {
+                      // Frissítjük a form értékét is
+                      const form = e.target.closest('form');
+                      if (form) {
+                        const imageInput = form.querySelector('input[name="image"]') as HTMLInputElement;
+                        if (imageInput) {
+                          imageInput.value = url;
+                        }
+                      }
+                    }
+                  }
                 }}
+                disabled={uploading}
+                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 disabled:opacity-50"
               />
+              {uploading && (
+                <p className="text-sm text-gray-600 mt-1">Feltöltés folyamatban...</p>
+              )}
+            </div>
+
+            {/* Vagy URL megadása */}
+            <div>
+              <label className="block text-sm text-gray-600 mb-2">
+                Vagy add meg a kép URL-jét:
+              </label>
+              <input
+                {...register('image')}
+                type="url"
+                value={imagePreview || ''}
+                onChange={(e) => {
+                  setImagePreview(e.target.value);
+                  register('image').onChange(e);
+                }}
+                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+                placeholder="https://example.com/image.jpg"
+              />
+              {errors.image && (
+                <p className="text-red-500 text-sm mt-1">{errors.image.message}</p>
+              )}
+            </div>
+
+            {/* Kép előnézet */}
+            {imagePreview && (
+              <div className="mt-4">
+                <img
+                  src={imagePreview}
+                  alt="Preview"
+                  className="w-full max-w-2xl rounded-lg border"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+              </div>
             )}
           </div>
 
