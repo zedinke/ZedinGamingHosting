@@ -42,9 +42,100 @@ export async function GET(
       );
     }
 
-    // TODO: Valós implementációban itt kellene metrikák lekérdezése egy time-series adatbázisból (InfluxDB, TimescaleDB, stb.)
-    // Jelenleg mock adatokat generálunk
-    const metrics = generateMockMetrics(parseInt(period), parseInt(interval));
+    // Metrikák lekérdezése
+    const { getLatestMetrics, getAggregatedMetrics } = await import('@/lib/metrics-storage');
+    
+    const endTime = new Date();
+    const startTime = new Date(endTime.getTime() - parseInt(period) * 60 * 60 * 1000);
+    
+    let metricsData;
+    
+    if (interval && parseInt(interval) > 1) {
+      // Aggregált metrikák
+      metricsData = await getAggregatedMetrics(
+        id,
+        startTime,
+        endTime,
+        parseInt(interval) >= 24 ? 'day' : 'hour'
+      );
+      
+      // Formázás a frontend számára
+      const metrics = {
+        cpu: metricsData.map((m) => ({ timestamp: m.timestamp.toISOString(), value: m.cpu.avg })),
+        ram: metricsData.map((m) => ({ timestamp: m.timestamp.toISOString(), value: m.ram.avg / (1024 * 1024) })), // GB
+        disk: metricsData.map((m) => ({ timestamp: m.timestamp.toISOString(), value: m.disk.avg / (1024 * 1024) })), // GB
+        network: metricsData.map((m) => ({
+          timestamp: m.timestamp.toISOString(),
+          in: m.networkIn.total / (1024 * 1024), // MB
+          out: m.networkOut.total / (1024 * 1024), // MB
+        })),
+        players: metricsData.map((m) => ({
+          timestamp: m.timestamp.toISOString(),
+          online: m.players.avg,
+          max: m.players.max,
+        })),
+      };
+      
+      return NextResponse.json({
+        success: true,
+        server: {
+          id: server.id,
+          name: server.name,
+          gameType: server.gameType,
+        },
+        metrics,
+        period: parseInt(period),
+        interval: parseInt(interval),
+      });
+    } else {
+      // Legutóbbi metrikák
+      const latestMetrics = await getLatestMetrics(id, parseInt(period) * 12); // 5 perces intervallum
+      
+      if (latestMetrics.length === 0) {
+        // Ha nincs metrika, mock adatokat generálunk
+        const metrics = generateMockMetrics(parseInt(period), parseInt(interval));
+        return NextResponse.json({
+          success: true,
+          server: {
+            id: server.id,
+            name: server.name,
+            gameType: server.gameType,
+          },
+          metrics,
+          period: parseInt(period),
+          interval: parseInt(interval),
+        });
+      }
+      
+      // Formázás a frontend számára
+      const metrics = {
+        cpu: latestMetrics.map((m) => ({ timestamp: m.timestamp.toISOString(), value: m.cpu })),
+        ram: latestMetrics.map((m) => ({ timestamp: m.timestamp.toISOString(), value: m.ram / (1024 * 1024) })), // GB
+        disk: latestMetrics.map((m) => ({ timestamp: m.timestamp.toISOString(), value: m.disk / (1024 * 1024) })), // GB
+        network: latestMetrics.map((m) => ({
+          timestamp: m.timestamp.toISOString(),
+          in: m.networkIn / (1024 * 1024), // MB
+          out: m.networkOut / (1024 * 1024), // MB
+        })),
+        players: latestMetrics.map((m) => ({
+          timestamp: m.timestamp.toISOString(),
+          online: m.players || 0,
+          max: 20, // TODO: max players a szerverből
+        })),
+      };
+      
+      return NextResponse.json({
+        success: true,
+        server: {
+          id: server.id,
+          name: server.name,
+          gameType: server.gameType,
+        },
+        metrics,
+        period: parseInt(period),
+        interval: parseInt(interval),
+      });
+    }
 
     return NextResponse.json({
       success: true,

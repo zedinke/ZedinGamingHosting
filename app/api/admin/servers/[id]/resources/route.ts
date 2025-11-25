@@ -44,6 +44,22 @@ export async function PUT(
       },
     });
 
+    // Metrikák mentése
+    if (resourceUsage) {
+      const { saveMetric } = await import('@/lib/metrics-storage');
+      await saveMetric({
+        serverId: id,
+        timestamp: new Date(),
+        cpu: resourceUsage.cpu || 0,
+        ram: resourceUsage.ram || 0,
+        disk: resourceUsage.disk || 0,
+        networkIn: resourceUsage.networkIn || 0,
+        networkOut: resourceUsage.networkOut || 0,
+        players: resourceUsage.players,
+        uptime: resourceUsage.uptime,
+      });
+    }
+
     return NextResponse.json({
       success: true,
       server: {
