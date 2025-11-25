@@ -89,6 +89,13 @@ export function SlideshowManagement({ slides, locale, transitionInterval }: Slid
 
       {/* Slides list */}
       <div className="space-y-4">
+        {slides.length > 0 && (
+          <div className="mb-4">
+            <p className="text-sm text-gray-700">
+              Összesen <strong>{slides.length}</strong> slide található
+            </p>
+          </div>
+        )}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {slides.map((slide) => (
             <Card key={slide.id} className={`${!slide.isActive ? 'opacity-60' : ''} bg-white border border-gray-200`} hover>
@@ -100,16 +107,28 @@ export function SlideshowManagement({ slides, locale, transitionInterval }: Slid
                     muted
                     playsInline
                   />
-                ) : (
+                ) : slide.image ? (
                   <img
-                    src={slide.image || '/placeholder.jpg'}
+                    src={slide.image}
                     alt={slide.title || 'Slide'}
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/placeholder.jpg';
+                    }}
                   />
+                ) : (
+                  <div className="w-full h-full bg-gray-300 flex items-center justify-center">
+                    <span className="text-gray-500 text-sm">Nincs média</span>
+                  </div>
                 )}
                 {slide.mediaType === 'video' && (
                   <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs font-medium">
                     Video
+                  </div>
+                )}
+                {slide.mediaType === 'image' && (
+                  <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs font-medium">
+                    Kép
                   </div>
                 )}
               </div>

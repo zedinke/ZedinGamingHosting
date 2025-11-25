@@ -88,14 +88,19 @@ export function SlideshowSection({ slides, locale, transitionInterval = 5 }: Sli
 
   // Use slides from database if available, otherwise use default images
   const activeSlides = slides.length > 0 
-    ? slides.filter((slide) => slide && (slide.image || slide.video))
-    : defaultGameImages;
+    ? slides.filter((slide) => slide && (slide.image || slide.video) && slide.isActive !== false)
+    : [];
   
   // Always use default images if no slides from database
   const displaySlides = activeSlides.length > 0 ? activeSlides : defaultGameImages;
 
   // Convert seconds to milliseconds
   const intervalMs = transitionInterval * 1000;
+
+  // Reset current slide when slides change
+  useEffect(() => {
+    setCurrentSlide(0);
+  }, [displaySlides.length]);
 
   useEffect(() => {
     if (!isAutoPlaying || displaySlides.length <= 1) return;
@@ -144,18 +149,24 @@ export function SlideshowSection({ slides, locale, transitionInterval = 5 }: Sli
                 muted
                 playsInline
                 className="w-full h-full object-cover"
+                key={s.id}
               />
-            ) : (
+            ) : s.image ? (
               <img
-                src={s.image || 'https://via.placeholder.com/1920x1080/1a1f2e/5b6fff?text=Gaming+Server'}
+                src={s.image}
                 alt={s.title || 'Slide'}
                 className="w-full h-full object-cover"
                 loading={index === 0 ? 'eager' : 'lazy'}
+                key={s.id}
                 onError={(e) => {
                   // Fallback to placeholder if image fails to load
                   (e.target as HTMLImageElement).src = 'https://via.placeholder.com/1920x1080/1a1f2e/5b6fff?text=Gaming+Server';
                 }}
               />
+            ) : (
+              <div className="w-full h-full bg-gray-800 flex items-center justify-center">
+                <span className="text-white">No media</span>
+              </div>
             )}
           </div>
         ))}

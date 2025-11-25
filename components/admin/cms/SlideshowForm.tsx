@@ -136,11 +136,20 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
       setImagePreview(uploadedUrl);
       
       // Beállítjuk a form image mezőjét is - fontos, hogy shouldValidate: true legyen
+      // Várunk egy kicsit, hogy a form frissüljön
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       setValue('image', uploadedUrl, { 
         shouldValidate: true,
         shouldDirty: true,
         shouldTouch: true,
       });
+      
+      // MediaType-t is beállítjuk image-re, ha még nem volt beállítva
+      const currentMediaType = watch('mediaType');
+      if (currentMediaType !== 'image') {
+        setValue('mediaType', 'image', { shouldValidate: true });
+      }
       
       toast.success('Kép sikeresen feltöltve');
       setUploading(false);
