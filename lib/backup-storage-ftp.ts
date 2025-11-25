@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma';
 async function createFTPClient() {
   try {
     // Dynamic import with type assertion to avoid build-time type checking issues
+    // @ts-ignore - basic-ftp is an optional dependency, may not be installed
     const ftpModule = await import('basic-ftp') as any;
     const { Client } = ftpModule;
     const client = new Client();
