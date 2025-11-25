@@ -2,6 +2,7 @@ import { getTranslations } from '@/lib/i18n';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
+import Link from 'next/link';
 import { ServerDetail } from '@/components/admin/ServerDetail';
 
 export default async function AdminServerDetailPage({
