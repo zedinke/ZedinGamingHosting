@@ -1,0 +1,63 @@
+{
+  "nav": {
+    "home": "Home",
+    "pricing": "Pricing",
+    "games": "Games",
+    "about": "About",
+    "contact": "Contact",
+    "dashboard": "Dashboard",
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout"
+  },
+  "hero": {
+    "title": "The Best Gaming Server Hosting",
+    "subtitle": "Performance, reliability and easy management in one place",
+    "cta": "Get Started",
+    "learnMore": "Learn More"
+  },
+  "auth": {
+    "email": "Email address",
+    "password": "Password",
+    "confirmPassword": "Confirm password",
+    "forgotPassword": "Forgot your password?",
+    "rememberMe": "Remember me",
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "signInWith": "Sign in with {{provider}}",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "resetPassword": "Reset Password",
+    "verifyEmail": "Verify Email"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "servers": "Servers",
+    "billing": "Billing",
+    "support": "Support",
+    "settings": "Settings"
+  },
+  "server": {
+    "status": "Status",
+    "online": "Online",
+    "offline": "Offline",
+    "starting": "Starting...",
+    "stopping": "Stopping...",
+    "restart": "Restart",
+    "start": "Start",
+    "stop": "Stop",
+    "manage": "Manage"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "success": "Success"
+  }
+}
+

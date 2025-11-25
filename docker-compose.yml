@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: zedingaming-app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - NEXTAUTH_URL=${NEXTAUTH_URL}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - SMTP_FROM=${SMTP_FROM}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
+    restart: unless-stopped
+    networks:
+      - zedingaming-network
+
+networks:
+  zedingaming-network:
+    driver: bridge
+

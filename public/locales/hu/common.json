@@ -1,0 +1,63 @@
+{
+  "nav": {
+    "home": "Kezdőlap",
+    "pricing": "Árazás",
+    "games": "Játékok",
+    "about": "Rólunk",
+    "contact": "Kapcsolat",
+    "dashboard": "Vezérlőpult",
+    "login": "Bejelentkezés",
+    "register": "Regisztráció",
+    "logout": "Kijelentkezés"
+  },
+  "hero": {
+    "title": "A legjobb gaming szerver hosting",
+    "subtitle": "Teljesítmény, megbízhatóság és könnyű kezelés egy helyen",
+    "cta": "Kezdj el most",
+    "learnMore": "Tudj meg többet"
+  },
+  "auth": {
+    "email": "Email cím",
+    "password": "Jelszó",
+    "confirmPassword": "Jelszó megerősítése",
+    "forgotPassword": "Elfelejtetted a jelszavad?",
+    "rememberMe": "Emlékezz rám",
+    "signIn": "Bejelentkezés",
+    "signUp": "Regisztráció",
+    "signInWith": "Bejelentkezés {{provider}} segítségével",
+    "noAccount": "Nincs még fiókod?",
+    "hasAccount": "Van már fiókod?",
+    "resetPassword": "Jelszó visszaállítása",
+    "verifyEmail": "Email megerősítése"
+  },
+  "dashboard": {
+    "title": "Vezérlőpult",
+    "servers": "Szerverek",
+    "billing": "Számlázás",
+    "support": "Támogatás",
+    "settings": "Beállítások"
+  },
+  "server": {
+    "status": "Státusz",
+    "online": "Online",
+    "offline": "Offline",
+    "starting": "Indítás...",
+    "stopping": "Leállítás...",
+    "restart": "Újraindítás",
+    "start": "Indítás",
+    "stop": "Leállítás",
+    "manage": "Kezelés"
+  },
+  "common": {
+    "save": "Mentés",
+    "cancel": "Mégse",
+    "delete": "Törlés",
+    "edit": "Szerkesztés",
+    "create": "Létrehozás",
+    "search": "Keresés",
+    "loading": "Betöltés...",
+    "error": "Hiba történt",
+    "success": "Sikeres művelet"
+  }
+}
+
