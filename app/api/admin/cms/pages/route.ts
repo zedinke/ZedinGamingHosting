@@ -47,12 +47,10 @@ export async function POST(request: NextRequest) {
     const data = pageSchema.parse(body);
 
     // Check if slug+locale combination already exists
-    const existing = await prisma.page.findUnique({
+    const existing = await prisma.page.findFirst({
       where: {
-        slug_locale: {
-          slug: data.slug,
-          locale: data.locale,
-        },
+        slug: data.slug,
+        locale: data.locale,
       },
     });
 
