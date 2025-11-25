@@ -208,10 +208,49 @@ export async function provisionServer(
       },
     });
 
+    // Game szerver automatikus telepítése
+    const plan = await prisma.pricingPlan.findUnique({
+      where: { id: options.planId },
+    });
+
+    const { installGameServer } = await import('./game-server-installer');
+    const installResult = await installGameServer(serverId, options.gameType, {
+      maxPlayers: options.maxPlayers,
+      ram: plan?.ram || 2048,
+      port: server.port || 25565,
+      name: server.name,
+    });
+
+    if (!installResult.success) {
+      console.error('Game server installation failed:', installResult.error);
+      // Szerver státusz frissítése hibára
+      await prisma.server.update({
+        where: { id: serverId },
+        data: { status: 'ERROR' },
+      });
+      return {
+        success: false,
+        error: installResult.error || 'Game szerver telepítési hiba',
+      };
+    }
+
     // Task végrehajtása háttérben
     executeTask(task.id).catch((error) => {
       console.error(`Provisioning task ${task.id} végrehajtási hiba:`, error);
     });
+
+    // Értesítés küldése
+    if (server.userId) {
+      const { createNotification } = await import('./notifications');
+      createNotification(
+        server.userId,
+        'SERVER_CREATED',
+        'Szerver létrehozva',
+        `A(z) ${server.name} szerver sikeresen létrejött és telepítve lett.`,
+        'medium',
+        { serverId, gameType: options.gameType }
+      ).catch(console.error);
+    }
 
     return {
       success: true,

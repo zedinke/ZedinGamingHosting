@@ -7,6 +7,7 @@ import { prisma } from '@/lib/prisma';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { QuickActionCard } from '@/components/dashboard/QuickActionCard';
 import { ServerListCard } from '@/components/dashboard/ServerListCard';
+import { NotificationsPanel } from '@/components/dashboard/NotificationsPanel';
 
 export default async function DashboardPage({
   params,
@@ -208,6 +209,11 @@ export default async function DashboardPage({
             iconName="Headphones"
             color="success"
           />
+        </div>
+
+        {/* Értesítések */}
+        <div className="mb-8">
+          <NotificationsPanel locale={locale} />
         </div>
 
         {/* Szerverek listája */}

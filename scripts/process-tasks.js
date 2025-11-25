@@ -114,11 +114,22 @@ async function scheduleAutomaticBackups() {
   }
 }
 
+// Automatikus skálázás ellenőrzése
+async function checkAutoScaling() {
+  try {
+    const { checkAllServersScaling } = require('../lib/auto-scaling');
+    await checkAllServersScaling();
+  } catch (error) {
+    console.error('Auto scaling check error:', error);
+  }
+}
+
 // Fő folyamat
 async function main() {
   await processPendingTasks();
   await checkOfflineAgents();
   await scheduleAutomaticBackups();
+  await checkAutoScaling();
   process.exit(0);
 }
 

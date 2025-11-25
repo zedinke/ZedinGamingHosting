@@ -86,6 +86,25 @@ export async function executeTask(taskId: string): Promise<void> {
         serverId: task.serverId,
         backupName: result.backupPath,
       }).catch(console.error);
+      
+      // Értesítés küldése
+      if (task.serverId) {
+        const server = await prisma.server.findUnique({
+          where: { id: task.serverId },
+          select: { userId: true, name: true },
+        });
+        if (server) {
+          const { createNotification } = await import('./notifications');
+          createNotification(
+            server.userId,
+            'BACKUP_CREATED',
+            'Backup sikeresen létrehozva',
+            `A(z) ${server.name} szerver backup-ja sikeresen létrejött.`,
+            'medium',
+            { serverId: task.serverId, backupPath: result.backupPath }
+          ).catch(console.error);
+        }
+      }
     } else {
       const { sendWebhookEvent } = await import('./webhook-sender');
       sendWebhookEvent('task_completed', {
@@ -125,6 +144,25 @@ export async function executeTask(taskId: string): Promise<void> {
       serverId: task.serverId,
       error: error.message,
     }).catch(console.error);
+    
+    // Értesítés küldése
+    if (task.serverId) {
+      const server = await prisma.server.findUnique({
+        where: { id: task.serverId },
+        select: { userId: true, name: true },
+      });
+      if (server) {
+        const { createNotification } = await import('./notifications');
+        createNotification(
+          server.userId,
+          'TASK_FAILED',
+          'Feladat sikertelen',
+          `A(z) ${server.name} szerveren a ${task.type} feladat sikertelen volt: ${error.message}`,
+          'high',
+          { serverId: task.serverId, taskId: task.id, taskType: task.type }
+        ).catch(console.error);
+      }
+    }
 
     throw error;
   }
