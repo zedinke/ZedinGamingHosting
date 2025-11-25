@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { ServerFileManager } from './ServerFileManager';
 import { ServerConsole } from './ServerConsole';
 import { ServerBackupManager } from './ServerBackupManager';
+import { ServerResourceMonitor } from './ServerResourceMonitor';
 
 interface Server {
   id: string;
@@ -335,73 +336,11 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
         {activeTab === 'backup' && <ServerBackupManager serverId={server.id} locale={locale} />}
       </div>
 
-      {/* Erőforrás használat */}
-      {server.resourceUsage && (
-        <div className="card">
-          <h2 className="text-xl font-bold mb-4">Erőforrás Használat</h2>
-          <div className="space-y-4">
-            {server.resourceUsage.cpu && (
-              <div>
-                <div className="flex justify-between mb-1">
-                  <span className="text-sm font-medium">CPU</span>
-                  <span className="text-sm text-gray-600">
-                    {server.resourceUsage.cpu.usage}% / {server.resourceUsage.cpu.cores} core
-                  </span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-primary-600 h-2 rounded-full"
-                    style={{ width: `${server.resourceUsage.cpu.usage}%` }}
-                  />
-                </div>
-              </div>
-            )}
-            {server.resourceUsage.ram && (
-              <div>
-                <div className="flex justify-between mb-1">
-                  <span className="text-sm font-medium">RAM</span>
-                  <span className="text-sm text-gray-600">
-                    {Math.round(server.resourceUsage.ram.used / 1024 / 1024 / 1024)} GB /{' '}
-                    {Math.round(server.resourceUsage.ram.total / 1024 / 1024 / 1024)} GB
-                  </span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-primary-600 h-2 rounded-full"
-                    style={{
-                      width: `${(server.resourceUsage.ram.used / server.resourceUsage.ram.total) * 100}%`,
-                    }}
-                  />
-                </div>
-              </div>
-            )}
-            {server.resourceUsage.disk && (
-              <div>
-                <div className="flex justify-between mb-1">
-                  <span className="text-sm font-medium">Disk</span>
-                  <span className="text-sm text-gray-600">
-                    {Math.round(server.resourceUsage.disk.used / 1024 / 1024 / 1024)} GB /{' '}
-                    {Math.round(server.resourceUsage.disk.total / 1024 / 1024 / 1024)} GB
-                  </span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-primary-600 h-2 rounded-full"
-                    style={{
-                      width: `${(server.resourceUsage.disk.used / server.resourceUsage.disk.total) * 100}%`,
-                    }}
-                  />
-                </div>
-              </div>
-            )}
-            {(!server.resourceUsage.cpu && !server.resourceUsage.ram && !server.resourceUsage.disk) && (
-              <pre className="bg-gray-50 p-4 rounded overflow-x-auto text-sm">
-                {JSON.stringify(server.resourceUsage, null, 2)}
-              </pre>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Erőforrás használat - Real-time monitoring */}
+      <ServerResourceMonitor
+        serverId={server.id}
+        initialResourceUsage={server.resourceUsage}
+      />
     </div>
   );
 }

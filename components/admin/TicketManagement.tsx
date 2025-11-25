@@ -194,26 +194,26 @@ export function TicketManagement({
       </div>
 
       {/* Ticketek táblázata */}
-      <div className="card overflow-x-auto">
-        <table className="w-full">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
+        <table className="w-full text-gray-700">
           <thead>
-            <tr className="border-b">
-              <th className="text-left p-3">Tárgy</th>
-              <th className="text-left p-3">Felhasználó</th>
-              <th className="text-left p-3">Kategória</th>
-              <th className="text-left p-3">Státusz</th>
-              <th className="text-left p-3">Prioritás</th>
-              <th className="text-left p-3">Üzenetek</th>
-              <th className="text-left p-3">Utolsó frissítés</th>
-              <th className="text-left p-3">Műveletek</th>
+            <tr className="border-b border-gray-200 bg-gray-50">
+              <th className="text-left p-3 font-semibold text-gray-900">Tárgy</th>
+              <th className="text-left p-3 font-semibold text-gray-900">Felhasználó</th>
+              <th className="text-left p-3 font-semibold text-gray-900">Kategória</th>
+              <th className="text-left p-3 font-semibold text-gray-900">Státusz</th>
+              <th className="text-left p-3 font-semibold text-gray-900">Prioritás</th>
+              <th className="text-left p-3 font-semibold text-gray-900">Üzenetek</th>
+              <th className="text-left p-3 font-semibold text-gray-900">Utolsó frissítés</th>
+              <th className="text-left p-3 font-semibold text-gray-900">Műveletek</th>
             </tr>
           </thead>
           <tbody>
             {tickets.map((ticket) => (
-              <tr key={ticket.id} className="border-b hover:bg-gray-50">
+              <tr key={ticket.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                 <td className="p-3">
-                  <div className="font-medium">{ticket.subject}</div>
-                  <div className="text-sm text-gray-500">
+                  <div className="font-medium text-gray-800">{ticket.subject}</div>
+                  <div className="text-sm text-gray-600">
                     #{ticket.id.slice(0, 8)}
                   </div>
                 </td>
@@ -249,7 +249,7 @@ export function TicketManagement({
                 <td className="p-3">
                   <span className="text-sm">{ticket._count.messages}</span>
                 </td>
-                <td className="p-3 text-sm text-gray-600">
+                <td className="p-3 text-sm text-gray-700">
                   {ticket.messages[0]
                     ? new Date(ticket.messages[0].createdAt).toLocaleDateString('hu-HU')
                     : new Date(ticket.createdAt).toLocaleDateString('hu-HU')}
@@ -274,18 +274,18 @@ export function TicketManagement({
           {currentPage > 1 && (
             <Link
               href={`/${locale}/admin/tickets?page=${currentPage - 1}${statusFilter ? `&status=${statusFilter}` : ''}${categoryFilter ? `&category=${categoryFilter}` : ''}${priorityFilter ? `&priority=${priorityFilter}` : ''}`}
-              className="px-4 py-2 border rounded-lg hover:bg-gray-50"
+              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 text-gray-700 transition-colors"
             >
               Előző
             </Link>
           )}
-          <span className="px-4 py-2">
+          <span className="px-4 py-2 text-gray-700">
             Oldal {currentPage} / {totalPages}
           </span>
           {currentPage < totalPages && (
             <Link
               href={`/${locale}/admin/tickets?page=${currentPage + 1}${statusFilter ? `&status=${statusFilter}` : ''}${categoryFilter ? `&category=${categoryFilter}` : ''}${priorityFilter ? `&priority=${priorityFilter}` : ''}`}
-              className="px-4 py-2 border rounded-lg hover:bg-gray-50"
+              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 text-gray-700 transition-colors"
             >
               Következő
             </Link>
