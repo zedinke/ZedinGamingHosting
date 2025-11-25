@@ -13,21 +13,21 @@ interface InvoiceItem {
   total: number;
 }
 
-interface InvoiceData extends Invoice {
+interface InvoiceData extends Omit<Invoice, 'subtotal' | 'taxAmount' | 'taxRate' | 'companyName' | 'companyTaxNumber' | 'companyAddress' | 'companyVatNumber' | 'billingName' | 'billingAddress' | 'billingTaxNumber' | 'paymentMethod' | 'paymentReference'> {
   user: User;
-  items?: InvoiceItem[];
-  subtotal?: number | null;
-  taxAmount?: number | null;
-  taxRate?: number | null;
-  companyName?: string | null;
-  companyTaxNumber?: string | null;
-  companyAddress?: string | null;
-  companyVatNumber?: string | null;
-  billingName?: string | null;
-  billingAddress?: string | null;
-  billingTaxNumber?: string | null;
-  paymentMethod?: string | null;
-  paymentReference?: string | null;
+  items?: InvoiceItem[] | null;
+  subtotal: number | null;
+  taxAmount: number | null;
+  taxRate: number | null;
+  companyName: string | null;
+  companyTaxNumber: string | null;
+  companyAddress: string | null;
+  companyVatNumber: string | null;
+  billingName: string | null;
+  billingAddress: string | null;
+  billingTaxNumber: string | null;
+  paymentMethod: string | null;
+  paymentReference: string | null;
 }
 
 /**
