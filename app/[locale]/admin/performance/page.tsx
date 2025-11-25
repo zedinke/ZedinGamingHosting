@@ -11,17 +11,20 @@ export default async function PerformancePage({
   await requireAdmin(locale);
 
   return (
-    <AdminNavigation locale={locale}>
-      <div className="ml-64 p-8">
-        <h1 className="text-3xl font-bold mb-8">Performance & Health Monitoring</h1>
-        
-        <div className="mb-8">
-          <SystemHealthDashboard />
-        </div>
+    <>
+      <AdminNavigation locale={locale} />
+      <main className="lg:ml-64 min-h-screen bg-white">
+        <div className="p-6 lg:p-8">
+          <h1 className="text-3xl font-bold mb-8 text-gray-900">Performance & Health Monitoring</h1>
+          
+          <div className="mb-8">
+            <SystemHealthDashboard />
+          </div>
 
-        <PerformanceDashboard />
-      </div>
-    </AdminNavigation>
+          <PerformanceDashboard />
+        </div>
+      </main>
+    </>
   );
 }
 
