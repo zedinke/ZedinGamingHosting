@@ -7,7 +7,6 @@ import { prisma } from '@/lib/prisma';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { QuickActionCard } from '@/components/dashboard/QuickActionCard';
 import { ServerListCard } from '@/components/dashboard/ServerListCard';
-import { Server, CreditCard, Headphones, TrendingUp } from 'lucide-react';
 
 export default async function DashboardPage({
   params,
@@ -158,25 +157,25 @@ export default async function DashboardPage({
           <StatCard
             title="Szervereim"
             value={serializableServers.length}
-            icon={Server}
+            iconName="Server"
             color="primary"
           />
           <StatCard
             title="Aktív Előfizetések"
             value={subscriptions.length}
-            icon={CreditCard}
+            iconName="CreditCard"
             color="info"
           />
           <StatCard
             title="Online Szerverek"
             value={onlineServers}
-            icon={TrendingUp}
+            iconName="TrendingUp"
             color="success"
           />
           <StatCard
             title="Offline Szerverek"
             value={serializableServers.length - onlineServers}
-            icon={Server}
+            iconName="Server"
             color="warning"
           />
         </div>
@@ -187,21 +186,21 @@ export default async function DashboardPage({
             title="Új Szerver"
             description="Rendelj egy új gaming szervert"
             href={`/${locale}/servers/new`}
-            icon={Server}
+            iconName="Server"
             color="primary"
           />
           <QuickActionCard
             title="Számlázás"
             description="Számlák és előfizetések kezelése"
             href={`/${locale}/dashboard/billing`}
-            icon={CreditCard}
+            iconName="CreditCard"
             color="secondary"
           />
           <QuickActionCard
             title="Támogatás"
             description="Support ticketek kezelése"
             href={`/${locale}/dashboard/support`}
-            icon={Headphones}
+            iconName="Headphones"
             color="success"
           />
         </div>

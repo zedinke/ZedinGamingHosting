@@ -1,12 +1,14 @@
 'use client';
 
 import { Card } from '@/components/ui/Card';
+import * as LucideIcons from 'lucide-react';
 import { LucideIcon } from 'lucide-react';
 
 interface StatCardProps {
   title: string;
   value: string | number;
-  icon: LucideIcon;
+  iconName?: string;
+  icon?: LucideIcon;
   color?: 'primary' | 'success' | 'warning' | 'danger' | 'info';
   trend?: {
     value: number;
@@ -14,7 +16,19 @@ interface StatCardProps {
   };
 }
 
-export function StatCard({ title, value, icon: Icon, color = 'primary', trend }: StatCardProps) {
+export function StatCard({ title, value, iconName, icon: Icon, color = 'primary', trend }: StatCardProps) {
+  // Dinamikusan betöltjük az ikont név alapján, ha nincs közvetlenül megadva
+  if (!Icon && iconName) {
+    const IconComponent = (LucideIcons as any)[iconName] as LucideIcon;
+    if (IconComponent) {
+      Icon = IconComponent;
+    }
+  }
+  
+  // Ha még mindig nincs ikon, használunk egy default-ot
+  if (!Icon) {
+    Icon = LucideIcons.BarChart3;
+  }
   const colorClasses = {
     primary: 'bg-primary-100 text-primary-600',
     success: 'bg-green-100 text-green-600',

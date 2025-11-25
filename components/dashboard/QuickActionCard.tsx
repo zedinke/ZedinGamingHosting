@@ -2,13 +2,15 @@
 
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
+import * as LucideIcons from 'lucide-react';
 import { LucideIcon } from 'lucide-react';
 
 interface QuickActionCardProps {
   title: string;
   description: string;
   href: string;
-  icon: LucideIcon;
+  iconName?: string;
+  icon?: LucideIcon;
   color?: 'primary' | 'secondary' | 'success' | 'warning';
 }
 
@@ -16,9 +18,22 @@ export function QuickActionCard({
   title,
   description,
   href,
+  iconName,
   icon: Icon,
   color = 'primary',
 }: QuickActionCardProps) {
+  // Dinamikusan betöltjük az ikont név alapján, ha nincs közvetlenül megadva
+  if (!Icon && iconName) {
+    const IconComponent = (LucideIcons as any)[iconName] as LucideIcon;
+    if (IconComponent) {
+      Icon = IconComponent;
+    }
+  }
+  
+  // Ha még mindig nincs ikon, használunk egy default-ot
+  if (!Icon) {
+    Icon = LucideIcons.ArrowRight;
+  }
   const colorClasses = {
     primary: 'bg-primary-100 text-primary-600 hover:bg-primary-200',
     secondary: 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200',
