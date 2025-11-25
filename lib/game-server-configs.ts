@@ -643,12 +643,9 @@ export const GAME_SERVER_CONFIGS: Record<GameType, GameServerConfig> = {
     stopCommand: '',
     port: 0,
   },
-  
-  // További játékok (30+)
-  ...EXTENDED_GAME_SERVER_CONFIGS,
 };
 
-// Összevonjuk a két konfigurációt
+// Összevonjuk a két konfigurációt (alap 30 + kiterjesztett 30)
 export const ALL_GAME_SERVER_CONFIGS: Record<GameType, GameServerConfig> = {
   ...GAME_SERVER_CONFIGS,
   ...EXTENDED_GAME_SERVER_CONFIGS,
