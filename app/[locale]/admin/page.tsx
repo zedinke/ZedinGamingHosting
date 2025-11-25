@@ -1,6 +1,7 @@
 import { getTranslations } from '@/lib/i18n';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth-helpers';
+import { SystemHealth } from '@/components/admin/SystemHealth';
 
 export default async function AdminDashboardPage({
   params: { locale },
@@ -64,6 +65,11 @@ export default async function AdminDashboardPage({
           <h3 className="text-sm font-medium text-gray-700 mb-2">Nyitott Ticketek</h3>
           <p className="text-3xl font-bold text-yellow-600">{openTickets}</p>
         </div>
+      </div>
+
+      {/* Rendszer Egészség */}
+      <div className="mb-8">
+        <SystemHealth locale={locale} />
       </div>
 
       {/* Legutóbbi aktivitások */}
