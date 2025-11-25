@@ -290,13 +290,21 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Gomb szöveg</label>
+            <label className="block text-sm font-medium mb-2">
+              Gomb szöveg (opcionális - csak akkor jelenik meg, ha van link is)
+            </label>
             <input
               {...register('buttonText')}
               type="text"
               placeholder="Pl: További információ"
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 disabled:opacity-50 disabled:bg-gray-100"
+              disabled={!watch('link') || watch('link')?.trim() === ''}
             />
+            {(!watch('link') || watch('link')?.trim() === '') && (
+              <p className="text-xs text-gray-500 mt-1">
+                A gomb csak akkor jelenik meg, ha van link is megadva.
+              </p>
+            )}
           </div>
         </div>
       </Card>
