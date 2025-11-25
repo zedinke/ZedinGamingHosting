@@ -1,4 +1,3 @@
-import { Navigation } from '@/components/Navigation';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { DebugManagement } from '@/components/admin/DebugManagement';
 
@@ -20,8 +19,7 @@ export default async function DebugPage({
           Debug mód kezelése és logok megtekintése
         </p>
       </div>
-        <DebugManagement locale={locale} />
-      </main>
+      <DebugManagement locale={locale} />
     </div>
   );
 }
