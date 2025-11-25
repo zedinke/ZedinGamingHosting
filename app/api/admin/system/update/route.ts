@@ -250,7 +250,8 @@ async function startUpdateProcess() {
 
         try {
           await appendLog('  - npm install (ez eltarthat néhány percig)...');
-          await execAsync('npm install --legacy-peer-deps', { 
+          // First, clean install to ensure all dependencies are installed
+          await execAsync('npm ci --legacy-peer-deps || npm install --legacy-peer-deps', { 
             cwd: PROJECT_ROOT,
             maxBuffer: 1024 * 1024 * 10,
             timeout: 600000, // 10 minutes
