@@ -3,6 +3,7 @@ import { getTranslations } from '@/lib/i18n';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 
 export default async function DashboardPage({
