@@ -10,11 +10,15 @@ import { ServerListCard } from '@/components/dashboard/ServerListCard';
 import { Server, CreditCard, Headphones, TrendingUp } from 'lucide-react';
 
 export default async function DashboardPage({
-  params: { locale },
+  params,
 }: {
-  params: { locale: string };
+  params: Promise<{ locale: string }> | { locale: string };
 }) {
   try {
+    // Next.js 14+ támogatás: params lehet Promise
+    const resolvedParams = params instanceof Promise ? await params : params;
+    const locale = resolvedParams.locale || 'hu';
+    
     const session = await getServerSession(authOptions);
     
     if (!session || !session.user) {
