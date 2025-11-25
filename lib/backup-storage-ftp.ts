@@ -22,10 +22,9 @@ export async function uploadBackupToFTP(
   backupPath: string,
   backupName: string
 ): Promise<{ success: boolean; ftpPath?: string; error?: string }> {
+  let client: any = null;
   try {
-    const client = await createFTPClient();
-  
-  try {
+    client = await createFTPClient();
     const { readFile } = await import('fs/promises');
     const { existsSync } = await import('fs');
 
@@ -61,20 +60,20 @@ export async function uploadBackupToFTP(
       ftpPath: remotePath,
     };
   } catch (error: any) {
-    client.close();
-    console.error('FTP upload error:', error);
-    return {
-      success: false,
-      error: error.message || 'FTP feltöltési hiba',
-    };
-  } catch (error: any) {
+    if (client) {
+      client.close();
+    }
     if (error.message?.includes('basic-ftp modul nincs telepítve')) {
       return {
         success: false,
         error: 'FTP támogatás nincs telepítve. Telepítsd: npm install basic-ftp',
       };
     }
-    throw error;
+    console.error('FTP upload error:', error);
+    return {
+      success: false,
+      error: error.message || 'FTP feltöltési hiba',
+    };
   }
 }
 
@@ -85,10 +84,9 @@ export async function downloadBackupFromFTP(
   ftpPath: string,
   localPath: string
 ): Promise<{ success: boolean; error?: string }> {
+  let client: any = null;
   try {
-    const client = await createFTPClient();
-  
-  try {
+    client = await createFTPClient();
     await client.access({
       host: process.env.FTP_HOST || 'localhost',
       user: process.env.FTP_USER || '',
@@ -105,20 +103,20 @@ export async function downloadBackupFromFTP(
       success: true,
     };
   } catch (error: any) {
-    client.close();
-    console.error('FTP download error:', error);
-    return {
-      success: false,
-      error: error.message || 'FTP letöltési hiba',
-    };
-  } catch (error: any) {
+    if (client) {
+      client.close();
+    }
     if (error.message?.includes('basic-ftp modul nincs telepítve')) {
       return {
         success: false,
         error: 'FTP támogatás nincs telepítve. Telepítsd: npm install basic-ftp',
       };
     }
-    throw error;
+    console.error('FTP download error:', error);
+    return {
+      success: false,
+      error: error.message || 'FTP letöltési hiba',
+    };
   }
 }
 
@@ -128,10 +126,9 @@ export async function downloadBackupFromFTP(
 export async function deleteBackupFromFTP(
   ftpPath: string
 ): Promise<{ success: boolean; error?: string }> {
+  let client: any = null;
   try {
-    const client = await createFTPClient();
-  
-  try {
+    client = await createFTPClient();
     await client.access({
       host: process.env.FTP_HOST || 'localhost',
       user: process.env.FTP_USER || '',
@@ -148,20 +145,20 @@ export async function deleteBackupFromFTP(
       success: true,
     };
   } catch (error: any) {
-    client.close();
-    console.error('FTP delete error:', error);
-    return {
-      success: false,
-      error: error.message || 'FTP törlési hiba',
-    };
-  } catch (error: any) {
+    if (client) {
+      client.close();
+    }
     if (error.message?.includes('basic-ftp modul nincs telepítve')) {
       return {
         success: false,
         error: 'FTP támogatás nincs telepítve. Telepítsd: npm install basic-ftp',
       };
     }
-    throw error;
+    console.error('FTP delete error:', error);
+    return {
+      success: false,
+      error: error.message || 'FTP törlési hiba',
+    };
   }
 }
 
@@ -171,10 +168,9 @@ export async function deleteBackupFromFTP(
 export async function listBackupsFromFTP(
   serverId: string
 ): Promise<Array<{ name: string; size: number; modified: Date }>> {
+  let client: any = null;
   try {
-    const client = await createFTPClient();
-  
-  try {
+    client = await createFTPClient();
     await client.access({
       host: process.env.FTP_HOST || 'localhost',
       user: process.env.FTP_USER || '',
@@ -207,4 +203,3 @@ export async function listBackupsFromFTP(
     return [];
   }
 }
-
