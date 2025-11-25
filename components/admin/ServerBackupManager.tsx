@@ -77,8 +77,30 @@ export function ServerBackupManager({ serverId, locale }: ServerBackupManagerPro
   };
 
   const handleDownloadBackup = async (backup: Backup) => {
-    // TODO: Backup letöltési logika
-    toast('Backup letöltés hamarosan elérhető');
+    try {
+      const response = await fetch(`/api/admin/servers/${serverId}/backup/${backup.id}/download`);
+      
+      if (!response.ok) {
+        const data = await response.json();
+        toast.error(data.error || 'Hiba történt');
+        return;
+      }
+
+      // Fájl letöltése
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = backup.name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('Backup letöltése sikeres');
+    } catch (error) {
+      toast.error('Hiba történt a backup letöltése során');
+    }
   };
 
   const handleDeleteBackup = async (backup: Backup) => {
@@ -86,8 +108,23 @@ export function ServerBackupManager({ serverId, locale }: ServerBackupManagerPro
       return;
     }
 
-    // TODO: Backup törlési logika
-    toast('Backup törlés hamarosan elérhető');
+    try {
+      const response = await fetch(`/api/admin/servers/${serverId}/backup/${backup.id}`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data.error || 'Hiba történt');
+        return;
+      }
+
+      toast.success('Backup sikeresen törölve');
+      loadBackups();
+    } catch (error) {
+      toast.error('Hiba történt a backup törlése során');
+    }
   };
 
   const formatSize = (bytes: number) => {
