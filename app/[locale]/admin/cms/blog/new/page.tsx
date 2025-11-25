@@ -15,9 +15,9 @@ export default async function NewBlogPostPage({
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Új Blog Bejegyzés</h1>
-        <p className="text-gray-600">Blog bejegyzés hozzáadása</p>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Új Blog Bejegyzés</h1>
+        <p className="text-gray-700">Blog bejegyzés hozzáadása</p>
       </div>
 
       <BlogPostForm locale={locale} authorId={(session?.user as any)?.id} />

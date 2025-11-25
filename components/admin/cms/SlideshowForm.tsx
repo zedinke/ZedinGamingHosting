@@ -313,10 +313,19 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
     }
   };
 
+  if (!validLocale) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <p className="text-red-800">Hibás locale érték. Kérjük, frissítsd az oldalt.</p>
+      </div>
+    );
+  }
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <Card padding="lg" className="bg-white border border-gray-200">
-        <h2 className="text-xl font-bold mb-4 text-gray-900">Slide Információk</h2>
+    <div className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <Card padding="lg" className="bg-white border border-gray-200">
+          <h2 className="text-xl font-bold mb-4 text-gray-900">Slide Információk</h2>
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-2 text-gray-900">Cím</label>
@@ -595,7 +604,8 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
           Mégse
         </Button>
       </div>
-    </form>
+      </form>
+    </div>
   );
 }
 

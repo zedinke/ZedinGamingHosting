@@ -42,8 +42,8 @@ export function UpdateProgress({ progress }: UpdateProgressProps) {
     { key: 'git_pull', label: 'Git változások letöltése' },
     { key: 'npm_install', label: 'Függőségek telepítése' },
     { key: 'db_migrate', label: 'Adatbázis migrációk' },
-    { key: 'docker_build', label: 'Docker build' },
-    { key: 'docker_restart', label: 'Docker újraindítás' },
+    { key: 'build', label: 'Production build' },
+    { key: 'restart', label: 'Szolgáltatás újraindítás' },
     { key: 'completed', label: 'Frissítés befejezve' },
   ];
 

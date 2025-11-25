@@ -12,9 +12,9 @@ export default async function NewHomepageSectionPage({
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Új Homepage Szekció</h1>
-        <p className="text-gray-600">Homepage szekció hozzáadása</p>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Új Homepage Szekció</h1>
+        <p className="text-gray-700">Homepage szekció hozzáadása</p>
       </div>
 
       <HomepageSectionForm locale={locale} />

@@ -43,10 +43,6 @@ export default async function HomePage({
       where: {
         locale,
         isActive: true,
-        OR: [
-          { image: { not: null } },
-          { video: { not: null } },
-        ],
       },
       orderBy: { order: 'asc' },
     }),

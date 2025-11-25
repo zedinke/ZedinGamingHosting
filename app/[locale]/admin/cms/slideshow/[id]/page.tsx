@@ -21,10 +21,10 @@ export default async function EditSlideshowSlidePage({
   }
 
   return (
-    <div className="bg-gray-50 min-h-screen p-6">
-      <div className="mb-8 flex justify-between items-center">
+    <div>
+      <div className="mb-6 flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold mb-2 text-gray-900">Slideshow Slide Szerkesztése</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Slideshow Slide Szerkesztése</h1>
           <p className="text-gray-700">{slide.title || 'Névtelen slide'}</p>
         </div>
         <a
@@ -35,7 +35,7 @@ export default async function EditSlideshowSlidePage({
         </a>
       </div>
 
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl">
         <SlideshowForm locale={locale} slide={slide} />
       </div>
     </div>

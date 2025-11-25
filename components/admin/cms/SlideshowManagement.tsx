@@ -12,8 +12,8 @@ interface SlideshowSlide {
   title: string | null;
   subtitle: string | null;
   image: string | null;
-  video: string | null;
-  mediaType: string;
+  video?: string | null;
+  mediaType?: string;
   link: string | null;
   buttonText: string | null;
   isActive: boolean;

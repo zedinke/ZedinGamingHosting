@@ -27,14 +27,14 @@ export default async function AdminFAQPage({
 
   return (
     <div>
-      <div className="mb-8 flex justify-between items-center">
+      <div className="mb-6 flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold mb-2">FAQ Kezelése</h1>
-          <p className="text-gray-600">Gyakran ismételt kérdések</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">FAQ Kezelése</h1>
+          <p className="text-gray-700">Gyakran ismételt kérdések</p>
         </div>
         <a
           href={`/${locale}/admin/cms/faq/new`}
-          className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700"
+          className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition-colors font-medium shadow-sm hover:shadow-md"
         >
           Új FAQ
         </a>

@@ -35,21 +35,21 @@ export default async function AdminGamesPage({
 
   return (
     <div>
-      <div className="mb-8 flex justify-between items-center">
+      <div className="mb-6 flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Játékok Kezelése</h1>
-          <p className="text-gray-600">Játékok és kategóriák kezelése</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Játékok Kezelése</h1>
+          <p className="text-gray-700">Játékok és kategóriák kezelése</p>
         </div>
         <div className="flex gap-2">
           <a
             href={`/${locale}/admin/cms/games/categories/new`}
-            className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+            className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition-colors font-medium shadow-sm hover:shadow-md"
           >
             Új Kategória
           </a>
           <a
             href={`/${locale}/admin/cms/games/new`}
-            className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition-colors"
+            className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition-colors font-medium shadow-sm hover:shadow-md"
           >
             Új Játék
           </a>

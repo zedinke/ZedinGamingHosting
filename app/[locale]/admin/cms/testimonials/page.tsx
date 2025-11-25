@@ -27,14 +27,14 @@ export default async function AdminTestimonialsPage({
 
   return (
     <div>
-      <div className="mb-8 flex justify-between items-center">
+      <div className="mb-6 flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Testimonials</h1>
-          <p className="text-gray-600">Vélemények kezelése</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Testimonials</h1>
+          <p className="text-gray-700">Vélemények kezelése</p>
         </div>
         <a
           href={`/${locale}/admin/cms/testimonials/new`}
-          className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition-colors"
+          className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition-colors font-medium shadow-sm hover:shadow-md"
         >
           Új vélemény
         </a>

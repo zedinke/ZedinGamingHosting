@@ -97,20 +97,26 @@ export async function PUT(
     const body = await request.json();
     const data = slideshowSlideSchema.parse(body);
 
+    const updateData: any = {
+      title: data.title || null,
+      subtitle: data.subtitle || null,
+      image: data.mediaType === 'image' ? (data.image || undefined) : undefined,
+      video: data.mediaType === 'video' ? (data.video || undefined) : undefined,
+      link: data.link || null,
+      buttonText: data.buttonText || null,
+      isActive: data.isActive,
+      order: data.order,
+      locale: data.locale,
+    };
+    
+    // Add mediaType if it exists in the schema
+    if (data.mediaType) {
+      updateData.mediaType = data.mediaType;
+    }
+    
     const slide = await prisma.slideshowSlide.update({
       where: { id: params.id },
-      data: {
-        title: data.title || null,
-        subtitle: data.subtitle || null,
-        mediaType: data.mediaType || 'image',
-        image: data.mediaType === 'image' ? (data.image || null) : null,
-        video: data.mediaType === 'video' ? (data.video || null) : null,
-        link: data.link || null,
-        buttonText: data.buttonText || null,
-        isActive: data.isActive,
-        order: data.order,
-        locale: data.locale,
-      },
+      data: updateData,
     });
 
     return NextResponse.json(slide);

@@ -78,9 +78,9 @@ export default async function AdminCMSPage({
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">CMS Kezelés</h1>
-        <p className="text-gray-600">Tartalomkezelő rendszer</p>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">CMS Kezelés</h1>
+        <p className="text-gray-700">Tartalomkezelő rendszer</p>
       </div>
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -88,15 +88,15 @@ export default async function AdminCMSPage({
           <Link
             key={section.href}
             href={section.href}
-            className="card hover:shadow-lg transition-shadow"
+            className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all"
           >
             <div className="flex items-start gap-4">
               <div className={`${section.color} text-white p-3 rounded-lg text-2xl`}>
                 {section.icon}
               </div>
               <div className="flex-1">
-                <h2 className="text-xl font-bold mb-2">{section.title}</h2>
-                <p className="text-gray-600 text-sm">{section.description}</p>
+                <h2 className="text-xl font-bold text-gray-900 mb-2">{section.title}</h2>
+                <p className="text-gray-700 text-sm">{section.description}</p>
               </div>
             </div>
           </Link>

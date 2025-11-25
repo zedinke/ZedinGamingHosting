@@ -3,48 +3,66 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { UserRole } from '@prisma/client';
 import { unlink } from 'fs/promises';
-import { join } from 'path';
+import { join, resolve } from 'path';
+import { existsSync } from 'fs';
 
-const PROGRESS_FILE = join(process.cwd(), '.update-progress.json');
-const LOG_FILE = join(process.cwd(), '.update-log.txt');
+// Get project root directory (same logic as update route)
+function getProjectRoot(): string {
+  let currentDir = process.cwd();
+  
+  if (currentDir.includes('.next/standalone')) {
+    currentDir = resolve(currentDir, '..', '..');
+  }
+  
+  if (existsSync(join(currentDir, 'package.json'))) {
+    return currentDir;
+  }
+  
+  const parentDir = resolve(currentDir, '..');
+  if (existsSync(join(parentDir, 'package.json'))) {
+    return parentDir;
+  }
+  
+  return currentDir;
+}
+
+const PROJECT_ROOT = getProjectRoot();
+const PROGRESS_FILE = join(PROJECT_ROOT, '.update-progress.json');
+const LOG_FILE = join(PROJECT_ROOT, '.update-log.txt');
 
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session || (session.user as any).role !== UserRole.ADMIN) {
-      return NextResponse.json(
-        { error: 'Nincs jogosultság' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 403 });
     }
 
-    // Progress fájl törlése
+    // Delete progress and log files
     try {
-      await unlink(PROGRESS_FILE).catch(() => {
-        // Ha nincs fájl, nem probléma
-      });
-    } catch (error) {
-      // Nem kritikus hiba
+      if (existsSync(PROGRESS_FILE)) {
+        await unlink(PROGRESS_FILE);
+      }
+    } catch (error: any) {
+      console.error('Error deleting progress file:', error);
     }
 
-    // Log fájl törlése
     try {
-      await unlink(LOG_FILE).catch(() => {
-        // Ha nincs fájl, nem probléma
-      });
-    } catch (error) {
-      // Nem kritikus hiba
+      if (existsSync(LOG_FILE)) {
+        await unlink(LOG_FILE);
+      }
+    } catch (error: any) {
+      console.error('Error deleting log file:', error);
     }
 
     return NextResponse.json({
       success: true,
       message: 'Progress fájlok törölve',
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Update reset error:', error);
     return NextResponse.json(
-      { error: 'Hiba történt a progress törlése során' },
+      { error: 'Hiba történt a progress törlése során: ' + (error.message || 'Ismeretlen hiba') },
       { status: 500 }
     );
   }

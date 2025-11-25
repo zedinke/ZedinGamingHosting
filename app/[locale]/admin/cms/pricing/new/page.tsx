@@ -12,9 +12,9 @@ export default async function NewPricingPlanPage({
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Új Árazási Csomag</h1>
-        <p className="text-gray-600">Árazási csomag hozzáadása</p>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Új Árazási Csomag</h1>
+        <p className="text-gray-700">Árazási csomag hozzáadása</p>
       </div>
 
       <PricingPlanForm locale={locale} />
