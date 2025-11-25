@@ -165,8 +165,8 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
         return null;
       }
 
-      // A feltöltött kép URL-je
-      const uploadedUrl = result.url;
+      // A feltöltött kép URL-je - használjuk a publicUrl-t ha van, különben az url-t
+      const uploadedUrl = result.publicUrl || result.url;
       
       if (!uploadedUrl) {
         console.error('No URL in response:', result);
@@ -176,6 +176,7 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
       }
 
       console.log('Upload successful, URL:', uploadedUrl);
+      console.log('Full response:', result);
       
       // Frissítjük az előnézetet
       setImagePreview(uploadedUrl);

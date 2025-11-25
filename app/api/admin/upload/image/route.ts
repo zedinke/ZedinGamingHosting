@@ -222,8 +222,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Return URL (relative to public directory)
-    const fileUrl = `/uploads/slideshow/${fileName}`;
+    // Return URL - use API route for serving files (more reliable)
+    const fileUrl = `/api/uploads/slideshow/${fileName}`;
+    
+    // Also return the public URL for direct access
+    const publicUrl = `/uploads/slideshow/${fileName}`;
     
     // Final verification
     if (!existsSync(filePath)) {
@@ -231,16 +234,31 @@ export async function POST(request: NextRequest) {
       throw new Error('A fájl nem található a mentés után');
     }
     
+    // Verify file is readable
+    try {
+      const testRead = await readFile(filePath);
+      if (testRead.length !== buffer.length) {
+        throw new Error('Fájl olvasási hiba: méret eltérés');
+      }
+      console.log('✓ File is readable');
+    } catch (readError: any) {
+      console.error('File read error:', readError);
+      throw new Error(`A fájl nem olvasható: ${readError.message}`);
+    }
+    
     console.log('✓ Upload successful:', {
       fileName,
       filePath,
       fileUrl,
+      publicUrl,
       fileSize: buffer.length,
+      fileExists: existsSync(filePath),
     });
 
     return NextResponse.json({
       success: true,
-      url: fileUrl,
+      url: fileUrl, // Use API route for serving
+      publicUrl: publicUrl, // Also provide public URL
       fileName: fileName,
     }, { status: 200 });
   } catch (error: any) {

@@ -1,27 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readFile, stat } from 'fs/promises';
+import { readFile } from 'fs/promises';
 import { join, resolve } from 'path';
 import { existsSync } from 'fs';
 
-// Helper function to find project root
+// Helper function to find project root reliably
 function findProjectRoot(): string {
   let currentDir = process.cwd();
   
+  // If we're in .next/standalone, go up to project root
   if (currentDir.includes('.next/standalone')) {
     currentDir = resolve(currentDir, '..', '..', '..');
   }
   
+  // Verify it's the project root
   const checks = [
     join(currentDir, 'package.json'),
+    join(currentDir, 'next.config.js'),
+    join(currentDir, 'app'),
     join(currentDir, 'public'),
   ];
   
-  if (checks.some(check => existsSync(check))) {
+  const isValidRoot = checks.some(check => existsSync(check));
+  
+  if (isValidRoot) {
     return currentDir;
   }
   
+  // Try parent directory
   const parentDir = resolve(currentDir, '..');
-  if (existsSync(join(parentDir, 'package.json'))) {
+  const parentChecks = [
+    join(parentDir, 'package.json'),
+    join(parentDir, 'next.config.js'),
+  ];
+  
+  if (parentChecks.some(check => existsSync(check))) {
     return parentDir;
   }
   
@@ -30,75 +42,65 @@ function findProjectRoot(): string {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { path: string[] } }
+  { params }: { params: Promise<{ path: string[] }> }
 ) {
   try {
-    const pathSegments = params.path || [];
+    const resolvedParams = await params;
+    const pathSegments = resolvedParams.path || [];
     
-    if (pathSegments.length === 0) {
-      return NextResponse.json({ error: 'Invalid path' }, { status: 400 });
+    // Security: prevent path traversal
+    const sanitizedPath = pathSegments
+      .map(segment => segment.replace(/\.\./g, '').replace(/\//g, ''))
+      .filter(segment => segment.length > 0)
+      .join('/');
+    
+    if (!sanitizedPath) {
+      return new NextResponse('Not Found', { status: 404 });
     }
-
-    // Find project root
+    
     const projectRoot = findProjectRoot();
-    const publicDir = join(projectRoot, 'public');
+    const filePath = join(projectRoot, 'public', 'uploads', sanitizedPath);
     
-    // Build file path (security: only allow files in public/uploads)
-    const filePath = join(publicDir, ...pathSegments);
+    // Security: ensure file is within public/uploads directory
+    const publicUploadsDir = join(projectRoot, 'public', 'uploads');
+    const resolvedFilePath = resolve(filePath);
+    const resolvedUploadsDir = resolve(publicUploadsDir);
     
-    // Security check: ensure path is within public directory
-    const resolvedPath = resolve(filePath);
-    const resolvedPublic = resolve(publicDir);
-    
-    if (!resolvedPath.startsWith(resolvedPublic)) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (!resolvedFilePath.startsWith(resolvedUploadsDir)) {
+      return new NextResponse('Forbidden', { status: 403 });
     }
     
     // Check if file exists
     if (!existsSync(filePath)) {
-      return NextResponse.json({ error: 'File not found' }, { status: 404 });
+      return new NextResponse('Not Found', { status: 404 });
     }
     
-    // Get file stats
-    const stats = await stat(filePath);
-    
-    if (!stats.isFile()) {
-      return NextResponse.json({ error: 'Not a file' }, { status: 400 });
-    }
-    
-    // Read file
+    // Read and serve the file
     const fileBuffer = await readFile(filePath);
     
-    // Determine content type
-    const ext = pathSegments[pathSegments.length - 1].split('.').pop()?.toLowerCase();
+    // Determine content type based on file extension
+    const ext = filePath.split('.').pop()?.toLowerCase();
     const contentTypeMap: Record<string, string> = {
-      'jpg': 'image/jpeg',
-      'jpeg': 'image/jpeg',
-      'png': 'image/png',
-      'gif': 'image/gif',
-      'webp': 'image/webp',
-      'svg': 'image/svg+xml',
-      'mp4': 'video/mp4',
-      'webm': 'video/webm',
-      'mov': 'video/quicktime',
+      jpg: 'image/jpeg',
+      jpeg: 'image/jpeg',
+      png: 'image/png',
+      gif: 'image/gif',
+      webp: 'image/webp',
+      svg: 'image/svg+xml',
+      mp4: 'video/mp4',
+      webm: 'video/webm',
     };
     
     const contentType = contentTypeMap[ext || ''] || 'application/octet-stream';
     
-    // Return file with appropriate headers
     return new NextResponse(fileBuffer, {
       headers: {
         'Content-Type': contentType,
-        'Content-Length': stats.size.toString(),
         'Cache-Control': 'public, max-age=31536000, immutable',
       },
     });
   } catch (error: any) {
-    console.error('File serve error:', error);
-    return NextResponse.json(
-      { error: 'Error serving file: ' + (error.message || 'Unknown error') },
-      { status: 500 }
-    );
+    console.error('Error serving upload file:', error);
+    return new NextResponse('Internal Server Error', { status: 500 });
   }
 }
-
