@@ -31,11 +31,16 @@ export async function POST(request: NextRequest) {
     const randomId = randomBytes(4).toString('hex');
     const agentId = `agent-${machine.ipAddress.replace(/\./g, '-')}-${randomId}`;
 
+    // API kulcs generálása
+    const { generateApiKey } = await import('@/lib/api-key');
+    const apiKey = generateApiKey();
+
     // Agent létrehozása
     const agent = await prisma.agent.create({
       data: {
         machineId,
         agentId,
+        apiKey,
         version: version || '1.0.0',
         status: 'ONLINE',
         lastHeartbeat: new Date(),
@@ -69,7 +74,8 @@ export async function POST(request: NextRequest) {
         agentId: agent.agentId,
         machine: agent.machine,
       },
-      message: 'Agent sikeresen regisztrálva',
+      apiKey: apiKey, // API kulcs visszaadása (csak egyszer látható)
+      message: 'Agent sikeresen regisztrálva. Mentsd el az API kulcsot!',
     });
   } catch (error: any) {
     console.error('Agent registration error:', error);

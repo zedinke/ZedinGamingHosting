@@ -531,6 +531,7 @@ model Agent {
   id            String   @id @default(cuid())
   machineId     String
   agentId       String   @unique // Egyedi agent azonosító
+  apiKey        String?  @unique // API kulcs az autentikációhoz
   version       String
   status        AgentStatus @default(OFFLINE)
   lastHeartbeat DateTime?

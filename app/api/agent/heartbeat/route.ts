@@ -14,8 +14,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TODO: Valós implementációban itt kellene autentikáció (API key vagy token)
-    // Jelenleg csak az agentId-t ellenőrizzük
+    // API key autentikáció
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { error: 'API key szükséges' },
+        { status: 401 }
+      );
+    }
+
+    const apiKey = authHeader.substring(7);
+    const { validateApiKey } = await import('@/lib/api-key');
+    const validation = await validateApiKey(apiKey);
+
+    if (!validation.valid || validation.agentId !== agentId) {
+      return NextResponse.json(
+        { error: 'Érvénytelen API key' },
+        { status: 401 }
+      );
+    }
 
     await handleAgentHeartbeat(agentId, {
       status,
