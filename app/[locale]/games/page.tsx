@@ -1,19 +1,14 @@
 import { Navigation } from '@/components/Navigation';
 import { getTranslations } from '@/lib/i18n';
-import { prisma } from '@/lib/prisma';
-import { PricingSection } from '@/components/PricingSection';
+import { GameGrid } from '@/components/games/GameGrid';
+import { Footer } from '@/components/home/Footer';
 
-export default async function PricingPage({
+export default async function GamesPage({
   params: { locale },
 }: {
   params: { locale: string };
 }) {
   const t = getTranslations(locale, 'common');
-
-  const plans = await prisma.pricingPlan.findMany({
-    where: { isActive: true },
-    orderBy: { order: 'asc' },
-  });
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -22,15 +17,16 @@ export default async function PricingPage({
         {/* Hero Section */}
         <div className="text-center mb-16">
           <h1 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900">
-            Árazás
+            Támogatott Játékok
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Válassz egy csomagot, amely megfelel az igényeidnek. Minden csomag tartalmaz DDoS védelmet és 24/7 támogatást.
+            Válassz a legnépszerűbb játékok közül és indítsd el a szervered percek alatt
           </p>
         </div>
 
-        <PricingSection plans={plans} locale={locale} />
+        <GameGrid locale={locale} />
       </main>
+      <Footer />
     </div>
   );
 }

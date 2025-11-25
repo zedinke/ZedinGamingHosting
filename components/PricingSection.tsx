@@ -1,7 +1,9 @@
 'use client';
 
-import Link from 'next/link';
 import { useSession } from 'next-auth/react';
+import { PricingCard } from '@/components/pricing/PricingCard';
+import { PricingComparison } from '@/components/pricing/PricingComparison';
+import { useState } from 'react';
 
 interface PricingPlan {
   id: string;
@@ -21,67 +23,64 @@ interface PricingSectionProps {
 
 export function PricingSection({ plans, locale }: PricingSectionProps) {
   const { data: session } = useSession();
+  const [showComparison, setShowComparison] = useState(false);
 
-  const formatPrice = (price: number, currency: string) => {
-    return new Intl.NumberFormat('hu-HU', {
-      style: 'currency',
-      currency: currency,
-    }).format(price);
-  };
+  // Népszerű csomag meghatározása (általában a középső)
+  const popularPlanIndex = plans.length > 1 ? Math.floor(plans.length / 2) : -1;
 
   return (
-    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-      {plans.map((plan) => (
-        <div
-          key={plan.id}
-          className="card hover:shadow-xl transition-shadow relative"
-        >
-          {plan.order === 2 && (
-            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-              <span className="bg-primary-600 text-white px-4 py-1 rounded-full text-sm font-semibold">
-                Népszerű
-              </span>
-            </div>
-          )}
-          
-          <div className="text-center mb-6">
-            <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
-            {plan.description && (
-              <p className="text-gray-600 text-sm mb-4">{plan.description}</p>
-            )}
-            <div className="mb-4">
-              <span className="text-4xl font-bold text-primary-600">
-                {formatPrice(plan.price, plan.currency)}
-              </span>
-              <span className="text-gray-600">/{plan.interval}</span>
-            </div>
+    <div>
+      {/* Pricing Cards */}
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
+        {plans.map((plan, index) => (
+          <PricingCard
+            key={plan.id}
+            plan={plan}
+            locale={locale}
+            isPopular={index === popularPlanIndex}
+            session={session}
+          />
+        ))}
+
+        {plans.length === 0 && (
+          <div className="col-span-full text-center py-12">
+            <p className="text-gray-600">Jelenleg nincs elérhető árazási csomag</p>
           </div>
+        )}
+      </div>
 
-          {plan.features && Array.isArray(plan.features) && (
-            <ul className="space-y-3 mb-6">
-              {plan.features.map((feature: string, index: number) => (
-                <li key={index} className="flex items-start">
-                  <span className="text-green-600 mr-2 mt-1">✓</span>
-                  <span className="text-sm">{feature}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-
-          <Link
-            href={session ? `/${locale}/servers/new?plan=${plan.id}` : `/${locale}/register`}
-            className="block w-full bg-primary-600 text-white text-center py-3 rounded-lg hover:bg-primary-700 transition-colors font-semibold"
+      {/* Comparison Toggle */}
+      {plans.length > 1 && (
+        <div className="mt-12 text-center">
+          <button
+            onClick={() => setShowComparison(!showComparison)}
+            className="text-primary-600 hover:text-primary-700 font-semibold underline"
           >
-            Rendelés
-          </Link>
-        </div>
-      ))}
-
-      {plans.length === 0 && (
-        <div className="col-span-full text-center py-12">
-          <p className="text-gray-600">Jelenleg nincs elérhető árazási csomag</p>
+            {showComparison ? 'Összehasonlítás elrejtése' : 'Összehasonlítás megjelenítése'}
+          </button>
         </div>
       )}
+
+      {/* Comparison Table */}
+      {showComparison && plans.length > 1 && (
+        <PricingComparison plans={plans} />
+      )}
+
+      {/* FAQ vagy További információk */}
+      <div className="mt-16 max-w-3xl mx-auto">
+        <Card className="text-center" padding="lg">
+          <h3 className="text-xl font-bold mb-4">Kérdések?</h3>
+          <p className="text-gray-600 mb-4">
+            Nem vagy biztos, melyik csomag a megfelelő? Lépj velünk kapcsolatba!
+          </p>
+          <a
+            href={`/${locale}/dashboard/support/new`}
+            className="inline-block text-primary-600 hover:text-primary-700 font-semibold"
+          >
+            Kapcsolatfelvétel →
+          </a>
+        </Card>
+      </div>
     </div>
   );
 }
