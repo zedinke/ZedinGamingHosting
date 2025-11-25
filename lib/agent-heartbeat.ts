@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { AgentStatus } from '@prisma/client';
 
 /**
  * Agent heartbeat kezelése - frissíti az agent és gép státuszát
@@ -24,10 +25,21 @@ export async function handleAgentHeartbeat(
     }
 
     // Agent frissítése
+    // Validáljuk és konvertáljuk a status-t AgentStatus enum-ra
+    let agentStatus: AgentStatus = AgentStatus.ONLINE;
+    if (data.status) {
+      // Ellenőrizzük, hogy érvényes AgentStatus érték-e
+      if (Object.values(AgentStatus).includes(data.status as AgentStatus)) {
+        agentStatus = data.status as AgentStatus;
+      } else {
+        console.warn(`Invalid agent status: ${data.status}, using ONLINE`);
+      }
+    }
+
     await prisma.agent.update({
       where: { id: agent.id },
       data: {
-        status: data.status || 'ONLINE',
+        status: agentStatus,
         lastHeartbeat: new Date(),
         capabilities: data.capabilities || agent.capabilities,
       },
