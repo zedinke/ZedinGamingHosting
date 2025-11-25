@@ -8,7 +8,13 @@ import { z } from 'zod';
 const slideshowSlideSchema = z.object({
   title: z.string().optional().nullable(),
   subtitle: z.string().optional().nullable(),
-  image: z.string().url('Érvényes URL szükséges').min(1, 'Kép URL megadása kötelező'),
+  image: z.string().min(1, 'Kép megadása kötelező').refine(
+    (val) => {
+      // URL vagy relatív path (pl. /uploads/slideshow/image.jpg)
+      return val.startsWith('http://') || val.startsWith('https://') || val.startsWith('/');
+    },
+    { message: 'Érvényes URL vagy fájl elérési út szükséges' }
+  ),
   link: z.union([
     z.string().url('Érvényes URL szükséges'),
     z.literal(''),
