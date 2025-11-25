@@ -115,18 +115,19 @@ async function startUpdateProcess() {
     },
     {
       key: 'docker_build',
-      label: 'Docker build',
+      label: 'Production build',
       action: async () => {
         await updateProgress({
           status: 'in_progress',
-          message: 'Docker konténerek buildelése...',
+          message: 'Production build készítése...',
           progress: 70,
           currentStep: 'docker_build',
         });
         try {
+          // Először próbáljuk a Docker-t
           await execAsync('docker-compose build');
         } catch (error) {
-          // Ha nincs docker-compose, akkor csak build
+          // Ha nincs docker-compose, akkor Next.js build (standalone módban)
           await execAsync('npm run build');
         }
       },
@@ -137,15 +138,17 @@ async function startUpdateProcess() {
       action: async () => {
         await updateProgress({
           status: 'in_progress',
-          message: 'Docker konténerek újraindítása...',
+          message: 'Szolgáltatások újraindítása...',
           progress: 90,
           currentStep: 'docker_restart',
         });
         try {
+          // Először próbáljuk a Docker-t
           await execAsync('docker-compose up -d');
         } catch (error) {
-          // Ha nincs docker, akkor PM2 restart
+          // Ha nincs docker, akkor PM2 restart (standalone módban)
           try {
+            // PM2 restart standalone szerverrel
             await execAsync('pm2 restart zedingaming');
           } catch {
             // Ha nincs PM2 sem, akkor csak build
