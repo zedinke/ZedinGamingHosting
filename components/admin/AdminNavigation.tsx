@@ -35,6 +35,7 @@ export function AdminNavigation({ locale }: AdminNavigationProps) {
     { href: `/${locale}/admin/analytics`, label: 'Analytics', icon: '📈' },
     { href: `/${locale}/admin/theme`, label: 'Téma', icon: '🎨' },
     { href: `/${locale}/admin/system`, label: 'Rendszer', icon: '⚙️' },
+    { href: `/${locale}/admin/debug`, label: 'Debug', icon: '🐛' },
   ];
 
   return (
