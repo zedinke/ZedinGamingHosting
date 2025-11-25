@@ -46,22 +46,25 @@ export async function POST(request: NextRequest) {
 
     // Determine the correct upload directory
     // Always use project root public directory for consistency
-    const baseDir = process.cwd();
+    let baseDir = process.cwd();
     const isStandalone = baseDir.includes('.next/standalone') || existsSync(join(baseDir, 'server.js'));
     
-    // Primary upload directory - always use project root public
-    let uploadsDir: string;
+    // If in standalone, find project root
     if (isStandalone && baseDir.includes('.next/standalone')) {
-      // In standalone, go up to project root
-      uploadsDir = join(baseDir, '..', '..', '..', 'public', 'uploads', 'slideshow');
-    } else {
-      // Normal build, use current directory
-      uploadsDir = join(baseDir, 'public', 'uploads', 'slideshow');
+      // Go up to project root: .next/standalone -> .next -> project root
+      baseDir = join(baseDir, '..', '..', '..');
+      // Normalize the path to resolve any .. references
+      const path = require('path');
+      baseDir = path.resolve(baseDir);
+      console.log('Standalone detected, using project root:', baseDir);
     }
     
+    // Primary upload directory - always use project root public
+    const uploadsDir = join(baseDir, 'public', 'uploads', 'slideshow');
+    
     // Also save to standalone public if in standalone (for Next.js to serve)
-    const standalonePublicDir = isStandalone && baseDir.includes('.next/standalone')
-      ? join(baseDir, 'public', 'uploads', 'slideshow')
+    const standalonePublicDir = isStandalone && process.cwd().includes('.next/standalone')
+      ? join(process.cwd(), 'public', 'uploads', 'slideshow')
       : null;
     
     // Create primary directory (project root)
@@ -90,6 +93,7 @@ export async function POST(request: NextRequest) {
     
     // Debug: log directory info
     console.log('Upload info:', {
+      processCwd: process.cwd(),
       baseDir,
       isStandalone,
       uploadsDir,
@@ -97,6 +101,24 @@ export async function POST(request: NextRequest) {
       standalonePublicDir,
       standaloneExists: standalonePublicDir ? existsSync(standalonePublicDir) : null,
     });
+    
+    // Verify the directory exists and is writable
+    if (!existsSync(uploadsDir)) {
+      console.error('Uploads directory does not exist:', uploadsDir);
+      throw new Error(`Az uploads mappa nem létezik: ${uploadsDir}`);
+    }
+    
+    // Test write permissions
+    try {
+      const testFile = join(uploadsDir, '.test-write');
+      await writeFile(testFile, 'test');
+      const { unlink } = await import('fs/promises');
+      await unlink(testFile);
+      console.log('✓ Uploads directory is writable');
+    } catch (error: any) {
+      console.error('✗ Uploads directory is not writable:', error);
+      throw new Error(`Az uploads mappa nem írható: ${error.message}`);
+    }
 
     // Egyedi fájlnév generálása
     const timestamp = Date.now();
@@ -113,8 +135,23 @@ export async function POST(request: NextRequest) {
     try {
       await writeFile(filePath, buffer);
       console.log('✓ File saved to primary location:', filePath);
+      
+      // Verify file was actually written
+      const { statSync } = require('fs');
+      const stats = statSync(filePath);
+      console.log('✓ File verified:', {
+        path: filePath,
+        size: stats.size,
+        exists: existsSync(filePath),
+      });
+      
+      if (stats.size === 0) {
+        throw new Error('A fájl üres, valószínűleg nem sikerült menteni');
+      }
     } catch (error: any) {
       console.error('Error saving file to primary location:', error);
+      console.error('File path:', filePath);
+      console.error('Directory exists:', existsSync(uploadsDir));
       throw new Error(`Nem sikerült menteni a fájlt: ${error.message}`);
     }
     
@@ -122,6 +159,12 @@ export async function POST(request: NextRequest) {
     if (standalonePublicDir) {
       const standaloneFilePath = join(standalonePublicDir, fileName);
       try {
+        // Ensure standalone directory exists
+        const standaloneDir = require('path').dirname(standaloneFilePath);
+        if (!existsSync(standaloneDir)) {
+          await mkdir(standaloneDir, { recursive: true });
+        }
+        
         await writeFile(standaloneFilePath, buffer);
         console.log('✓ File also saved to standalone location:', standaloneFilePath);
       } catch (error: any) {

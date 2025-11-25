@@ -45,22 +45,25 @@ export async function POST(request: NextRequest) {
     }
 
     // Determine the correct upload directory
-    const baseDir = process.cwd();
+    let baseDir = process.cwd();
     const isStandalone = baseDir.includes('.next/standalone') || existsSync(join(baseDir, 'server.js'));
     
-    // Primary upload directory - always use project root public
-    let uploadsDir: string;
+    // If in standalone, find project root
     if (isStandalone && baseDir.includes('.next/standalone')) {
-      // In standalone, go up to project root
-      uploadsDir = join(baseDir, '..', '..', '..', 'public', 'uploads', 'slideshow', 'videos');
-    } else {
-      // Normal build, use current directory
-      uploadsDir = join(baseDir, 'public', 'uploads', 'slideshow', 'videos');
+      // Go up to project root: .next/standalone -> .next -> project root
+      baseDir = join(baseDir, '..', '..', '..');
+      // Normalize the path to resolve any .. references
+      const path = require('path');
+      baseDir = path.resolve(baseDir);
+      console.log('Standalone detected, using project root:', baseDir);
     }
     
+    // Primary upload directory - always use project root public
+    const uploadsDir = join(baseDir, 'public', 'uploads', 'slideshow', 'videos');
+    
     // Also save to standalone public if in standalone (for Next.js to serve)
-    const standalonePublicDir = isStandalone && baseDir.includes('.next/standalone')
-      ? join(baseDir, 'public', 'uploads', 'slideshow', 'videos')
+    const standalonePublicDir = isStandalone && process.cwd().includes('.next/standalone')
+      ? join(process.cwd(), 'public', 'uploads', 'slideshow', 'videos')
       : null;
     
     // Create primary directory (project root)
