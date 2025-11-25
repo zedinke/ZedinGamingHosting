@@ -402,28 +402,65 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
                 <label className="block text-sm text-gray-700 mb-2 font-medium">
                   Vagy tölts fel egy képet:
                 </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      console.log('File selected:', file.name, file.size, file.type);
+                <div className="flex gap-2">
+                  <input
+                    type="file"
+                    id="image-upload-input"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        console.log('File selected:', file.name, file.size, file.type);
+                        const url = await handleImageUpload(file);
+                        if (url) {
+                          console.log('Upload completed, URL:', url);
+                        } else {
+                          console.error('Upload failed');
+                        }
+                        // Reset input value so same file can be selected again
+                        e.target.value = '';
+                      }
+                    }}
+                    disabled={uploading}
+                  />
+                  <label
+                    htmlFor="image-upload-input"
+                    className={`flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 disabled:opacity-50 bg-white text-gray-900 cursor-pointer text-center hover:bg-gray-50 transition-colors ${
+                      uploading ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                  >
+                    {uploading ? 'Feltöltés folyamatban...' : 'Kép kiválasztása'}
+                  </label>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const input = document.getElementById('image-upload-input') as HTMLInputElement;
+                      const file = input?.files?.[0];
+                      if (!file) {
+                        toast.error('Kérjük, válassz ki egy képet először!');
+                        input?.click();
+                        return;
+                      }
+                      console.log('Direct upload button clicked:', file.name, file.size, file.type);
                       const url = await handleImageUpload(file);
                       if (url) {
-                        console.log('Upload completed, URL:', url);
+                        console.log('Direct upload completed, URL:', url);
                       } else {
-                        console.error('Upload failed');
+                        console.error('Direct upload failed');
                       }
-                      // Reset input value so same file can be selected again
-                      e.target.value = '';
-                    }
-                  }}
-                  disabled={uploading}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 disabled:opacity-50 bg-white text-gray-900 cursor-pointer"
-                />
+                    }}
+                    disabled={uploading}
+                    className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-sm hover:shadow-md"
+                  >
+                    {uploading ? 'Feltöltés...' : 'Feltöltés'}
+                  </button>
+                </div>
                 {uploading && (
-                  <p className="text-sm text-gray-700 mt-1">Feltöltés folyamatban...</p>
+                  <p className="text-sm text-gray-700 mt-2 flex items-center gap-2">
+                    <span className="animate-spin">⏳</span>
+                    Feltöltés folyamatban...
+                  </p>
                 )}
               </div>
 

@@ -109,6 +109,15 @@ export async function POST(request: NextRequest) {
         await mkdir(uploadsDir, { recursive: true });
         console.log('✓ Created uploads directory:', uploadsDir);
       }
+      
+      // Set permissions to 755 (rwxr-xr-x) to allow FTP uploads
+      try {
+        const { chmodSync } = require('fs');
+        chmodSync(uploadsDir, 0o755);
+        console.log('✓ Set permissions (755) for uploads directory');
+      } catch (permError) {
+        console.warn('⚠ Could not set permissions (non-critical):', permError);
+      }
     } catch (error: any) {
       console.error('Error creating uploads directory:', error);
       throw new Error(`Nem sikerült létrehozni az uploads mappát: ${error.message}`);
