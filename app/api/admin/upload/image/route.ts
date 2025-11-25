@@ -45,30 +45,47 @@ export async function POST(request: NextRequest) {
     }
 
     // Determine the correct upload directory
-    // In standalone build, process.cwd() points to .next/standalone
-    // We need to save to both public and standalone/public for compatibility
+    // Always use project root public directory for consistency
     const baseDir = process.cwd();
     const isStandalone = baseDir.includes('.next/standalone') || existsSync(join(baseDir, 'server.js'));
     
-    // Primary upload directory (where Next.js serves from)
-    const uploadsDir = isStandalone 
-      ? join(baseDir, 'public', 'uploads', 'slideshow')
-      : join(baseDir, 'public', 'uploads', 'slideshow');
-    
-    // Also save to project root public if in standalone (for backup)
-    const projectRootPublic = isStandalone && baseDir.includes('.next/standalone')
-      ? join(baseDir, '..', '..', '..', 'public', 'uploads', 'slideshow')
-      : null;
-    
-    // Create directories
-    if (!existsSync(uploadsDir)) {
-      await mkdir(uploadsDir, { recursive: true });
-      console.log('✓ Created uploads directory:', uploadsDir);
+    // Primary upload directory - always use project root public
+    let uploadsDir: string;
+    if (isStandalone && baseDir.includes('.next/standalone')) {
+      // In standalone, go up to project root
+      uploadsDir = join(baseDir, '..', '..', '..', 'public', 'uploads', 'slideshow');
+    } else {
+      // Normal build, use current directory
+      uploadsDir = join(baseDir, 'public', 'uploads', 'slideshow');
     }
     
-    if (projectRootPublic && !existsSync(projectRootPublic)) {
-      await mkdir(projectRootPublic, { recursive: true });
-      console.log('✓ Created project root uploads directory:', projectRootPublic);
+    // Also save to standalone public if in standalone (for Next.js to serve)
+    const standalonePublicDir = isStandalone && baseDir.includes('.next/standalone')
+      ? join(baseDir, 'public', 'uploads', 'slideshow')
+      : null;
+    
+    // Create primary directory (project root)
+    try {
+      if (!existsSync(uploadsDir)) {
+        await mkdir(uploadsDir, { recursive: true });
+        console.log('✓ Created uploads directory:', uploadsDir);
+      }
+    } catch (error: any) {
+      console.error('Error creating primary uploads directory:', error);
+      throw new Error(`Nem sikerült létrehozni az uploads mappát: ${error.message}`);
+    }
+    
+    // Create standalone directory if needed
+    if (standalonePublicDir) {
+      try {
+        if (!existsSync(standalonePublicDir)) {
+          await mkdir(standalonePublicDir, { recursive: true });
+          console.log('✓ Created standalone uploads directory:', standalonePublicDir);
+        }
+      } catch (error: any) {
+        console.warn('Warning: Could not create standalone uploads directory:', error);
+        // Don't throw, primary directory is more important
+      }
     }
     
     // Debug: log directory info
@@ -77,7 +94,8 @@ export async function POST(request: NextRequest) {
       isStandalone,
       uploadsDir,
       uploadsDirExists: existsSync(uploadsDir),
-      projectRootPublic,
+      standalonePublicDir,
+      standaloneExists: standalonePublicDir ? existsSync(standalonePublicDir) : null,
     });
 
     // Egyedi fájlnév generálása
@@ -91,17 +109,24 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
     
-    // Save to primary location
-    await writeFile(filePath, buffer);
+    // Save to primary location (project root)
+    try {
+      await writeFile(filePath, buffer);
+      console.log('✓ File saved to primary location:', filePath);
+    } catch (error: any) {
+      console.error('Error saving file to primary location:', error);
+      throw new Error(`Nem sikerült menteni a fájlt: ${error.message}`);
+    }
     
-    // Also save to project root if in standalone (for backup and direct access)
-    if (projectRootPublic) {
-      const projectRootFilePath = join(projectRootPublic, fileName);
+    // Also save to standalone public if in standalone (for Next.js to serve)
+    if (standalonePublicDir) {
+      const standaloneFilePath = join(standalonePublicDir, fileName);
       try {
-        await writeFile(projectRootFilePath, buffer);
-        console.log('✓ File also saved to project root:', projectRootFilePath);
-      } catch (error) {
-        console.warn('⚠ Could not save to project root:', error);
+        await writeFile(standaloneFilePath, buffer);
+        console.log('✓ File also saved to standalone location:', standaloneFilePath);
+      } catch (error: any) {
+        console.warn('⚠ Could not save to standalone location:', error);
+        // Don't throw, primary save succeeded
       }
     }
 
