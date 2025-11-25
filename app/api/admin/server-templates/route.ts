@@ -43,7 +43,15 @@ export async function GET(request: NextRequest) {
  * Alapértelmezett sablon konfiguráció
  */
 function getDefaultTemplateConfig(gameType: GameType): any {
-  const configs: Record<GameType, any> = {
+  const arkConfig = {
+    difficultyOffset: 0.2,
+    harvestAmountMultiplier: 1.0,
+    tamingSpeedMultiplier: 1.0,
+    xpMultiplier: 1.0,
+    pvp: false,
+  };
+
+  const configs: Partial<Record<GameType, any>> = {
     MINECRAFT: {
       difficulty: 'normal',
       gamemode: 'survival',
@@ -53,19 +61,8 @@ function getDefaultTemplateConfig(gameType: GameType): any {
       spawnProtection: 16,
       whitelist: false,
     },
-    ARK: {
-      difficultyOffset: 0.2,
-      harvestAmountMultiplier: 1.0,
-      tamingSpeedMultiplier: 1.0,
-      xpMultiplier: 1.0,
-      pvp: false,
-    },
-    CSGO: {
-      tickrate: 64,
-      svRegion: 255,
-      svPassword: '',
-      rconPassword: '',
-    },
+    ARK_EVOLVED: arkConfig,
+    ARK_ASCENDED: arkConfig,
     RUST: {
       seed: 0, // Random
       worldSize: 3000,
@@ -81,6 +78,16 @@ function getDefaultTemplateConfig(gameType: GameType): any {
       GameDifficulty: 2,
       GameWorld: 'Navezgane',
     },
+    CONAN_EXILES: {},
+    DAYZ: {},
+    PROJECT_ZOMBOID: {},
+    PALWORLD: {},
+    ENSHROUDED: {},
+    SONS_OF_THE_FOREST: {},
+    THE_FOREST: {},
+    GROUNDED: {},
+    V_RISING: {},
+    DONT_STARVE_TOGETHER: {},
     OTHER: {},
   };
 
@@ -91,13 +98,23 @@ function getDefaultTemplateConfig(gameType: GameType): any {
  * Alapértelmezett max játékosok száma
  */
 function getDefaultMaxPlayers(gameType: GameType): number {
-  const defaults: Record<GameType, number> = {
+  const defaults: Partial<Record<GameType, number>> = {
     MINECRAFT: 20,
-    ARK: 70,
-    CSGO: 10,
+    ARK_EVOLVED: 70,
+    ARK_ASCENDED: 70,
     RUST: 100,
     VALHEIM: 10,
     SEVEN_DAYS_TO_DIE: 8,
+    CONAN_EXILES: 40,
+    DAYZ: 60,
+    PROJECT_ZOMBOID: 32,
+    PALWORLD: 32,
+    ENSHROUDED: 16,
+    SONS_OF_THE_FOREST: 8,
+    THE_FOREST: 8,
+    GROUNDED: 4,
+    V_RISING: 40,
+    DONT_STARVE_TOGETHER: 6,
     OTHER: 10,
   };
 

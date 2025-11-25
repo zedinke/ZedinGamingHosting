@@ -157,3 +157,26 @@ export async function getUnreadNotificationCount(
   }
 }
 
+/**
+ * Értesítés küldése (alias createNotification-hoz kompatibilis formátummal)
+ */
+export async function sendNotification(
+  userId: string,
+  options: {
+    type: string;
+    title: string;
+    message: string;
+    priority?: NotificationPriority;
+    data?: any;
+  }
+): Promise<void> {
+  await createNotification(
+    userId,
+    options.type as NotificationType,
+    options.title,
+    options.message,
+    options.priority || 'medium',
+    options.data
+  );
+}
+
