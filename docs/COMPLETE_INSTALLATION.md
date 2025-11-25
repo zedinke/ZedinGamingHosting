@@ -82,11 +82,16 @@ cd zedingaming
 ### 3.1 .env Fájl Létrehozása
 
 ```bash
-# Másold az .env.example fájlt
+# Másold az .env.example fájlt (FIGYELJ: cp parancs kell!)
 cp .env.example .env
+
+# Vagy ha a cp parancs nem elérhető, használd a cat-ot:
+cat .env.example > .env
 
 # Szerkeszd a .env fájlt
 nano .env
+# vagy
+vi .env
 ```
 
 ### 3.2 .env Fájl Tartalma
