@@ -29,6 +29,9 @@ export function SlideshowManagement({ slides, locale, transitionInterval }: Slid
   const [intervalValue, setIntervalValue] = useState(transitionInterval);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Debug: log slides
+  console.log('SlideshowManagement - slides:', slides);
+
   const handleSaveInterval = async () => {
     setIsSaving(true);
     try {

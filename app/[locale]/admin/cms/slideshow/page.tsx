@@ -25,6 +25,9 @@ export default async function AdminSlideshowPage({
     }),
   ]);
 
+  // Debug: log slides
+  console.log('AdminSlideshowPage - slides found:', slides.length, slides);
+
   return (
     <div className="bg-gray-50 min-h-screen p-6">
       <div className="mb-8 flex justify-between items-center">
