@@ -10,6 +10,7 @@ import { handleApiError, createUnauthorizedError, createForbiddenError } from '.
 import { withPerformanceMonitoring } from './performance-monitor';
 import { logger } from './logger';
 import { cache } from './cache';
+import { generateRequestId, addRequestIdHeader } from './request-id';
 
 /**
  * Autentikált API route wrapper
@@ -33,13 +34,16 @@ export function withAuth<T extends any[]>(
           throw createForbiddenError('Nincs jogosultság');
         }
 
+        const requestId = generateRequestId();
         logger.debug('API request', {
           endpoint,
           method,
           userId: (session.user as any).id,
+          requestId,
         });
 
-        return await handler(request, ...args);
+        const response = await handler(request, ...args);
+        return addRequestIdHeader(response, requestId);
       } catch (error) {
         logger.error('API error', error as Error, {
           endpoint,
