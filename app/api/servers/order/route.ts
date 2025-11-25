@@ -69,7 +69,8 @@ export async function POST(request: NextRequest) {
       });
     });
 
-    // Előfizetés létrehozása (TODO: Stripe integrációval)
+    // Előfizetés létrehozása (fizetési integrációval)
+    // A fizetés a checkout API-n keresztül történik
     const subscription = await prisma.subscription.create({
       data: {
         userId: (session.user as any).id,

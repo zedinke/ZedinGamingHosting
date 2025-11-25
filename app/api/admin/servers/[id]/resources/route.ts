@@ -12,9 +12,35 @@ export async function PUT(
   try {
     const session = await getServerSession(authOptions);
 
-    // TODO: Valós implementációban itt kellene agent autentikáció (API key)
-    // Jelenleg csak admin jogosultságot ellenőrizzük
-    if (!session || (session.user as any).role !== UserRole.ADMIN) {
+    // Agent autentikáció (API key) vagy admin jogosultság
+    const authHeader = request.headers.get('authorization');
+    let isAuthorized = false;
+
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      // API key autentikáció (agent)
+      const apiKey = authHeader.substring(7);
+      const { validateApiKey } = await import('@/lib/api-key');
+      const validation = await validateApiKey(apiKey);
+      
+      if (validation.valid) {
+        // Ellenőrizzük, hogy az agent jogosult-e erre a szerverre
+        const serverWithAgent = await prisma.server.findUnique({
+          where: { id },
+          include: { agent: true },
+        });
+        
+        if (serverWithAgent?.agentId === validation.agent?.id) {
+          isAuthorized = true;
+        }
+      }
+    } else {
+      // Session autentikáció (admin)
+      if (session && (session.user as any).role === UserRole.ADMIN) {
+        isAuthorized = true;
+      }
+    }
+
+    if (!isAuthorized) {
       return NextResponse.json(
         { error: 'Nincs jogosultság' },
         { status: 403 }
