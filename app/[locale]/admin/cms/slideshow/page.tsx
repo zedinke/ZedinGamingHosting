@@ -34,15 +34,15 @@ export default async function AdminSlideshowPage({
   console.log('AdminSlideshowPage - Filtered slides found:', slides.length, slides);
 
   return (
-    <div className="bg-gray-50 min-h-screen p-6">
-      <div className="mb-8 flex justify-between items-center">
+    <div>
+      <div className="mb-6 flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold mb-2 text-gray-900">Slideshow Kezelése</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Slideshow Kezelése</h1>
           <p className="text-gray-700">Kezdőoldal slideshow diák kezelése</p>
         </div>
         <a
           href={`/${locale}/admin/cms/slideshow/new`}
-          className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition-colors font-medium"
+          className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition-colors font-medium shadow-sm hover:shadow-md"
         >
           Új Slide
         </a>

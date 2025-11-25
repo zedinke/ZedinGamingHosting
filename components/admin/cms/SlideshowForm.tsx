@@ -88,6 +88,9 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(slide?.image || null);
   const [videoPreview, setVideoPreview] = useState<string | null>(slide?.video || null);
+  
+  // Ensure locale is valid
+  const validLocale = (locale === 'hu' || locale === 'en') ? locale : 'hu';
 
   const {
     register,
@@ -120,7 +123,7 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
           buttonText: '',
           isActive: true,
           order: 0,
-          locale: 'hu',
+          locale: validLocale as 'hu' | 'en',
         },
   });
 
@@ -312,30 +315,32 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <Card padding="lg">
-        <h2 className="text-xl font-bold mb-4">Slide Információk</h2>
+      <Card padding="lg" className="bg-white border border-gray-200">
+        <h2 className="text-xl font-bold mb-4 text-gray-900">Slide Információk</h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Cím</label>
+            <label className="block text-sm font-medium mb-2 text-gray-900">Cím</label>
             <input
               {...register('title')}
               type="text"
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white text-gray-900"
+              placeholder="Opcionális cím"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Alcím</label>
+            <label className="block text-sm font-medium mb-2 text-gray-900">Alcím</label>
             <textarea
               {...register('subtitle')}
               rows={4}
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white text-gray-900"
+              placeholder="Opcionális alcím"
             />
           </div>
 
           {/* Media Type Selection */}
           <div>
-            <label className="block text-sm font-medium mb-2">Média típus *</label>
+            <label className="block text-sm font-medium mb-2 text-gray-900">Média típus *</label>
             <select
               {...register('mediaType')}
               onChange={(e) => {

@@ -1,6 +1,7 @@
 import { getTranslations } from '@/lib/i18n';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { SlideshowForm } from '@/components/admin/cms/SlideshowForm';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 export default async function NewSlideshowSlidePage({
   params: { locale },
@@ -10,11 +11,14 @@ export default async function NewSlideshowSlidePage({
   await requireAdmin(locale);
   const t = getTranslations(locale, 'common');
 
+  // Ensure locale is valid
+  const validLocale = locale === 'hu' || locale === 'en' ? locale : 'hu';
+
   return (
-    <div className="bg-gray-50 min-h-screen p-6">
-      <div className="mb-8 flex justify-between items-center">
+    <div>
+      <div className="mb-6 flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold mb-2 text-gray-900">Új Slideshow Slide</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Új Slideshow Slide</h1>
           <p className="text-gray-700">Slideshow slide hozzáadása</p>
         </div>
         <a
@@ -25,8 +29,10 @@ export default async function NewSlideshowSlidePage({
         </a>
       </div>
 
-      <div className="max-w-4xl mx-auto">
-        <SlideshowForm locale={locale} />
+      <div className="max-w-4xl">
+        <ErrorBoundary>
+          <SlideshowForm locale={validLocale} />
+        </ErrorBoundary>
       </div>
     </div>
   );
