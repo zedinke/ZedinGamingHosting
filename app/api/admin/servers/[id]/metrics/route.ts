@@ -136,18 +136,6 @@ export async function GET(
         interval: parseInt(interval),
       });
     }
-
-    return NextResponse.json({
-      success: true,
-      server: {
-        id: server.id,
-        name: server.name,
-        gameType: server.gameType,
-      },
-      metrics,
-      period: parseInt(period),
-      interval: parseInt(interval),
-    });
   } catch (error) {
     console.error('Get metrics error:', error);
     return NextResponse.json(
