@@ -45,27 +45,68 @@ export async function POST(request: NextRequest) {
     }
 
     // Determine the correct upload directory
-    // Always use project root public directory for consistency
+    // Try multiple strategies to find the project root
     let baseDir = process.cwd();
+    const originalCwd = baseDir;
     const isStandalone = baseDir.includes('.next/standalone') || existsSync(join(baseDir, 'server.js'));
     
-    // If in standalone, find project root
+    console.log('=== Upload Debug Info ===');
+    console.log('Original process.cwd():', originalCwd);
+    console.log('Is standalone:', isStandalone);
+    
+    // Strategy 1: If in standalone, go up to project root
     if (isStandalone && baseDir.includes('.next/standalone')) {
-      // Go up to project root: .next/standalone -> .next -> project root
+      // Go up: .next/standalone -> .next -> project root
       baseDir = join(baseDir, '..', '..', '..');
-      // Normalize the path to resolve any .. references
       const path = require('path');
       baseDir = path.resolve(baseDir);
-      console.log('Standalone detected, using project root:', baseDir);
+      console.log('Strategy 1: Standalone detected, going up to:', baseDir);
+    }
+    
+    // Strategy 2: Check if we're in the right place by looking for app/ or public/ directory
+    const path = require('path');
+    const hasAppDir = existsSync(join(baseDir, 'app'));
+    const hasPublicDir = existsSync(join(baseDir, 'public'));
+    const hasPackageJson = existsSync(join(baseDir, 'package.json'));
+    
+    console.log('Directory check:', {
+      baseDir,
+      hasAppDir,
+      hasPublicDir,
+      hasPackageJson,
+    });
+    
+    // If we don't have the expected directories, try to find project root
+    if (!hasPublicDir && !hasAppDir) {
+      // Try going up one more level
+      const parentDir = path.resolve(join(baseDir, '..'));
+      if (existsSync(join(parentDir, 'public')) || existsSync(join(parentDir, 'app'))) {
+        baseDir = parentDir;
+        console.log('Strategy 2: Found project root at:', baseDir);
+      }
+    }
+    
+    // Final check: ensure we have a public directory
+    const finalPublicDir = join(baseDir, 'public');
+    if (!existsSync(finalPublicDir)) {
+      console.error('ERROR: Cannot find public directory!');
+      console.error('Searched in:', baseDir);
+      throw new Error(`Nem található a public mappa a következő helyen: ${baseDir}`);
     }
     
     // Primary upload directory - always use project root public
     const uploadsDir = join(baseDir, 'public', 'uploads', 'slideshow');
     
     // Also save to standalone public if in standalone (for Next.js to serve)
-    const standalonePublicDir = isStandalone && process.cwd().includes('.next/standalone')
-      ? join(process.cwd(), 'public', 'uploads', 'slideshow')
+    const standalonePublicDir = isStandalone && originalCwd.includes('.next/standalone')
+      ? join(originalCwd, 'public', 'uploads', 'slideshow')
       : null;
+    
+    console.log('Final directories:', {
+      baseDir,
+      uploadsDir,
+      standalonePublicDir,
+    });
     
     // Create primary directory (project root)
     try {
