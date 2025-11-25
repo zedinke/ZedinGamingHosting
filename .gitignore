@@ -42,3 +42,5 @@ next-env.d.ts
 *.swp
 *.swo
 
+# Update progress file
+.update-progress.json

@@ -373,3 +373,14 @@ model TeamMember {
   @@map("team_members")
 }
 
+// Rendszer beállítások
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
+
