@@ -47,7 +47,9 @@ export function ServerTemplates({ locale }: ServerTemplatesProps) {
 
   const handleUseTemplate = (template: Template) => {
     // TODO: Valós implementációban itt kellene a sablon alkalmazása új szerver létrehozásakor
-    toast.info('Sablon használata hamarosan elérhető');
+    toast('Sablon használata hamarosan elérhető', {
+      icon: 'ℹ️',
+    });
   };
 
   if (loading && templates.length === 0) {
