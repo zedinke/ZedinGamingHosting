@@ -1,4 +1,3 @@
-import axios from 'axios';
 import crypto from 'crypto';
 import { prisma } from '@/lib/prisma';
 
@@ -7,15 +6,26 @@ const revolutApiKey = process.env.REVOLUT_API_KEY || '';
 const revolutWebhookSecret = process.env.REVOLUT_WEBHOOK_SECRET || '';
 
 /**
- * Revolut API client
+ * Revolut API request helper
  */
-const revolutClient = axios.create({
-  baseURL: revolutApiUrl,
-  headers: {
-    'Authorization': `Bearer ${revolutApiKey}`,
-    'Content-Type': 'application/json',
-  },
-});
+async function revolutRequest(endpoint: string, options: RequestInit = {}) {
+  const url = endpoint.startsWith('http') ? endpoint : `${revolutApiUrl}${endpoint}`;
+  
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      'Authorization': `Bearer ${revolutApiKey}`,
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Revolut API request failed: ${response.statusText}`);
+  }
+
+  return response.json();
+}
 
 /**
  * Revolut order létrehozása
@@ -36,19 +46,20 @@ export async function createRevolutOrder(
   }
 
   // Revolut order létrehozása
-  const response = await revolutClient.post('/orders', {
-    amount: Math.round(amount * 100), // Centben
-    currency,
-    description,
-    customer_email: user.email || undefined,
-    metadata: {
-      userId,
-      serverId,
-    },
-    capture_mode: 'MANUAL', // Manuális capture (előfizetés esetén)
+  const order = await revolutRequest('/orders', {
+    method: 'POST',
+    body: JSON.stringify({
+      amount: Math.round(amount * 100), // Centben
+      currency,
+      description,
+      customer_email: user.email || undefined,
+      metadata: {
+        userId,
+        serverId,
+      },
+      capture_mode: 'MANUAL', // Manuális capture (előfizetés esetén)
+    }),
   });
-
-  const order = response.data;
 
   return {
     orderId: order.id,
@@ -61,7 +72,9 @@ export async function createRevolutOrder(
  * Revolut order capture (fizetés megerősítése)
  */
 export async function captureRevolutOrder(orderId: string): Promise<void> {
-  await revolutClient.post(`/orders/${orderId}/capture`);
+  await revolutRequest(`/orders/${orderId}/capture`, {
+    method: 'POST',
+  });
 }
 
 /**
@@ -72,11 +85,13 @@ export async function getRevolutOrderStatus(orderId: string): Promise<{
   amount: number;
   currency: string;
 }> {
-  const response = await revolutClient.get(`/orders/${orderId}`);
+  const response = await revolutRequest(`/orders/${orderId}`, {
+    method: 'GET',
+  });
   return {
-    state: response.data.state,
-    amount: response.data.amount / 100, // Centből
-    currency: response.data.currency,
+    state: response.state,
+    amount: response.amount / 100, // Centből
+    currency: response.currency,
   };
 }
 

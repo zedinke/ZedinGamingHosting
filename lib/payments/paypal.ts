@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { prisma } from '@/lib/prisma';
 
 const paypalApiUrl = process.env.PAYPAL_API_URL || 'https://api-m.sandbox.paypal.com';
@@ -16,38 +15,50 @@ async function getPayPalAccessToken(): Promise<string> {
     return accessToken;
   }
 
-  const response = await axios.post(
-    `${paypalApiUrl}/v1/oauth2/token`,
-    'grant_type=client_credentials',
-    {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      auth: {
-        username: paypalClientId,
-        password: paypalClientSecret,
-      },
-    }
-  );
+  // Basic auth header
+  const auth = Buffer.from(`${paypalClientId}:${paypalClientSecret}`).toString('base64');
 
-  accessToken = response.data.access_token;
-  tokenExpiry = Date.now() + (response.data.expires_in * 1000) - 60000; // 1 perc buffer
+  const response = await fetch(`${paypalApiUrl}/v1/oauth2/token`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Authorization': `Basic ${auth}`,
+    },
+    body: 'grant_type=client_credentials',
+  });
+
+  if (!response.ok) {
+    throw new Error(`PayPal token request failed: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  accessToken = data.access_token;
+  tokenExpiry = Date.now() + (data.expires_in * 1000) - 60000; // 1 perc buffer
 
   return accessToken;
 }
 
 /**
- * PayPal API client
+ * PayPal API request helper
  */
-async function getPayPalClient() {
+async function paypalRequest(endpoint: string, options: RequestInit = {}) {
   const token = await getPayPalAccessToken();
-  return axios.create({
-    baseURL: paypalApiUrl,
+  const url = endpoint.startsWith('http') ? endpoint : `${paypalApiUrl}${endpoint}`;
+  
+  const response = await fetch(url, {
+    ...options,
     headers: {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
+      ...options.headers,
     },
   });
+
+  if (!response.ok) {
+    throw new Error(`PayPal API request failed: ${response.statusText}`);
+  }
+
+  return response.json();
 }
 
 /**
@@ -60,8 +71,6 @@ export async function createPayPalPlan(
   currency: string = 'HUF',
   interval: 'MONTH' | 'YEAR' = 'MONTH'
 ): Promise<{ planId: string }> {
-  const client = await getPayPalClient();
-
   const plan = {
     name,
     description,
@@ -94,8 +103,11 @@ export async function createPayPalPlan(
     ],
   };
 
-  const response = await client.post('/v1/billing/plans', plan);
-  return { planId: response.data.id };
+  const response = await paypalRequest('/v1/billing/plans', {
+    method: 'POST',
+    body: JSON.stringify(plan),
+  });
+  return { planId: response.id };
 }
 
 /**
@@ -115,8 +127,6 @@ export async function createPayPalSubscription(
   if (!user) {
     throw new Error('Felhasználó nem található');
   }
-
-  const client = await getPayPalClient();
 
   const subscription = {
     plan_id: planId,
@@ -143,11 +153,14 @@ export async function createPayPalSubscription(
     custom_id: `${userId}:${serverId}`,
   };
 
-  const response = await client.post('/v1/billing/subscriptions', subscription);
+  const response = await paypalRequest('/v1/billing/subscriptions', {
+    method: 'POST',
+    body: JSON.stringify(subscription),
+  });
 
   return {
-    subscriptionId: response.data.id,
-    approvalUrl: response.data.links.find((link: any) => link.rel === 'approve')?.href || '',
+    subscriptionId: response.id,
+    approvalUrl: response.links.find((link: any) => link.rel === 'approve')?.href || '',
   };
 }
 
@@ -155,17 +168,20 @@ export async function createPayPalSubscription(
  * PayPal subscription aktiválása
  */
 export async function activatePayPalSubscription(subscriptionId: string): Promise<void> {
-  const client = await getPayPalClient();
-  await client.post(`/v1/billing/subscriptions/${subscriptionId}/activate`);
+  await paypalRequest(`/v1/billing/subscriptions/${subscriptionId}/activate`, {
+    method: 'POST',
+  });
 }
 
 /**
  * PayPal subscription megszüntetése
  */
 export async function cancelPayPalSubscription(subscriptionId: string): Promise<void> {
-  const client = await getPayPalClient();
-  await client.post(`/v1/billing/subscriptions/${subscriptionId}/cancel`, {
-    reason: 'User requested cancellation',
+  await paypalRequest(`/v1/billing/subscriptions/${subscriptionId}/cancel`, {
+    method: 'POST',
+    body: JSON.stringify({
+      reason: 'User requested cancellation',
+    }),
   });
 }
 
@@ -176,11 +192,12 @@ export async function getPayPalSubscriptionStatus(subscriptionId: string): Promi
   status: string;
   planId: string;
 }> {
-  const client = await getPayPalClient();
-  const response = await client.get(`/v1/billing/subscriptions/${subscriptionId}`);
+  const response = await paypalRequest(`/v1/billing/subscriptions/${subscriptionId}`, {
+    method: 'GET',
+  });
   return {
-    status: response.data.status,
-    planId: response.data.plan_id,
+    status: response.status,
+    planId: response.plan_id,
   };
 }
 

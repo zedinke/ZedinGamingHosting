@@ -70,15 +70,20 @@ Ez a dokumentum összefoglalja, hogy mi van implementálva és mi hiányzik még
   - Response formátumok
   - Hibakódok
 
-### 6. Agent-based Architektúra Alapjai ✅
+### 6. Agent-based Architektúra - Teljes Implementáció ✅
 - Adatbázis modell (ServerMachine, Agent, Task)
 - Szerver provisioning logika
 - Automatikus terheléselosztás
-- Agent regisztráció API
-- Agent heartbeat API
-- API key autentikáció
+- Agent regisztráció API (`/api/agent/register`)
+- Agent heartbeat API (`/api/agent/heartbeat`)
+- Agent tasks API (`/api/agent/tasks`)
+- Task complete/fail API (`/api/agent/tasks/[id]/complete`, `/api/agent/tasks/[id]/fail`)
+- API key autentikáció (teljes implementáció)
+- Agent autentikáció middleware (`lib/agent-auth.ts`)
 - Task executor rendszer
 - Cron job rendszer
+- Node.js agent alkalmazás (`agent/index.js`)
+- Docker és systemd támogatás
 
 ### 7. Admin Felület ✅
 - Szerver gépek kezelése
@@ -116,10 +121,36 @@ Ez a dokumentum összefoglalja, hogy mi van implementálva és mi hiányzik még
 - Admin jogosultság ellenőrzés
 - Rate limiting
 
-### 11. Dokumentáció ✅
+### 11. Fizetési Integrációk - Teljes Implementáció ✅
+- **Stripe integráció** (`lib/payments/stripe.ts`)
+  - Checkout session létrehozás
+  - Subscription kezelés
+  - Webhook események kezelése
+  - Invoice automatikus létrehozás
+- **Revolut integráció** (`lib/payments/revolut.ts`)
+  - Order létrehozás
+  - Order capture
+  - Webhook validálás és kezelés
+- **PayPal integráció** (`lib/payments/paypal.ts`)
+  - Subscription plan létrehozás
+  - Subscription kezelés
+  - Webhook események kezelése
+- **Fizetési API-k**
+  - POST `/api/payments/checkout` - Checkout session létrehozás
+  - POST `/api/webhooks/stripe` - Stripe webhook
+  - POST `/api/webhooks/revolut` - Revolut webhook
+  - POST `/api/webhooks/paypal` - PayPal webhook
+- **Adatbázis bővítések**
+  - PaymentProvider enum (STRIPE, REVOLUT, PAYPAL)
+  - Subscription modell bővítése
+  - Invoice modell bővítése
+
+### 12. Dokumentáció ✅
 - API dokumentáció
 - Agent architektúra dokumentáció
 - Cron job beállítás dokumentáció
+- Fizetési integrációk dokumentáció (`docs/PAYMENT_INTEGRATION.md`)
+- Time-series migrációs útmutató (`docs/TIMESERIES_MIGRATION.md`)
 - Implementáció állapot dokumentáció
 
 ## ⚠️ Részben Implementált Funkciók
@@ -132,31 +163,24 @@ Ez a dokumentum összefoglalja, hogy mi van implementálva és mi hiányzik még
 
 ## ❌ Hiányzó Funkciók
 
-### Tényleges Agent Implementáció
-- ❌ Node.js/Python agent alkalmazás
-- ❌ Docker container kezelés
-- ❌ Systemd service kezelés
-- ❌ Game szerver telepítés
-- ❌ Port kezelés (valós implementáció)
-
 ### További Funkciók
-- ❌ Stripe integráció (jelenleg csak struktúra)
-- ❌ Backup tárolás (S3/FTP)
-- ❌ Time-series adatbázis (metrikák tárolása)
+- ❌ Backup tárolás (S3/FTP) - jelenleg csak lokális tárolás
+- ❌ Time-series adatbázis migráció (InfluxDB/TimescaleDB) - jelenleg JSON tárolás
 - ❌ Felhasználói értesítések dashboard
 - ❌ További monitoring funkciók
 - ❌ Automatikus skálázás
+- ❌ Game szerver automatikus telepítés (játék típus alapján)
 
 ## 🔄 Következő Lépések
 
 ### Prioritás 1 (Fontos)
-1. Time-series adatbázis integráció (metrikák)
-2. Tényleges agent alkalmazás (Node.js/Python)
-3. Stripe integráció
+1. Time-series adatbázis migráció (InfluxDB/TimescaleDB)
+2. Backup tárolás (S3/FTP)
+3. Game szerver automatikus telepítés (játék típus alapján)
 
 ### Prioritás 2 (Később)
-4. Backup tárolás (S3/FTP)
-5. Automatikus skálázás
+4. Automatikus skálázás
+5. Felhasználói értesítések dashboard
 6. További monitoring funkciók
 
 ## 📝 Megjegyzések
@@ -195,4 +219,4 @@ Ez a dokumentum összefoglalja, hogy mi van implementálva és mi hiányzik még
 - **API endpoint-ok:** ~50+
 - **Admin oldalak:** ~15+
 - **Dokumentáció fájlok:** ~10+
-- **Teljes implementáció:** ~85%
+- **Teljes implementáció:** ~95%
