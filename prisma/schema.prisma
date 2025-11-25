@@ -7,7 +7,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql" // vagy "mysql" ha MySQL-t használsz a Hestia CP-ben
+  provider = "mysql" // MySQL használata Hestia CP-hez
   url      = env("DATABASE_URL")
 }
 
