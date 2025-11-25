@@ -202,15 +202,22 @@ async function executeProvisionTask(task: any): Promise<any> {
     });
   }
 
-  // TODO: Valós implementációban itt kellene:
-  // 1. Docker container létrehozása az agent gépen
-  // 2. Game szerver telepítése
-  // 3. Konfiguráció beállítása
-  // 4. Portok nyitása
-  // 5. Szerver indítása
+  // Game szerver telepítése (ha még nem történt meg)
+  const { installGameServer } = await import('./game-server-installer');
+  const plan = await prisma.pricingPlan.findUnique({
+    where: { id: task.command?.planId },
+  });
 
-  // Szimuláció
-  await new Promise((resolve) => setTimeout(resolve, 5000));
+  const installResult = await installGameServer(task.serverId, server.gameType, {
+    maxPlayers: server.maxPlayers,
+    ram: plan?.ram || 2048,
+    port: server.port || 25565,
+    name: server.name,
+  });
+
+  if (!installResult.success) {
+    throw new Error(installResult.error || 'Game szerver telepítési hiba');
+  }
 
   // Szerver státusz frissítése ONLINE-ra
   await prisma.server.update({

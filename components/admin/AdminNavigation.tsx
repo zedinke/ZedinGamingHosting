@@ -62,6 +62,7 @@ export function AdminNavigation({ locale }: AdminNavigationProps) {
     { href: `/${locale}/admin/analytics`, label: 'Analytics', icon: BarChart3 },
     { href: `/${locale}/admin/theme`, label: 'Téma', icon: Palette },
     { href: `/${locale}/admin/system`, label: 'Rendszer', icon: Settings },
+    { href: `/${locale}/admin/settings`, label: 'Beállítások', icon: Settings },
     { href: `/${locale}/admin/debug`, label: 'Debug', icon: Bug },
   ];
 
