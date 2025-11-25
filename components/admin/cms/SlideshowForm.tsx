@@ -13,32 +13,8 @@ const slideshowSlideSchema = z.object({
   title: z.string().optional().or(z.literal('')),
   subtitle: z.string().optional().or(z.literal('')),
   mediaType: z.enum(['image', 'video']).default('image'),
-  image: z.string().optional().refine(
-    (val, ctx) => {
-      const mediaType = ctx.parent.mediaType;
-      if (mediaType === 'image') {
-        if (!val || val.trim() === '') {
-          return false;
-        }
-        return val.startsWith('http://') || val.startsWith('https://') || val.startsWith('/');
-      }
-      return true; // Ha video, akkor nem kötelező
-    },
-    { message: 'Kép megadása kötelező, ha kép típusú slide-ot hozol létre' }
-  ),
-  video: z.string().optional().refine(
-    (val, ctx) => {
-      const mediaType = ctx.parent.mediaType;
-      if (mediaType === 'video') {
-        if (!val || val.trim() === '') {
-          return false;
-        }
-        return val.startsWith('http://') || val.startsWith('https://') || val.startsWith('/');
-      }
-      return true; // Ha image, akkor nem kötelező
-    },
-    { message: 'Videó megadása kötelező, ha videó típusú slide-ot hozol létre' }
-  ),
+  image: z.string().optional(),
+  video: z.string().optional(),
   link: z.union([
     z.string().url('Érvényes URL szükséges'),
     z.literal(''),
@@ -48,6 +24,40 @@ const slideshowSlideSchema = z.object({
   isActive: z.boolean(),
   order: z.number().int().min(0),
   locale: z.enum(['hu', 'en']),
+}).superRefine((data, ctx) => {
+  // Kép validáció
+  if (data.mediaType === 'image') {
+    if (!data.image || data.image.trim() === '') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Kép megadása kötelező, ha kép típusú slide-ot hozol létre',
+        path: ['image'],
+      });
+    } else if (!data.image.startsWith('http://') && !data.image.startsWith('https://') && !data.image.startsWith('/')) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Érvényes URL vagy fájl elérési út szükséges',
+        path: ['image'],
+      });
+    }
+  }
+  
+  // Videó validáció
+  if (data.mediaType === 'video') {
+    if (!data.video || data.video.trim() === '') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Videó megadása kötelező, ha videó típusú slide-ot hozol létre',
+        path: ['video'],
+      });
+    } else if (!data.video.startsWith('http://') && !data.video.startsWith('https://') && !data.video.startsWith('/')) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Érvényes URL vagy fájl elérési út szükséges',
+        path: ['video'],
+      });
+    }
+  }
 });
 
 type SlideshowSlideFormData = z.infer<typeof slideshowSlideSchema>;
@@ -335,7 +345,7 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
           </div>
 
           {/* Image Upload Section */}
-          {mediaType === 'image' && (
+          {watch('mediaType') === 'image' && (
             <div>
               <label className="block text-sm font-medium mb-2">Kép *</label>
               
@@ -404,7 +414,7 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
           )}
 
           {/* Video Upload Section */}
-          {mediaType === 'video' && (
+          {watch('mediaType') === 'video' && (
             <div>
               <label className="block text-sm font-medium mb-2">Videó * (max 30 másodperc, max 50MB)</label>
               
