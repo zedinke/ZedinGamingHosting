@@ -4,9 +4,7 @@ const nextConfig = {
   images: {
     domains: ['localhost'],
   },
-  experimental: {
-    serverActions: true,
-  },
+  // Server Actions are available by default in Next.js 14+
   output: 'standalone', // Docker optimalizáláshoz
 };
 
