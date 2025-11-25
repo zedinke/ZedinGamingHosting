@@ -20,18 +20,37 @@ export default async function DashboardPage({
     redirect(`/${locale}/login`);
   }
 
+  const userId = (session.user as any)?.id;
+  
+  if (!userId) {
+    // Ha nincs ID a session-ben, próbáljuk meg lekérni a user-t az email alapján
+    const user = await prisma.user.findUnique({
+      where: { email: session.user?.email || '' },
+      select: { id: true },
+    });
+    
+    if (!user) {
+      redirect(`/${locale}/login`);
+    }
+    
+    // Frissítjük a session-t az ID-val (ez csak ebben a request-ben érvényes)
+    (session.user as any).id = user.id;
+  }
+
   const t = getTranslations(locale, 'common');
+
+  const finalUserId = (session.user as any)?.id;
 
   // Felhasználó szervereinek lekérése
   const servers = await prisma.server.findMany({
-    where: { userId: (session.user as any).id },
+    where: { userId: finalUserId },
     orderBy: { createdAt: 'desc' },
   });
 
   // Aktív előfizetések
   const subscriptions = await prisma.subscription.findMany({
     where: {
-      userId: (session.user as any).id,
+      userId: finalUserId,
       status: 'ACTIVE',
     },
     include: {
@@ -39,7 +58,7 @@ export default async function DashboardPage({
     },
   });
 
-  const onlineServers = servers.filter(s => s.status === 'ONLINE').length;
+  const onlineServers = servers.filter((s: { status: string }) => s.status === 'ONLINE').length;
 
   return (
     <div className="min-h-screen bg-gray-50">
