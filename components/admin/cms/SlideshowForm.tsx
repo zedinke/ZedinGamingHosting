@@ -436,15 +436,9 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
                   Vagy add meg a videó URL-jét vagy relatív elérési útját:
                 </label>
                 <input
-                  {...register('video', {
-                    onChange: (e) => {
-                      const value = e.target.value;
-                      setVideoPreview(value);
-                      setValue('video', value, { shouldValidate: true });
-                    },
-                  })}
+                  {...register('video')}
                   type="text"
-                  value={videoPreview || watch('video') || ''}
+                  value={videoPreview !== null ? videoPreview : (watch('video') || '')}
                   onChange={(e) => {
                     const value = e.target.value;
                     setVideoPreview(value);
