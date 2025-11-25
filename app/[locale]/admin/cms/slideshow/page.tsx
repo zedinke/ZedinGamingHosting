@@ -15,18 +15,23 @@ export default async function AdminSlideshowPage({
 
   const localeFilter = searchParams.localeFilter || locale;
 
-  const [slides, transitionInterval] = await Promise.all([
-    prisma.slideshowSlide.findMany({
-      where: { locale: localeFilter },
-      orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
-    }),
-    prisma.setting.findUnique({
-      where: { key: 'slideshow_transition_interval' },
-    }),
-  ]);
+  // Fetch all slides first to debug
+  const allSlides = await prisma.slideshowSlide.findMany({
+    orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
+  });
+  
+  console.log('AdminSlideshowPage - All slides:', allSlides.length, allSlides.map(s => ({ id: s.id, locale: s.locale, title: s.title })));
+  console.log('AdminSlideshowPage - Locale filter:', localeFilter, 'Current locale:', locale);
 
-  // Debug: log slides
-  console.log('AdminSlideshowPage - slides found:', slides.length, slides);
+  // Filter by locale
+  const slides = allSlides.filter(slide => slide.locale === localeFilter);
+  
+  const transitionInterval = await prisma.setting.findUnique({
+    where: { key: 'slideshow_transition_interval' },
+  });
+
+  // Debug: log filtered slides
+  console.log('AdminSlideshowPage - Filtered slides found:', slides.length, slides);
 
   return (
     <div className="bg-gray-50 min-h-screen p-6">
