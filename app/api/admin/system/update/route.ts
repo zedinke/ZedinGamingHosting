@@ -132,22 +132,28 @@ export async function POST(request: NextRequest) {
 
     // Frissítés indítása háttérben (nem blokkoló módon)
     // Ne várjuk meg, hogy a process befejeződjön
-    startUpdateProcess().catch(async (error) => {
-      console.error('Update process error:', error);
-      const errorMessage = error.message || error.toString() || 'Ismeretlen hiba';
-      try {
-        await updateProgress({
-          status: 'error',
-          message: 'Frissítési hiba',
-          progress: 0,
-          error: errorMessage,
-          log: await readLog(),
-          timestamp: new Date().toISOString(),
-        });
-      } catch (updateError) {
-        console.error('Progress frissítési hiba:', updateError);
-      }
-    });
+    console.log('=== Frissítési process indítása ===');
+    startUpdateProcess()
+      .then(() => {
+        console.log('=== Frissítési process sikeresen befejezve ===');
+      })
+      .catch(async (error) => {
+        console.error('=== Update process error ===', error);
+        console.error('Error stack:', error.stack);
+        const errorMessage = error.message || error.toString() || 'Ismeretlen hiba';
+        try {
+          await updateProgress({
+            status: 'error',
+            message: 'Frissítési hiba',
+            progress: 0,
+            error: errorMessage,
+            log: await readLog(),
+            timestamp: new Date().toISOString(),
+          });
+        } catch (updateError) {
+          console.error('Progress frissítési hiba:', updateError);
+        }
+      });
 
     // Várunk egy kicsit, hogy biztosan létrejöjjön a progress fájl
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -168,9 +174,24 @@ export async function POST(request: NextRequest) {
 async function startUpdateProcess() {
   try {
     console.log('=== startUpdateProcess elindítva ===');
+    console.log('Working directory:', process.cwd());
+    console.log('Progress file path:', PROGRESS_FILE);
+    console.log('Log file path:', LOG_FILE);
+    
     await clearLog();
     await appendLog('=== Frissítés indítása ===');
     console.log('Log fájl törölve');
+    
+    // Progress frissítése azonnal
+    await updateProgress({
+      status: 'in_progress',
+      message: 'Frissítési folyamat elindítva...',
+      progress: 5,
+      currentStep: 'initializing',
+      log: await readLog(),
+      timestamp: new Date().toISOString(),
+    });
+    console.log('Progress frissítve: in_progress, 5%');
     
     const steps = [
       {
@@ -449,15 +470,25 @@ async function startUpdateProcess() {
   ];
 
     console.log(`Frissítési lépések száma: ${steps.length}`);
+    await appendLog(`Összesen ${steps.length} lépés lesz végrehajtva`);
     
-    for (const step of steps) {
+    for (let i = 0; i < steps.length; i++) {
+      const step = steps[i];
       try {
-        console.log(`Lépés indítása: ${step.label} (${step.key})`);
+        console.log(`[${i + 1}/${steps.length}] Lépés indítása: ${step.label} (${step.key})`);
+        await appendLog(`[${i + 1}/${steps.length}] Lépés: ${step.label}`);
         await step.action();
-        console.log(`Lépés befejezve: ${step.label}`);
+        console.log(`[${i + 1}/${steps.length}] Lépés befejezve: ${step.label}`);
+        await appendLog(`✓ ${step.label} sikeresen befejezve`);
       } catch (error: any) {
-        console.error(`Lépés hiba: ${step.label}`, error);
+        console.error(`[${i + 1}/${steps.length}] Lépés hiba: ${step.label}`, error);
+        console.error('Error details:', {
+          message: error.message,
+          stack: error.stack,
+          code: error.code,
+        });
         const errorMessage = error.message || error.toString() || 'Ismeretlen hiba';
+        await appendLog(`❌ ${step.label} hiba: ${errorMessage}`);
         await updateProgress({
           status: 'error',
           message: `${step.label} hiba`,
@@ -465,6 +496,7 @@ async function startUpdateProcess() {
           currentStep: step.key,
           error: errorMessage,
           stepLabel: step.label,
+          log: await readLog(),
           timestamp: new Date().toISOString(),
         });
         throw new Error(`${step.label} hiba: ${errorMessage}`);
