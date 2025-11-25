@@ -53,18 +53,14 @@ export default async function DashboardPage({
   }
 
   // Translation betöltése - biztonságos módon
-  let t: (key: string) => string;
+  // Fontos: A függvényt nem lehet Client Component-nek átadni, csak az eredményt
+  let dashboardTitle: string;
   try {
-    t = getTranslations(locale, 'common');
+    const t = getTranslations(locale, 'common');
+    dashboardTitle = t('dashboard.title');
   } catch (error) {
     console.error('Error loading translations:', error);
-    // Fallback translation function
-    t = (key: string) => {
-      const fallbacks: Record<string, string> = {
-        'dashboard.title': 'Dashboard',
-      };
-      return fallbacks[key] || key;
-    };
+    dashboardTitle = 'Dashboard';
   }
 
   // Felhasználó szervereinek lekérése
