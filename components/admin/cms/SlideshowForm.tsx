@@ -367,24 +367,18 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
                 <label className="block text-sm text-gray-700 mb-2 font-medium">
                   Vagy add meg a kép URL-jét vagy relatív elérési útját:
                 </label>
-                <input
-                  {...register('image', {
-                    onChange: (e) => {
-                      const value = e.target.value;
-                      setImagePreview(value);
-                      setValue('image', value, { shouldValidate: true });
-                    },
-                  })}
-                  type="text"
-                  value={imagePreview || watch('image') || ''}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    setImagePreview(value);
-                    setValue('image', value, { shouldValidate: true });
-                  }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white text-gray-900"
-                  placeholder="https://example.com/image.jpg vagy /uploads/slideshow/image.jpg"
-                />
+              <input
+                {...register('image')}
+                type="text"
+                value={imagePreview !== null ? imagePreview : (watch('image') || '')}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setImagePreview(value);
+                  setValue('image', value, { shouldValidate: true });
+                }}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white text-gray-900"
+                placeholder="https://example.com/image.jpg vagy /uploads/slideshow/image.jpg"
+              />
                 {errors.image && (
                   <p className="text-red-600 text-sm mt-1 font-medium">{errors.image.message}</p>
                 )}
