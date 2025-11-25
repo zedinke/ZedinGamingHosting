@@ -26,14 +26,15 @@ export async function PUT(
       const { validateApiKey } = await import('@/lib/api-key');
       const validation = await validateApiKey(apiKey);
       
-      if (validation.valid) {
+      if (validation.valid && validation.agentId) {
         // Ellenőrizzük, hogy az agent jogosult-e erre a szerverre
         const serverWithAgent = await prisma.server.findUnique({
           where: { id },
           include: { agent: true },
         });
         
-        if (serverWithAgent?.agentId === validation.agent?.id) {
+        // Összehasonlítjuk az agent agentId-jét a validation.agentId-vel
+        if (serverWithAgent?.agent?.agentId === validation.agentId) {
           isAuthorized = true;
         }
       }
