@@ -5,9 +5,10 @@ import { cn } from '@/lib/utils';
 
 interface BadgeProps {
   children: ReactNode;
-  variant?: 'default' | 'success' | 'warning' | 'danger' | 'error' | 'info';
+  variant?: 'default' | 'success' | 'warning' | 'danger' | 'error' | 'info' | 'outline';
   size?: 'sm' | 'md';
   className?: string;
+  style?: React.CSSProperties;
 }
 
 export function Badge({ children, variant = 'default', size = 'md', className, style }: BadgeProps) {
