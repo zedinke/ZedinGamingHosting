@@ -53,6 +53,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Ha van régi progress fájl (completed vagy error), töröljük
+    if (
+      currentProgress.status === 'completed' ||
+      currentProgress.status === 'error' ||
+      currentProgress.status === 'idle'
+    ) {
+      // Töröljük a progress fájlt, hogy új frissítés indítható legyen
+      try {
+        const { unlink } = await import('fs/promises');
+        await unlink(PROGRESS_FILE).catch(() => {
+          // Ha nincs fájl, nem probléma
+        });
+      } catch {
+        // Nem kritikus hiba
+      }
+    }
+
     // Frissítés indítása háttérben (nem blokkoló módon)
     startUpdateProcess().catch((error) => {
       console.error('Update process error:', error);
@@ -191,6 +208,18 @@ async function startUpdateProcess() {
         value: new Date().toISOString(),
       },
     });
+
+    // Progress fájl törlése 5 másodperc után (hogy új frissítés indítható legyen)
+    setTimeout(async () => {
+      try {
+        const { unlink } = await import('fs/promises');
+        await unlink(PROGRESS_FILE).catch(() => {
+          // Ha nincs fájl, nem probléma
+        });
+      } catch {
+        // Nem kritikus hiba
+      }
+    }, 5000);
   } catch (error: any) {
     await updateProgress({
       status: 'error',
@@ -198,6 +227,18 @@ async function startUpdateProcess() {
       progress: 0,
       error: error.message,
     });
+
+    // Hiba esetén is töröljük a progress fájlt 10 másodperc után
+    setTimeout(async () => {
+      try {
+        const { unlink } = await import('fs/promises');
+        await unlink(PROGRESS_FILE).catch(() => {
+          // Ha nincs fájl, nem probléma
+        });
+      } catch {
+        // Nem kritikus hiba
+      }
+    }, 10000);
   }
 }
 

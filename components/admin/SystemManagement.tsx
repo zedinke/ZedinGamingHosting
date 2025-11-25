@@ -18,6 +18,11 @@ export function SystemManagement({
   const [maintenanceMode, setMaintenanceMode] = useState(initialMaintenanceMode);
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateProgress, setUpdateProgress] = useState<any>(null);
+  const [updateCheck, setUpdateCheck] = useState<{
+    hasUpdate: boolean;
+    checking: boolean;
+    commitInfo: any;
+  } | null>(null);
 
   const handleMaintenanceToggle = async () => {
     try {
@@ -46,6 +51,35 @@ export function SystemManagement({
       );
     } catch (error) {
       toast.error('Hiba történt');
+    }
+  };
+
+  const handleCheckForUpdates = async () => {
+    setUpdateCheck({ hasUpdate: false, checking: true, commitInfo: null });
+    try {
+      const response = await fetch('/api/admin/system/update/check');
+      const data = await response.json();
+      
+      if (!response.ok) {
+        toast.error(data.error || 'Hiba történt a frissítés ellenőrzése során');
+        setUpdateCheck({ hasUpdate: false, checking: false, commitInfo: null });
+        return;
+      }
+
+      setUpdateCheck({
+        hasUpdate: data.hasUpdate,
+        checking: false,
+        commitInfo: data.commitInfo,
+      });
+
+      if (data.hasUpdate) {
+        toast.success(`Van új frissítés! (${data.commitInfo?.count || 0} új commit)`);
+      } else {
+        toast.success('A rendszer naprakész, nincs új frissítés.');
+      }
+    } catch (error) {
+      toast.error('Hiba történt a frissítés ellenőrzése során');
+      setUpdateCheck({ hasUpdate: false, checking: false, commitInfo: null });
     }
   };
 
@@ -157,6 +191,54 @@ export function SystemManagement({
                   {new Date(lastUpdate).toLocaleString('hu-HU')}
                 </span>
               </p>
+            </div>
+          )}
+
+          {/* Frissítés ellenőrzés */}
+          <div className="flex gap-3">
+            <button
+              onClick={handleCheckForUpdates}
+              disabled={updateCheck?.checking || isUpdating}
+              className="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm"
+            >
+              {updateCheck?.checking ? 'Ellenőrzés...' : 'Frissítések Ellenőrzése'}
+            </button>
+          </div>
+
+          {/* Frissítés információ */}
+          {updateCheck && !updateCheck.checking && (
+            <div className={`p-4 rounded-lg border ${
+              updateCheck.hasUpdate 
+                ? 'bg-green-50 border-green-200' 
+                : 'bg-blue-50 border-blue-200'
+            }`}>
+              {updateCheck.hasUpdate ? (
+                <div>
+                  <p className="text-sm font-semibold text-green-800 mb-2">
+                    ✅ Van új frissítés!
+                  </p>
+                  {updateCheck.commitInfo && (
+                    <div className="text-xs text-green-700">
+                      <p className="mb-1">
+                        <strong>{updateCheck.commitInfo.count}</strong> új commit érhető el
+                      </p>
+                      {updateCheck.commitInfo.commits && updateCheck.commitInfo.commits.length > 0 && (
+                        <ul className="list-disc list-inside space-y-1 mt-2">
+                          {updateCheck.commitInfo.commits.slice(0, 5).map((commit: string, idx: number) => (
+                            <li key={idx} className="font-mono text-xs">
+                              {commit.substring(0, 60)}...
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm text-blue-800">
+                  ℹ️ A rendszer naprakész, nincs új frissítés.
+                </p>
+              )}
             </div>
           )}
 
