@@ -150,7 +150,7 @@ export default async function DashboardPage({
         {/* Welcome Section */}
         <div className="mb-8">
           <h1 className="text-3xl md:text-4xl font-bold mb-2 text-gray-900">
-            {t('dashboard.title')}
+            {dashboardTitle}
           </h1>
           <p className="text-gray-600 text-lg">
             Üdvözöljük, <span className="font-semibold text-gray-900">{userName || userEmail || 'Felhasználó'}</span>!
