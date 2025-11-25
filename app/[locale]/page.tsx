@@ -10,6 +10,8 @@ import { Footer } from '@/components/home/Footer';
 import { prisma } from '@/lib/prisma';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import Link from 'next/link';
+import { Button } from '@/components/ui/Button';
 
 export default async function HomePage({
   params: { locale },
