@@ -92,9 +92,10 @@ export async function addServerToCluster(
     }
 
     // GameUserSettings.ini frissítése cluster beállításokkal
-    // ARK-nál az instance path-ot használjuk
+    // ARK-nál az instance path-ot használjuk (felhasználó + szervergép kombináció)
     const serverConfig = (server.configuration as any) || {};
-    const instancePath = serverConfig.instancePath || `/opt/ark-shared/${server.userId}/instances/${serverId}`;
+    const machineId = serverConfig.machineId || machine.id;
+    const instancePath = serverConfig.instancePath || `/opt/ark-shared/${server.userId}-${machineId}/instances/${serverId}`;
     const configPath = `${instancePath}/ShooterGame/Saved/Config/LinuxServer/GameUserSettings.ini`;
     
     const clusterConfig = `

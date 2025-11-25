@@ -65,9 +65,10 @@ export async function installGameServer(
       };
     }
 
-    // ARK játékoknál közös fájlokat használunk felhasználónként
+    // ARK játékoknál közös fájlokat használunk felhasználó + szervergép kombinációként
+    // Minden szervergépen külön shared mappa van felhasználónként
     const isARK = gameType === 'ARK_EVOLVED' || gameType === 'ARK_ASCENDED';
-    const sharedPath = isARK ? `/opt/ark-shared/${server.userId}` : null;
+    const sharedPath = isARK ? `/opt/ark-shared/${server.userId}-${machine.id}` : null;
     const serverPath = isARK ? `${sharedPath}/instances/${serverId}` : `/opt/servers/${serverId}`;
 
     // Szerver könyvtár létrehozása
@@ -183,6 +184,7 @@ export async function installGameServer(
             ...currentConfig,
             instancePath: serverPath,
             sharedPath: sharedPath,
+            machineId: machine.id, // Szervergép ID mentése
           },
         },
       });
@@ -409,6 +411,7 @@ async function checkARKSharedInstallation(
 
 /**
  * ARK közös fájlok telepítése
+ * Felhasználó + szervergép kombinációhoz telepíti az ARK fájlokat
  */
 async function installARKSharedFiles(
   sharedPath: string,
@@ -417,30 +420,75 @@ async function installARKSharedFiles(
 ): Promise<void> {
   const steamAppId = gameType === 'ARK_EVOLVED' ? 376030 : 2430930;
   
+  logger.info('Installing ARK shared files', { 
+    sharedPath, 
+    gameType, 
+    steamAppId,
+    machineId: machine.id 
+  });
+  
   const installScript = `
     #!/bin/bash
     set -e
+    echo "Creating shared directory: ${sharedPath}"
     mkdir -p ${sharedPath}
     cd ${sharedPath}
+    
+    # SteamCMD letöltése ha nincs
     if [ ! -f steamcmd.sh ]; then
+      echo "Downloading SteamCMD..."
       wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf -
     fi
+    
+    # ARK szerver fájlok letöltése
+    echo "Installing ARK server files (this may take a while)..."
     ./steamcmd.sh +force_install_dir ${sharedPath} +login anonymous +app_update ${steamAppId} validate +quit
+    
+    # Szükséges könyvtárak létrehozása
     mkdir -p ShooterGame/Saved/Config/LinuxServer
+    mkdir -p ShooterGame/Saved/SavedArks
+    
+    echo "ARK shared files installation completed"
   `;
 
-  const scriptPath = `/tmp/install-ark-shared-${Date.now()}.sh`;
-  await executeSSHCommand(
-    {
-      host: machine.ipAddress,
-      port: machine.sshPort,
-      user: machine.sshUser,
-      keyPath: machine.sshKeyPath || undefined,
-    },
-    `cat > ${scriptPath} << 'EOF'\n${installScript}\nEOF && chmod +x ${scriptPath} && ${scriptPath}`
-  );
+  const scriptPath = `/tmp/install-ark-shared-${machine.id}-${Date.now()}.sh`;
+  
+  try {
+    await executeSSHCommand(
+      {
+        host: machine.ipAddress,
+        port: machine.sshPort,
+        user: machine.sshUser,
+        keyPath: machine.sshKeyPath || undefined,
+      },
+      `cat > ${scriptPath} << 'EOF'\n${installScript}\nEOF && chmod +x ${scriptPath}`
+    );
 
-  logger.info('ARK shared files installed', { sharedPath, gameType });
+    // Script futtatása háttérben (hosszú folyamat lehet)
+    await executeSSHCommand(
+      {
+        host: machine.ipAddress,
+        port: machine.sshPort,
+        user: machine.sshUser,
+        keyPath: machine.sshKeyPath || undefined,
+      },
+      `nohup ${scriptPath} > ${sharedPath}/install.log 2>&1 &`
+    );
+
+    logger.info('ARK shared files installation started', { 
+      sharedPath, 
+      gameType,
+      machineId: machine.id,
+      logFile: `${sharedPath}/install.log`
+    });
+  } catch (error: any) {
+    logger.error('Failed to install ARK shared files', error as Error, {
+      sharedPath,
+      gameType,
+      machineId: machine.id,
+    });
+    throw error;
+  }
 }
 
 /**
