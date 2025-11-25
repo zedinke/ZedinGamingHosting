@@ -1,8 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -10,21 +8,20 @@ import { loadTranslations, getNestedValue } from '@/lib/translations';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 
-const loginSchema = z.object({
+const forgotPasswordSchema = z.object({
   email: z.string().email('Érvénytelen email cím'),
-  password: z.string().min(6, 'A jelszónak legalább 6 karakter hosszúnak kell lennie'),
 });
 
-type LoginFormData = z.infer<typeof loginSchema>;
+type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 
-interface LoginFormProps {
+interface ForgotPasswordFormProps {
   locale: string;
 }
 
-export function LoginForm({ locale }: LoginFormProps) {
-  const router = useRouter();
+export function ForgotPasswordForm({ locale }: ForgotPasswordFormProps) {
   const [translations, setTranslations] = useState<any>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
 
   useEffect(() => {
     loadTranslations(locale, 'common').then(setTranslations);
@@ -36,32 +33,59 @@ export function LoginForm({ locale }: LoginFormProps) {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
+  } = useForm<ForgotPasswordFormData>({
+    resolver: zodResolver(forgotPasswordSchema),
   });
 
-  const onSubmit = async (data: LoginFormData) => {
+  const onSubmit = async (data: ForgotPasswordFormData) => {
     setIsLoading(true);
     try {
-      const result = await signIn('credentials', {
-        email: data.email,
-        password: data.password,
-        redirect: false,
+      const response = await fetch(`/api/auth/forgot-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: data.email,
+          locale,
+        }),
       });
 
-      if (result?.error) {
-        toast.error(result.error);
-      } else {
-        toast.success(t('common.success'));
-        router.push(`/${locale}/dashboard`);
-        router.refresh();
+      const result = await response.json();
+
+      if (!response.ok) {
+        toast.error(result.error || t('common.error'));
+        return;
       }
+
+      setEmailSent(true);
+      toast.success('Jelszó visszaállítási email elküldve!');
     } catch (error) {
       toast.error(t('common.error'));
     } finally {
       setIsLoading(false);
     }
   };
+
+  if (emailSent) {
+    return (
+      <div className="space-y-4">
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <p className="text-green-800">
+            Ha ez az email cím regisztrálva van, akkor elküldtük a jelszó visszaállítási linket.
+          </p>
+        </div>
+        <div className="text-center">
+          <Link
+            href={`/${locale}/login`}
+            className="text-primary-600 hover:underline"
+          >
+            Vissza a bejelentkezéshez
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -81,33 +105,20 @@ export function LoginForm({ locale }: LoginFormProps) {
         )}
       </div>
 
-      <div>
-        <label htmlFor="password" className="block text-sm font-medium mb-1">
-          {t('auth.password')}
-        </label>
-        <input
-          {...register('password')}
-          type="password"
-          id="password"
-          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-          placeholder={t('auth.password')}
-        />
-        {errors.password && (
-          <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
-        )}
-      </div>
-
       <button
         type="submit"
         disabled={isLoading}
         className="w-full bg-primary-600 text-white py-2 rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {isLoading ? t('common.loading') : t('auth.signIn')}
+        {isLoading ? t('common.loading') : 'Jelszó visszaállítási link küldése'}
       </button>
 
       <div className="text-center">
-        <Link href={`/${locale}/forgot-password`} className="text-primary-600 hover:underline text-sm">
-          {t('auth.forgotPassword')}
+        <Link
+          href={`/${locale}/login`}
+          className="text-primary-600 hover:underline text-sm"
+        >
+          Vissza a bejelentkezéshez
         </Link>
       </div>
     </form>
