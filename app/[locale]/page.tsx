@@ -4,7 +4,9 @@ import { HeroSection } from '@/components/home/HeroSection';
 import { FeaturesSection } from '@/components/home/FeaturesSection';
 import { StatsSection } from '@/components/home/StatsSection';
 import { CTASection } from '@/components/home/CTASection';
+import { SlideshowSection } from '@/components/home/SlideshowSection';
 import { Footer } from '@/components/home/Footer';
+import { prisma } from '@/lib/prisma';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
@@ -25,15 +27,79 @@ export default async function HomePage({
     console.error('Failed to load translations:', error);
   }
 
+  // Load homepage sections from database
+  const [homepageSections, slideshowSlides] = await Promise.all([
+    prisma.homepageSection.findMany({
+      where: {
+        locale,
+        isActive: true,
+      },
+      orderBy: { order: 'asc' },
+    }),
+    prisma.slideshowSlide.findMany({
+      where: {
+        locale,
+        isActive: true,
+      },
+      orderBy: { order: 'asc' },
+    }),
+  ]);
+
+  // Get sections by type
+  const heroSection = homepageSections.find((s) => s.type === 'hero');
+  const featuresSection = homepageSections.find((s) => s.type === 'features');
+  const statsSection = homepageSections.find((s) => s.type === 'stats');
+  const ctaSection = homepageSections.find((s) => s.type === 'cta');
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation locale={locale} />
 
       <main>
-        <HeroSection locale={locale} translations={translations} />
-        <FeaturesSection locale={locale} translations={translations} />
-        <StatsSection />
-        <CTASection locale={locale} translations={translations} />
+        {/* Slideshow */}
+        {slideshowSlides.length > 0 && (
+          <SlideshowSection slides={slideshowSlides} locale={locale} />
+        )}
+
+        {/* Hero Section - Use database if available, otherwise fallback to component */}
+        {heroSection ? (
+          <HeroSection
+            locale={locale}
+            translations={translations}
+            section={heroSection}
+          />
+        ) : (
+          <HeroSection locale={locale} translations={translations} />
+        )}
+
+        {/* Features Section */}
+        {featuresSection ? (
+          <FeaturesSection
+            locale={locale}
+            translations={translations}
+            section={featuresSection}
+          />
+        ) : (
+          <FeaturesSection locale={locale} translations={translations} />
+        )}
+
+        {/* Stats Section */}
+        {statsSection ? (
+          <StatsSection section={statsSection} />
+        ) : (
+          <StatsSection />
+        )}
+
+        {/* CTA Section */}
+        {ctaSection ? (
+          <CTASection
+            locale={locale}
+            translations={translations}
+            section={ctaSection}
+          />
+        ) : (
+          <CTASection locale={locale} translations={translations} />
+        )}
       </main>
 
       <Footer />

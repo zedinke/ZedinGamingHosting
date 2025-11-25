@@ -4,12 +4,21 @@ import { Card } from '@/components/ui/Card';
 import { getNestedValue } from '@/lib/translations';
 import { Server, Zap, Shield, Headphones, Clock, Globe } from 'lucide-react';
 
+interface HomepageSection {
+  id: string;
+  type: string;
+  title: string | null;
+  subtitle: string | null;
+  content: any;
+}
+
 interface FeaturesSectionProps {
   locale: string;
   translations: any;
+  section?: HomepageSection;
 }
 
-const features = [
+const defaultFeatures = [
   {
     icon: Zap,
     title: 'Gyors & Megbízható',
@@ -42,16 +51,29 @@ const features = [
   },
 ];
 
-export function FeaturesSection({ locale, translations }: FeaturesSectionProps) {
+export function FeaturesSection({ locale, translations, section }: FeaturesSectionProps) {
+  // Parse features from section content if available
+  let features = defaultFeatures;
+  if (section?.content && typeof section.content === 'object') {
+    if (Array.isArray(section.content)) {
+      features = section.content;
+    } else if (section.content.features && Array.isArray(section.content.features)) {
+      features = section.content.features;
+    }
+  }
+
+  const title = section?.title || 'Miért válassz minket?';
+  const subtitle = section?.subtitle || 'Minden, amire szükséged van egy professzionális gaming szerverhez';
+
   return (
     <section className="py-20 bg-gray-50">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Miért válassz minket?
+            {title}
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Minden, amire szükséged van egy professzionális gaming szerverhez
+            {subtitle}
           </p>
         </div>
 

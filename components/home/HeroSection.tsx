@@ -5,13 +5,32 @@ import { Button } from '@/components/ui/Button';
 import { getNestedValue } from '@/lib/translations';
 import { useEffect, useState } from 'react';
 
+interface HomepageSection {
+  id: string;
+  type: string;
+  title: string | null;
+  subtitle: string | null;
+  content: any;
+  image: string | null;
+  buttonText: string | null;
+  buttonLink: string | null;
+}
+
 interface HeroSectionProps {
   locale: string;
   translations: any;
+  section?: HomepageSection;
 }
 
-export function HeroSection({ locale, translations }: HeroSectionProps) {
+export function HeroSection({ locale, translations, section }: HeroSectionProps) {
   const t = (key: string) => getNestedValue(translations, key) || key;
+
+  // Use section data if available, otherwise use translations
+  const title = section?.title || t('hero.title');
+  const subtitle = section?.subtitle || t('hero.subtitle');
+  const buttonText = section?.buttonText || t('hero.cta');
+  const buttonLink = section?.buttonLink || `/${locale}/register`;
+  const learnMoreLink = `/${locale}/pricing`;
 
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-700 text-white">
@@ -31,22 +50,22 @@ export function HeroSection({ locale, translations }: HeroSectionProps) {
 
           {/* Main heading */}
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
-            {t('hero.title')}
+            {title}
           </h1>
 
           {/* Subtitle */}
           <p className="text-xl md:text-2xl text-primary-100 mb-10 max-w-2xl mx-auto leading-relaxed">
-            {t('hero.subtitle')}
+            {subtitle}
           </p>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-            <Link href={`/${locale}/register`}>
+            <Link href={buttonLink}>
               <Button size="lg" className="w-full sm:w-auto">
-                {t('hero.cta')}
+                {buttonText}
               </Button>
             </Link>
-            <Link href={`/${locale}/pricing`}>
+            <Link href={learnMoreLink}>
               <Button variant="outline" size="lg" className="w-full sm:w-auto border-white text-white hover:bg-white/10">
                 {t('hero.learnMore')}
               </Button>

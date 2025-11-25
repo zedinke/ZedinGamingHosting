@@ -3,14 +3,33 @@
 import { Card } from '@/components/ui/Card';
 import { Users, Server, Globe, Award } from 'lucide-react';
 
-const stats = [
+interface HomepageSection {
+  id: string;
+  type: string;
+  content: any;
+}
+
+const defaultStats = [
   { icon: Users, value: '10,000+', label: 'Elégedett Felhasználó' },
   { icon: Server, value: '50,000+', label: 'Aktív Szerver' },
   { icon: Globe, value: '150+', label: 'Ország' },
   { icon: Award, value: '99.9%', label: 'Uptime Garancia' },
 ];
 
-export function StatsSection() {
+interface StatsSectionProps {
+  section?: HomepageSection;
+}
+
+export function StatsSection({ section }: StatsSectionProps) {
+  // Parse stats from section content if available
+  let stats = defaultStats;
+  if (section?.content && typeof section.content === 'object') {
+    if (Array.isArray(section.content)) {
+      stats = section.content;
+    } else if (section.content.stats && Array.isArray(section.content.stats)) {
+      stats = section.content.stats;
+    }
+  }
   return (
     <section className="py-16 bg-white">
       <div className="container mx-auto px-4">
