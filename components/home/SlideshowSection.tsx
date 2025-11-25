@@ -90,22 +90,23 @@ export function SlideshowSection({ slides, locale }: SlideshowSectionProps) {
   const activeSlides = slides.length > 0 
     ? slides.filter((slide) => slide && slide.image)
     : defaultGameImages;
+  
+  // Always use default images if no slides from database
+  const displaySlides = activeSlides.length > 0 ? activeSlides : defaultGameImages;
 
   useEffect(() => {
-    if (!isAutoPlaying || activeSlides.length <= 1) return;
+    if (!isAutoPlaying || displaySlides.length <= 1) return;
 
     const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % activeSlides.length);
+      setCurrentSlide((prev) => (prev + 1) % displaySlides.length);
     }, 5000); // 5 másodpercenként vált
 
     return () => clearInterval(interval);
-  }, [isAutoPlaying, activeSlides.length]);
+  }, [isAutoPlaying, displaySlides.length]);
 
-  if (activeSlides.length === 0) {
+  if (displaySlides.length === 0) {
     return null;
   }
-
-  const slide = activeSlides[currentSlide];
 
   const goToSlide = (index: number) => {
     setCurrentSlide(index);
@@ -114,25 +115,36 @@ export function SlideshowSection({ slides, locale }: SlideshowSectionProps) {
   };
 
   const nextSlide = () => {
-    goToSlide((currentSlide + 1) % activeSlides.length);
+    goToSlide((currentSlide + 1) % displaySlides.length);
   };
 
   const prevSlide = () => {
-    goToSlide((currentSlide - 1 + activeSlides.length) % activeSlides.length);
+    goToSlide((currentSlide - 1 + displaySlides.length) % displaySlides.length);
   };
 
   return (
     <section className="relative w-full h-screen min-h-[600px] overflow-hidden bg-white">
-      <div className="relative w-full h-full">
-        <Image
-          src={slide.image}
-          alt={slide.title || 'Slide'}
-          fill
-          className="object-cover"
-          priority={currentSlide === 0}
-          quality={90}
-          unoptimized={slide.image.startsWith('https://images.unsplash.com')}
-        />
+      {/* Background images - slideshow */}
+      <div className="absolute inset-0 w-full h-full z-0">
+        {displaySlides.map((s, index) => (
+          <div
+            key={s.id}
+            className={`absolute inset-0 transition-opacity duration-1000 ${
+              index === currentSlide ? 'opacity-100' : 'opacity-0'
+            }`}
+          >
+            <img
+              src={s.image}
+              alt={s.title || 'Slide'}
+              className="w-full h-full object-cover"
+              loading={index === 0 ? 'eager' : 'lazy'}
+              onError={(e) => {
+                // Fallback to placeholder if image fails to load
+                (e.target as HTMLImageElement).src = 'https://via.placeholder.com/1920x1080/1a1f2e/5b6fff?text=Gaming+Server';
+              }}
+            />
+          </div>
+        ))}
         {/* 30% dark overlay */}
         <div className="absolute inset-0 bg-black/30" />
         
@@ -142,43 +154,21 @@ export function SlideshowSection({ slides, locale }: SlideshowSectionProps) {
             backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
           }}></div>
         </div>
-        
-        <div className="absolute inset-0 flex items-center justify-center z-10">
-          <div className="container mx-auto px-4 text-center text-white">
-            {slide.title && (
-              <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-white drop-shadow-lg">
-                {slide.title}
-              </h2>
-            )}
-            {slide.subtitle && (
-              <p className="text-lg md:text-xl lg:text-2xl mb-10 text-gray-100 drop-shadow-md max-w-2xl mx-auto">
-                {slide.subtitle}
-              </p>
-            )}
-            {slide.buttonText && slide.link && (
-              <Link href={slide.link}>
-                <Button size="lg" className="bg-white text-gray-900 hover:bg-gray-100 px-8 py-3 rounded-lg font-semibold transition-colors">
-                  {slide.buttonText}
-                </Button>
-              </Link>
-            )}
-          </div>
-        </div>
       </div>
 
       {/* Navigation arrows */}
-      {activeSlides.length > 1 && (
+      {displaySlides.length > 1 && (
         <>
           <button
             onClick={prevSlide}
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-full p-3 transition-colors"
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-30 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-full p-3 transition-colors"
             aria-label="Előző slide"
           >
             <ChevronLeft className="w-6 h-6 text-white" />
           </button>
           <button
             onClick={nextSlide}
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-full p-3 transition-colors"
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-30 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-full p-3 transition-colors"
             aria-label="Következő slide"
           >
             <ChevronRight className="w-6 h-6 text-white" />
@@ -187,9 +177,9 @@ export function SlideshowSection({ slides, locale }: SlideshowSectionProps) {
       )}
 
       {/* Dots indicator */}
-      {activeSlides.length > 1 && (
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-2">
-          {activeSlides.map((_, index) => (
+      {displaySlides.length > 1 && (
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 flex gap-2">
+          {displaySlides.map((_, index) => (
             <button
               key={index}
               onClick={() => goToSlide(index)}
