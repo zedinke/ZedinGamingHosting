@@ -57,21 +57,8 @@ export default async function HomePage({
       <Navigation locale={locale} />
 
       <main>
-        {/* Hero Section - Use database if available, otherwise fallback to component */}
-        {heroSection ? (
-          <HeroSection
-            locale={locale}
-            translations={translations}
-            section={heroSection}
-          />
-        ) : (
-          <HeroSection locale={locale} translations={translations} />
-        )}
-
-        {/* Slideshow - Hero és Features között */}
-        {slideshowSlides.length > 0 && (
-          <SlideshowSection slides={slideshowSlides} locale={locale} />
-        )}
+        {/* Slideshow - Full width hero section with game images */}
+        <SlideshowSection slides={slideshowSlides} locale={locale} />
 
         {/* Features Section */}
         {featuresSection ? (
