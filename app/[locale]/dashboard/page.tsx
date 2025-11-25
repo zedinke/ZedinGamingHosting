@@ -24,10 +24,16 @@ export default async function DashboardPage({
   
   if (!userId) {
     // Ha nincs ID a session-ben, próbáljuk meg lekérni a user-t az email alapján
+    const userEmail = session.user?.email;
+    
+    if (!userEmail) {
+      redirect(`/${locale}/login`);
+    }
+    
     const user = await prisma.user.findUnique({
-      where: { email: session.user?.email || '' },
+      where: { email: userEmail },
       select: { id: true },
-    });
+    }).catch(() => null);
     
     if (!user) {
       redirect(`/${locale}/login`);
@@ -41,11 +47,24 @@ export default async function DashboardPage({
 
   const finalUserId = (session.user as any)?.id;
 
+  if (!finalUserId) {
+    redirect(`/${locale}/login`);
+  }
+
   // Felhasználó szervereinek lekérése
   const servers = await prisma.server.findMany({
     where: { userId: finalUserId },
     orderBy: { createdAt: 'desc' },
-  });
+    select: {
+      id: true,
+      name: true,
+      gameType: true,
+      maxPlayers: true,
+      ipAddress: true,
+      port: true,
+      status: true,
+    },
+  }).catch(() => []);
 
   // Aktív előfizetések
   const subscriptions = await prisma.subscription.findMany({
@@ -54,9 +73,15 @@ export default async function DashboardPage({
       status: 'ACTIVE',
     },
     include: {
-      server: true,
+      server: {
+        select: {
+          id: true,
+          name: true,
+          status: true,
+        },
+      },
     },
-  });
+  }).catch(() => []);
 
   const onlineServers = servers.filter((s: { status: string }) => s.status === 'ONLINE').length;
 

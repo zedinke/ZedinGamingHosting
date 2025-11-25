@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { UserRole } from '@prisma/client';
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import { writeFile, readFile } from 'fs/promises';
+import { writeFile, readFile, appendFile } from 'fs/promises';
 
 import { join } from 'path';
 
@@ -32,9 +32,11 @@ async function updateProgress(progress: any) {
       timestamp: progress.timestamp || new Date().toISOString(),
     };
     await writeFile(PROGRESS_FILE, JSON.stringify(progressWithTimestamp, null, 2), 'utf-8');
-  } catch (error) {
+    console.log('Progress frissítve:', progressWithTimestamp.status, progressWithTimestamp.progress + '%');
+  } catch (error: any) {
     console.error('Error writing progress file:', error);
-    throw error;
+    // Ne throw-oljuk, hogy ne álljon le a teljes process
+    // Csak logoljuk a hibát
   }
 }
 
@@ -42,7 +44,7 @@ async function appendLog(message: string) {
   const timestamp = new Date().toISOString();
   const logMessage = `[${timestamp}] ${message}\n`;
   try {
-    await writeFile(LOG_FILE, logMessage, { flag: 'a' });
+    await appendFile(LOG_FILE, logMessage);
   } catch (error) {
     console.error('Log write error:', error);
   }
@@ -187,12 +189,18 @@ async function startUpdateProcess() {
         try {
           // Először fetch (nem pull, hogy ne legyen merge conflict)
           await appendLog('  - Fetch origin main...');
-          const { stdout: fetchOutput, stderr: fetchError } = await execAsync('git fetch origin main', { cwd: process.cwd() });
+          const { stdout: fetchOutput, stderr: fetchError } = await execAsync('git fetch origin main', { 
+            cwd: process.cwd(),
+            timeout: 60000, // 60 másodperc timeout
+          });
           await appendLog(`  ${fetchOutput || fetchError || 'Fetch sikeres'}`);
           
           // Ellenőrizzük, hogy van-e változás
           await appendLog('  - Git status ellenőrzése...');
-          const { stdout: statusOutput } = await execAsync('git status -sb', { cwd: process.cwd() });
+          const { stdout: statusOutput } = await execAsync('git status -sb', { 
+            cwd: process.cwd(),
+            timeout: 10000, // 10 másodperc timeout
+          });
           await appendLog(`  Status: ${statusOutput.substring(0, 100)}...`);
           
           // Ha van változás, pull merge strategy-vel
@@ -208,7 +216,10 @@ async function startUpdateProcess() {
             // Pull hard reset-tel (ha van conflict, akkor a remote verziót használjuk)
             try {
               await appendLog('  - Git pull futtatása...');
-              const { stdout: pullOutput, stderr: pullError } = await execAsync('git pull origin main --no-rebase', { cwd: process.cwd() });
+              const { stdout: pullOutput, stderr: pullError } = await execAsync('git pull origin main --no-rebase', { 
+                cwd: process.cwd(),
+                timeout: 60000, // 60 másodperc timeout
+              });
               await appendLog(`  ${pullOutput || pullError || 'Pull sikeres'}`);
             } catch (pullError: any) {
               // Ha merge conflict van, reset hard-ot használunk
@@ -221,7 +232,10 @@ async function startUpdateProcess() {
                   currentStep: 'git_pull',
                   log: await readLog(),
                 });
-                const { stdout: resetOutput } = await execAsync('git reset --hard origin/main', { cwd: process.cwd() });
+                const { stdout: resetOutput } = await execAsync('git reset --hard origin/main', { 
+                  cwd: process.cwd(),
+                  timeout: 30000, // 30 másodperc timeout
+                });
                 await appendLog(`  ${resetOutput || 'Reset sikeres'}`);
               } else {
                 await appendLog(`  ❌ Pull hiba: ${pullError.message}`);
@@ -260,7 +274,11 @@ async function startUpdateProcess() {
         });
         try {
           await appendLog('  - npm install futtatása (ez eltarthat néhány percig)...');
-          const { stdout, stderr } = await execAsync('npm install --legacy-peer-deps', { cwd: process.cwd(), maxBuffer: 1024 * 1024 * 10 });
+          const { stdout, stderr } = await execAsync('npm install --legacy-peer-deps', { 
+            cwd: process.cwd(), 
+            maxBuffer: 1024 * 1024 * 10,
+            timeout: 600000, // 10 perc timeout (npm install hosszú lehet)
+          });
           await appendLog(`  ${stdout || stderr || 'NPM install sikeres'}`);
           await updateProgress({
             status: 'in_progress',
@@ -289,7 +307,10 @@ async function startUpdateProcess() {
         });
         try {
           await appendLog('  - Prisma client generálása...');
-          const { stdout: genOutput } = await execAsync('npm run db:generate', { cwd: process.cwd() });
+          const { stdout: genOutput } = await execAsync('npm run db:generate', { 
+            cwd: process.cwd(),
+            timeout: 120000, // 2 perc timeout
+          });
           await appendLog(`  ${genOutput || 'Prisma generate sikeres'}`);
           await updateProgress({
             status: 'in_progress',
@@ -300,7 +321,10 @@ async function startUpdateProcess() {
           });
           
           await appendLog('  - Adatbázis séma frissítése...');
-          const { stdout: pushOutput } = await execAsync('npm run db:push', { cwd: process.cwd() });
+          const { stdout: pushOutput } = await execAsync('npm run db:push', { 
+            cwd: process.cwd(),
+            timeout: 120000, // 2 perc timeout
+          });
           await appendLog(`  ${pushOutput || 'DB push sikeres'}`);
         } catch (error: any) {
           await appendLog(`  ❌ DB migráció hiba: ${error.message}`);
@@ -324,12 +348,20 @@ async function startUpdateProcess() {
           // Először próbáljuk a Docker-t
           await appendLog('  - Docker build próbálása...');
           try {
-            const { stdout: dockerOutput } = await execAsync('docker-compose build', { cwd: process.cwd(), maxBuffer: 1024 * 1024 * 10 });
+            const { stdout: dockerOutput } = await execAsync('docker-compose build', { 
+              cwd: process.cwd(), 
+              maxBuffer: 1024 * 1024 * 10,
+              timeout: 600000, // 10 perc timeout
+            });
             await appendLog(`  ${dockerOutput || 'Docker build sikeres'}`);
           } catch (dockerError) {
             // Ha nincs docker-compose, akkor Next.js build (standalone módban)
             await appendLog('  - Docker nem elérhető, Next.js build használata...');
-            const { stdout: buildOutput } = await execAsync('npm run build', { cwd: process.cwd(), maxBuffer: 1024 * 1024 * 10 });
+            const { stdout: buildOutput } = await execAsync('npm run build', { 
+              cwd: process.cwd(), 
+              maxBuffer: 1024 * 1024 * 10,
+              timeout: 600000, // 10 perc timeout
+            });
             await appendLog(`  ${buildOutput || 'Next.js build sikeres'}`);
           }
         } catch (error: any) {
@@ -354,7 +386,10 @@ async function startUpdateProcess() {
           // Először próbáljuk a Docker-t
           await appendLog('  - Docker restart próbálása...');
           try {
-            const { stdout: dockerOutput } = await execAsync('docker-compose up -d', { cwd: process.cwd() });
+            const { stdout: dockerOutput } = await execAsync('docker-compose up -d', { 
+              cwd: process.cwd(),
+              timeout: 120000, // 2 perc timeout
+            });
             await appendLog(`  ${dockerOutput || 'Docker restart sikeres'}`);
           } catch (dockerError) {
             // Ha nincs docker, akkor PM2 restart (standalone módban)
@@ -363,7 +398,10 @@ async function startUpdateProcess() {
               // Először próbáljuk megkeresni a PM2 process-t
               let pm2ProcessName = 'zedingaming';
               try {
-                const { stdout: pm2List } = await execAsync('pm2 list --no-color', { cwd: process.cwd() });
+                const { stdout: pm2List } = await execAsync('pm2 list --no-color', { 
+                  cwd: process.cwd(),
+                  timeout: 10000, // 10 másodperc timeout
+                });
                 // Keresünk egy aktív Next.js process-t
                 const lines = pm2List.split('\n');
                 for (const line of lines) {
@@ -382,12 +420,18 @@ async function startUpdateProcess() {
               
               // Próbáljuk restart-olni az összes PM2 process-t, ha nem találunk specifikust
               try {
-                const { stdout: pm2Output } = await execAsync(`pm2 restart ${pm2ProcessName}`, { cwd: process.cwd() });
+                const { stdout: pm2Output } = await execAsync(`pm2 restart ${pm2ProcessName}`, { 
+                  cwd: process.cwd(),
+                  timeout: 30000, // 30 másodperc timeout
+                });
                 await appendLog(`  ${pm2Output || 'PM2 restart sikeres'}`);
               } catch {
                 // Ha a specifikus process nem létezik, próbáljuk az összeset
                 await appendLog('  - Specifikus process nem található, összes PM2 process restart...');
-                const { stdout: pm2Output } = await execAsync('pm2 restart all', { cwd: process.cwd() });
+                const { stdout: pm2Output } = await execAsync('pm2 restart all', { 
+                  cwd: process.cwd(),
+                  timeout: 30000, // 30 másodperc timeout
+                });
                 await appendLog(`  ${pm2Output || 'PM2 restart all sikeres'}`);
               }
             } catch (pm2Error: any) {
