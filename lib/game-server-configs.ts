@@ -1,9 +1,11 @@
 /**
  * Game szerver telepítési konfigurációk
  * 30 legnépszerűbb Steam játék támogatása
+ * További 30 játék: lib/game-server-configs-extended.ts
  */
 
 import { GameType } from '@prisma/client';
+import { EXTENDED_GAME_SERVER_CONFIGS } from './game-server-configs-extended';
 
 export interface GameServerConfig {
   steamAppId?: number; // Steam App ID (ha SteamCMD-t használ)
@@ -641,5 +643,14 @@ export const GAME_SERVER_CONFIGS: Record<GameType, GameServerConfig> = {
     stopCommand: '',
     port: 0,
   },
+  
+  // További játékok (30+)
+  ...EXTENDED_GAME_SERVER_CONFIGS,
 };
+
+// Összevonjuk a két konfigurációt
+export const ALL_GAME_SERVER_CONFIGS: Record<GameType, GameServerConfig> = {
+  ...GAME_SERVER_CONFIGS,
+  ...EXTENDED_GAME_SERVER_CONFIGS,
+} as Record<GameType, GameServerConfig>;
 

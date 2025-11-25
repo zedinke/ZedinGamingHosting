@@ -128,7 +128,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   }
 
   // Előfizetés létrehozása
-  await prisma.subscription.create({
+  const subscription = await prisma.subscription.create({
     data: {
       userId,
       serverId,
@@ -140,6 +140,12 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
       currentPeriodStart: new Date(),
       currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     },
+  });
+
+  // Automatikus telepítés triggerelése
+  const { triggerAutoInstallOnPayment } = await import('@/lib/auto-install-on-payment');
+  triggerAutoInstallOnPayment(serverId).catch((error) => {
+    console.error('Auto-install error:', error);
   });
 }
 
@@ -173,6 +179,9 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
     where: {
       stripeSubscriptionId: invoice.subscription as string,
     },
+    include: {
+      server: true,
+    },
   });
 
   if (!subscription) {
@@ -180,15 +189,29 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
   }
 
   // Számla frissítése
-  await prisma.invoice.updateMany({
+  const updatedInvoice = await prisma.invoice.findFirst({
     where: {
       stripeInvoiceId: invoice.id,
     },
-    data: {
-      status: 'PAID',
-      paidAt: new Date(),
-    },
   });
+
+  if (updatedInvoice) {
+    await prisma.invoice.update({
+      where: { id: updatedInvoice.id },
+      data: {
+        status: 'PAID',
+        paidAt: new Date(),
+      },
+    });
+  }
+
+  // Automatikus telepítés triggerelése (ha van szerver és még nincs telepítve)
+  if (subscription.serverId && subscription.server) {
+    const { triggerAutoInstallOnPayment } = await import('@/lib/auto-install-on-payment');
+    triggerAutoInstallOnPayment(subscription.serverId, updatedInvoice?.id).catch((error) => {
+      console.error('Auto-install error:', error);
+    });
+  }
 }
 
 async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {

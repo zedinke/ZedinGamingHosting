@@ -7,7 +7,7 @@
 import { prisma } from '@/lib/prisma';
 import { executeSSHCommand } from './ssh-client';
 import { GameType } from '@prisma/client';
-import { GAME_SERVER_CONFIGS } from './game-server-configs';
+import { ALL_GAME_SERVER_CONFIGS } from './game-server-configs';
 import { addServerToCluster, createClusterFolder } from './ark-cluster';
 import { logger } from './logger';
 
@@ -56,7 +56,7 @@ export async function installGameServer(
     }
 
     const machine = server.agent.machine;
-    const gameConfig = GAME_SERVER_CONFIGS[gameType];
+    const gameConfig = ALL_GAME_SERVER_CONFIGS[gameType];
 
     if (!gameConfig || gameType === 'OTHER') {
       return {

@@ -273,6 +273,9 @@ async function handlePaymentCompleted(payment: any) {
     where: {
       paypalSubscriptionId: payment.billing_agreement_id,
     },
+    include: {
+      server: true,
+    },
   });
 
   if (!subscription) {
@@ -280,7 +283,7 @@ async function handlePaymentCompleted(payment: any) {
   }
 
   const invoiceNumber = `INV-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  await prisma.invoice.create({
+  const invoice = await prisma.invoice.create({
     data: {
       userId: subscription.userId,
       subscriptionId: subscription.id,
@@ -293,6 +296,14 @@ async function handlePaymentCompleted(payment: any) {
       paidAt: new Date(),
     },
   });
+
+  // Automatikus telepítés triggerelése (ha van szerver és még nincs telepítve)
+  if (subscription.serverId && subscription.server) {
+    const { triggerAutoInstallOnPayment } = await import('@/lib/auto-install-on-payment');
+    triggerAutoInstallOnPayment(subscription.serverId, invoice.id).catch((error) => {
+      console.error('Auto-install error:', error);
+    });
+  }
 }
 
 async function handlePaymentDenied(payment: any) {

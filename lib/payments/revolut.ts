@@ -135,7 +135,7 @@ async function handleOrderCompleted(order: any) {
   }
 
   // Előfizetés létrehozása
-  await prisma.subscription.create({
+  const subscription = await prisma.subscription.create({
     data: {
       userId,
       serverId,
@@ -150,12 +150,10 @@ async function handleOrderCompleted(order: any) {
 
   // Számla létrehozása
   const invoiceNumber = `INV-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  await prisma.invoice.create({
+  const invoice = await prisma.invoice.create({
     data: {
       userId,
-      subscriptionId: (await prisma.subscription.findFirst({
-        where: { revolutOrderId: order.id },
-      }))?.id,
+      subscriptionId: subscription.id,
       paymentProvider: 'REVOLUT',
       revolutOrderId: order.id,
       revolutPaymentId: order.payments?.[0]?.id,
@@ -165,6 +163,12 @@ async function handleOrderCompleted(order: any) {
       invoiceNumber,
       paidAt: new Date(),
     },
+  });
+
+  // Automatikus telepítés triggerelése
+  const { triggerAutoInstallOnPayment } = await import('@/lib/auto-install-on-payment');
+  triggerAutoInstallOnPayment(serverId, invoice.id).catch((error) => {
+    console.error('Auto-install error:', error);
   });
 }
 
