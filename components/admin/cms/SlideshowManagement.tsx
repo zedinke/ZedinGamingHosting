@@ -125,11 +125,12 @@ export function SlideshowManagement({ slides, locale, transitionInterval }: Slid
         ))}
       </div>
 
-      {slides.length === 0 && (
-        <Card className="text-center py-12">
-          <p className="text-gray-600">Még nincs slideshow slide</p>
-        </Card>
-      )}
+        {slides.length === 0 && (
+          <Card className="text-center py-12">
+            <p className="text-gray-600">Még nincs slideshow slide</p>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }
