@@ -118,7 +118,7 @@ export function SystemManagement({
 
       // Polling a progress követéséhez
       let pollCount = 0;
-      const maxPolls = 600; // 10 perc maximum (600 * 1 másodperc)
+      const maxPolls = 1200; // 20 perc maximum (1200 * 1 másodperc)
       
       const checkProgress = async () => {
         pollCount++;
@@ -140,42 +140,41 @@ export function SystemManagement({
           
           if (!progressResponse.ok) {
             // Ha a fájl nem létezik, lehet hogy még nem indult el
-            if (pollCount < 10) {
+            if (pollCount < 5) {
               console.log(`Progress fájl még nem létezik, várakozás... (poll: ${pollCount})`);
-              setTimeout(checkProgress, 2000);
+              setTimeout(checkProgress, 1000);
               return;
             }
-            console.error('Progress fájl nem elérhető:', progressResponse.status, progressResponse.statusText);
-            throw new Error(`Nem sikerült lekérni a frissítés állapotát: ${progressResponse.status} ${progressResponse.statusText}`);
+            console.error('Progress fájl nem elérhető:', progressResponse.status);
+            throw new Error(`Nem sikerült lekérni a frissítés állapotát`);
           }
           
           const progress = await progressResponse.json();
           
           console.log('Progress állapot:', progress.status, 'Progress:', progress.progress, '%');
 
-          // Mindig frissítjük a progress-t, még akkor is, ha idle
+          // Mindig frissítjük a progress-t
           setUpdateProgress(progress);
 
-          if (progress.status === 'completed' || progress.status === 'error') {
+          if (progress.status === 'completed') {
             setIsUpdating(false);
-            if (progress.status === 'completed') {
-              toast.success('Rendszer sikeresen frissítve!');
-              setUpdateCheck(null); // Reset update check
-              setTimeout(() => {
-                window.location.reload();
-              }, 2000);
-            } else {
-              toast.error(progress.error || 'Frissítési hiba');
-            }
-            return; // Ne folytassuk a polling-ot
+            toast.success('Rendszer sikeresen frissítve!');
+            setUpdateCheck(null);
+            setTimeout(() => {
+              window.location.reload();
+            }, 2000);
+            return;
+          } else if (progress.status === 'error') {
+            setIsUpdating(false);
+            toast.error(progress.error || 'Frissítési hiba');
+            return;
           } else if (progress.status === 'starting' || progress.status === 'in_progress') {
             // Folytatjuk a polling-ot
             setTimeout(checkProgress, 1000);
           } else if (progress.status === 'idle') {
-            // Ha idle, lehet hogy még nem indult el, várunk egy kicsit
-            if (pollCount < 20) {
-              // Növeljük a várakozást 20-ra, hogy legyen idő a fájl létrehozására
-              setTimeout(checkProgress, 2000);
+            // Ha idle, lehet hogy még nem indult el
+            if (pollCount < 5) {
+              setTimeout(checkProgress, 1000);
             } else {
               setIsUpdating(false);
               setUpdateProgress(null);
@@ -199,7 +198,7 @@ export function SystemManagement({
       };
 
       // Elindítjuk a progress követést
-      setTimeout(checkProgress, 1000);
+      setTimeout(checkProgress, 500);
     } catch (error: any) {
       setIsUpdating(false);
       setUpdateProgress(null);
@@ -326,8 +325,8 @@ export function SystemManagement({
                       return;
                     }
                     try {
-                      const response = await fetch('/api/admin/system/update/reset', {
-                        method: 'POST',
+                      const response = await fetch('/api/admin/system/update', {
+                        method: 'DELETE',
                       });
                       if (response.ok) {
                         setIsUpdating(false);

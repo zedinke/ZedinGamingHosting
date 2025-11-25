@@ -9,18 +9,20 @@ import { existsSync } from 'fs';
 
 const execAsync = promisify(exec);
 
-// Get project root directory (same logic as update route)
 function getProjectRoot(): string {
   let currentDir = process.cwd();
   
+  // If in standalone, go up to project root
   if (currentDir.includes('.next/standalone')) {
     currentDir = resolve(currentDir, '..', '..');
   }
   
+  // Verify by checking for package.json
   if (existsSync(join(currentDir, 'package.json'))) {
     return currentDir;
   }
   
+  // Try parent directory
   const parentDir = resolve(currentDir, '..');
   if (existsSync(join(parentDir, 'package.json'))) {
     return parentDir;
@@ -39,36 +41,46 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 403 });
     }
 
-    // Get current commit hash
+    // Get current commit
     let currentCommit = '';
     try {
-      const { stdout } = await execAsync('git rev-parse HEAD', { cwd: PROJECT_ROOT });
+      const { stdout } = await execAsync('git rev-parse HEAD', { 
+        cwd: PROJECT_ROOT,
+        timeout: 10000,
+      });
       currentCommit = stdout.trim();
     } catch (error: any) {
+      console.error('Error getting current commit:', error);
       return NextResponse.json({
         hasUpdate: false,
-        error: 'Nem sikerült lekérni a jelenlegi commit-ot: ' + (error.message || 'Ismeretlen hiba'),
+        error: 'Nem sikerült lekérni a jelenlegi commit-ot',
       });
     }
 
-    // Get remote commit hash
+    // Fetch and get remote commit
     let remoteCommit = '';
     try {
-      // Fetch latest info (not pull, just fetch)
-      await execAsync('git fetch origin main', { cwd: PROJECT_ROOT, timeout: 30000 });
-      const { stdout } = await execAsync('git rev-parse origin/main', { cwd: PROJECT_ROOT });
+      await execAsync('git fetch origin main', { 
+        cwd: PROJECT_ROOT, 
+        timeout: 30000 
+      });
+      const { stdout } = await execAsync('git rev-parse origin/main', { 
+        cwd: PROJECT_ROOT,
+        timeout: 10000,
+      });
       remoteCommit = stdout.trim();
     } catch (error: any) {
+      console.error('Error getting remote commit:', error);
       return NextResponse.json({
         hasUpdate: false,
-        error: 'Nem sikerült lekérni a remote commit-ot: ' + (error.message || 'Ismeretlen hiba'),
+        error: 'Nem sikerült lekérni a remote commit-ot',
       });
     }
 
-    // Compare
+    // Compare commits
     const hasUpdate = currentCommit !== remoteCommit;
 
-    // Get commit info (if there's an update)
+    // Get commit info if update available
     let commitInfo = null;
     if (hasUpdate) {
       try {
@@ -79,7 +91,7 @@ export async function GET(request: NextRequest) {
         const commits = stdout.trim().split('\n').filter(Boolean);
         commitInfo = {
           count: commits.length,
-          commits: commits.slice(0, 10), // Latest 10 commits
+          commits: commits.slice(0, 10),
         };
       } catch (error) {
         // Not critical
@@ -95,7 +107,10 @@ export async function GET(request: NextRequest) {
   } catch (error: any) {
     console.error('Update check error:', error);
     return NextResponse.json(
-      { error: 'Hiba történt a frissítés ellenőrzése során: ' + (error.message || 'Ismeretlen hiba'), hasUpdate: false },
+      { 
+        hasUpdate: false, 
+        error: 'Hiba történt a frissítés ellenőrzése során: ' + (error.message || 'Ismeretlen hiba') 
+      },
       { status: 500 }
     );
   }

@@ -11,40 +11,28 @@ import { existsSync } from 'fs';
 
 const execAsync = promisify(exec);
 
-// Get project root directory
 function getProjectRoot(): string {
   let currentDir = process.cwd();
   
-  // If we're in .next/standalone, go up to project root
   if (currentDir.includes('.next/standalone')) {
-    // Go up: .next/standalone -> .next -> project root
     currentDir = resolve(currentDir, '..', '..');
   }
   
-  // Verify it's the project root by checking for package.json
   if (existsSync(join(currentDir, 'package.json'))) {
     return currentDir;
   }
   
-  // Fallback: try going up one more level
   const parentDir = resolve(currentDir, '..');
   if (existsSync(join(parentDir, 'package.json'))) {
     return parentDir;
   }
   
-  // Last resort: use current directory
   return currentDir;
 }
 
 const PROJECT_ROOT = getProjectRoot();
 const PROGRESS_FILE = join(PROJECT_ROOT, '.update-progress.json');
 const LOG_FILE = join(PROJECT_ROOT, '.update-log.txt');
-
-console.log('Update system initialized:', {
-  projectRoot: PROJECT_ROOT,
-  progressFile: PROGRESS_FILE,
-  logFile: LOG_FILE,
-});
 
 async function writeProgress(progress: any) {
   try {
@@ -53,7 +41,6 @@ async function writeProgress(progress: any) {
       timestamp: new Date().toISOString(),
     };
     await writeFile(PROGRESS_FILE, JSON.stringify(progressWithTimestamp, null, 2), 'utf-8');
-    console.log('Progress updated:', progress.status, progress.progress + '%');
   } catch (error: any) {
     console.error('Error writing progress:', error.message);
   }
@@ -71,34 +58,15 @@ async function appendLog(message: string) {
 
 async function clearLog() {
   try {
-    await writeFile(LOG_FILE, '', 'utf-8');
+    if (existsSync(LOG_FILE)) {
+      await unlink(LOG_FILE);
+    }
   } catch (error: any) {
     console.error('Error clearing log:', error.message);
   }
 }
 
-async function readProgress() {
-  try {
-    if (!existsSync(PROGRESS_FILE)) {
-      return { status: 'idle', message: 'Nincs aktív frissítés', progress: 0, log: '' };
-    }
-    const data = await readFile(PROGRESS_FILE, 'utf-8');
-    const progress = JSON.parse(data);
-    
-    // Add log to progress
-    try {
-      const log = await readFile(LOG_FILE, 'utf-8');
-      progress.log = log;
-    } catch {
-      progress.log = '';
-    }
-    
-    return progress;
-  } catch (error) {
-    return { status: 'idle', message: 'Nincs aktív frissítés', progress: 0, log: '' };
-  }
-}
-
+// POST: Start update
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -108,20 +76,26 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if update is already running
-    const currentProgress = await readProgress();
-    if (currentProgress.status === 'in_progress' || currentProgress.status === 'starting') {
-      return NextResponse.json(
-        { error: 'Már van egy frissítés folyamatban' },
-        { status: 400 }
-      );
+    if (existsSync(PROGRESS_FILE)) {
+      try {
+        const currentProgress = JSON.parse(await readFile(PROGRESS_FILE, 'utf-8'));
+        if (currentProgress.status === 'in_progress' || currentProgress.status === 'starting') {
+          return NextResponse.json(
+            { error: 'Már van egy frissítés folyamatban' },
+            { status: 400 }
+          );
+        }
+      } catch {
+        // If we can't read it, assume it's safe to start
+      }
     }
 
-    // Clear old progress and log files
+    // Clear old files
     try {
       if (existsSync(PROGRESS_FILE)) await unlink(PROGRESS_FILE);
       if (existsSync(LOG_FILE)) await unlink(LOG_FILE);
     } catch {
-      // Ignore errors
+      // Ignore
     }
 
     // Initialize progress
@@ -131,11 +105,10 @@ export async function POST(request: NextRequest) {
       status: 'starting',
       message: 'Frissítés indítása...',
       progress: 0,
-      currentStep: 'starting',
-      log: '',
+      currentStep: null,
     });
 
-    // Start update process in background
+    // Start update process in background (don't await)
     startUpdateProcess().catch(async (error: any) => {
       console.error('Update process error:', error);
       await appendLog(`❌ Hiba: ${error.message || 'Ismeretlen hiba'}`);
@@ -144,11 +117,11 @@ export async function POST(request: NextRequest) {
         message: 'Frissítési hiba',
         progress: 0,
         error: error.message || 'Ismeretlen hiba',
-        log: await readFile(LOG_FILE, 'utf-8').catch(() => ''),
+        currentStep: null,
       });
     });
 
-    // Wait a bit to ensure progress file is created
+    // Wait a bit to ensure files are created
     await new Promise(resolve => setTimeout(resolve, 500));
 
     return NextResponse.json({
@@ -164,10 +137,38 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// DELETE: Reset update (clear progress)
+export async function DELETE(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session || (session.user as any).role !== UserRole.ADMIN) {
+      return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 403 });
+    }
+
+    try {
+      if (existsSync(PROGRESS_FILE)) await unlink(PROGRESS_FILE);
+      if (existsSync(LOG_FILE)) await unlink(LOG_FILE);
+    } catch (error: any) {
+      return NextResponse.json(
+        { error: 'Hiba történt a progress törlése során: ' + error.message },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ success: true, message: 'Progress törölve' });
+  } catch (error: any) {
+    console.error('Reset error:', error);
+    return NextResponse.json(
+      { error: 'Hiba történt: ' + (error.message || 'Ismeretlen hiba') },
+      { status: 500 }
+    );
+  }
+}
+
 async function startUpdateProcess() {
   console.log('=== Update process started ===');
   console.log('Project root:', PROJECT_ROOT);
-  console.log('Progress file:', PROGRESS_FILE);
 
   const steps = [
     {
@@ -184,7 +185,6 @@ async function startUpdateProcess() {
         });
 
         try {
-          // Fetch latest changes
           await appendLog('  - Fetch origin main...');
           await execAsync('git fetch origin main', { 
             cwd: PROJECT_ROOT,
@@ -250,7 +250,7 @@ async function startUpdateProcess() {
 
         try {
           await appendLog('  - npm install (ez eltarthat néhány percig)...');
-          const { stdout, stderr } = await execAsync('npm install --legacy-peer-deps', { 
+          await execAsync('npm install --legacy-peer-deps', { 
             cwd: PROJECT_ROOT,
             maxBuffer: 1024 * 1024 * 10,
             timeout: 600000, // 10 minutes
@@ -315,7 +315,7 @@ async function startUpdateProcess() {
           }
 
           await appendLog('  - Next.js build...');
-          const { stdout, stderr } = await execAsync('npm run build', { 
+          await execAsync('npm run build', { 
             cwd: PROJECT_ROOT,
             maxBuffer: 1024 * 1024 * 10,
             timeout: 600000, // 10 minutes
@@ -405,7 +405,6 @@ async function startUpdateProcess() {
           progress: 0,
           currentStep: step.key,
           error: error.message,
-          log: await readFile(LOG_FILE, 'utf-8').catch(() => ''),
         });
         throw error;
       }
@@ -418,7 +417,6 @@ async function startUpdateProcess() {
       message: 'Frissítés sikeresen befejezve!',
       progress: 100,
       currentStep: 'completed',
-      log: await readFile(LOG_FILE, 'utf-8').catch(() => ''),
     });
 
     // Save last update time
@@ -437,8 +435,9 @@ async function startUpdateProcess() {
       message: 'Frissítési hiba',
       progress: 0,
       error: error.message || 'Ismeretlen hiba',
-      log: await readFile(LOG_FILE, 'utf-8').catch(() => ''),
+      currentStep: null,
     });
     throw error;
   }
 }
+

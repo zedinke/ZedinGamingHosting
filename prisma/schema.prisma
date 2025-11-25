@@ -107,11 +107,16 @@ model Server {
   maxPlayers    Int         @default(10)
   configuration Json?       // Szerver konfiguráció JSON formátumban
   resourceUsage Json?       // CPU, RAM, Disk használat
+  machineId     String?     // Melyik gépen fut
+  agentId       String?     // Melyik agent kezeli
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
   user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   subscription  Subscription?
+  machine       ServerMachine? @relation(fields: [machineId], references: [id], onDelete: SetNull)
+  agent         Agent?         @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  tasks         Task[]
 
   @@map("servers")
 }
@@ -490,5 +495,100 @@ model ThemeSetting {
   updatedAt DateTime @updatedAt
 
   @@map("theme_settings")
+}
+
+// Szerver gépek (host nodes)
+model ServerMachine {
+  id            String   @id @default(cuid())
+  name          String
+  ipAddress     String  @unique
+  sshPort       Int     @default(22)
+  sshUser       String
+  sshKeyPath    String? @db.Text // SSH kulcs elérési út
+  status        MachineStatus @default(OFFLINE)
+  agentVersion  String?
+  lastHeartbeat DateTime?
+  resources     Json?    // CPU, RAM, Disk kapacitás { cpu: { cores, usage }, ram: { total, used }, disk: { total, used } }
+  notes         String?  @db.Text
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  agents        Agent[]
+  servers       Server[]
+  
+  @@map("server_machines")
+}
+
+enum MachineStatus {
+  ONLINE
+  OFFLINE
+  ERROR
+  MAINTENANCE
+}
+
+// Game Server Agents
+model Agent {
+  id            String   @id @default(cuid())
+  machineId     String
+  agentId       String   @unique // Egyedi agent azonosító
+  version       String
+  status        AgentStatus @default(OFFLINE)
+  lastHeartbeat DateTime?
+  capabilities  Json?    // Agent képességek { docker: true, systemd: true, etc. }
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  machine       ServerMachine @relation(fields: [machineId], references: [id], onDelete: Cascade)
+  servers       Server[]
+  tasks         Task[]
+  
+  @@map("agents")
+}
+
+enum AgentStatus {
+  ONLINE
+  OFFLINE
+  ERROR
+  UPDATING
+}
+
+// Feladatütemezés
+model Task {
+  id          String   @id @default(cuid())
+  agentId     String?
+  serverId    String?
+  type        TaskType
+  status      TaskStatus @default(PENDING)
+  command     Json     // Parancs adatok { action, params, etc. }
+  result      Json?    // Eredmény
+  error       String?  @db.Text
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  agent       Agent?   @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  server      Server?  @relation(fields: [serverId], references: [id], onDelete: SetNull)
+  
+  @@map("tasks")
+}
+
+enum TaskType {
+  PROVISION
+  START
+  STOP
+  RESTART
+  UPDATE
+  BACKUP
+  DELETE
+  INSTALL_AGENT
+}
+
+enum TaskStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
 }
 
