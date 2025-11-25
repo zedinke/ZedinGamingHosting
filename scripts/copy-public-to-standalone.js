@@ -1,0 +1,47 @@
+const fs = require('fs');
+const path = require('path');
+
+const publicDir = path.join(process.cwd(), 'public');
+const standalonePublicDir = path.join(process.cwd(), '.next/standalone/public');
+
+if (!fs.existsSync('.next/standalone')) {
+  console.log('Standalone build not found, skipping public folder copy');
+  process.exit(0);
+}
+
+if (!fs.existsSync(publicDir)) {
+  console.log('Public folder not found, skipping copy');
+  process.exit(0);
+}
+
+// Create standalone public directory if it doesn't exist
+if (!fs.existsSync(standalonePublicDir)) {
+  fs.mkdirSync(standalonePublicDir, { recursive: true });
+}
+
+// Recursive copy function
+const copyRecursive = (src, dest) => {
+  const exists = fs.existsSync(src);
+  const stats = exists && fs.statSync(src);
+  const isDirectory = exists && stats.isDirectory();
+
+  if (isDirectory) {
+    if (!fs.existsSync(dest)) {
+      fs.mkdirSync(dest, { recursive: true });
+    }
+    fs.readdirSync(src).forEach((childItem) => {
+      copyRecursive(path.join(src, childItem), path.join(dest, childItem));
+    });
+  } else {
+    fs.copyFileSync(src, dest);
+  }
+};
+
+try {
+  copyRecursive(publicDir, standalonePublicDir);
+  console.log('✓ Public folder copied to standalone build');
+} catch (error) {
+  console.error('✗ Error copying public folder:', error);
+  process.exit(1);
+}
+
