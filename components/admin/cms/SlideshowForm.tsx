@@ -101,27 +101,38 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
 
       if (!response.ok) {
         toast.error(result.error || 'Hiba történt a kép feltöltése során');
+        setUploading(false);
         return null;
       }
 
+      // A feltöltött kép URL-je
+      const uploadedUrl = result.url;
+      
+      // Frissítjük az előnézetet
+      setImagePreview(uploadedUrl);
+      
+      // Beállítjuk a form image mezőjét is - fontos, hogy shouldValidate: true legyen
+      setValue('image', uploadedUrl, { 
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true,
+      });
+      
       toast.success('Kép sikeresen feltöltve');
-      setImagePreview(result.url);
-      // Beállítjuk a form image mezőjét is
-      setValue('image', result.url, { shouldValidate: true });
-      return result.url;
-    } catch (error) {
-      toast.error('Hiba történt a kép feltöltése során');
-      return null;
-    } finally {
       setUploading(false);
+      return uploadedUrl;
+    } catch (error) {
+      console.error('Image upload error:', error);
+      toast.error('Hiba történt a kép feltöltése során');
+      setUploading(false);
+      return null;
     }
   };
 
   const onSubmit = async (data: SlideshowSlideFormData) => {
     setIsLoading(true);
     try {
-      // Ha van imagePreview, azt használjuk (feltöltött kép)
-      // De először ellenőrizzük, hogy a form image mezője is frissítve van-e
+      // A kép URL-je - először az imagePreview-t, aztán a form értékét használjuk
       const currentImageValue = watch('image');
       const imageUrl = imagePreview || currentImageValue || data.image;
 
@@ -131,11 +142,21 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
         return;
       }
 
-      // Ha az imageUrl nem egyezik meg a form értékével, frissítjük
-      if (imageUrl !== data.image && imageUrl !== currentImageValue) {
-        setValue('image', imageUrl, { shouldValidate: true });
+      // Ha az imageUrl nem egyezik meg a form értékével, frissítjük és újra validáljuk
+      if (imageUrl !== data.image) {
+        setValue('image', imageUrl, { 
+          shouldValidate: true,
+          shouldDirty: true,
+        });
         // Várunk egy kicsit, hogy a validáció frissüljön
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
+        // Újra lekérjük az adatokat a validáció után
+        const updatedData = watch();
+        if (updatedData.image !== imageUrl) {
+          // Ha még mindig nem egyezik, akkor manuálisan beállítjuk
+          setValue('image', imageUrl, { shouldValidate: false });
+        }
       }
 
       // Ha nincs link, de van buttonText, akkor a buttonText-et is null-ra állítjuk
@@ -245,26 +266,32 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
             {/* Vagy URL megadása */}
             <div>
               <label className="block text-sm text-gray-600 mb-2">
-                Vagy add meg a kép URL-jét:
+                Vagy add meg a kép URL-jét vagy relatív elérési útját:
               </label>
               <input
                 {...register('image', {
                   onChange: (e) => {
-                    setImagePreview(e.target.value);
+                    const value = e.target.value;
+                    setImagePreview(value);
+                    setValue('image', value, { shouldValidate: true });
                   },
                 })}
-                type="url"
+                type="text"
                 value={imagePreview || watch('image') || ''}
                 onChange={(e) => {
-                  setImagePreview(e.target.value);
-                  setValue('image', e.target.value, { shouldValidate: true });
+                  const value = e.target.value;
+                  setImagePreview(value);
+                  setValue('image', value, { shouldValidate: true });
                 }}
                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
-                placeholder="https://example.com/image.jpg"
+                placeholder="https://example.com/image.jpg vagy /uploads/slideshow/image.jpg"
               />
               {errors.image && (
                 <p className="text-red-500 text-sm mt-1">{errors.image.message}</p>
               )}
+              <p className="text-xs text-gray-500 mt-1">
+                Megadhatsz teljes URL-t (https://...) vagy relatív elérési utat (/uploads/...)
+              </p>
             </div>
 
             {/* Kép előnézet */}
