@@ -13,9 +13,9 @@ interface InvoiceItem {
   total: number;
 }
 
-interface InvoiceData extends Omit<Invoice, 'subtotal' | 'taxAmount' | 'taxRate' | 'companyName' | 'companyTaxNumber' | 'companyAddress' | 'companyVatNumber' | 'billingName' | 'billingAddress' | 'billingTaxNumber' | 'paymentMethod' | 'paymentReference'> {
+interface InvoiceData extends Omit<Invoice, 'subtotal' | 'taxAmount' | 'taxRate' | 'companyName' | 'companyTaxNumber' | 'companyAddress' | 'companyVatNumber' | 'billingName' | 'billingAddress' | 'billingTaxNumber' | 'paymentMethod' | 'paymentReference' | 'items'> {
   user: User;
-  items?: InvoiceItem[] | null;
+  items: InvoiceItem[] | null;
   subtotal: number | null;
   taxAmount: number | null;
   taxRate: number | null;
