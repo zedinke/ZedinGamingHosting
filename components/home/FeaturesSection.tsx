@@ -66,32 +66,45 @@ export function FeaturesSection({ locale, translations, section }: FeaturesSecti
   const subtitle = section?.subtitle || 'Minden, amire szükséged van egy professzionális gaming szerverhez';
 
   return (
-    <section className="py-20 bg-gray-50">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            {title}
+    <section className="py-24 bg-dark-900 relative overflow-hidden">
+      {/* Background pattern */}
+      <div className="absolute inset-0 hexagon-pattern opacity-10"></div>
+      
+      <div className="container mx-auto px-4 relative z-10">
+        <div className="text-center mb-20">
+          <div className="inline-block px-4 py-2 mb-6 glass-effect rounded-full border border-primary-500/30">
+            <span className="text-sm font-semibold text-primary-400 uppercase tracking-wider">Funkciók</span>
+          </div>
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 text-glow">
+            <span className="bg-clip-text text-transparent gamer-gradient">
+              {title}
+            </span>
           </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
             {subtitle}
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           {features.map((feature, index) => {
             const Icon = feature.icon;
             return (
-              <Card key={index} hover className="text-center">
-                <div className="inline-flex items-center justify-center w-16 h-16 mb-4 bg-primary-100 rounded-full">
-                  <Icon className="w-8 h-8 text-primary-600" />
+              <div
+                key={index}
+                className="group card-glow text-center p-8 hover:scale-105 transition-all duration-300 animate-slide-up"
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
+                <div className="inline-flex items-center justify-center w-20 h-20 mb-6 bg-gradient-to-br from-primary-500/20 to-secondary-500/20 rounded-2xl border border-primary-500/30 group-hover:border-primary-400 group-hover:shadow-neon transition-all duration-300">
+                  <Icon className="w-10 h-10 text-primary-400 group-hover:text-primary-300 transition-colors" />
                 </div>
-                <h3 className="text-xl font-bold mb-3 text-gray-900">
+                <h3 className="text-2xl font-bold mb-4 text-white group-hover:text-primary-300 transition-colors">
                   {feature.title}
                 </h3>
-                <p className="text-gray-600 leading-relaxed">
+                <p className="text-gray-400 leading-relaxed group-hover:text-gray-300 transition-colors">
                   {feature.description}
                 </p>
-              </Card>
+                <div className="mt-6 h-1 w-0 bg-gradient-to-r from-primary-500 to-secondary-500 group-hover:w-full transition-all duration-500 rounded-full"></div>
+              </div>
             );
           })}
         </div>

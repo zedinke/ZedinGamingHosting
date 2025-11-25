@@ -139,17 +139,22 @@ export default async function DashboardPage({
   const validLocale = locale === 'hu' || locale === 'en' ? locale : 'hu';
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-dark-900">
       <Navigation locale={validLocale} />
       <main className="container mx-auto px-4 py-8">
         {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold mb-2 text-gray-900">
-            {dashboardTitle}
-          </h1>
-          <p className="text-gray-600 text-lg">
-            Üdvözöljük, <span className="font-semibold text-gray-900">{userName || userEmail || 'Felhasználó'}</span>!
-          </p>
+        <div className="mb-10 relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary-600/20 via-secondary-600/20 to-accent-500/20 blur-3xl rounded-3xl"></div>
+          <div className="relative glass-effect rounded-2xl p-8 border border-primary-500/30">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black mb-4 text-glow">
+              <span className="bg-clip-text text-transparent gamer-gradient">
+                {dashboardTitle}
+              </span>
+            </h1>
+            <p className="text-xl text-gray-300">
+              Üdvözöljük, <span className="font-bold text-primary-400">{userName || userEmail || 'Felhasználó'}</span>! 👋
+            </p>
+          </div>
         </div>
 
         {/* Statisztikák */}

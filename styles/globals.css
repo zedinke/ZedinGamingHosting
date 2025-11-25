@@ -2,29 +2,145 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
 @layer base {
+  * {
+    @apply border-border;
+  }
+  
   body {
-    @apply text-gray-900 antialiased;
+    @apply bg-dark-900 text-gray-100 antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Orbitron', 'Inter', system-ui, sans-serif;
+    @apply font-bold;
+  }
+  
+  code, pre {
+    font-family: 'JetBrains Mono', monospace;
+  }
+  
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-dark-800;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-primary-600 rounded-full;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary-500;
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors;
+    @apply bg-gradient-to-r from-primary-600 to-primary-700 text-white px-6 py-3 rounded-lg font-semibold 
+           hover:from-primary-500 hover:to-primary-600 transition-all duration-300 
+           shadow-lg shadow-primary-500/50 hover:shadow-xl hover:shadow-primary-500/60
+           transform hover:scale-105 active:scale-95;
   }
   
   .btn-secondary {
-    @apply border border-primary-600 text-primary-600 px-4 py-2 rounded-lg hover:bg-primary-50 transition-colors;
+    @apply border-2 border-primary-500 text-primary-400 px-6 py-3 rounded-lg font-semibold 
+           hover:bg-primary-500/10 hover:border-primary-400 hover:text-primary-300 
+           transition-all duration-300 backdrop-blur-sm;
+  }
+  
+  .btn-glow {
+    @apply relative overflow-hidden;
+    box-shadow: 0 0 20px rgba(91, 111, 255, 0.4);
+  }
+  
+  .btn-glow::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent;
+    transform: translateX(-100%);
+    animation: shimmer 2s infinite;
   }
   
   .card {
-    @apply bg-white rounded-lg shadow-md p-6;
+    @apply bg-dark-800/50 backdrop-blur-sm rounded-xl border border-dark-700 p-6 
+           shadow-xl hover:shadow-2xl hover:border-primary-500/50 transition-all duration-300;
+  }
+  
+  .card-glow {
+    @apply card;
+    box-shadow: 0 0 30px rgba(91, 111, 255, 0.1);
+  }
+  
+  .card-glow:hover {
+    box-shadow: 0 0 40px rgba(91, 111, 255, 0.2);
+  }
+  
+  .gamer-gradient {
+    @apply bg-gradient-to-br from-primary-600 via-secondary-600 to-accent-500;
+    background-size: 200% 200%;
+    animation: gradient 8s ease infinite;
+  }
+  
+  .text-glow {
+    text-shadow: 0 0 10px rgba(91, 111, 255, 0.5), 0 0 20px rgba(91, 111, 255, 0.3);
+  }
+  
+  .neon-border {
+    @apply border-2 border-primary-500;
+    box-shadow: 0 0 10px rgba(91, 111, 255, 0.5), inset 0 0 10px rgba(91, 111, 255, 0.1);
+  }
+  
+  .glass-effect {
+    @apply bg-dark-800/30 backdrop-blur-md border border-dark-700/50;
   }
 }
 
 @layer utilities {
   .animate-blob {
     animation: blob 7s infinite;
+  }
+  
+  @keyframes blob {
+    0%, 100% {
+      transform: translate(0, 0) scale(1);
+    }
+    33% {
+      transform: translate(30px, -50px) scale(1.1);
+    }
+    66% {
+      transform: translate(-20px, 20px) scale(0.9);
+    }
+  }
+  
+  .animation-delay-2000 {
+    animation-delay: 2s;
+  }
+  
+  .animation-delay-4000 {
+    animation-delay: 4s;
+  }
+  
+  /* Grid pattern background */
+  .grid-pattern {
+    background-image: 
+      linear-gradient(rgba(91, 111, 255, 0.1) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(91, 111, 255, 0.1) 1px, transparent 1px);
+    background-size: 50px 50px;
+  }
+  
+  /* Hexagon pattern */
+  .hexagon-pattern {
+    background-image: 
+      repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(91, 111, 255, 0.03) 2px, rgba(91, 111, 255, 0.03) 4px),
+      repeating-linear-gradient(60deg, transparent, transparent 2px, rgba(91, 111, 255, 0.03) 2px, rgba(91, 111, 255, 0.03) 4px),
+      repeating-linear-gradient(120deg, transparent, transparent 2px, rgba(91, 111, 255, 0.03) 2px, rgba(91, 111, 255, 0.03) 4px);
   }
   
   .animation-delay-2000 {

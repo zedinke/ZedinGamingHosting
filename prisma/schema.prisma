@@ -178,6 +178,28 @@ model Invoice {
   paidAt            DateTime?
   invoiceNumber     String        @unique
   pdfUrl            String?
+  
+  // Hatósági követelmények - számlázási adatok
+  taxAmount         Float?        // ÁFA összeg
+  taxRate           Float?        // ÁFA kulcs (pl. 27%)
+  subtotal          Float?        // Nettó összeg
+  items             Json?         // Számla tételek (tömb)
+  
+  // Céginformációk (ha van)
+  companyName       String?       // Cégnév
+  companyTaxNumber  String?       // Adószám
+  companyAddress    String?       @db.Text // Cím
+  companyVatNumber  String?       // ÁFA szám
+  
+  // Számlázási cím
+  billingName       String?       // Számlázási név
+  billingAddress    String?       @db.Text // Számlázási cím
+  billingTaxNumber  String?       // Számlázási adószám
+  
+  // Fizetési információk
+  paymentMethod     String?       // Fizetési mód
+  paymentReference  String?       // Fizetési referencia
+  
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 
