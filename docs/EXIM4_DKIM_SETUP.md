@@ -20,9 +20,22 @@ systemctl enable exim4
 
 ### 2. DKIM konfiguráció ellenőrzése
 
+**Fontos:** A Hestia CP parancsoknak USER paraméterre is szükségük van!
+
+Először találd meg a domain tulajdonos user-t:
+```bash
+# User keresése domain alapján
+bash scripts/find-hestia-user.sh zedgaminghosting.hu
+
+# Vagy manuálisan a könyvtárak alapján
+ls -la /home/*/web/zedgaminghosting.hu
+ls -la /home/*/mail/zedgaminghosting.hu
+```
+
+Példa: Ha a user `ZedGamingHosting`, akkor:
 ```bash
 # Hestia CP DKIM információk
-/usr/local/hestia/bin/v-list-mail-domain-dkim zedgaminghosting.hu
+/usr/local/hestia/bin/v-list-mail-domain-dkim ZedGamingHosting zedgaminghosting.hu
 
 # DKIM kulcs fájlok
 ls -la /usr/local/hestia/data/ssl/dkim/
@@ -44,17 +57,30 @@ dig TXT default._domainkey.zedgaminghosting.hu +short
 
 ### 1. DKIM újragenerálása
 
+**Fontos:** Cseréld ki a `USER` paramétert a tényleges Hestia CP user nevére!
+
 Ha a DKIM nem működik, töröld és generáld újra:
 
 ```bash
-# DKIM törlése
-/usr/local/hestia/bin/v-delete-mail-domain-dkim zedgaminghosting.hu
+# USER megtalálása (pl. 'ZedGamingHosting')
+# Nézd meg: /home/*/web/zedgaminghosting.hu vagy /home/*/mail/zedgaminghosting.hu
+
+# DKIM törlése (USER = a Hestia CP user neve)
+/usr/local/hestia/bin/v-delete-mail-domain-dkim USER zedgaminghosting.hu
 
 # DKIM újragenerálása
-/usr/local/hestia/bin/v-add-mail-domain-dkim zedgaminghosting.hu
+/usr/local/hestia/bin/v-add-mail-domain-dkim USER zedgaminghosting.hu
 
 # DKIM információk megtekintése
-/usr/local/hestia/bin/v-list-mail-domain-dkim zedgaminghosting.hu
+/usr/local/hestia/bin/v-list-mail-domain-dkim USER zedgaminghosting.hu
+```
+
+**Példa:**
+```bash
+# Ha a user 'ZedGamingHosting'
+/usr/local/hestia/bin/v-delete-mail-domain-dkim ZedGamingHosting zedgaminghosting.hu
+/usr/local/hestia/bin/v-add-mail-domain-dkim ZedGamingHosting zedgaminghosting.hu
+/usr/local/hestia/bin/v-list-mail-domain-dkim ZedGamingHosting zedgaminghosting.hu
 ```
 
 ### 2. DNS rekord hozzáadása
@@ -209,9 +235,12 @@ DKIM: signed domain=zedgaminghosting.hu selector=mail
 
 **Megoldás:**
 ```bash
-# DKIM újragenerálása
-/usr/local/hestia/bin/v-delete-mail-domain-dkim zedgaminghosting.hu
-/usr/local/hestia/bin/v-add-mail-domain-dkim zedgaminghosting.hu
+# USER megtalálása
+bash scripts/find-hestia-user.sh zedgaminghosting.hu
+
+# DKIM újragenerálása (USER = a Hestia CP user neve)
+/usr/local/hestia/bin/v-delete-mail-domain-dkim USER zedgaminghosting.hu
+/usr/local/hestia/bin/v-add-mail-domain-dkim USER zedgaminghosting.hu
 
 # Ellenőrzés
 ls -la /usr/local/hestia/data/ssl/dkim/zedgaminghosting.hu/

@@ -51,8 +51,16 @@ echo ""
 echo "3. HESTIA CP DKIM KULCSOK"
 echo "=========================="
 if [ -f "/usr/local/hestia/bin/v-list-mail-domain-dkim" ]; then
-    echo "DKIM kulcs információk:"
-    /usr/local/hestia/bin/v-list-mail-domain-dkim $DOMAIN 2>/dev/null || echo "   ⚠️  DKIM nincs beállítva"
+    # User keresése
+    USER=$(ls -d /home/*/web/$DOMAIN /home/*/mail/$DOMAIN 2>/dev/null | head -1 | cut -d'/' -f3)
+    if [ ! -z "$USER" ]; then
+        echo "Talált user: $USER"
+        echo "DKIM kulcs információk:"
+        /usr/local/hestia/bin/v-list-mail-domain-dkim $USER $DOMAIN 2>/dev/null || echo "   ⚠️  DKIM nincs beállítva"
+    else
+        echo "   ⚠️  User nem található automatikusan"
+        echo "   Futtasd: bash scripts/find-hestia-user.sh $DOMAIN"
+    fi
     
     # DKIM kulcs fájlok ellenőrzése
     echo ""
@@ -117,10 +125,19 @@ else
 fi
 
 echo ""
-echo "Ha a DKIM nem működik, próbáld:"
-echo "1. DKIM újragenerálása:"
-echo "   /usr/local/hestia/bin/v-delete-mail-domain-dkim $DOMAIN"
-echo "   /usr/local/hestia/bin/v-add-mail-domain-dkim $DOMAIN"
+if [ ! -z "$USER" ]; then
+    echo "Ha a DKIM nem működik, próbáld:"
+    echo "1. DKIM újragenerálása:"
+    echo "   /usr/local/hestia/bin/v-delete-mail-domain-dkim $USER $DOMAIN"
+    echo "   /usr/local/hestia/bin/v-add-mail-domain-dkim $USER $DOMAIN"
+else
+    echo "Ha a DKIM nem működik:"
+    echo "1. Találd meg a user-t:"
+    echo "   bash scripts/find-hestia-user.sh $DOMAIN"
+    echo "2. DKIM újragenerálása:"
+    echo "   /usr/local/hestia/bin/v-delete-mail-domain-dkim USER $DOMAIN"
+    echo "   /usr/local/hestia/bin/v-add-mail-domain-dkim USER $DOMAIN"
+fi
 echo ""
 echo "2. Exim4 újraindítása:"
 echo "   systemctl restart exim4"
