@@ -47,13 +47,19 @@ export default async function DashboardPage({
     redirect(`/${locale}/login`);
   }
 
-  // Translation betöltése
+  // Translation betöltése - biztonságos módon
   let t: (key: string) => string;
   try {
     t = getTranslations(locale, 'common');
   } catch (error) {
     console.error('Error loading translations:', error);
-    t = (key: string) => key;
+    // Fallback translation function
+    t = (key: string) => {
+      const fallbacks: Record<string, string> = {
+        'dashboard.title': 'Dashboard',
+      };
+      return fallbacks[key] || key;
+    };
   }
 
   // Felhasználó szervereinek lekérése
@@ -116,7 +122,18 @@ export default async function DashboardPage({
     subscriptions = [];
   }
 
-  const onlineServers = servers.filter((s: { status: string }) => s.status === 'ONLINE').length;
+  // Biztosítjuk, hogy minden adat szerializálható legyen
+  const serializableServers = servers.map(server => ({
+    id: String(server.id),
+    name: String(server.name || ''),
+    gameType: String(server.gameType || ''),
+    maxPlayers: Number(server.maxPlayers || 0),
+    ipAddress: server.ipAddress ? String(server.ipAddress) : null,
+    port: server.port ? Number(server.port) : null,
+    status: String(server.status || 'OFFLINE'),
+  }));
+
+  const onlineServers = serializableServers.filter((s: { status: string }) => s.status === 'ONLINE').length;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -136,7 +153,7 @@ export default async function DashboardPage({
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <StatCard
             title="Szervereim"
-            value={servers.length}
+            value={serializableServers.length}
             icon={Server}
             color="primary"
           />
@@ -154,7 +171,7 @@ export default async function DashboardPage({
           />
           <StatCard
             title="Offline Szerverek"
-            value={servers.length - onlineServers}
+            value={serializableServers.length - onlineServers}
             icon={Server}
             color="warning"
           />
@@ -186,7 +203,7 @@ export default async function DashboardPage({
         </div>
 
         {/* Szerverek listája */}
-        <ServerListCard servers={servers} locale={locale} />
+        <ServerListCard servers={serializableServers} locale={locale} />
       </main>
     </div>
   );
