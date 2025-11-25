@@ -6,6 +6,7 @@ import { unlink } from 'fs/promises';
 import { join } from 'path';
 
 const PROGRESS_FILE = join(process.cwd(), '.update-progress.json');
+const LOG_FILE = join(process.cwd(), '.update-log.txt');
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,6 +22,16 @@ export async function POST(request: NextRequest) {
     // Progress fájl törlése
     try {
       await unlink(PROGRESS_FILE);
+    } catch (error: any) {
+      // Ha nincs fájl, nem probléma
+      if (error.code !== 'ENOENT') {
+        throw error;
+      }
+    }
+
+    // Log fájl törlése
+    try {
+      await unlink(LOG_FILE);
     } catch (error: any) {
       // Ha nincs fájl, nem probléma
       if (error.code !== 'ENOENT') {

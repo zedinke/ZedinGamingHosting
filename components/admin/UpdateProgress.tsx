@@ -8,6 +8,7 @@ interface UpdateProgressProps {
     currentStep?: string;
     totalSteps?: number;
     error?: string;
+    log?: string;
   };
 }
 
@@ -120,6 +121,21 @@ export function UpdateProgress({ progress }: UpdateProgressProps) {
           );
         })}
       </div>
+
+      {/* Live Log */}
+      {progress.log && (
+        <div className="p-4 bg-gray-900 text-green-400 rounded-lg font-mono text-xs max-h-96 overflow-y-auto">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-green-300 font-semibold">Live Log:</span>
+            {progress.status === 'in_progress' && (
+              <span className="text-green-400 animate-pulse">●</span>
+            )}
+          </div>
+          <pre className="whitespace-pre-wrap break-words">
+            {progress.log}
+          </pre>
+        </div>
+      )}
 
       {/* Error message */}
       {progress.status === 'error' && progress.error && (
