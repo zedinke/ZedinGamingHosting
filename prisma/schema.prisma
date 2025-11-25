@@ -430,7 +430,9 @@ model SlideshowSlide {
   id          String   @id @default(cuid())
   title       String?
   subtitle    String?  @db.Text
-  image       String
+  image       String?  // Opcionális, ha video van
+  video       String?  // Opcionális, ha image van
+  mediaType   String   @default("image") // "image" vagy "video"
   link        String?
   buttonText  String?
   isActive    Boolean  @default(true)

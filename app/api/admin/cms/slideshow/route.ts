@@ -8,12 +8,32 @@ import { z } from 'zod';
 const slideshowSlideSchema = z.object({
   title: z.string().optional().nullable(),
   subtitle: z.string().optional().nullable(),
-  image: z.string().min(1, 'Kép megadása kötelező').refine(
-    (val) => {
-      // URL vagy relatív path (pl. /uploads/slideshow/image.jpg)
-      return val.startsWith('http://') || val.startsWith('https://') || val.startsWith('/');
+  mediaType: z.enum(['image', 'video']).default('image'),
+  image: z.string().optional().nullable().refine(
+    (val, ctx) => {
+      const mediaType = (ctx as any).parent?.mediaType;
+      if (mediaType === 'image') {
+        if (!val || val.trim() === '') {
+          return false;
+        }
+        return val.startsWith('http://') || val.startsWith('https://') || val.startsWith('/');
+      }
+      return true;
     },
-    { message: 'Érvényes URL vagy fájl elérési út szükséges' }
+    { message: 'Kép megadása kötelező, ha kép típusú slide' }
+  ),
+  video: z.string().optional().nullable().refine(
+    (val, ctx) => {
+      const mediaType = (ctx as any).parent?.mediaType;
+      if (mediaType === 'video') {
+        if (!val || val.trim() === '') {
+          return false;
+        }
+        return val.startsWith('http://') || val.startsWith('https://') || val.startsWith('/');
+      }
+      return true;
+    },
+    { message: 'Videó megadása kötelező, ha videó típusú slide' }
   ),
   link: z.union([
     z.string().url('Érvényes URL szükséges'),
@@ -61,7 +81,9 @@ export async function POST(request: NextRequest) {
       data: {
         title: data.title || null,
         subtitle: data.subtitle || null,
-        image: data.image,
+        mediaType: data.mediaType || 'image',
+        image: data.mediaType === 'image' ? (data.image || null) : null,
+        video: data.mediaType === 'video' ? (data.video || null) : null,
         link: data.link || null,
         buttonText: data.buttonText || null,
         isActive: data.isActive,

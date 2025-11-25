@@ -7,7 +7,9 @@ interface SlideshowSlide {
   id: string;
   title: string | null;
   subtitle: string | null;
-  image: string;
+  image: string | null;
+  video: string | null;
+  mediaType: string;
   link: string | null;
   buttonText: string | null;
   isActive?: boolean;
@@ -86,7 +88,7 @@ export function SlideshowSection({ slides, locale, transitionInterval = 5 }: Sli
 
   // Use slides from database if available, otherwise use default images
   const activeSlides = slides.length > 0 
-    ? slides.filter((slide) => slide && slide.image)
+    ? slides.filter((slide) => slide && (slide.image || slide.video))
     : defaultGameImages;
   
   // Always use default images if no slides from database
@@ -125,7 +127,7 @@ export function SlideshowSection({ slides, locale, transitionInterval = 5 }: Sli
 
   return (
     <section className="relative w-full h-screen min-h-[600px] overflow-hidden bg-white">
-      {/* Background images - slideshow */}
+      {/* Background media - slideshow */}
       <div className="absolute inset-0 w-full h-full z-0">
         {displaySlides.map((s, index) => (
           <div
@@ -134,16 +136,27 @@ export function SlideshowSection({ slides, locale, transitionInterval = 5 }: Sli
               index === currentSlide ? 'opacity-100' : 'opacity-0'
             }`}
           >
-            <img
-              src={s.image}
-              alt={s.title || 'Slide'}
-              className="w-full h-full object-cover"
-              loading={index === 0 ? 'eager' : 'lazy'}
-              onError={(e) => {
-                // Fallback to placeholder if image fails to load
-                (e.target as HTMLImageElement).src = 'https://via.placeholder.com/1920x1080/1a1f2e/5b6fff?text=Gaming+Server';
-              }}
-            />
+            {s.mediaType === 'video' && s.video ? (
+              <video
+                src={s.video}
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <img
+                src={s.image || 'https://via.placeholder.com/1920x1080/1a1f2e/5b6fff?text=Gaming+Server'}
+                alt={s.title || 'Slide'}
+                className="w-full h-full object-cover"
+                loading={index === 0 ? 'eager' : 'lazy'}
+                onError={(e) => {
+                  // Fallback to placeholder if image fails to load
+                  (e.target as HTMLImageElement).src = 'https://via.placeholder.com/1920x1080/1a1f2e/5b6fff?text=Gaming+Server';
+                }}
+              />
+            )}
           </div>
         ))}
         {/* 30% dark overlay */}

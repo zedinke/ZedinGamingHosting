@@ -12,12 +12,32 @@ import { Card } from '@/components/ui/Card';
 const slideshowSlideSchema = z.object({
   title: z.string().optional().or(z.literal('')),
   subtitle: z.string().optional().or(z.literal('')),
-  image: z.string().min(1, 'Kép megadása kötelező').refine(
-    (val) => {
-      // URL vagy relatív path (pl. /uploads/slideshow/image.jpg)
-      return val.startsWith('http://') || val.startsWith('https://') || val.startsWith('/');
+  mediaType: z.enum(['image', 'video']).default('image'),
+  image: z.string().optional().refine(
+    (val, ctx) => {
+      const mediaType = ctx.parent.mediaType;
+      if (mediaType === 'image') {
+        if (!val || val.trim() === '') {
+          return false;
+        }
+        return val.startsWith('http://') || val.startsWith('https://') || val.startsWith('/');
+      }
+      return true; // Ha video, akkor nem kötelező
     },
-    { message: 'Érvényes URL vagy fájl elérési út szükséges' }
+    { message: 'Kép megadása kötelező, ha kép típusú slide-ot hozol létre' }
+  ),
+  video: z.string().optional().refine(
+    (val, ctx) => {
+      const mediaType = ctx.parent.mediaType;
+      if (mediaType === 'video') {
+        if (!val || val.trim() === '') {
+          return false;
+        }
+        return val.startsWith('http://') || val.startsWith('https://') || val.startsWith('/');
+      }
+      return true; // Ha image, akkor nem kötelező
+    },
+    { message: 'Videó megadása kötelező, ha videó típusú slide-ot hozol létre' }
   ),
   link: z.union([
     z.string().url('Érvényes URL szükséges'),
@@ -36,7 +56,9 @@ interface SlideshowSlide {
   id: string;
   title: string | null;
   subtitle: string | null;
-  image: string;
+  image: string | null;
+  video: string | null;
+  mediaType: string;
   link: string | null;
   buttonText: string | null;
   isActive: boolean;
@@ -53,7 +75,9 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(slide?.image || null);
+  const [videoPreview, setVideoPreview] = useState<string | null>(slide?.video || null);
 
   const {
     register,
@@ -125,6 +149,56 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
       console.error('Image upload error:', error);
       toast.error('Hiba történt a kép feltöltése során');
       setUploading(false);
+      return null;
+    }
+  };
+
+  const handleVideoUpload = async (file: File) => {
+    setUploadingVideo(true);
+    try {
+      // Videó hossz ellenőrzése (max 30 másodperc)
+      // Megjegyzés: A pontos hossz ellenőrzéshez videó metaadatokat kellene olvasni,
+      // de ez böngészőben nehézkes. A fájlméret alapján becsülhetjük.
+      
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/admin/upload/video', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        toast.error(result.error || 'Hiba történt a videó feltöltése során');
+        setUploadingVideo(false);
+        return null;
+      }
+
+      // A feltöltött videó URL-je
+      const uploadedUrl = result.url;
+      
+      // Frissítjük az előnézetet
+      setVideoPreview(uploadedUrl);
+      
+      // Beállítjuk a form video mezőjét is
+      setValue('video', uploadedUrl, { 
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true,
+      });
+      
+      // MediaType-t is beállítjuk videóra
+      setValue('mediaType', 'video', { shouldValidate: true });
+      
+      toast.success('Videó sikeresen feltöltve');
+      setUploadingVideo(false);
+      return uploadedUrl;
+    } catch (error) {
+      console.error('Video upload error:', error);
+      toast.error('Hiba történt a videó feltöltése során');
+      setUploadingVideo(false);
       return null;
     }
   };
@@ -237,80 +311,174 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
             />
           </div>
 
+          {/* Media Type Selection */}
           <div>
-            <label className="block text-sm font-medium mb-2">Kép *</label>
-            
-            {/* Képfeltöltés */}
-            <div className="mb-4">
-              <label className="block text-sm text-gray-600 mb-2">
-                Vagy tölts fel egy képet:
-              </label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    const url = await handleImageUpload(file);
-                    // A handleImageUpload már beállítja a setValue-t
-                  }
-                }}
-                disabled={uploading}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 disabled:opacity-50"
-              />
-              {uploading && (
-                <p className="text-sm text-gray-600 mt-1">Feltöltés folyamatban...</p>
-              )}
-            </div>
+            <label className="block text-sm font-medium mb-2">Média típus *</label>
+            <select
+              {...register('mediaType')}
+              onChange={(e) => {
+                setValue('mediaType', e.target.value as 'image' | 'video', { shouldValidate: true });
+              }}
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 bg-white text-gray-900"
+            >
+              <option value="image">Kép</option>
+              <option value="video">Videó (max 30 másodperc)</option>
+            </select>
+          </div>
 
-            {/* Vagy URL megadása */}
+          {/* Image Upload Section */}
+          {mediaType === 'image' && (
             <div>
-              <label className="block text-sm text-gray-600 mb-2">
-                Vagy add meg a kép URL-jét vagy relatív elérési útját:
-              </label>
-              <input
-                {...register('image', {
-                  onChange: (e) => {
+              <label className="block text-sm font-medium mb-2">Kép *</label>
+              
+              {/* Képfeltöltés */}
+              <div className="mb-4">
+                <label className="block text-sm text-gray-700 mb-2 font-medium">
+                  Vagy tölts fel egy képet:
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const url = await handleImageUpload(file);
+                      // A handleImageUpload már beállítja a setValue-t
+                    }
+                  }}
+                  disabled={uploading}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 disabled:opacity-50 bg-white text-gray-900"
+                />
+                {uploading && (
+                  <p className="text-sm text-gray-700 mt-1">Feltöltés folyamatban...</p>
+                )}
+              </div>
+
+              {/* Vagy URL megadása */}
+              <div>
+                <label className="block text-sm text-gray-700 mb-2 font-medium">
+                  Vagy add meg a kép URL-jét vagy relatív elérési útját:
+                </label>
+                <input
+                  {...register('image', {
+                    onChange: (e) => {
+                      const value = e.target.value;
+                      setImagePreview(value);
+                      setValue('image', value, { shouldValidate: true });
+                    },
+                  })}
+                  type="text"
+                  value={imagePreview || watch('image') || ''}
+                  onChange={(e) => {
                     const value = e.target.value;
                     setImagePreview(value);
                     setValue('image', value, { shouldValidate: true });
-                  },
-                })}
-                type="text"
-                value={imagePreview || watch('image') || ''}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setImagePreview(value);
-                  setValue('image', value, { shouldValidate: true });
-                }}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
-                placeholder="https://example.com/image.jpg vagy /uploads/slideshow/image.jpg"
-              />
-              {errors.image && (
-                <p className="text-red-500 text-sm mt-1">{errors.image.message}</p>
-              )}
-              <p className="text-xs text-gray-500 mt-1">
-                Megadhatsz teljes URL-t (https://...) vagy relatív elérési utat (/uploads/...)
-              </p>
-            </div>
-
-            {/* Kép előnézet */}
-            {imagePreview && (
-              <div className="mt-4">
-                <img
-                  src={imagePreview}
-                  alt="Preview"
-                  className="w-full max-w-2xl rounded-lg border"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none';
                   }}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white text-gray-900"
+                  placeholder="https://example.com/image.jpg vagy /uploads/slideshow/image.jpg"
                 />
+                {errors.image && (
+                  <p className="text-red-600 text-sm mt-1 font-medium">{errors.image.message}</p>
+                )}
+                <p className="text-xs text-gray-600 mt-1">
+                  Megadhatsz teljes URL-t (https://...) vagy relatív elérési utat (/uploads/...)
+                </p>
               </div>
-            )}
-          </div>
+
+              {/* Kép előnézet */}
+              {imagePreview && (
+                <div className="mt-4">
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="w-full max-w-2xl rounded-lg border border-gray-300"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Video Upload Section */}
+          {mediaType === 'video' && (
+            <div>
+              <label className="block text-sm font-medium mb-2">Videó * (max 30 másodperc, max 50MB)</label>
+              
+              {/* Videófeltöltés */}
+              <div className="mb-4">
+                <label className="block text-sm text-gray-700 mb-2 font-medium">
+                  Tölts fel egy videót:
+                </label>
+                <input
+                  type="file"
+                  accept="video/*"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const url = await handleVideoUpload(file);
+                    }
+                  }}
+                  disabled={uploadingVideo}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 disabled:opacity-50 bg-white text-gray-900"
+                />
+                {uploadingVideo && (
+                  <p className="text-sm text-gray-700 mt-1">Feltöltés folyamatban...</p>
+                )}
+              </div>
+
+              {/* Vagy URL megadása */}
+              <div>
+                <label className="block text-sm text-gray-700 mb-2 font-medium">
+                  Vagy add meg a videó URL-jét vagy relatív elérési útját:
+                </label>
+                <input
+                  {...register('video', {
+                    onChange: (e) => {
+                      const value = e.target.value;
+                      setVideoPreview(value);
+                      setValue('video', value, { shouldValidate: true });
+                    },
+                  })}
+                  type="text"
+                  value={videoPreview || watch('video') || ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setVideoPreview(value);
+                    setValue('video', value, { shouldValidate: true });
+                  }}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white text-gray-900"
+                  placeholder="https://example.com/video.mp4 vagy /uploads/slideshow/videos/video.mp4"
+                />
+                {errors.video && (
+                  <p className="text-red-600 text-sm mt-1 font-medium">{errors.video.message}</p>
+                )}
+                <p className="text-xs text-gray-600 mt-1">
+                  Megadhatsz teljes URL-t (https://...) vagy relatív elérési utat (/uploads/...)
+                </p>
+              </div>
+
+              {/* Videó előnézet */}
+              {videoPreview && (
+                <div className="mt-4">
+                  <video
+                    src={videoPreview}
+                    controls
+                    className="w-full max-w-2xl rounded-lg border border-gray-300"
+                    onError={(e) => {
+                      console.error('Video load error');
+                    }}
+                  >
+                    A böngésződ nem támogatja a videó lejátszást.
+                  </video>
+                </div>
+              )}
+            </div>
+          )}
 
           <div>
-            <label className="block text-sm font-medium mb-2">
+            <label className="block text-sm font-medium mb-2 text-gray-900">
               Link (opcionális - csak akkor szükséges, ha gombot szeretnél megjeleníteni)
             </label>
             <input
@@ -331,29 +499,29 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
               })}
               type="text"
               placeholder="https://example.com"
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white text-gray-900"
             />
             {errors.link && (
-              <p className="text-red-500 text-sm mt-1">{errors.link.message}</p>
+              <p className="text-red-600 text-sm mt-1 font-medium">{errors.link.message}</p>
             )}
-            <p className="text-xs text-gray-500 mt-1">
-              Ha nem adsz meg linket, a slide csak képként jelenik meg, gomb nélkül.
+            <p className="text-xs text-gray-600 mt-1">
+              Ha nem adsz meg linket, a slide csak médiaként jelenik meg, gomb nélkül.
             </p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">
+            <label className="block text-sm font-medium mb-2 text-gray-900">
               Gomb szöveg (opcionális - csak akkor jelenik meg, ha van link is)
             </label>
             <input
               {...register('buttonText')}
               type="text"
               placeholder="Pl: További információ"
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 disabled:opacity-50 disabled:bg-gray-100"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 disabled:opacity-50 disabled:bg-gray-100 bg-white text-gray-900"
               disabled={!watch('link') || watch('link')?.trim() === ''}
             />
             {(!watch('link') || watch('link')?.trim() === '') && (
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-600 mt-1">
                 A gomb csak akkor jelenik meg, ha van link is megadva.
               </p>
             )}
@@ -361,14 +529,14 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
         </div>
       </Card>
 
-      <Card padding="lg">
-        <h2 className="text-xl font-bold mb-4">Beállítások</h2>
+        <Card padding="lg" className="bg-white border border-gray-200">
+          <h2 className="text-xl font-bold mb-4 text-gray-900">Beállítások</h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Nyelv *</label>
+            <label className="block text-sm font-medium mb-2 text-gray-900">Nyelv *</label>
             <select
               {...register('locale')}
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white text-gray-900"
             >
               <option value="hu">Magyar</option>
               <option value="en">English</option>
@@ -376,12 +544,12 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Sorrend</label>
+            <label className="block text-sm font-medium mb-2 text-gray-900">Sorrend</label>
             <input
               {...register('order', { valueAsNumber: true })}
               type="number"
               min="0"
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white text-gray-900"
             />
           </div>
 
