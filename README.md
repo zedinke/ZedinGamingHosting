@@ -19,6 +19,10 @@ Teljes körű gaming szerver hosting platform CMS képességekkel, felhasználó
 4. **Számlázás & Előfizetések** - Stripe integráció, automatikus számlázás, kupon rendszer
 5. **Admin Vezérlőpult** - Teljes rendszerkezelés, jelentések, analytics
 6. **Támogatás** - Ticket rendszer, chat, tudásbázis
+7. **Agent-Based Architektúra** - Skálázható szerver kezelés, automatikus terheléselosztás
+8. **Real-time Monitoring** - Server-Sent Events (SSE) alapú valós idejű monitoring
+9. **SSH Integráció** - Biztonságos SSH kapcsolat szerver gépekkel
+10. **Automatikus Task Feldolgozás** - Cron job alapú háttér feldolgozás
 
 ## Telepítés
 
@@ -33,6 +37,22 @@ npm run db:push
 # Fejlesztői szerver indítása
 npm run dev
 ```
+
+## Agent-Based Architektúra
+
+A platform egy agent-based architektúrát használ a szerver kezeléshez:
+
+- **Weboldal (Next.js)**: Felhasználói és admin felület, API Gateway
+- **Manager Logika**: Központi koordinátor, terheléselosztás, task kezelés
+- **Game Server Agents**: Külön alkalmazások a szerver gépeken (TODO: implementáció)
+
+Részletes dokumentáció: [Agent Architektúra](./docs/AGENT_ARCHITECTURE.md)
+
+## Cron Job Beállítás
+
+A rendszer automatikus feldolgozásához cron job-okat kell beállítani:
+
+Részletes útmutató: [Cron Job Beállítás](./docs/CRON_SETUP.md)
 
 ## Hestia CP Integráció
 
