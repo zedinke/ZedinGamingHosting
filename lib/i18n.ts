@@ -8,8 +8,29 @@ type Translations = Record<string, any>;
 function loadTranslations(locale: string, namespace: string = 'common'): Translations {
   try {
     const filePath = join(process.cwd(), 'public', 'locales', locale, `${namespace}.json`);
-    const fileContents = readFileSync(filePath, 'utf-8');
-    return JSON.parse(fileContents);
+    
+    // Ellenőrizzük, hogy a fájl létezik-e
+    try {
+      const fileContents = readFileSync(filePath, 'utf-8');
+      return JSON.parse(fileContents);
+    } catch (fileError: any) {
+      // Ha a fájl nem létezik, próbáljuk meg az angol verziót
+      if (locale !== 'en') {
+        try {
+          const fallbackPath = join(process.cwd(), 'public', 'locales', 'en', `${namespace}.json`);
+          const fallbackContents = readFileSync(fallbackPath, 'utf-8');
+          console.warn(`Translation file not found for ${locale}/${namespace}, using English fallback`);
+          return JSON.parse(fallbackContents);
+        } catch {
+          // Ha az angol sem létezik, üres objektum
+          console.error(`Translation file not found for ${locale}/${namespace} or en/${namespace}`);
+          return {};
+        }
+      } else {
+        console.error(`Translation file not found for ${locale}/${namespace}:`, fileError);
+        return {};
+      }
+    }
   } catch (error) {
     console.error(`Failed to load translations for ${locale}/${namespace}:`, error);
     return {};
