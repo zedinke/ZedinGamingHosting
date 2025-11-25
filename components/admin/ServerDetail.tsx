@@ -7,6 +7,8 @@ import { ServerFileManager } from './ServerFileManager';
 import { ServerConsole } from './ServerConsole';
 import { ServerBackupManager } from './ServerBackupManager';
 import { ServerResourceMonitor } from './ServerResourceMonitor';
+import { ServerConfigEditor } from './ServerConfigEditor';
+import { ServerLogsViewer } from './ServerLogsViewer';
 
 interface Server {
   id: string;
@@ -60,7 +62,7 @@ interface ServerDetailProps {
 export function ServerDetail({ server, locale }: ServerDetailProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [serverStatus, setServerStatus] = useState(server.status);
-  const [activeTab, setActiveTab] = useState<'files' | 'console' | 'backup'>('files');
+  const [activeTab, setActiveTab] = useState<'files' | 'console' | 'backup' | 'config' | 'logs'>('files');
 
   const handleServerAction = async (action: string) => {
     setIsLoading(true);
@@ -329,11 +331,40 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
             >
               Backup
             </button>
+            <button
+              onClick={() => setActiveTab('config')}
+              className={`px-4 py-2 border-b-2 ${
+                activeTab === 'config'
+                  ? 'border-primary-600 text-primary-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-800'
+              }`}
+            >
+              Konfiguráció
+            </button>
+            <button
+              onClick={() => setActiveTab('logs')}
+              className={`px-4 py-2 border-b-2 ${
+                activeTab === 'logs'
+                  ? 'border-primary-600 text-primary-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-800'
+              }`}
+            >
+              Logok
+            </button>
           </div>
         </div>
         {activeTab === 'files' && <ServerFileManager serverId={server.id} locale={locale} />}
         {activeTab === 'console' && <ServerConsole serverId={server.id} locale={locale} />}
         {activeTab === 'backup' && <ServerBackupManager serverId={server.id} locale={locale} />}
+        {activeTab === 'config' && (
+          <ServerConfigEditor
+            serverId={server.id}
+            gameType={server.gameType}
+            maxPlayers={server.maxPlayers}
+            initialConfig={server.configuration}
+          />
+        )}
+        {activeTab === 'logs' && <ServerLogsViewer serverId={server.id} autoRefresh={true} />}
       </div>
 
       {/* Erőforrás használat - Real-time monitoring */}
