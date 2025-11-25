@@ -5,20 +5,27 @@ import { prisma } from '@/lib/prisma';
 import { UserRole, ServerStatus } from '@prisma/client';
 import { createAuditLog, AuditAction } from '@/lib/audit-log';
 import { sendWebhookEvent } from '@/lib/webhook-sender';
+import { handleApiError, AppError, ErrorCodes, createForbiddenError, createNotFoundError } from '@/lib/error-handler';
+import { withPerformanceMonitoring } from '@/lib/performance-monitor';
+import { logger } from '@/lib/logger';
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string; action: string } }
-) {
-  try {
-    const session = await getServerSession(authOptions);
+export const POST = withPerformanceMonitoring(
+  async (
+    request: NextRequest,
+    { params }: { params: { id: string; action: string } }
+  ) => {
+    try {
+      const session = await getServerSession(authOptions);
 
-    if (!session || (session.user as any).role !== UserRole.ADMIN) {
-      return NextResponse.json(
-        { error: 'Nincs jogosultság' },
-        { status: 403 }
-      );
-    }
+      if (!session || (session.user as any).role !== UserRole.ADMIN) {
+        throw createForbiddenError('Nincs jogosultság');
+      }
+
+      logger.info('Server action request', {
+        serverId: params.id,
+        action: params.action,
+        adminId: (session.user as any).id,
+      });
 
     const { id, action } = params;
 
@@ -27,12 +34,9 @@ export async function POST(
       where: { id },
     });
 
-    if (!server) {
-      return NextResponse.json(
-        { error: 'Szerver nem található' },
-        { status: 404 }
-      );
-    }
+      if (!server) {
+        throw createNotFoundError('Szerver', params.id);
+      }
 
     let newStatus: ServerStatus;
     let taskType: 'START' | 'STOP' | 'RESTART';
@@ -103,7 +107,10 @@ export async function POST(
       // Task végrehajtása háttérben
       const { executeTask } = await import('@/lib/task-executor');
       executeTask(task.id).catch((error) => {
-        console.error(`Task ${task.id} végrehajtási hiba:`, error);
+        logger.error(`Task ${task.id} végrehajtási hiba`, error as Error, {
+          taskId: task.id,
+          serverId: server.id,
+        });
       });
     }
 
@@ -137,19 +144,27 @@ export async function POST(
       oldStatus: server.status,
       newStatus: newStatus,
       action,
-    }).catch(console.error);
+    }).catch((error) => {
+      logger.error('Webhook send error', error as Error, {
+        serverId: server.id,
+        event: 'server_status_change',
+      });
+    });
 
     return NextResponse.json({
       success: true,
       status: newStatus,
       message: `Szerver ${action} művelet elindítva`,
     });
-  } catch (error) {
-    console.error('Server action error:', error);
-    return NextResponse.json(
-      { error: 'Hiba történt a művelet végrehajtása során' },
-      { status: 500 }
-    );
-  }
-}
+    } catch (error) {
+      logger.error('Server action error', error as Error, {
+        serverId: params.id,
+        action: params.action,
+      });
+      return handleApiError(error);
+    }
+  },
+  '/api/admin/servers/[id]/[action]',
+  'POST'
+);
 

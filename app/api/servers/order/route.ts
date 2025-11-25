@@ -3,40 +3,46 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { GameType } from '@prisma/client';
+import { handleApiError, AppError, ErrorCodes, createUnauthorizedError, createValidationError } from '@/lib/error-handler';
+import { withPerformanceMonitoring } from '@/lib/performance-monitor';
+import { logger } from '@/lib/logger';
 
-export async function POST(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
+export const POST = withPerformanceMonitoring(
+  async (request: NextRequest) => {
+    try {
+      const session = await getServerSession(authOptions);
 
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Bejelentkezés szükséges' },
-        { status: 401 }
-      );
-    }
+      if (!session) {
+        throw createUnauthorizedError('Bejelentkezés szükséges');
+      }
 
-    const body = await request.json();
-    const { name, gameType, planId, maxPlayers } = body;
+      const body = await request.json();
+      const { name, gameType, planId, maxPlayers } = body;
 
-    // Validáció
-    if (!name || !gameType || !planId || !maxPlayers) {
-      return NextResponse.json(
-        { error: 'Minden mező kitöltése kötelező' },
-        { status: 400 }
-      );
-    }
+      // Validáció
+      if (!name || !gameType || !planId || !maxPlayers) {
+        throw createValidationError('form', 'Minden mező kitöltése kötelező');
+      }
+
+      logger.info('Server order request', {
+        userId: (session.user as any).id,
+        gameType,
+        planId,
+        maxPlayers,
+      });
 
     // Csomag ellenőrzése
     const plan = await prisma.pricingPlan.findUnique({
       where: { id: planId },
     });
 
-    if (!plan || !plan.isActive) {
-      return NextResponse.json(
-        { error: 'Érvénytelen vagy inaktív csomag' },
-        { status: 400 }
-      );
-    }
+      if (!plan || !plan.isActive) {
+        throw new AppError(
+          ErrorCodes.VALIDATION_ERROR,
+          'Érvénytelen vagy inaktív csomag',
+          400
+        );
+      }
 
     // Port generálása
     const { generateServerPort } = await import('@/lib/server-provisioning');

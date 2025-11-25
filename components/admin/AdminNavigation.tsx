@@ -46,6 +46,7 @@ export function AdminNavigation({ locale }: AdminNavigationProps) {
   const menuItems = [
     { href: `/${locale}/admin`, label: 'Vezérlőpult', icon: LayoutDashboard },
     { href: `/${locale}/admin/monitoring`, label: 'Monitoring', icon: BarChart3 },
+    { href: `/${locale}/admin/performance`, label: 'Performance', icon: BarChart3 },
     { href: `/${locale}/admin/reports`, label: 'Jelentések', icon: BarChart3 },
     { href: `/${locale}/admin/webhooks`, label: 'Webhookok', icon: Settings },
     { href: `/${locale}/admin/server-templates`, label: 'Szerver Sablonok', icon: Server },
