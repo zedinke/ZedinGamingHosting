@@ -3,6 +3,9 @@
 import { useState } from 'react';
 import { ServerStatus, GameType } from '@prisma/client';
 import toast from 'react-hot-toast';
+import { ServerFileManager } from './ServerFileManager';
+import { ServerConsole } from './ServerConsole';
+import { ServerBackupManager } from './ServerBackupManager';
 
 interface Server {
   id: string;
@@ -56,6 +59,7 @@ interface ServerDetailProps {
 export function ServerDetail({ server, locale }: ServerDetailProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [serverStatus, setServerStatus] = useState(server.status);
+  const [activeTab, setActiveTab] = useState<'files' | 'console' | 'backup'>('files');
 
   const handleServerAction = async (action: string) => {
     setIsLoading(true);
@@ -288,6 +292,48 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
           </pre>
         </div>
       )}
+
+      {/* Fájlkezelő és Konzol */}
+      <div className="card">
+        <h2 className="text-xl font-bold mb-4">Szerver Kezelés</h2>
+        <div className="border-b mb-4">
+          <div className="flex gap-4">
+            <button
+              onClick={() => setActiveTab('files')}
+              className={`px-4 py-2 border-b-2 ${
+                activeTab === 'files'
+                  ? 'border-primary-600 text-primary-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-800'
+              }`}
+            >
+              Fájlkezelő
+            </button>
+            <button
+              onClick={() => setActiveTab('console')}
+              className={`px-4 py-2 border-b-2 ${
+                activeTab === 'console'
+                  ? 'border-primary-600 text-primary-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-800'
+              }`}
+            >
+              Konzol
+            </button>
+            <button
+              onClick={() => setActiveTab('backup')}
+              className={`px-4 py-2 border-b-2 ${
+                activeTab === 'backup'
+                  ? 'border-primary-600 text-primary-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-800'
+              }`}
+            >
+              Backup
+            </button>
+          </div>
+        </div>
+        {activeTab === 'files' && <ServerFileManager serverId={server.id} locale={locale} />}
+        {activeTab === 'console' && <ServerConsole serverId={server.id} locale={locale} />}
+        {activeTab === 'backup' && <ServerBackupManager serverId={server.id} locale={locale} />}
+      </div>
 
       {/* Erőforrás használat */}
       {server.resourceUsage && (
