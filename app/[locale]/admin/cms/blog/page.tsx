@@ -37,9 +37,6 @@ export default async function AdminBlogPage({
       skip: (pageNum - 1) * itemsPerPage,
       take: itemsPerPage,
       orderBy: { createdAt: 'desc' },
-      include: {
-        // authorId alapján kellene a user-t, de most csak az ID-t használjuk
-      },
     }),
     prisma.blogPost.count({ where }),
   ]);
