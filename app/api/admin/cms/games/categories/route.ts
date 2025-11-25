@@ -10,7 +10,11 @@ const gameCategorySchema = z.object({
   slug: z.string().min(1, 'Slug megadása kötelező'),
   description: z.string().optional().nullable(),
   icon: z.string().optional().nullable(),
-  color: z.string().regex(/^#[0-9A-F]{6}$/i, 'Érvényes hex szín szükséges').optional().nullable(),
+  color: z.union([
+    z.string().regex(/^#[0-9A-F]{6}$/i, 'Érvényes hex szín szükséges (pl: #4F46E5)'),
+    z.literal(''),
+    z.null(),
+  ]).optional(),
   isActive: z.boolean(),
   order: z.number().int().min(0),
   locale: z.enum(['hu', 'en']),

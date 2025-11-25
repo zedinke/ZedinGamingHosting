@@ -14,15 +14,15 @@ const homepageSectionSchema = z.object({
   title: z.string().optional().or(z.literal('')),
   subtitle: z.string().optional().or(z.literal('')),
   content: z.string().optional().or(z.literal('')),
-  image: z.string().optional().or(z.literal('')).refine(
-    (val) => !val || val === '' || z.string().url().safeParse(val).success,
-    { message: 'Érvényes URL szükséges' }
-  ),
+  image: z.union([
+    z.string().url('Érvényes URL szükséges'),
+    z.literal(''),
+  ]).optional(),
   buttonText: z.string().optional().or(z.literal('')),
-  buttonLink: z.string().optional().or(z.literal('')).refine(
-    (val) => !val || val === '' || z.string().url().safeParse(val).success,
-    { message: 'Érvényes URL szükséges' }
-  ),
+  buttonLink: z.union([
+    z.string().url('Érvényes URL szükséges'),
+    z.literal(''),
+  ]).optional(),
   isActive: z.boolean(),
   order: z.number().int().min(0),
   locale: z.enum(['hu', 'en']),

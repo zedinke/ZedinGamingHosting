@@ -9,7 +9,11 @@ const gameSchema = z.object({
   name: z.string().min(1, 'Név megadása kötelező'),
   slug: z.string().min(1, 'Slug megadása kötelező'),
   description: z.string().optional().nullable(),
-  image: z.string().url().optional().or(z.literal('')).nullable(),
+  image: z.union([
+    z.string().url('Érvényes URL szükséges'),
+    z.literal(''),
+    z.null(),
+  ]).optional(),
   categoryId: z.string().optional().nullable(),
   isActive: z.boolean(),
   order: z.number().int().min(0),

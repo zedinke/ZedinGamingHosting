@@ -8,8 +8,12 @@ import { z } from 'zod';
 const slideshowSlideSchema = z.object({
   title: z.string().optional().nullable(),
   subtitle: z.string().optional().nullable(),
-  image: z.string().url('Érvényes URL szükséges').or(z.literal('')),
-  link: z.string().url().optional().or(z.literal('')).nullable(),
+  image: z.string().url('Érvényes URL szükséges').min(1, 'Kép URL megadása kötelező'),
+  link: z.union([
+    z.string().url('Érvényes URL szükséges'),
+    z.literal(''),
+    z.null(),
+  ]).optional(),
   buttonText: z.string().optional().nullable(),
   isActive: z.boolean(),
   order: z.number().int().min(0),
