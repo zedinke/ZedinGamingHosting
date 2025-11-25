@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { UserRole } from '@prisma/client';
+import { createAuditLog, AuditAction } from '@/lib/audit-log';
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,6 +26,18 @@ export async function POST(request: NextRequest) {
         key: 'maintenance_mode',
         value: enabled ? 'true' : 'false',
       },
+    });
+
+    // Audit log
+    await createAuditLog({
+      userId: (session.user as any).id,
+      action: AuditAction.MAINTENANCE_MODE,
+      resourceType: 'System',
+      details: {
+        enabled,
+      },
+      ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined,
+      userAgent: request.headers.get('user-agent') || undefined,
     });
 
     return NextResponse.json({

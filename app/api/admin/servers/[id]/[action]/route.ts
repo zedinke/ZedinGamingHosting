@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { UserRole, ServerStatus } from '@prisma/client';
+import { createAuditLog, AuditAction } from '@/lib/audit-log';
 
 export async function POST(
   request: NextRequest,
@@ -104,6 +105,29 @@ export async function POST(
         console.error(`Task ${task.id} végrehajtási hiba:`, error);
       });
     }
+
+    // Audit log
+    const auditAction =
+      action === 'start'
+        ? AuditAction.SERVER_START
+        : action === 'stop'
+        ? AuditAction.SERVER_STOP
+        : AuditAction.SERVER_RESTART;
+
+    await createAuditLog({
+      userId: (session.user as any).id,
+      action: auditAction,
+      resourceType: 'Server',
+      resourceId: server.id,
+      details: {
+        serverName: server.name,
+        oldStatus: server.status,
+        newStatus: newStatus,
+        action,
+      },
+      ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined,
+      userAgent: request.headers.get('user-agent') || undefined,
+    });
 
     return NextResponse.json({
       success: true,
