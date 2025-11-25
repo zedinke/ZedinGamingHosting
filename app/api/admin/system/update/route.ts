@@ -110,26 +110,45 @@ export async function POST(request: NextRequest) {
     }
 
     // Progress fájl létrehozása azonnal
-    await updateProgress({
-      status: 'starting',
-      message: 'Frissítés indítása...',
-      progress: 0,
-      currentStep: 'starting',
-      log: 'Frissítés indítása...\n',
-    });
+    try {
+      await updateProgress({
+        status: 'starting',
+        message: 'Frissítés indítása...',
+        progress: 0,
+        currentStep: 'starting',
+        log: 'Frissítés indítása...\n',
+        timestamp: new Date().toISOString(),
+      });
+      console.log('Progress fájl létrehozva:', PROGRESS_FILE);
+    } catch (progressError: any) {
+      console.error('Progress fájl létrehozási hiba:', progressError);
+      return NextResponse.json(
+        { error: `Progress fájl létrehozási hiba: ${progressError.message}` },
+        { status: 500 }
+      );
+    }
 
     // Frissítés indítása háttérben (nem blokkoló módon)
+    // Ne várjuk meg, hogy a process befejeződjön
     startUpdateProcess().catch(async (error) => {
       console.error('Update process error:', error);
       const errorMessage = error.message || error.toString() || 'Ismeretlen hiba';
-      await updateProgress({
-        status: 'error',
-        message: 'Frissítési hiba',
-        progress: 0,
-        error: errorMessage,
-        log: await readLog(),
-      });
+      try {
+        await updateProgress({
+          status: 'error',
+          message: 'Frissítési hiba',
+          progress: 0,
+          error: errorMessage,
+          log: await readLog(),
+          timestamp: new Date().toISOString(),
+        });
+      } catch (updateError) {
+        console.error('Progress frissítési hiba:', updateError);
+      }
     });
+
+    // Várunk egy kicsit, hogy biztosan létrejöjjön a progress fájl
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     return NextResponse.json({
       success: true,
@@ -146,8 +165,10 @@ export async function POST(request: NextRequest) {
 
 async function startUpdateProcess() {
   try {
+    console.log('=== startUpdateProcess elindítva ===');
     await clearLog();
     await appendLog('=== Frissítés indítása ===');
+    console.log('Log fájl törölve');
     
     const steps = [
       {
@@ -355,10 +376,15 @@ async function startUpdateProcess() {
     },
   ];
 
+    console.log(`Frissítési lépések száma: ${steps.length}`);
+    
     for (const step of steps) {
       try {
+        console.log(`Lépés indítása: ${step.label} (${step.key})`);
         await step.action();
+        console.log(`Lépés befejezve: ${step.label}`);
       } catch (error: any) {
+        console.error(`Lépés hiba: ${step.label}`, error);
         const errorMessage = error.message || error.toString() || 'Ismeretlen hiba';
         await updateProgress({
           status: 'error',
@@ -367,12 +393,14 @@ async function startUpdateProcess() {
           currentStep: step.key,
           error: errorMessage,
           stepLabel: step.label,
+          timestamp: new Date().toISOString(),
         });
         throw new Error(`${step.label} hiba: ${errorMessage}`);
       }
     }
 
     // Frissítés befejezve
+    console.log('=== Frissítés sikeresen befejezve! ===');
     await appendLog('=== Frissítés sikeresen befejezve! ===');
     await updateProgress({
       status: 'completed',
@@ -380,6 +408,7 @@ async function startUpdateProcess() {
       progress: 100,
       currentStep: 'completed',
       log: await readLog(),
+      timestamp: new Date().toISOString(),
     });
 
     // Utolsó frissítés időpont mentése
@@ -404,16 +433,21 @@ async function startUpdateProcess() {
       }
     }, 5000);
   } catch (error: any) {
+    console.error('=== startUpdateProcess HIBÁBA ÜTKÖZÖTT ===', error);
     const errorMessage = error.message || error.toString() || 'Ismeretlen hiba';
     await appendLog(`=== HIBÁBA ÜTKÖZÖTT: ${errorMessage} ===`);
-    await updateProgress({
-      status: 'error',
-      message: 'Frissítési hiba',
-      progress: 0,
-      error: errorMessage,
-      timestamp: new Date().toISOString(),
-      log: await readLog(),
-    });
+    try {
+      await updateProgress({
+        status: 'error',
+        message: 'Frissítési hiba',
+        progress: 0,
+        error: errorMessage,
+        timestamp: new Date().toISOString(),
+        log: await readLog(),
+      });
+    } catch (updateError) {
+      console.error('Progress frissítési hiba a catch blokkban:', updateError);
+    }
 
     // Hiba esetén is töröljük a progress fájlt 10 másodperc után
     setTimeout(async () => {

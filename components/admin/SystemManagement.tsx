@@ -131,20 +131,27 @@ export function SystemManagement({
         }
 
         try {
-          const progressResponse = await fetch(`/api/admin/system/update/status`, {
+          const progressResponse = await fetch(`/api/admin/system/update/status?t=${Date.now()}`, {
             cache: 'no-store',
+            headers: {
+              'Cache-Control': 'no-cache',
+            },
           });
           
           if (!progressResponse.ok) {
             // Ha a fájl nem létezik, lehet hogy még nem indult el
-            if (pollCount < 5) {
+            if (pollCount < 10) {
+              console.log(`Progress fájl még nem létezik, várakozás... (poll: ${pollCount})`);
               setTimeout(checkProgress, 2000);
               return;
             }
-            throw new Error('Nem sikerült lekérni a frissítés állapotát');
+            console.error('Progress fájl nem elérhető:', progressResponse.status, progressResponse.statusText);
+            throw new Error(`Nem sikerült lekérni a frissítés állapotát: ${progressResponse.status} ${progressResponse.statusText}`);
           }
           
           const progress = await progressResponse.json();
+          
+          console.log('Progress állapot:', progress.status, 'Progress:', progress.progress, '%');
 
           // Mindig frissítjük a progress-t, még akkor is, ha idle
           setUpdateProgress(progress);
