@@ -11,9 +11,10 @@ import { join } from 'path';
 
 const execAsync = promisify(exec);
 
-// Progress tracking fájl
-const PROGRESS_FILE = join(process.cwd(), '.update-progress.json');
-const LOG_FILE = join(process.cwd(), '.update-log.txt');
+// Progress tracking fájl - will be updated in startUpdateProcess based on actual working directory
+let PROGRESS_FILE = join(process.cwd(), '.update-progress.json');
+let LOG_FILE = join(process.cwd(), '.update-log.txt');
+let WORKING_DIR = process.cwd();
 
 async function readLog(logFile?: string): Promise<string> {
   try {
