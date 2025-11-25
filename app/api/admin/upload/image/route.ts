@@ -217,6 +217,12 @@ export async function POST(request: NextRequest) {
     // URL visszaadása
     const fileUrl = `/uploads/slideshow/${fileName}`;
     
+    // Verify file exists before returning
+    if (!existsSync(filePath)) {
+      console.error('ERROR: File was not saved:', filePath);
+      throw new Error('A fájl nem található a mentés után');
+    }
+    
     // Debug: log file info
     console.log('File saved successfully:', {
       fileName,
@@ -224,13 +230,14 @@ export async function POST(request: NextRequest) {
       fileUrl,
       fileSize: buffer.length,
       uploadsDirExists: existsSync(uploadsDir),
+      fileExists: existsSync(filePath),
     });
 
     return NextResponse.json({
       success: true,
       url: fileUrl,
       fileName: fileName,
-    });
+    }, { status: 200 });
   } catch (error: any) {
     console.error('Image upload error:', error);
     return NextResponse.json(

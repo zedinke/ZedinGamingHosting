@@ -128,26 +128,54 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
   });
 
   const handleImageUpload = async (file: File) => {
+    if (!file) {
+      toast.error('Nincs fájl kiválasztva');
+      return null;
+    }
+
     setUploading(true);
     try {
+      console.log('Starting image upload:', {
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+      });
+
       const formData = new FormData();
       formData.append('file', file);
+
+      console.log('Sending request to /api/admin/upload/image');
 
       const response = await fetch('/api/admin/upload/image', {
         method: 'POST',
         body: formData,
       });
 
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+
       const result = await response.json();
+      console.log('Response result:', result);
 
       if (!response.ok) {
-        toast.error(result.error || 'Hiba történt a kép feltöltése során');
+        const errorMessage = result.error || 'Hiba történt a kép feltöltése során';
+        console.error('Upload error:', errorMessage);
+        toast.error(errorMessage);
         setUploading(false);
         return null;
       }
 
       // A feltöltött kép URL-je
       const uploadedUrl = result.url;
+      
+      if (!uploadedUrl) {
+        console.error('No URL in response:', result);
+        toast.error('A válasz nem tartalmazza a kép URL-jét');
+        setUploading(false);
+        return null;
+      }
+
+      console.log('Upload successful, URL:', uploadedUrl);
       
       // Frissítjük az előnézetet
       setImagePreview(uploadedUrl);
@@ -168,12 +196,14 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
         setValue('mediaType', 'image', { shouldValidate: true });
       }
       
+      console.log('Form updated with image URL:', uploadedUrl);
       toast.success('Kép sikeresen feltöltve');
       setUploading(false);
       return uploadedUrl;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Image upload error:', error);
-      toast.error('Hiba történt a kép feltöltése során');
+      const errorMessage = error.message || 'Hiba történt a kép feltöltése során';
+      toast.error(errorMessage);
       setUploading(false);
       return null;
     }
@@ -378,12 +408,19 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
                   onChange={async (e) => {
                     const file = e.target.files?.[0];
                     if (file) {
+                      console.log('File selected:', file.name, file.size, file.type);
                       const url = await handleImageUpload(file);
-                      // A handleImageUpload már beállítja a setValue-t
+                      if (url) {
+                        console.log('Upload completed, URL:', url);
+                      } else {
+                        console.error('Upload failed');
+                      }
+                      // Reset input value so same file can be selected again
+                      e.target.value = '';
                     }
                   }}
                   disabled={uploading}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 disabled:opacity-50 bg-white text-gray-900"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 disabled:opacity-50 bg-white text-gray-900 cursor-pointer"
                 />
                 {uploading && (
                   <p className="text-sm text-gray-700 mt-1">Feltöltés folyamatban...</p>
