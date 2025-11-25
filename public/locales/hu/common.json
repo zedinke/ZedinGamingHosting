@@ -58,6 +58,14 @@
     "loading": "Betöltés...",
     "error": "Hiba történt",
     "success": "Sikeres művelet"
+  },
+  "server": {
+    "online": "Online",
+    "offline": "Offline",
+    "starting": "Indítás...",
+    "stopping": "Leállítás...",
+    "restarting": "Újraindítás...",
+    "error": "Hiba"
   }
 }
 

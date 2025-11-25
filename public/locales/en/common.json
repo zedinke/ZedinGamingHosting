@@ -58,6 +58,14 @@
     "loading": "Loading...",
     "error": "An error occurred",
     "success": "Success"
+  },
+  "server": {
+    "online": "Online",
+    "offline": "Offline",
+    "starting": "Starting...",
+    "stopping": "Stopping...",
+    "restarting": "Restarting...",
+    "error": "Error"
   }
 }
 
