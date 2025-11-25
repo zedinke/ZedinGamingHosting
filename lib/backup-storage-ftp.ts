@@ -5,12 +5,17 @@ import { prisma } from '@/lib/prisma';
  */
 async function createFTPClient() {
   try {
-    const { Client } = await import('basic-ftp');
+    // Dynamic import with type assertion to avoid build-time type checking issues
+    const ftpModule = await import('basic-ftp') as any;
+    const { Client } = ftpModule;
     const client = new Client();
     client.ftp.verbose = process.env.FTP_VERBOSE === 'true';
     return client;
-  } catch (error) {
-    throw new Error('basic-ftp modul nincs telepítve. Telepítsd: npm install basic-ftp');
+  } catch (error: any) {
+    if (error.code === 'MODULE_NOT_FOUND' || error.message?.includes('Cannot find module')) {
+      throw new Error('basic-ftp modul nincs telepítve. Telepítsd: npm install basic-ftp');
+    }
+    throw error;
   }
 }
 
