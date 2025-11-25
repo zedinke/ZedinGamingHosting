@@ -13,6 +13,16 @@ Teljes körű gaming szerver hosting platform CMS képességekkel, felhasználó
 
 ## Főbb Funkciók
 
+### Fejlett Rendszerek
+- **Error Handling**: Központi hibakezelő rendszer strukturált hibakezeléssel
+- **Performance Monitoring**: Teljesítmény metrikák gyűjtése és elemzése
+- **Cache Rendszer**: In-memory cache gyors adateléréshez
+- **Security Utilities**: Biztonsági segédfüggvények validációhoz és védelemhez
+- **Logger Rendszer**: Strukturált logging különböző log szintekkel
+- **Backup Storage**: S3 és FTP integráció lazy loading-gel
+
+### Agent-based Architektúra
+
 1. **Website CMS** - Dinamikus oldalépítő, blog kezelés, többnyelvű támogatás
 2. **Felhasználókezelés** - Regisztráció, bejelentkezés, 2FA, szerepkör alapú hozzáférés
 3. **Szerver Rendelés & Kezelés** - Szerver választás, konfiguráció, valós idejű monitoring
