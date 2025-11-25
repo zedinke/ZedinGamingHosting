@@ -256,7 +256,35 @@ export function SystemManagement({
           </div>
 
           {isUpdating && updateProgress ? (
-            <UpdateProgress progress={updateProgress} />
+            <div className="space-y-4">
+              <UpdateProgress progress={updateProgress} />
+              {(updateProgress.status === 'error' || updateProgress.status === 'in_progress') && (
+                <button
+                  onClick={async () => {
+                    if (!confirm('Biztosan törölni szeretnéd a progress fájlt és újraindítani a frissítést?')) {
+                      return;
+                    }
+                    try {
+                      const response = await fetch('/api/admin/system/update/reset', {
+                        method: 'POST',
+                      });
+                      if (response.ok) {
+                        setIsUpdating(false);
+                        setUpdateProgress(null);
+                        toast.success('Progress törölve, újra próbálhatod a frissítést');
+                      } else {
+                        toast.error('Hiba történt a progress törlése során');
+                      }
+                    } catch (error) {
+                      toast.error('Hiba történt');
+                    }
+                  }}
+                  className="w-full bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors font-semibold"
+                >
+                  Progress Törlése és Újraindítás
+                </button>
+              )}
+            </div>
           ) : (
             <button
               onClick={handleSystemUpdate}

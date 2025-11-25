@@ -1,0 +1,43 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
+import { UserRole } from '@prisma/client';
+import { unlink } from 'fs/promises';
+import { join } from 'path';
+
+const PROGRESS_FILE = join(process.cwd(), '.update-progress.json');
+
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session || (session.user as any).role !== UserRole.ADMIN) {
+      return NextResponse.json(
+        { error: 'Nincs jogosultság' },
+        { status: 403 }
+      );
+    }
+
+    // Progress fájl törlése
+    try {
+      await unlink(PROGRESS_FILE);
+    } catch (error: any) {
+      // Ha nincs fájl, nem probléma
+      if (error.code !== 'ENOENT') {
+        throw error;
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Progress fájl törölve, új frissítés indítható',
+    });
+  } catch (error: any) {
+    console.error('Reset progress error:', error);
+    return NextResponse.json(
+      { error: 'Hiba történt a progress reset során' },
+      { status: 500 }
+    );
+  }
+}
+

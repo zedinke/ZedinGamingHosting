@@ -100,7 +100,53 @@ async function startUpdateProcess() {
           progress: 10,
           currentStep: 'git_pull',
         });
-        await execAsync('git pull origin main');
+        
+        try {
+          // Először fetch (nem pull, hogy ne legyen merge conflict)
+          await execAsync('git fetch origin main', { cwd: process.cwd() });
+          
+          // Ellenőrizzük, hogy van-e változás
+          const { stdout: statusOutput } = await execAsync('git status -sb', { cwd: process.cwd() });
+          
+          // Ha van változás, pull merge strategy-vel
+          if (statusOutput.includes('behind')) {
+            // Merge strategy beállítása (ha nincs beállítva)
+            try {
+              await execAsync('git config pull.rebase false', { cwd: process.cwd() });
+            } catch {
+              // Nem kritikus hiba
+            }
+            
+            // Pull hard reset-tel (ha van conflict, akkor a remote verziót használjuk)
+            try {
+              await execAsync('git pull origin main --no-rebase', { cwd: process.cwd() });
+            } catch (pullError: any) {
+              // Ha merge conflict van, reset hard-ot használunk
+              if (pullError.message.includes('conflict') || pullError.message.includes('merge')) {
+                await updateProgress({
+                  status: 'in_progress',
+                  message: 'Merge conflict feloldása (remote verzió használata)...',
+                  progress: 12,
+                  currentStep: 'git_pull',
+                });
+                await execAsync('git reset --hard origin/main', { cwd: process.cwd() });
+              } else {
+                throw pullError;
+              }
+            }
+          } else {
+            await updateProgress({
+              status: 'in_progress',
+              message: 'Nincs új változás a Git-ben',
+              progress: 15,
+              currentStep: 'git_pull',
+            });
+          }
+        } catch (error: any) {
+          // Részletes hibaüzenet
+          const errorMessage = error.stderr || error.message || 'Ismeretlen hiba';
+          throw new Error(`Git pull hiba: ${errorMessage}`);
+        }
       },
     },
     {
@@ -187,7 +233,16 @@ async function startUpdateProcess() {
       try {
         await step.action();
       } catch (error: any) {
-        throw new Error(`${step.label} hiba: ${error.message}`);
+        const errorMessage = error.message || error.toString() || 'Ismeretlen hiba';
+        await updateProgress({
+          status: 'error',
+          message: `${step.label} hiba`,
+          progress: 0,
+          currentStep: step.key,
+          error: errorMessage,
+          stepLabel: step.label,
+        });
+        throw new Error(`${step.label} hiba: ${errorMessage}`);
       }
     }
 
@@ -221,11 +276,13 @@ async function startUpdateProcess() {
       }
     }, 5000);
   } catch (error: any) {
+    const errorMessage = error.message || error.toString() || 'Ismeretlen hiba';
     await updateProgress({
       status: 'error',
       message: 'Frissítési hiba',
       progress: 0,
-      error: error.message,
+      error: errorMessage,
+      timestamp: new Date().toISOString(),
     });
 
     // Hiba esetén is töröljük a progress fájlt 10 másodperc után
