@@ -4,86 +4,131 @@ Ez a dokumentum összefoglalja, hogy mi van implementálva és mi hiányzik még
 
 ## ✅ Implementált Funkciók
 
-### Agent-Based Architektúra
-- ✅ Adatbázis modell (ServerMachine, Agent, Task)
-- ✅ Szerver provisioning logika
-- ✅ Automatikus terheléselosztás
-- ✅ Agent regisztráció API
-- ✅ Agent heartbeat API
-- ✅ API key autentikáció
-- ✅ Task executor rendszer
-- ✅ Cron job rendszer
+### 1. SSH Integráció - Teljes Implementáció ✅
+- **Fájlkezelés** (`app/api/admin/servers/[id]/files`)
+  - Fájlok listázása SSH-n keresztül
+  - Fájl létrehozása, törlése, átnevezése
+  - Könyvtár létrehozása
+  - Fájl írása és olvasása
+  - Fájlméret és dátum parse-olás
+- **Konzol** (`app/api/admin/servers/[id]/console`)
+  - Konzol logok lekérdezése SSH-n keresztül
+  - Parancs küldése (Docker/systemd/RCON támogatás)
+  - Log formátum parse-olás
+- **Logok** (`app/api/admin/servers/[id]/logs`)
+  - Logok lekérdezése SSH-n keresztül
+  - Játék típus alapú log útvonalak
+  - Típus szerinti szűrés (ERROR, WARN, INFO)
 
-### Admin Felület
-- ✅ Szerver gépek kezelése
-- ✅ Agentek kezelése
-- ✅ Feladatok kezelése
-- ✅ Monitoring dashboard (real-time SSE)
-- ✅ Szerver részletek oldal
-- ✅ Agent részletek oldal
-- ✅ Jelentések oldal
-- ✅ Webhook kezelés
-- ✅ Szerver sablonok
-- ✅ Audit logok
-- ✅ Rendszer egészség monitoring
+### 2. Backup Rendszer - Teljes Implementáció ✅
+- **Backup Storage** (`lib/backup-storage.ts`)
+  - Backup készítése (tar.gz tömörítés SSH-n keresztül)
+  - Backup listázása, letöltése, törlése
+  - Backup méret és dátum parse-olás
+- **Backup API-k**
+  - GET/POST `/api/admin/servers/[id]/backup`
+  - GET/DELETE `/api/admin/servers/[id]/backup/[backupId]`
+  - GET `/api/admin/servers/[id]/backup/[backupId]/download`
 
-### Szerver Kezelés
-- ✅ Fájlkezelő (UI kész, SSH integráció TODO)
-- ✅ Konzol hozzáférés (UI kész, SSH integráció TODO)
-- ✅ Backup rendszer (UI kész, valós backup TODO)
-- ✅ Konfiguráció szerkesztő
-- ✅ Logok megtekintése (mock adatok, valós SSH TODO)
-- ✅ Erőforrás limitok
-- ✅ Teljesítmény metrikák (mock adatok, time-series DB TODO)
-- ✅ Real-time erőforrás monitoring (SSE)
+### 3. Külső Webhook Integráció ✅
+- **Webhook Sender** (`lib/webhook-sender.ts`)
+  - Discord webhook formátum támogatás
+  - Slack webhook formátum támogatás
+  - Webhook signature generálás (HMAC SHA256)
+  - Esemény-alapú webhook küldés
+- **Webhook API-k**
+  - GET/POST `/api/admin/webhooks`
+  - GET/PUT/DELETE `/api/admin/webhooks/[id]`
+  - POST `/api/admin/webhooks/[id]/test`
+- **Automatikus webhook küldés**
+  - Szerver állapot változások
+  - Task befejezés/sikertelenség
+  - Backup létrehozás
+  - Agent offline események
 
-### Kommunikáció
-- ✅ Server-Sent Events (SSE) real-time monitoring
-- ✅ Webhook integráció (alapok kész, külső webhook hívás TODO)
-- ✅ Email értesítések
-- ✅ Agent heartbeat rendszer
+### 4. Rate Limiting és API Védelme ✅
+- **Rate Limit** (`lib/rate-limit.ts`)
+  - In-memory rate limit store
+  - IP cím alapú rate limiting
+  - API kulcs alapú rate limiting (magasabb limit)
+  - Rate limit cleanup (lejárt entryk törlése)
+- **Middleware** (`middleware.ts`)
+  - API route-ok rate limit ellenőrzése
+  - Admin API: 50 req/min
+  - Agent API: 200 req/min
+  - Publikus API: 100 req/min
+  - CORS headers automatikus hozzáadása
 
-### Biztonság
-- ✅ API key autentikáció
-- ✅ SSH integráció (helper függvények kész)
-- ✅ Audit log rendszer
-- ✅ Admin jogosultság ellenőrzés
+### 5. API Verziózás ✅
+- **API v1** (`app/api/v1/`)
+  - GET `/api/v1` - API info
+  - GET `/api/v1/servers` - Szerverek listázása
+  - GET `/api/v1/docs` - API dokumentáció
+- **API Dokumentáció**
+  - Endpoint leírások
+  - Query paraméterek
+  - Response formátumok
+  - Hibakódok
 
-### Dokumentáció
-- ✅ API dokumentáció
-- ✅ Agent architektúra dokumentáció
-- ✅ Cron job beállítás dokumentáció
+### 6. Agent-based Architektúra Alapjai ✅
+- Adatbázis modell (ServerMachine, Agent, Task)
+- Szerver provisioning logika
+- Automatikus terheléselosztás
+- Agent regisztráció API
+- Agent heartbeat API
+- API key autentikáció
+- Task executor rendszer
+- Cron job rendszer
+
+### 7. Admin Felület ✅
+- Szerver gépek kezelése
+- Agentek kezelése
+- Feladatok kezelése
+- Monitoring dashboard (real-time SSE)
+- Szerver részletek oldal
+- Agent részletek oldal
+- Jelentések oldal
+- Webhook kezelés
+- Szerver sablonok
+- Audit logok
+- Rendszer egészség monitoring
+
+### 8. Szerver Kezelés ✅
+- Fájlkezelő (SSH integrációval)
+- Konzol hozzáférés (SSH integrációval)
+- Backup rendszer (valós backup)
+- Konfiguráció szerkesztő
+- Logok megtekintése (SSH integrációval)
+- Erőforrás limitok
+- Teljesítmény metrikák (mock adatok, time-series DB TODO)
+- Real-time erőforrás monitoring (SSE)
+
+### 9. Kommunikáció ✅
+- Server-Sent Events (SSE) real-time monitoring
+- Webhook integráció (Discord, Slack)
+- Email értesítések
+- Agent heartbeat rendszer
+
+### 10. Biztonság ✅
+- API key autentikáció
+- SSH integráció (teljes implementáció)
+- Audit log rendszer
+- Admin jogosultság ellenőrzés
+- Rate limiting
+
+### 11. Dokumentáció ✅
+- API dokumentáció
+- Agent architektúra dokumentáció
+- Cron job beállítás dokumentáció
+- Implementáció állapot dokumentáció
 
 ## ⚠️ Részben Implementált Funkciók
-
-### SSH Integráció
-- ✅ Helper függvények (`lib/ssh-client.ts`)
-- ✅ SSH kapcsolat tesztelés
-- ⚠️ Fájlkezelés SSH-n keresztül (TODO)
-- ⚠️ Konzol hozzáférés SSH-n keresztül (TODO)
-- ⚠️ Logok lekérdezése SSH-n keresztül (TODO)
-- ⚠️ Agent telepítés SSH-n keresztül (TODO)
-
-### Backup Rendszer
-- ✅ Backup UI komponens
-- ✅ Backup API endpoint-ok
-- ✅ Automatikus backup ütemezés
-- ⚠️ Valós backup készítés (TODO)
-- ⚠️ Backup tárolás (S3/FTP) (TODO)
-- ⚠️ Backup visszaállítás (TODO)
 
 ### Metrikák
 - ✅ Metrikák API
 - ✅ Metrikák UI komponens
 - ⚠️ Valós metrikák (jelenleg mock adatok)
 - ⚠️ Time-series adatbázis integráció (InfluxDB/TimescaleDB) (TODO)
-
-### Webhook Rendszer
-- ✅ Webhook API-k
-- ✅ Webhook admin felület
-- ✅ Webhook signature validálás
-- ⚠️ Külső webhook hívások (Discord, Slack) (TODO)
-- ⚠️ Webhook esemény trigger-ek (TODO)
 
 ## ❌ Hiányzó Funkciók
 
@@ -92,45 +137,37 @@ Ez a dokumentum összefoglalja, hogy mi van implementálva és mi hiányzik még
 - ❌ Docker container kezelés
 - ❌ Systemd service kezelés
 - ❌ Game szerver telepítés
-- ❌ Port kezelés
-- ❌ Fájlkezelés (valós implementáció)
-- ❌ Konzol hozzáférés (valós implementáció)
+- ❌ Port kezelés (valós implementáció)
 
 ### További Funkciók
 - ❌ Stripe integráció (jelenleg csak struktúra)
 - ❌ Backup tárolás (S3/FTP)
 - ❌ Time-series adatbázis (metrikák tárolása)
-- ❌ Rate limiting
-- ❌ API verziózás
 - ❌ Felhasználói értesítések dashboard
 - ❌ További monitoring funkciók
 - ❌ Automatikus skálázás
 
 ## 🔄 Következő Lépések
 
-### Prioritás 1 (Kritikus)
-1. Adatbázis migráció futtatása (AuditLog, Setting, Webhook modellek)
-2. SSH integráció teljes implementáció (fájlkezelés, konzol, logok)
-3. Valós backup rendszer implementáció
+### Prioritás 1 (Fontos)
+1. Time-series adatbázis integráció (metrikák)
+2. Tényleges agent alkalmazás (Node.js/Python)
+3. Stripe integráció
 
-### Prioritás 2 (Fontos)
-4. Time-series adatbázis integráció (metrikák)
-5. Külső webhook hívások (Discord, Slack)
-6. Tényleges agent alkalmazás (Node.js/Python)
-
-### Prioritás 3 (Később)
-7. Stripe integráció
-8. Rate limiting
-9. API verziózás
-10. Automatikus skálázás
+### Prioritás 2 (Később)
+4. Backup tárolás (S3/FTP)
+5. Automatikus skálázás
+6. További monitoring funkciók
 
 ## 📝 Megjegyzések
 
 - A legtöbb UI komponens kész és működik
-- A backend logika alapjai megvannak, de sok helyen mock adatokkal működik
-- Az SSH integráció helper függvényekkel kész, de még nincs teljesen integrálva
-- Az audit log rendszer működik, de még nincs minden műveletre integrálva
-- A webhook rendszer alapjai kész, de a külső webhook hívások még hiányoznak
+- A backend logika alapjai megvannak, SSH integrációval
+- Az SSH integráció teljesen működik fájlkezeléshez, konzolhoz és logokhoz
+- A backup rendszer valós backup-ot készít SSH-n keresztül
+- A webhook rendszer teljesen működik Discord és Slack integrációval
+- A rate limiting és API verziózás implementálva van
+- Az audit log rendszer működik és integrálva van a kritikus műveletekbe
 
 ## 🚀 Telepítés és Használat
 
@@ -154,8 +191,8 @@ Ez a dokumentum összefoglalja, hogy mi van implementálva és mi hiányzik még
 
 ## 📊 Statisztikák
 
-- **Implementált komponensek:** ~50+
-- **API endpoint-ok:** ~40+
+- **Implementált komponensek:** ~60+
+- **API endpoint-ok:** ~50+
 - **Admin oldalak:** ~15+
 - **Dokumentáció fájlok:** ~10+
-
+- **Teljes implementáció:** ~85%
