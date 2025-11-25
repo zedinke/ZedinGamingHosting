@@ -615,6 +615,26 @@ model Webhook {
   @@map("webhooks")
 }
 
+// Felhasználói értesítések
+model Notification {
+  id        String             @id @default(cuid())
+  userId    String
+  type      String             // Értesítés típusa
+  title     String
+  message   String             @db.Text
+  priority  String             @default("medium") // low, medium, high, urgent
+  data      Json?              // További adatok
+  read      Boolean            @default(false)
+  readAt    DateTime?
+  createdAt DateTime           @default(now())
+
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
+  @@map("notifications")
+}
+
 enum AgentStatus {
   ONLINE
   OFFLINE
