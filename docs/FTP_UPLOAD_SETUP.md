@@ -4,16 +4,29 @@ Ez a dokumentum leírja, hogyan lehet FTP-n keresztül képeket feltölteni a sl
 
 ## Automatikus Engedélyek Beállítása
 
-Futtasd le a következő scriptet a szerveren:
+Két módon állíthatod be az engedélyeket:
+
+### 1. Bash Script (Linux/Mac)
 
 ```bash
 bash scripts/set-uploads-permissions.sh
 ```
 
-Ez a script:
+### 2. Node.js Script (Minden platform)
+
+```bash
+node scripts/fix-uploads-permissions.js
+```
+
+Mindkét script:
 - Létrehozza az összes szükséges uploads mappát
 - Beállítja a megfelelő engedélyeket (755 - rwxr-xr-x)
 - Lehetővé teszi az FTP feltöltést
+
+**Ha a feltöltés nem működik, próbáld meg futtatni a fix scriptet:**
+```bash
+node scripts/fix-uploads-permissions.js
+```
 
 ## Manuális Engedélyek Beállítása
 
