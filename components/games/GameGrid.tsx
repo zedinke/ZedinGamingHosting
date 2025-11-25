@@ -41,42 +41,50 @@ export function GameGrid({ games, locale }: GameGridProps) {
 
   return (
     <div>
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {games.map((game) => {
           const gameLink = `/${locale}/servers/new?gameType=${game.slug.toUpperCase()}`;
           const gameImage = game.image || '/images/games/default.jpg';
 
           return (
-            <Card key={game.id} className="relative overflow-hidden group" hover>
-              {game.category && (
-                <Badge
-                  variant="outline"
-                  className="absolute top-3 left-3 z-10"
-                  style={game.category.color ? { borderColor: game.category.color, color: game.category.color } : {}}
-                >
-                  {game.category.name}
-                </Badge>
-              )}
-              <div className="relative w-full h-48 overflow-hidden rounded-t-lg bg-gray-200">
-                <Image
-                  src={gameImage}
-                  alt={game.name}
-                  fill
-                  className="object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-              </div>
-              <div className="p-6">
-                <h3 className="text-xl font-bold mb-2 text-gray-900">{game.name}</h3>
-                {game.description && (
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-3">
-                    {game.description}
-                  </p>
+            <Link 
+              key={game.id} 
+              href={session ? gameLink : `/${locale}/register`}
+              className="group block"
+            >
+              <div className="relative overflow-hidden bg-white rounded-lg border border-gray-200 hover:border-gray-300 hover:shadow-lg transition-all duration-300">
+                {game.category && (
+                  <Badge
+                    variant="outline"
+                    className="absolute top-3 left-3 z-10 bg-white/90 backdrop-blur-sm"
+                    style={game.category.color ? { borderColor: game.category.color, color: game.category.color } : {}}
+                  >
+                    {game.category.name}
+                  </Badge>
                 )}
-                <Link href={session ? gameLink : `/${locale}/register`}>
-                  <Button className="w-full">Szerver rendelés</Button>
-                </Link>
+                <div className="relative w-full h-48 overflow-hidden bg-gray-100">
+                  <Image
+                    src={gameImage}
+                    alt={game.name}
+                    fill
+                    className="object-cover transition-transform duration-300 group-hover:scale-110"
+                  />
+                </div>
+                <div className="p-5">
+                  <h3 className="text-lg font-semibold mb-2 text-gray-900 group-hover:text-primary-600 transition-colors">
+                    {game.name}
+                  </h3>
+                  {game.description && (
+                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                      {game.description}
+                    </p>
+                  )}
+                  <div className="text-sm font-medium text-primary-600 group-hover:text-primary-700">
+                    Szerver létrehozása →
+                  </div>
+                </div>
               </div>
-            </Card>
+            </Link>
           );
         })}
       </div>

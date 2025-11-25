@@ -5,6 +5,7 @@ import { FeaturesSection } from '@/components/home/FeaturesSection';
 import { StatsSection } from '@/components/home/StatsSection';
 import { CTASection } from '@/components/home/CTASection';
 import { SlideshowSection } from '@/components/home/SlideshowSection';
+import { PartnersSection } from '@/components/home/PartnersSection';
 import { Footer } from '@/components/home/Footer';
 import { prisma } from '@/lib/prisma';
 import { readFileSync } from 'fs';
@@ -52,7 +53,7 @@ export default async function HomePage({
   const ctaSection = homepageSections.find((s) => s.type === 'cta');
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <Navigation locale={locale} />
 
       <main>
@@ -89,6 +90,9 @@ export default async function HomePage({
         ) : (
           <StatsSection />
         )}
+
+        {/* Partners Section */}
+        <PartnersSection locale={locale} />
 
         {/* CTA Section */}
         {ctaSection ? (

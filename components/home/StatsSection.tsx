@@ -31,23 +31,32 @@ export function StatsSection({ section }: StatsSectionProps) {
     }
   }
   return (
-    <section className="py-16 bg-white">
+    <section className="py-20 bg-gray-50">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold mb-2 text-gray-900">
+            Zahlen, Daten und Fakten
+          </h2>
+          <p className="text-gray-600">
+            Vertrauen von mehr als 50.000 Spielern und 8 Partnern
+          </p>
+        </div>
+        
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {stats.map((stat, index) => {
             const Icon = stat.icon;
             return (
-              <Card key={index} className="text-center" padding="lg">
-                <div className="inline-flex items-center justify-center w-12 h-12 mb-4 bg-primary-100 rounded-full">
-                  <Icon className="w-6 h-6 text-primary-600" />
+              <div key={index} className="text-center">
+                <div className="inline-flex items-center justify-center w-16 h-16 mb-4 bg-white rounded-full shadow-sm">
+                  <Icon className="w-8 h-8 text-gray-700" />
                 </div>
-                <div className="text-3xl md:text-4xl font-bold text-primary-600 mb-2">
+                <div className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">
                   {stat.value}
                 </div>
                 <div className="text-gray-600 font-medium">
                   {stat.label}
                 </div>
-              </Card>
+              </div>
             );
           })}
         </div>
