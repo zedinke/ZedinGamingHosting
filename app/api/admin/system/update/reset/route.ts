@@ -21,34 +21,31 @@ export async function POST(request: NextRequest) {
 
     // Progress fájl törlése
     try {
-      await unlink(PROGRESS_FILE);
-    } catch (error: any) {
-      // Ha nincs fájl, nem probléma
-      if (error.code !== 'ENOENT') {
-        throw error;
-      }
+      await unlink(PROGRESS_FILE).catch(() => {
+        // Ha nincs fájl, nem probléma
+      });
+    } catch (error) {
+      // Nem kritikus hiba
     }
 
     // Log fájl törlése
     try {
-      await unlink(LOG_FILE);
-    } catch (error: any) {
-      // Ha nincs fájl, nem probléma
-      if (error.code !== 'ENOENT') {
-        throw error;
-      }
+      await unlink(LOG_FILE).catch(() => {
+        // Ha nincs fájl, nem probléma
+      });
+    } catch (error) {
+      // Nem kritikus hiba
     }
 
     return NextResponse.json({
       success: true,
-      message: 'Progress fájl törölve, új frissítés indítható',
+      message: 'Progress fájlok törölve',
     });
-  } catch (error: any) {
-    console.error('Reset progress error:', error);
+  } catch (error) {
+    console.error('Update reset error:', error);
     return NextResponse.json(
-      { error: 'Hiba történt a progress reset során' },
+      { error: 'Hiba történt a progress törlése során' },
       { status: 500 }
     );
   }
 }
-

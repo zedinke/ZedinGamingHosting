@@ -142,7 +142,7 @@ async function startUpdateProcess() {
       {
         key: 'git_pull',
         label: 'Git változások letöltése',
-      action: async () => {
+        action: async () => {
         await appendLog('→ Git változások letöltése...');
         await updateProgress({
           status: 'in_progress',
@@ -213,7 +213,7 @@ async function startUpdateProcess() {
           throw new Error(`Git pull hiba: ${errorMessage}`);
         }
       },
-    },
+      },
     {
       key: 'npm_install',
       label: 'Függőségek telepítése',
