@@ -16,46 +16,44 @@ export default async function DashboardPage({
 }) {
   const session = await getServerSession(authOptions);
   
-  if (!session) {
+  if (!session || !session.user) {
     redirect(`/${locale}/login`);
   }
 
+  // Szerializálható adatok kinyerése a session-ből
+  const userEmail = session.user.email;
+  const userName = session.user.name;
   const userId = (session.user as any)?.id;
   
-  if (!userId) {
-    // Ha nincs ID a session-ben, próbáljuk meg lekérni a user-t az email alapján
-    const userEmail = session.user?.email;
-    
-    if (!userEmail) {
-      redirect(`/${locale}/login`);
+  // Ha nincs ID, próbáljuk meg lekérni a user-t az email alapján
+  let finalUserId = userId;
+  
+  if (!finalUserId && userEmail) {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { email: userEmail },
+        select: { id: true },
+      });
+      
+      if (user) {
+        finalUserId = user.id;
+      }
+    } catch (error) {
+      console.error('Error fetching user:', error);
     }
-    
-    const user = await prisma.user.findUnique({
-      where: { email: userEmail },
-      select: { id: true },
-    }).catch(() => null);
-    
-    if (!user) {
-      redirect(`/${locale}/login`);
-    }
-    
-    // Frissítjük a session-t az ID-val (ez csak ebben a request-ben érvényes)
-    (session.user as any).id = user.id;
   }
 
+  if (!finalUserId) {
+    redirect(`/${locale}/login`);
+  }
+
+  // Translation betöltése
   let t: (key: string) => string;
   try {
     t = getTranslations(locale, 'common');
   } catch (error) {
     console.error('Error loading translations:', error);
-    // Fallback translation function
     t = (key: string) => key;
-  }
-
-  const finalUserId = (session.user as any)?.id;
-
-  if (!finalUserId) {
-    redirect(`/${locale}/login`);
   }
 
   // Felhasználó szervereinek lekérése
@@ -88,7 +86,7 @@ export default async function DashboardPage({
   // Aktív előfizetések
   let subscriptions: any[] = [];
   try {
-    subscriptions = await prisma.subscription.findMany({
+    const subscriptionsData = await prisma.subscription.findMany({
       where: {
         userId: finalUserId,
         status: 'ACTIVE',
@@ -103,12 +101,13 @@ export default async function DashboardPage({
         },
       },
     });
-    // Konvertáljuk az enum értékeket stringgé
-    subscriptions = subscriptions.map(sub => ({
-      ...sub,
+    // Konvertáljuk az enum értékeket stringgé és csak a szükséges mezőket
+    subscriptions = subscriptionsData.map((sub: any) => ({
+      id: sub.id,
       status: String(sub.status),
       server: sub.server ? {
-        ...sub.server,
+        id: sub.server.id,
+        name: sub.server.name,
         status: String(sub.server.status),
       } : null,
     }));
@@ -129,7 +128,7 @@ export default async function DashboardPage({
             {t('dashboard.title')}
           </h1>
           <p className="text-gray-600 text-lg">
-            Üdvözöljük, <span className="font-semibold text-gray-900">{session.user?.name || session.user?.email}</span>!
+            Üdvözöljük, <span className="font-semibold text-gray-900">{userName || userEmail || 'Felhasználó'}</span>!
           </p>
         </div>
 
