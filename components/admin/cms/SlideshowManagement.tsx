@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
+import toast from 'react-hot-toast';
 
 interface SlideshowSlide {
   id: string;
@@ -26,8 +28,10 @@ interface SlideshowManagementProps {
 }
 
 export function SlideshowManagement({ slides, locale, transitionInterval }: SlideshowManagementProps) {
+  const router = useRouter();
   const [intervalValue, setIntervalValue] = useState(transitionInterval);
   const [isSaving, setIsSaving] = useState(false);
+  const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
 
   // Debug: log slides with image URLs
   console.log('SlideshowManagement - slides:', slides.map(s => ({
@@ -55,15 +59,52 @@ export function SlideshowManagement({ slides, locale, transitionInterval }: Slid
       const result = await response.json();
 
       if (!response.ok) {
-        alert(result.error || 'Hiba történt');
+        toast.error(result.error || 'Hiba történt');
         return;
       }
 
-      alert('Váltási idő sikeresen frissítve');
+      toast.success('Váltási idő sikeresen frissítve');
     } catch (error) {
-      alert('Hiba történt');
+      toast.error('Hiba történt');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleDelete = async (slideId: string, slideTitle: string | null) => {
+    const confirmed = window.confirm(
+      `Biztosan törölni szeretnéd ezt a slide-ot?${slideTitle ? `\n\n"${slideTitle}"` : ''}\n\nEz a művelet nem vonható vissza!`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingIds((prev) => new Set(prev).add(slideId));
+
+    try {
+      const response = await fetch(`/api/admin/cms/slideshow/${slideId}`, {
+        method: 'DELETE',
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        toast.error(result.error || 'Hiba történt a slide törlése során');
+        return;
+      }
+
+      toast.success('Slide sikeresen törölve');
+      router.refresh();
+    } catch (error) {
+      console.error('Delete error:', error);
+      toast.error('Hiba történt a slide törlése során');
+    } finally {
+      setDeletingIds((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(slideId);
+        return newSet;
+      });
     }
   };
 
@@ -172,12 +213,22 @@ export function SlideshowManagement({ slides, locale, transitionInterval }: Slid
                   </Badge>
                   <span className="text-xs text-gray-600 font-medium">#{slide.order}</span>
                 </div>
-                <Link
-                  href={`/${locale}/admin/cms/slideshow/${slide.id}`}
-                  className="text-primary-600 hover:text-primary-700 hover:underline text-sm font-medium"
-                >
-                  Szerkesztés
-                </Link>
+                <div className="flex items-center gap-3">
+                  <Link
+                    href={`/${locale}/admin/cms/slideshow/${slide.id}`}
+                    className="text-primary-600 hover:text-primary-700 hover:underline text-sm font-medium"
+                  >
+                    Szerkesztés
+                  </Link>
+                  <button
+                    onClick={() => handleDelete(slide.id, slide.title)}
+                    disabled={deletingIds.has(slide.id)}
+                    className="text-red-600 hover:text-red-700 hover:underline text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Slide törlése"
+                  >
+                    {deletingIds.has(slide.id) ? 'Törlés...' : 'Törlés'}
+                  </button>
+                </div>
               </div>
             </Card>
           ))}
