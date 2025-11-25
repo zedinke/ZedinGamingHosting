@@ -98,9 +98,26 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Progress fájl létrehozása azonnal
+    await updateProgress({
+      status: 'starting',
+      message: 'Frissítés indítása...',
+      progress: 0,
+      currentStep: 'starting',
+      log: 'Frissítés indítása...\n',
+    });
+
     // Frissítés indítása háttérben (nem blokkoló módon)
-    startUpdateProcess().catch((error) => {
+    startUpdateProcess().catch(async (error) => {
       console.error('Update process error:', error);
+      const errorMessage = error.message || error.toString() || 'Ismeretlen hiba';
+      await updateProgress({
+        status: 'error',
+        message: 'Frissítési hiba',
+        progress: 0,
+        error: errorMessage,
+        log: await readLog(),
+      });
     });
 
     return NextResponse.json({
@@ -117,10 +134,14 @@ export async function POST(request: NextRequest) {
 }
 
 async function startUpdateProcess() {
-  const steps = [
-    {
-      key: 'git_pull',
-      label: 'Git változások letöltése',
+  try {
+    await clearLog();
+    await appendLog('=== Frissítés indítása ===');
+    
+    const steps = [
+      {
+        key: 'git_pull',
+        label: 'Git változások letöltése',
       action: async () => {
         await appendLog('→ Git változások letöltése...');
         await updateProgress({
@@ -128,7 +149,7 @@ async function startUpdateProcess() {
           message: 'Git változások letöltése...',
           progress: 10,
           currentStep: 'git_pull',
-          log: 'Git változások letöltése...\n',
+          log: await readLog(),
         });
         
         try {
@@ -206,12 +227,13 @@ async function startUpdateProcess() {
           log: await readLog(),
         });
         try {
-          const { stdout, stderr } = await execAsync('npm install', { cwd: process.cwd(), maxBuffer: 1024 * 1024 * 10 });
+          await appendLog('  - npm install futtatása (ez eltarthat néhány percig)...');
+          const { stdout, stderr } = await execAsync('npm install --legacy-peer-deps', { cwd: process.cwd(), maxBuffer: 1024 * 1024 * 10 });
           await appendLog(`  ${stdout || stderr || 'NPM install sikeres'}`);
           await updateProgress({
             status: 'in_progress',
-            message: 'Függőségek telepítése...',
-            progress: 35,
+            message: 'Függőségek telepítése befejezve...',
+            progress: 50,
             currentStep: 'npm_install',
             log: await readLog(),
           });
@@ -321,16 +343,6 @@ async function startUpdateProcess() {
       },
     },
   ];
-
-  try {
-    await clearLog();
-    await appendLog('=== Frissítés indítása ===');
-    await updateProgress({
-      status: 'starting',
-      message: 'Frissítés indítása...',
-      progress: 0,
-      log: 'Frissítés indítása...\n',
-    });
 
     for (const step of steps) {
       try {
