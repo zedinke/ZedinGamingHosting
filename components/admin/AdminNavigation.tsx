@@ -32,6 +32,8 @@ export function AdminNavigation({ locale }: AdminNavigationProps) {
     { href: `/${locale}/admin/invoices`, label: 'Számlák', icon: '📄' },
     { href: `/${locale}/admin/tickets`, label: 'Ticketek', icon: '🎫' },
     { href: `/${locale}/admin/cms`, label: 'CMS', icon: '📝' },
+    { href: `/${locale}/admin/analytics`, label: 'Analytics', icon: '📈' },
+    { href: `/${locale}/admin/theme`, label: 'Téma', icon: '🎨' },
     { href: `/${locale}/admin/system`, label: 'Rendszer', icon: '⚙️' },
   ];
 

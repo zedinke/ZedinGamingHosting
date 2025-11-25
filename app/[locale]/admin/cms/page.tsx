@@ -53,6 +53,27 @@ export default async function AdminCMSPage({
       icon: '👥',
       color: 'bg-indigo-500',
     },
+    {
+      title: 'Kezdőoldal Szekciók',
+      description: 'Homepage szekciók szerkesztése',
+      href: `/${locale}/admin/cms/homepage`,
+      icon: '🏠',
+      color: 'bg-teal-500',
+    },
+    {
+      title: 'Slideshow',
+      description: 'Kezdőoldal slideshow kezelése',
+      href: `/${locale}/admin/cms/slideshow`,
+      icon: '🖼️',
+      color: 'bg-cyan-500',
+    },
+    {
+      title: 'Játékok',
+      description: 'Játékok és kategóriák kezelése',
+      href: `/${locale}/admin/cms/games`,
+      icon: '🎮',
+      color: 'bg-orange-500',
+    },
   ];
 
   return (

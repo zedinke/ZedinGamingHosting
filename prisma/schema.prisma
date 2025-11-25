@@ -384,3 +384,87 @@ model Setting {
   @@map("settings")
 }
 
+// Homepage Sections CMS
+model HomepageSection {
+  id          String   @id @default(cuid())
+  type        String   // hero, features, stats, cta, slideshow
+  title       String?
+  subtitle    String?  @db.Text
+  content     Json?    // Section specific content
+  image       String?
+  buttonText  String?
+  buttonLink  String?
+  isActive    Boolean  @default(true)
+  order       Int      @default(0)
+  locale      String   @default("hu")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("homepage_sections")
+}
+
+// Slideshow
+model SlideshowSlide {
+  id          String   @id @default(cuid())
+  title       String?
+  subtitle    String?  @db.Text
+  image       String
+  link        String?
+  buttonText  String?
+  isActive    Boolean  @default(true)
+  order       Int      @default(0)
+  locale      String   @default("hu")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("slideshow_slides")
+}
+
+// Game Categories
+model GameCategory {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?  @db.Text
+  icon        String?
+  color       String?  // Hex color
+  isActive    Boolean  @default(true)
+  order       Int      @default(0)
+  locale      String   @default("hu")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  games       Game[]
+
+  @@map("game_categories")
+}
+
+model Game {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?  @db.Text
+  image       String?
+  categoryId  String?
+  isActive    Boolean  @default(true)
+  order       Int      @default(0)
+  locale      String   @default("hu")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  category    GameCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  @@map("games")
+}
+
+// Theme Settings
+model ThemeSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json     // Theme configuration
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("theme_settings")
+}
+
