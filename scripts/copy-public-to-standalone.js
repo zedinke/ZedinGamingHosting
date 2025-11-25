@@ -1,8 +1,20 @@
 const fs = require('fs');
 const path = require('path');
 
-const publicDir = path.join(process.cwd(), 'public');
-const standalonePublicDir = path.join(process.cwd(), '.next/standalone/public');
+// Determine correct working directory
+// In standalone build, process.cwd() points to .next/standalone
+// We need to go to project root
+let workingDir = process.cwd();
+const isStandalone = workingDir.includes('.next/standalone') || fs.existsSync(path.join(workingDir, 'server.js'));
+
+if (isStandalone && workingDir.includes('.next/standalone')) {
+  // Go up to project root
+  workingDir = path.join(workingDir, '..', '..', '..');
+  console.log('Standalone build detected, using project root:', workingDir);
+}
+
+const publicDir = path.join(workingDir, 'public');
+const standalonePublicDir = path.join(workingDir, '.next/standalone/public');
 
 if (!fs.existsSync('.next/standalone')) {
   console.log('Standalone build not found, skipping public folder copy');

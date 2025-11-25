@@ -417,8 +417,20 @@ async function startUpdateProcess() {
           } catch (dockerError) {
             // Ha nincs docker-compose, akkor Next.js build (standalone módban)
             await appendLog('  - Docker nem elérhető, Next.js build használata...', LOG_FILE);
+            await appendLog(`  - Build working directory: ${WORKING_DIR}`, LOG_FILE);
+            
+            // Ellenőrizzük, hogy van-e app vagy pages mappa
+            const fs = require('fs');
+            const path = require('path');
+            const appDir = path.join(WORKING_DIR, 'app');
+            const pagesDir = path.join(WORKING_DIR, 'pages');
+            
+            if (!fs.existsSync(appDir) && !fs.existsSync(pagesDir)) {
+              throw new Error(`Nem található 'app' vagy 'pages' mappa a következő helyen: ${WORKING_DIR}`);
+            }
+            
             const { stdout: buildOutput } = await execAsync('npm run build', { 
-              cwd: WORKING_DIR, 
+              cwd: WORKING_DIR,
               maxBuffer: 1024 * 1024 * 10,
               timeout: 600000, // 10 perc timeout
             });
