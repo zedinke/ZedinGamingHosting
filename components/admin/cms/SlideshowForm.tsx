@@ -58,6 +58,7 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<SlideshowSlideFormData>({
     resolver: zodResolver(slideshowSlideSchema),
@@ -104,6 +105,8 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
 
       toast.success('Kép sikeresen feltöltve');
       setImagePreview(result.url);
+      // Beállítjuk a form image mezőjét is
+      setValue('image', result.url, { shouldValidate: true });
       return result.url;
     } catch (error) {
       toast.error('Hiba történt a kép feltöltése során');
@@ -218,16 +221,7 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
                   const file = e.target.files?.[0];
                   if (file) {
                     const url = await handleImageUpload(file);
-                    if (url) {
-                      // Frissítjük a form értékét is
-                      const form = e.target.closest('form');
-                      if (form) {
-                        const imageInput = form.querySelector('input[name="image"]') as HTMLInputElement;
-                        if (imageInput) {
-                          imageInput.value = url;
-                        }
-                      }
-                    }
+                    // A handleImageUpload már beállítja a setValue-t
                   }
                 }}
                 disabled={uploading}
@@ -244,12 +238,16 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
                 Vagy add meg a kép URL-jét:
               </label>
               <input
-                {...register('image')}
+                {...register('image', {
+                  onChange: (e) => {
+                    setImagePreview(e.target.value);
+                  },
+                })}
                 type="url"
-                value={imagePreview || ''}
+                value={imagePreview || watch('image') || ''}
                 onChange={(e) => {
                   setImagePreview(e.target.value);
-                  register('image').onChange(e);
+                  setValue('image', e.target.value, { shouldValidate: true });
                 }}
                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
                 placeholder="https://example.com/image.jpg"
