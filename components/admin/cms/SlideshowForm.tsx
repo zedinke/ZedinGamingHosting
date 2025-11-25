@@ -206,30 +206,27 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
   const onSubmit = async (data: SlideshowSlideFormData) => {
     setIsLoading(true);
     try {
-      // A kép URL-je - először az imagePreview-t, aztán a form értékét használjuk
-      const currentImageValue = watch('image');
-      const imageUrl = imagePreview || currentImageValue || data.image;
-
-      if (!imageUrl || imageUrl.trim() === '') {
-        toast.error('Kép megadása kötelező');
-        setIsLoading(false);
-        return;
-      }
-
-      // Ha az imageUrl nem egyezik meg a form értékével, frissítjük és újra validáljuk
-      if (imageUrl !== data.image) {
-        setValue('image', imageUrl, { 
-          shouldValidate: true,
-          shouldDirty: true,
-        });
-        // Várunk egy kicsit, hogy a validáció frissüljön
-        await new Promise(resolve => setTimeout(resolve, 200));
+      const currentMediaType = watch('mediaType') || data.mediaType || 'image';
+      
+      // Media típus alapján kép vagy videó URL-je
+      let mediaUrl = '';
+      if (currentMediaType === 'image') {
+        const currentImageValue = watch('image');
+        mediaUrl = imagePreview || currentImageValue || data.image || '';
         
-        // Újra lekérjük az adatokat a validáció után
-        const updatedData = watch();
-        if (updatedData.image !== imageUrl) {
-          // Ha még mindig nem egyezik, akkor manuálisan beállítjuk
-          setValue('image', imageUrl, { shouldValidate: false });
+        if (!mediaUrl || mediaUrl.trim() === '') {
+          toast.error('Kép megadása kötelező');
+          setIsLoading(false);
+          return;
+        }
+      } else {
+        const currentVideoValue = watch('video');
+        mediaUrl = videoPreview || currentVideoValue || data.video || '';
+        
+        if (!mediaUrl || mediaUrl.trim() === '') {
+          toast.error('Videó megadása kötelező');
+          setIsLoading(false);
+          return;
         }
       }
 
@@ -243,7 +240,9 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
       const payload = {
         title: data.title && data.title.trim() !== '' ? data.title : null,
         subtitle: data.subtitle && data.subtitle.trim() !== '' ? data.subtitle : null,
-        image: imageUrl,
+        mediaType: currentMediaType,
+        image: currentMediaType === 'image' ? mediaUrl : null,
+        video: currentMediaType === 'video' ? mediaUrl : null,
         link: linkValue,
         buttonText: buttonTextValue,
         isActive: data.isActive,
