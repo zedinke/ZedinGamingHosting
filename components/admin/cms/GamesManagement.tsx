@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
 
@@ -66,11 +65,10 @@ export function GamesManagement({ games, categories, locale }: GamesManagementPr
             <Card key={game.id} className={!game.isActive ? 'opacity-60' : ''} hover>
               {game.image && (
                 <div className="relative w-full h-48 mb-4 rounded-lg overflow-hidden bg-gray-200">
-                  <Image
+                  <img
                     src={game.image}
                     alt={game.name}
-                    fill
-                    className="object-cover"
+                    className="w-full h-full object-cover"
                   />
                 </div>
               )}

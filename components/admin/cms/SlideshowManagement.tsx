@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
 
@@ -29,11 +28,10 @@ export function SlideshowManagement({ slides, locale }: SlideshowManagementProps
         {slides.map((slide) => (
           <Card key={slide.id} className={!slide.isActive ? 'opacity-60' : ''} hover>
             <div className="relative w-full h-48 mb-4 rounded-lg overflow-hidden bg-gray-200">
-              <Image
+              <img
                 src={slide.image}
                 alt={slide.title || 'Slide'}
-                fill
-                className="object-cover"
+                className="w-full h-full object-cover"
               />
             </div>
 

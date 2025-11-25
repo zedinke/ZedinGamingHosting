@@ -40,7 +40,7 @@ export function InvoiceManagement({
   const [resendingIds, setResendingIds] = useState<Set<string>>(new Set());
 
   const handleResend = async (invoiceId: string) => {
-    setResendingIds((prev) => new Set(prev).add(invoiceId));
+    setResendingIds((prev: Set<string>) => new Set(prev).add(invoiceId));
     try {
       const response = await fetch(`/api/admin/invoices/${invoiceId}/resend`, {
         method: 'POST',
@@ -57,7 +57,7 @@ export function InvoiceManagement({
     } catch (error) {
       toast.error('Hiba történt');
     } finally {
-      setResendingIds((prev) => {
+      setResendingIds((prev: Set<string>) => {
         const newSet = new Set(prev);
         newSet.delete(invoiceId);
         return newSet;
@@ -109,7 +109,9 @@ export function InvoiceManagement({
                     </div>
                   </td>
                   <td className="p-3">{formatPrice(invoice.amount, invoice.currency)}</td>
-                  <td className="p-3">{getStatusBadge(invoice.status)}</td>
+                  <td className="p-3">
+                    {getStatusBadge(invoice.status)}
+                  </td>
                   <td className="p-3 text-sm text-gray-600">
                     {new Date(invoice.createdAt).toLocaleDateString('hu-HU')}
                   </td>
