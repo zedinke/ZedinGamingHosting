@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
@@ -19,11 +20,73 @@ interface SlideshowSlide {
 interface SlideshowManagementProps {
   slides: SlideshowSlide[];
   locale: string;
+  transitionInterval: number;
 }
 
-export function SlideshowManagement({ slides, locale }: SlideshowManagementProps) {
+export function SlideshowManagement({ slides, locale, transitionInterval }: SlideshowManagementProps) {
+  const [intervalValue, setIntervalValue] = useState(transitionInterval);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSaveInterval = async () => {
+    setIsSaving(true);
+    try {
+      const response = await fetch('/api/admin/cms/slideshow/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          transitionInterval: intervalValue,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        alert(result.error || 'Hiba történt');
+        return;
+      }
+
+      alert('Váltási idő sikeresen frissítve');
+    } catch (error) {
+      alert('Hiba történt');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* Váltási idő beállítás */}
+      <div className="bg-white p-6 rounded-lg border shadow-sm">
+        <h2 className="text-xl font-bold mb-4">Slideshow Beállítások</h2>
+        <div className="flex items-center gap-4">
+          <label className="text-sm font-medium">
+            Váltási idő (másodperc):
+          </label>
+          <input
+            type="number"
+            min="1"
+            max="60"
+            value={intervalValue}
+            onChange={(e) => setIntervalValue(parseInt(e.target.value, 10) || 5)}
+            className="w-24 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+          />
+          <button
+            onClick={handleSaveInterval}
+            disabled={isSaving}
+            className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
+          >
+            {isSaving ? 'Mentés...' : 'Mentés'}
+          </button>
+        </div>
+        <p className="text-sm text-gray-600 mt-2">
+          A képek ennyi másodpercenként váltanak egymást (1-60 másodperc között)
+        </p>
+      </div>
+
+      {/* Slides list */}
+      <div className="space-y-4">
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {slides.map((slide) => (
           <Card key={slide.id} className={!slide.isActive ? 'opacity-60' : ''} hover>

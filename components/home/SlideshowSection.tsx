@@ -17,6 +17,7 @@ interface SlideshowSlide {
 interface SlideshowSectionProps {
   slides: SlideshowSlide[];
   locale: string;
+  transitionInterval?: number; // Váltási idő másodpercben (alapértelmezett: 5)
 }
 
 // Default game images - 7 gaming images
@@ -79,7 +80,7 @@ const defaultGameImages = [
   },
 ];
 
-export function SlideshowSection({ slides, locale }: SlideshowSectionProps) {
+export function SlideshowSection({ slides, locale, transitionInterval = 5 }: SlideshowSectionProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
@@ -91,15 +92,18 @@ export function SlideshowSection({ slides, locale }: SlideshowSectionProps) {
   // Always use default images if no slides from database
   const displaySlides = activeSlides.length > 0 ? activeSlides : defaultGameImages;
 
+  // Convert seconds to milliseconds
+  const intervalMs = transitionInterval * 1000;
+
   useEffect(() => {
     if (!isAutoPlaying || displaySlides.length <= 1) return;
 
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % displaySlides.length);
-    }, 5000); // 5 másodpercenként vált
+    }, intervalMs); // Váltási idő beállítása
 
     return () => clearInterval(interval);
-  }, [isAutoPlaying, displaySlides.length]);
+  }, [isAutoPlaying, displaySlides.length, intervalMs]);
 
   if (displaySlides.length === 0) {
     return null;
