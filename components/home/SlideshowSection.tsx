@@ -131,6 +131,7 @@ export function SlideshowSection({ slides, locale }: SlideshowSectionProps) {
           className="object-cover"
           priority={currentSlide === 0}
           quality={90}
+          unoptimized={slide.image.startsWith('https://images.unsplash.com')}
         />
         {/* 30% dark overlay */}
         <div className="absolute inset-0 bg-black/30" />
