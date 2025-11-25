@@ -360,11 +360,39 @@ async function startUpdateProcess() {
             // Ha nincs docker, akkor PM2 restart (standalone módban)
             await appendLog('  - Docker nem elérhető, PM2 restart használata...');
             try {
-              const { stdout: pm2Output } = await execAsync('pm2 restart zedingaming', { cwd: process.cwd() });
-              await appendLog(`  ${pm2Output || 'PM2 restart sikeres'}`);
-            } catch (pm2Error) {
+              // Először próbáljuk megkeresni a PM2 process-t
+              let pm2ProcessName = 'zedingaming';
+              try {
+                const { stdout: pm2List } = await execAsync('pm2 list --no-color', { cwd: process.cwd() });
+                // Keresünk egy aktív Next.js process-t
+                const lines = pm2List.split('\n');
+                for (const line of lines) {
+                  if (line.includes('node') || line.includes('next') || line.includes('npm')) {
+                    const match = line.match(/\│\s+(\w+)\s+│/);
+                    if (match && match[1] && match[1] !== 'name') {
+                      pm2ProcessName = match[1];
+                      await appendLog(`  - PM2 process név: ${pm2ProcessName}`);
+                      break;
+                    }
+                  }
+                }
+              } catch {
+                // Ha nem sikerül, használjuk az alapértelmezett nevet
+              }
+              
+              // Próbáljuk restart-olni az összes PM2 process-t, ha nem találunk specifikust
+              try {
+                const { stdout: pm2Output } = await execAsync(`pm2 restart ${pm2ProcessName}`, { cwd: process.cwd() });
+                await appendLog(`  ${pm2Output || 'PM2 restart sikeres'}`);
+              } catch {
+                // Ha a specifikus process nem létezik, próbáljuk az összeset
+                await appendLog('  - Specifikus process nem található, összes PM2 process restart...');
+                const { stdout: pm2Output } = await execAsync('pm2 restart all', { cwd: process.cwd() });
+                await appendLog(`  ${pm2Output || 'PM2 restart all sikeres'}`);
+              }
+            } catch (pm2Error: any) {
               // Ha nincs PM2 sem, akkor csak build
-              await appendLog('  ⚠️  PM2 nem elérhető, restart kihagyva');
+              await appendLog(`  ⚠️  PM2 nem elérhető: ${pm2Error.message || 'Ismeretlen hiba'}`);
               console.log('No PM2 or Docker found, skipping restart');
             }
           }
