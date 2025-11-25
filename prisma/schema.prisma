@@ -32,7 +32,8 @@ model User {
   invoices      Invoice[]
   tickets       SupportTicket[]
   subscriptions Subscription[]
-
+  auditLogs     AuditLog[]
+  
   @@map("users")
 }
 
@@ -544,6 +545,53 @@ model Agent {
   tasks         Task[]
   
   @@map("agents")
+}
+
+// Audit Log
+model AuditLog {
+  id           String   @id @default(cuid())
+  userId       String?
+  action       String   // CREATE, UPDATE, DELETE, LOGIN, etc.
+  resourceType String   // User, Server, Machine, etc.
+  resourceId   String?
+  details      Json?    // További információk
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+
+  user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([action])
+  @@index([resourceType, resourceId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// Rendszer beállítások
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String   @db.Text
+  category  String?  // system, email, payment, etc.
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
+
+// Webhook konfigurációk
+model Webhook {
+  id        String   @id @default(cuid())
+  name      String
+  url       String   @db.Text
+  secret    String?
+  events    Json     // Események listája
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("webhooks")
 }
 
 enum AgentStatus {
