@@ -103,17 +103,47 @@ export function SystemManagement({
       // WebSocket vagy polling használata a progress követéséhez
       const response = await fetch(`/api/admin/system/update`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
 
+      const result = await response.json();
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Frissítési hiba');
+        throw new Error(result.error || 'Frissítési hiba');
       }
 
+      toast.success('Frissítés elindítva, követés...');
+
       // Polling a progress követéséhez
+      let pollCount = 0;
+      const maxPolls = 600; // 10 perc maximum (600 * 1 másodperc)
+      
       const checkProgress = async () => {
+        pollCount++;
+        
+        if (pollCount > maxPolls) {
+          setIsUpdating(false);
+          setUpdateProgress(null);
+          toast.error('A frissítés túl sokáig tart, ellenőrizd a logokat');
+          return;
+        }
+
         try {
-          const progressResponse = await fetch(`/api/admin/system/update/status`);
+          const progressResponse = await fetch(`/api/admin/system/update/status`, {
+            cache: 'no-store',
+          });
+          
+          if (!progressResponse.ok) {
+            // Ha a fájl nem létezik, lehet hogy még nem indult el
+            if (pollCount < 5) {
+              setTimeout(checkProgress, 2000);
+              return;
+            }
+            throw new Error('Nem sikerült lekérni a frissítés állapotát');
+          }
+          
           const progress = await progressResponse.json();
 
           setUpdateProgress(progress);
@@ -122,28 +152,49 @@ export function SystemManagement({
             setIsUpdating(false);
             if (progress.status === 'completed') {
               toast.success('Rendszer sikeresen frissítve!');
+              setUpdateCheck(null); // Reset update check
               setTimeout(() => {
                 window.location.reload();
               }, 2000);
             } else {
               toast.error(progress.error || 'Frissítési hiba');
             }
-          } else {
+          } else if (progress.status === 'starting' || progress.status === 'in_progress') {
             // Folytatjuk a polling-ot
             setTimeout(checkProgress, 1000);
+          } else if (progress.status === 'idle') {
+            // Ha idle, lehet hogy még nem indult el, várunk egy kicsit
+            if (pollCount < 10) {
+              setTimeout(checkProgress, 2000);
+            } else {
+              setIsUpdating(false);
+              setUpdateProgress(null);
+              toast.error('A frissítés nem indult el. Ellenőrizd a konzolt.');
+            }
+          } else {
+            // Más állapot, újra próbáljuk
+            setTimeout(checkProgress, 2000);
           }
-        } catch (error) {
-          setIsUpdating(false);
-          toast.error('Hiba történt a frissítés követése során');
+        } catch (error: any) {
+          console.error('Progress check error:', error);
+          // Folytatjuk a polling-ot, lehet hogy csak átmeneti hiba
+          if (pollCount < maxPolls) {
+            setTimeout(checkProgress, 2000);
+          } else {
+            setIsUpdating(false);
+            setUpdateProgress(null);
+            toast.error('Hiba történt a frissítés követése során: ' + (error.message || 'Ismeretlen hiba'));
+          }
         }
       };
 
       // Elindítjuk a progress követést
-      setTimeout(checkProgress, 500);
+      setTimeout(checkProgress, 1000);
     } catch (error: any) {
       setIsUpdating(false);
       setUpdateProgress(null);
       toast.error(error.message || 'Hiba történt a frissítés során');
+      console.error('Update start error:', error);
     }
   };
 
@@ -286,19 +337,33 @@ export function SystemManagement({
               )}
             </div>
           ) : (
-            <button
-              onClick={handleSystemUpdate}
-              disabled={isUpdating || maintenanceMode}
-              className="w-full bg-primary-600 text-white px-6 py-3 rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
-            >
-              {isUpdating ? 'Frissítés folyamatban...' : 'Rendszer Frissítése'}
-            </button>
-          )}
-
-          {maintenanceMode && (
-            <p className="text-sm text-gray-600 text-center">
-              Kérjük, kapcsold ki a karbantartási módot a frissítés előtt
-            </p>
+            <>
+              <button
+                onClick={handleSystemUpdate}
+                disabled={isUpdating || maintenanceMode}
+                className="w-full bg-primary-600 text-white px-6 py-3 rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+              >
+                {isUpdating ? 'Frissítés folyamatban...' : 'Rendszer Frissítése'}
+              </button>
+              
+              {maintenanceMode && (
+                <p className="text-sm text-yellow-600 text-center mt-2">
+                  ⚠️ Kérjük, kapcsold ki a karbantartási módot a frissítés előtt
+                </p>
+              )}
+              
+              {updateCheck && !updateCheck.hasUpdate && !updateCheck.checking && (
+                <p className="text-sm text-gray-600 text-center mt-2">
+                  ℹ️ Nincs elérhető frissítés. Kattints a "Frissítések Ellenőrzése" gombra, hogy ellenőrizd újra.
+                </p>
+              )}
+              
+              {!updateCheck && (
+                <p className="text-sm text-gray-500 text-center mt-2">
+                  💡 Kattints a "Frissítések Ellenőrzése" gombra, hogy megnézd, van-e új frissítés.
+                </p>
+              )}
+            </>
           )}
         </div>
       </div>
