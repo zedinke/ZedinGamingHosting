@@ -120,12 +120,21 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
     setIsLoading(true);
     try {
       // Ha van imagePreview, azt használjuk (feltöltött kép)
-      const imageUrl = imagePreview || data.image;
+      // De először ellenőrizzük, hogy a form image mezője is frissítve van-e
+      const currentImageValue = watch('image');
+      const imageUrl = imagePreview || currentImageValue || data.image;
 
       if (!imageUrl || imageUrl.trim() === '') {
         toast.error('Kép megadása kötelező');
         setIsLoading(false);
         return;
+      }
+
+      // Ha az imageUrl nem egyezik meg a form értékével, frissítjük
+      if (imageUrl !== data.image && imageUrl !== currentImageValue) {
+        setValue('image', imageUrl, { shouldValidate: true });
+        // Várunk egy kicsit, hogy a validáció frissüljön
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
 
       // Ha nincs link, de van buttonText, akkor a buttonText-et is null-ra állítjuk
