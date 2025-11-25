@@ -101,7 +101,9 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
       ? {
           title: slide.title || '',
           subtitle: slide.subtitle || '',
-          image: slide.image,
+          image: slide.image || undefined,
+          video: slide.video || undefined,
+          mediaType: (slide.mediaType || 'image') as 'image' | 'video',
           link: slide.link || '',
           buttonText: slide.buttonText || '',
           isActive: slide.isActive,
@@ -111,7 +113,9 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
       : {
           title: '',
           subtitle: '',
-          image: '',
+          image: undefined,
+          video: undefined,
+          mediaType: 'image' as 'image' | 'video',
           link: '',
           buttonText: '',
           isActive: true,
