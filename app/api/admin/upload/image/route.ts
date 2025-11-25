@@ -44,16 +44,41 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Uploads mappa létrehozása, ha nem létezik
-    const uploadsDir = join(process.cwd(), 'public', 'uploads', 'slideshow');
+    // Determine the correct upload directory
+    // In standalone build, process.cwd() points to .next/standalone
+    // We need to save to both public and standalone/public for compatibility
+    const baseDir = process.cwd();
+    const isStandalone = baseDir.includes('.next/standalone') || existsSync(join(baseDir, 'server.js'));
+    
+    // Primary upload directory (where Next.js serves from)
+    const uploadsDir = isStandalone 
+      ? join(baseDir, 'public', 'uploads', 'slideshow')
+      : join(baseDir, 'public', 'uploads', 'slideshow');
+    
+    // Also save to project root public if in standalone (for backup)
+    const projectRootPublic = isStandalone && baseDir.includes('.next/standalone')
+      ? join(baseDir, '..', '..', '..', 'public', 'uploads', 'slideshow')
+      : null;
+    
+    // Create directories
     if (!existsSync(uploadsDir)) {
       await mkdir(uploadsDir, { recursive: true });
       console.log('✓ Created uploads directory:', uploadsDir);
     }
     
-    // Debug: log directory existence
-    console.log('Upload directory exists:', existsSync(uploadsDir));
-    console.log('Upload directory path:', uploadsDir);
+    if (projectRootPublic && !existsSync(projectRootPublic)) {
+      await mkdir(projectRootPublic, { recursive: true });
+      console.log('✓ Created project root uploads directory:', projectRootPublic);
+    }
+    
+    // Debug: log directory info
+    console.log('Upload info:', {
+      baseDir,
+      isStandalone,
+      uploadsDir,
+      uploadsDirExists: existsSync(uploadsDir),
+      projectRootPublic,
+    });
 
     // Egyedi fájlnév generálása
     const timestamp = Date.now();
@@ -65,7 +90,20 @@ export async function POST(request: NextRequest) {
     // Fájl mentése
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
+    
+    // Save to primary location
     await writeFile(filePath, buffer);
+    
+    // Also save to project root if in standalone (for backup and direct access)
+    if (projectRootPublic) {
+      const projectRootFilePath = join(projectRootPublic, fileName);
+      try {
+        await writeFile(projectRootFilePath, buffer);
+        console.log('✓ File also saved to project root:', projectRootFilePath);
+      } catch (error) {
+        console.warn('⚠ Could not save to project root:', error);
+      }
+    }
 
     // URL visszaadása
     const fileUrl = `/uploads/slideshow/${fileName}`;

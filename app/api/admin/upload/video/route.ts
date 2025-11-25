@@ -44,16 +44,39 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Uploads mappa létrehozása, ha nem létezik
-    const uploadsDir = join(process.cwd(), 'public', 'uploads', 'slideshow', 'videos');
+    // Determine the correct upload directory
+    const baseDir = process.cwd();
+    const isStandalone = baseDir.includes('.next/standalone') || existsSync(join(baseDir, 'server.js'));
+    
+    // Primary upload directory
+    const uploadsDir = isStandalone 
+      ? join(baseDir, 'public', 'uploads', 'slideshow', 'videos')
+      : join(baseDir, 'public', 'uploads', 'slideshow', 'videos');
+    
+    // Also save to project root public if in standalone
+    const projectRootPublic = isStandalone && baseDir.includes('.next/standalone')
+      ? join(baseDir, '..', '..', '..', 'public', 'uploads', 'slideshow', 'videos')
+      : null;
+    
+    // Create directories
     if (!existsSync(uploadsDir)) {
       await mkdir(uploadsDir, { recursive: true });
       console.log('✓ Created video uploads directory:', uploadsDir);
     }
     
-    // Debug: log directory existence
-    console.log('Video upload directory exists:', existsSync(uploadsDir));
-    console.log('Video upload directory path:', uploadsDir);
+    if (projectRootPublic && !existsSync(projectRootPublic)) {
+      await mkdir(projectRootPublic, { recursive: true });
+      console.log('✓ Created project root video uploads directory:', projectRootPublic);
+    }
+    
+    // Debug: log directory info
+    console.log('Video upload info:', {
+      baseDir,
+      isStandalone,
+      uploadsDir,
+      uploadsDirExists: existsSync(uploadsDir),
+      projectRootPublic,
+    });
 
     // Egyedi fájlnév generálása
     const timestamp = Date.now();
@@ -65,7 +88,20 @@ export async function POST(request: NextRequest) {
     // Fájl mentése
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
+    
+    // Save to primary location
     await writeFile(filePath, buffer);
+    
+    // Also save to project root if in standalone (for backup and direct access)
+    if (projectRootPublic) {
+      const projectRootFilePath = join(projectRootPublic, fileName);
+      try {
+        await writeFile(projectRootFilePath, buffer);
+        console.log('✓ Video file also saved to project root:', projectRootFilePath);
+      } catch (error) {
+        console.warn('⚠ Could not save video to project root:', error);
+      }
+    }
 
     // URL visszaadása
     const fileUrl = `/uploads/slideshow/videos/${fileName}`;
