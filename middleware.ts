@@ -7,6 +7,14 @@ const defaultLocale = 'hu';
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   
+  // Root path kezelése
+  if (pathname === '/') {
+    const locale = getLocale(request) || defaultLocale;
+    return NextResponse.redirect(
+      new URL(`/${locale}`, request.url)
+    );
+  }
+  
   // Ellenőrizzük, hogy van-e locale a pathban
   const pathnameHasLocale = locales.some(
     (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
