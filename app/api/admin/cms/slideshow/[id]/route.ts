@@ -9,32 +9,8 @@ const slideshowSlideSchema = z.object({
   title: z.string().optional().nullable(),
   subtitle: z.string().optional().nullable(),
   mediaType: z.enum(['image', 'video']).default('image'),
-  image: z.string().optional().nullable().refine(
-    (val, ctx) => {
-      const mediaType = (ctx as any).parent?.mediaType;
-      if (mediaType === 'image') {
-        if (!val || val.trim() === '') {
-          return false;
-        }
-        return val.startsWith('http://') || val.startsWith('https://') || val.startsWith('/');
-      }
-      return true;
-    },
-    { message: 'Kép megadása kötelező, ha kép típusú slide' }
-  ),
-  video: z.string().optional().nullable().refine(
-    (val, ctx) => {
-      const mediaType = (ctx as any).parent?.mediaType;
-      if (mediaType === 'video') {
-        if (!val || val.trim() === '') {
-          return false;
-        }
-        return val.startsWith('http://') || val.startsWith('https://') || val.startsWith('/');
-      }
-      return true;
-    },
-    { message: 'Videó megadása kötelező, ha videó típusú slide' }
-  ),
+  image: z.string().optional().nullable(),
+  video: z.string().optional().nullable(),
   link: z.union([
     z.string().url('Érvényes URL szükséges'),
     z.literal(''),
@@ -44,6 +20,40 @@ const slideshowSlideSchema = z.object({
   isActive: z.boolean(),
   order: z.number().int().min(0),
   locale: z.enum(['hu', 'en']),
+}).superRefine((data, ctx) => {
+  // Kép validáció
+  if (data.mediaType === 'image') {
+    if (!data.image || data.image.trim() === '') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Kép megadása kötelező, ha kép típusú slide',
+        path: ['image'],
+      });
+    } else if (!data.image.startsWith('http://') && !data.image.startsWith('https://') && !data.image.startsWith('/')) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Érvényes URL vagy fájl elérési út szükséges',
+        path: ['image'],
+      });
+    }
+  }
+  
+  // Videó validáció
+  if (data.mediaType === 'video') {
+    if (!data.video || data.video.trim() === '') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Videó megadása kötelező, ha videó típusú slide',
+        path: ['video'],
+      });
+    } else if (!data.video.startsWith('http://') && !data.video.startsWith('https://') && !data.video.startsWith('/')) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Érvényes URL vagy fájl elérési út szükséges',
+        path: ['video'],
+      });
+    }
+  }
 });
 
 export async function GET(
