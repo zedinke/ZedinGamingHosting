@@ -62,6 +62,34 @@ export default async function DashboardPage({
           </div>
         </div>
 
+        {/* Gyors linkek */}
+        <div className="grid md:grid-cols-3 gap-4 mb-8">
+          <Link
+            href={`/${locale}/servers/new`}
+            className="card hover:shadow-lg transition-shadow text-center"
+          >
+            <div className="text-3xl mb-2">🖥️</div>
+            <h3 className="font-semibold">Új szerver</h3>
+            <p className="text-sm text-gray-600">Rendelj egy új szervert</p>
+          </Link>
+          <Link
+            href={`/${locale}/dashboard/billing`}
+            className="card hover:shadow-lg transition-shadow text-center"
+          >
+            <div className="text-3xl mb-2">💳</div>
+            <h3 className="font-semibold">Számlázás</h3>
+            <p className="text-sm text-gray-600">Számlák és előfizetések</p>
+          </Link>
+          <Link
+            href={`/${locale}/dashboard/support`}
+            className="card hover:shadow-lg transition-shadow text-center"
+          >
+            <div className="text-3xl mb-2">🎫</div>
+            <h3 className="font-semibold">Támogatás</h3>
+            <p className="text-sm text-gray-600">Ticketek kezelése</p>
+          </Link>
+        </div>
+
         {/* Szerverek listája */}
         <div className="card">
           <div className="flex justify-between items-center mb-4">
@@ -114,12 +142,12 @@ export default async function DashboardPage({
                         {t(`server.${server.status.toLowerCase()}`)}
                       </span>
                       <div className="mt-2">
-                        <a
+                        <Link
                           href={`/${locale}/dashboard/servers/${server.id}`}
                           className="text-primary-600 hover:underline text-sm"
                         >
                           {t('server.manage')}
-                        </a>
+                        </Link>
                       </div>
                     </div>
                   </div>

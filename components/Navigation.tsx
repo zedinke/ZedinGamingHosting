@@ -60,6 +60,22 @@ export function Navigation({ locale }: NavigationProps) {
               >
                 {t('nav.dashboard')}
               </Link>
+              <Link
+                href={`/${locale}/dashboard/billing`}
+                className={`hover:text-primary-600 transition-colors ${
+                  isActive('/billing') ? 'text-primary-600 font-semibold' : ''
+                }`}
+              >
+                Számlázás
+              </Link>
+              <Link
+                href={`/${locale}/dashboard/settings`}
+                className={`hover:text-primary-600 transition-colors ${
+                  isActive('/settings') ? 'text-primary-600 font-semibold' : ''
+                }`}
+              >
+                Beállítások
+              </Link>
               <button
                 onClick={() => signOut()}
                 className="text-gray-600 hover:text-primary-600 transition-colors"
