@@ -3,6 +3,8 @@
 import { useSession } from 'next-auth/react';
 import { PricingCard } from '@/components/pricing/PricingCard';
 import { PricingComparison } from '@/components/pricing/PricingComparison';
+import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
 import { useState } from 'react';
 
 interface PricingPlan {
