@@ -272,7 +272,7 @@ model TicketMessage {
 // CMS - Oldalak
 model Page {
   id          String   @id @default(cuid())
-  slug        String   @unique
+  slug        String
   title       String
   content     Json     // Rich text content
   isPublished Boolean  @default(false)
