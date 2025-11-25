@@ -39,24 +39,18 @@ export async function GET(
       );
     }
 
-    // TODO: Valós implementációban itt kellene lekérdezni a backupokat
-    // Jelenleg csak egy mock választ adunk vissza
-    const backups = [
-      {
-        id: 'backup-1',
-        name: 'backup-2024-01-15-10-30-00.tar.gz',
-        size: 1024 * 1024 * 500, // 500 MB
-        createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-        type: 'manual',
-      },
-      {
-        id: 'backup-2',
-        name: 'backup-2024-01-14-10-30-00.tar.gz',
-        size: 1024 * 1024 * 480,
-        createdAt: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
-        type: 'automatic',
-      },
-    ];
+    // Backupok lekérdezése SSH-n keresztül
+    const { listBackups } = await import('@/lib/backup-storage');
+    const backupsData = await listBackups(id);
+    
+    // Formázás az API válaszhoz
+    const backups = backupsData.map((backup) => ({
+      id: backup.name,
+      name: backup.name,
+      size: backup.size,
+      createdAt: backup.createdAt.toISOString(),
+      type: backup.type,
+    }));
 
     return NextResponse.json({
       backups,
@@ -111,25 +105,34 @@ export async function POST(
       );
     }
 
-    // Task létrehozása a backup-hoz
+    // Backup készítése SSH-n keresztül
+    const { createServerBackup } = await import('@/lib/backup-storage');
+    const backupResult = await createServerBackup(id, name);
+
+    if (!backupResult.success) {
+      return NextResponse.json(
+        { error: backupResult.error || 'Hiba történt a backup készítése során' },
+        { status: 500 }
+      );
+    }
+
+    // Task létrehozása a backup naplózásához
     const task = await prisma.task.create({
       data: {
         agentId: server.agent.id,
         serverId: server.id,
         type: 'BACKUP',
-        status: 'PENDING',
+        status: 'COMPLETED',
         command: {
           action: 'backup',
           name: name || `backup-${Date.now()}`,
           type,
         },
+        result: {
+          backupPath: backupResult.backupPath,
+        },
+        completedAt: new Date(),
       },
-    });
-
-    // Task végrehajtása háttérben
-    const { executeTask } = await import('@/lib/task-executor');
-    executeTask(task.id).catch((error) => {
-      console.error(`Backup task ${task.id} végrehajtási hiba:`, error);
     });
 
     return NextResponse.json({

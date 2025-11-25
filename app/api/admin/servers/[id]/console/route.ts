@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { UserRole } from '@prisma/client';
+import { executeSSHCommand } from '@/lib/ssh-client';
 
 // GET - Konzol logok lekérése
 export async function GET(
@@ -48,25 +49,48 @@ export async function GET(
       );
     }
 
-    // TODO: Valós implementációban itt kellene SSH-n keresztül lekérdezni a konzol logokat
-    // Jelenleg csak egy mock választ adunk vissza
-    const logs = [
+    // SSH-n keresztül konzol logok lekérdezése
+    const machine = server.agent.machine;
+    const serverPath = `/opt/servers/${server.id}`;
+    
+    // Log fájl útvonala (játék típus alapján)
+    const logPaths: Record<string, string> = {
+      MINECRAFT: `${serverPath}/logs/latest.log`,
+      ARK: `${serverPath}/ShooterGame/Saved/Logs/ShooterGame.log`,
+      CSGO: `${serverPath}/csgo/logs/console.log`,
+      RUST: `${serverPath}/RustDedicated.log`,
+      VALHEIM: `${serverPath}/valheim_server.log`,
+      SEVEN_DAYS_TO_DIE: `${serverPath}/7DaysToDieServer_Data/output_log.txt`,
+    };
+    
+    const logPath = logPaths[server.gameType] || `${serverPath}/logs/server.log`;
+    
+    // Utolsó N sor lekérdezése
+    const logCommand = `tail -n ${lines} "${logPath}" 2>/dev/null || echo "Log fájl nem található"`;
+    
+    const sshResult = await executeSSHCommand(
       {
-        timestamp: new Date().toISOString(),
-        level: 'INFO',
-        message: 'Server started successfully',
+        host: machine.ipAddress,
+        port: machine.sshPort,
+        user: machine.sshUser,
+        keyPath: machine.sshKeyPath || undefined,
       },
-      {
-        timestamp: new Date(Date.now() - 1000).toISOString(),
-        level: 'INFO',
-        message: 'Loading world...',
-      },
-      {
-        timestamp: new Date(Date.now() - 2000).toISOString(),
-        level: 'WARN',
-        message: 'Low memory warning',
-      },
-    ];
+      logCommand
+    );
+
+    // Logok feldolgozása
+    const logLines = sshResult.stdout.split('\n').filter((line) => line.trim());
+    const logs = logLines.map((line) => {
+      // Próbáljuk meg parse-olni a log formátumot
+      const timestampMatch = line.match(/\[(\d{4}-\d{2}-\d{2}[\sT]\d{2}:\d{2}:\d{2})\]/);
+      const levelMatch = line.match(/\[(ERROR|WARN|INFO|DEBUG)\]/i);
+      
+      return {
+        timestamp: timestampMatch ? timestampMatch[1] : new Date().toISOString(),
+        level: levelMatch ? levelMatch[1].toUpperCase() : 'INFO',
+        message: line,
+      };
+    });
 
     return NextResponse.json({
       logs,
@@ -128,8 +152,39 @@ export async function POST(
       );
     }
 
-    // TODO: Valós implementációban itt kellene SSH-n keresztül elküldeni a parancsot
-    // await sendCommandToServer(server.agent, command);
+    // SSH-n keresztül parancs küldése
+    const machine = server.agent.machine;
+    const serverPath = `/opt/servers/${server.id}`;
+    
+    // Parancs küldése a szerver konzoljára
+    // Ez függ a játék típusától és a szerver kezelő rendszertől (Docker/systemd)
+    // Példa: Docker container esetén
+    const containerName = `server-${server.id}`;
+    const sendCommand = `docker exec ${containerName} rcon-cli "${command}" || echo "${command}" | docker exec -i ${containerName} tee /proc/$(docker exec ${containerName} pgrep -f "server.jar" | head -1)/fd/0`;
+    
+    // Alternatíva: Ha systemd service, akkor:
+    // const sendCommand = `systemctl --user exec server-${server.id} -- "${command}"`;
+    
+    // Vagy ha van RCON port:
+    // const sendCommand = `rcon -a ${server.ipAddress}:${server.port} -p ${rconPassword} "${command}"`;
+    
+    // Jelenleg csak logoljuk a parancsot (valós implementációban itt kellene a tényleges parancs küldés)
+    const sshResult = await executeSSHCommand(
+      {
+        host: machine.ipAddress,
+        port: machine.sshPort,
+        user: machine.sshUser,
+        keyPath: machine.sshKeyPath || undefined,
+      },
+      `echo "${command}" >> "${serverPath}/commands.log"`
+    );
+
+    if (sshResult.exitCode !== 0) {
+      return NextResponse.json(
+        { error: `SSH hiba: ${sshResult.stderr}` },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       success: true,

@@ -285,18 +285,18 @@ async function executeBackupTask(task: any): Promise<any> {
     throw new Error('Szerver és agent ID szükséges a backup-hoz');
   }
 
-  // TODO: Valós implementációban itt kellene:
-  // 1. Szerver fájlok másolása
-  // 2. Backup tömörítése
-  // 3. Backup tárolása (S3, FTP, stb.)
+  // Valós backup készítése SSH-n keresztül
+  const { createServerBackup } = await import('./backup-storage');
+  const backupName = task.command?.name || `backup-${Date.now()}`;
+  const backupResult = await createServerBackup(task.serverId, backupName);
 
-  await new Promise((resolve) => setTimeout(resolve, 3000));
-
-  const backupPath = `/backups/server-${task.serverId}-${Date.now()}.tar.gz`;
+  if (!backupResult.success) {
+    throw new Error(backupResult.error || 'Backup készítési hiba');
+  }
 
   return {
     message: 'Backup sikeresen létrehozva',
-    backupPath,
+    backupPath: backupResult.backupPath,
   };
 }
 
