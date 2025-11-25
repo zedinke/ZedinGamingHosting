@@ -16,6 +16,18 @@ interface InvoiceItem {
 interface InvoiceData extends Invoice {
   user: User;
   items?: InvoiceItem[];
+  subtotal?: number | null;
+  taxAmount?: number | null;
+  taxRate?: number | null;
+  companyName?: string | null;
+  companyTaxNumber?: string | null;
+  companyAddress?: string | null;
+  companyVatNumber?: string | null;
+  billingName?: string | null;
+  billingAddress?: string | null;
+  billingTaxNumber?: string | null;
+  paymentMethod?: string | null;
+  paymentReference?: string | null;
 }
 
 /**
