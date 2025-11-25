@@ -110,12 +110,12 @@ export function HomepageSectionForm({ locale, section }: HomepageSectionFormProp
 
       const payload = {
         type: data.type,
-        title: data.title || null,
-        subtitle: data.subtitle || null,
+        title: data.title && data.title.trim() !== '' ? data.title : null,
+        subtitle: data.subtitle && data.subtitle.trim() !== '' ? data.subtitle : null,
         content: contentJson,
-        image: data.image || null,
-        buttonText: data.buttonText || null,
-        buttonLink: data.buttonLink || null,
+        image: data.image && data.image.trim() !== '' ? data.image : null,
+        buttonText: data.buttonText && data.buttonText.trim() !== '' ? data.buttonText : null,
+        buttonLink: data.buttonLink && data.buttonLink.trim() !== '' ? data.buttonLink : null,
         isActive: data.isActive,
         order: data.order,
         locale: data.locale,
@@ -137,7 +137,14 @@ export function HomepageSectionForm({ locale, section }: HomepageSectionFormProp
       const result = await response.json();
 
       if (!response.ok) {
-        toast.error(result.error || 'Hiba történt');
+        // Részletes hibaüzenet megjelenítése
+        if (result.details && Array.isArray(result.details)) {
+          const errorMessages = result.details.map((err: any) => `${err.path.join('.')}: ${err.message}`).join(', ');
+          toast.error(result.error + ': ' + errorMessages);
+        } else {
+          toast.error(result.error || 'Hiba történt');
+        }
+        console.error('API Error:', result);
         return;
       }
 

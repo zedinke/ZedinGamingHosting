@@ -88,11 +88,11 @@ export function GameForm({ locale, game, categories }: GameFormProps) {
     setIsLoading(true);
     try {
       const payload = {
-        name: data.name,
-        slug: data.slug,
-        description: data.description || null,
-        image: data.image || null,
-        categoryId: data.categoryId || null,
+        name: data.name.trim(),
+        slug: data.slug.trim(),
+        description: data.description && data.description.trim() !== '' ? data.description : null,
+        image: data.image && data.image.trim() !== '' ? data.image : null,
+        categoryId: data.categoryId && data.categoryId.trim() !== '' ? data.categoryId : null,
         isActive: data.isActive,
         order: data.order,
         locale: data.locale,
@@ -114,7 +114,14 @@ export function GameForm({ locale, game, categories }: GameFormProps) {
       const result = await response.json();
 
       if (!response.ok) {
-        toast.error(result.error || 'Hiba történt');
+        // Részletes hibaüzenet megjelenítése
+        if (result.details && Array.isArray(result.details)) {
+          const errorMessages = result.details.map((err: any) => `${err.path.join('.')}: ${err.message}`).join(', ');
+          toast.error(result.error + ': ' + errorMessages);
+        } else {
+          toast.error(result.error || 'Hiba történt');
+        }
+        console.error('API Error:', result);
         return;
       }
 

@@ -106,7 +106,14 @@ export function GameCategoryForm({ locale, category }: GameCategoryFormProps) {
       const result = await response.json();
 
       if (!response.ok) {
-        toast.error(result.error || 'Hiba történt');
+        // Részletes hibaüzenet megjelenítése
+        if (result.details && Array.isArray(result.details)) {
+          const errorMessages = result.details.map((err: any) => `${err.path.join('.')}: ${err.message}`).join(', ');
+          toast.error(result.error + ': ' + errorMessages);
+        } else {
+          toast.error(result.error || 'Hiba történt');
+        }
+        console.error('API Error:', result);
         return;
       }
 
