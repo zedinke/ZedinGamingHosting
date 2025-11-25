@@ -43,7 +43,14 @@ export default async function DashboardPage({
     (session.user as any).id = user.id;
   }
 
-  const t = getTranslations(locale, 'common');
+  let t: (key: string) => string;
+  try {
+    t = getTranslations(locale, 'common');
+  } catch (error) {
+    console.error('Error loading translations:', error);
+    // Fallback translation function
+    t = (key: string) => key;
+  }
 
   const finalUserId = (session.user as any)?.id;
 
@@ -52,36 +59,63 @@ export default async function DashboardPage({
   }
 
   // Felhasználó szervereinek lekérése
-  const servers = await prisma.server.findMany({
-    where: { userId: finalUserId },
-    orderBy: { createdAt: 'desc' },
-    select: {
-      id: true,
-      name: true,
-      gameType: true,
-      maxPlayers: true,
-      ipAddress: true,
-      port: true,
-      status: true,
-    },
-  }).catch(() => []);
+  let servers: any[] = [];
+  try {
+    servers = await prisma.server.findMany({
+      where: { userId: finalUserId },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        name: true,
+        gameType: true,
+        maxPlayers: true,
+        ipAddress: true,
+        port: true,
+        status: true,
+      },
+    });
+    // Konvertáljuk az enum értékeket stringgé
+    servers = servers.map(server => ({
+      ...server,
+      gameType: String(server.gameType),
+      status: String(server.status),
+    }));
+  } catch (error) {
+    console.error('Error fetching servers:', error);
+    servers = [];
+  }
 
   // Aktív előfizetések
-  const subscriptions = await prisma.subscription.findMany({
-    where: {
-      userId: finalUserId,
-      status: 'ACTIVE',
-    },
-    include: {
-      server: {
-        select: {
-          id: true,
-          name: true,
-          status: true,
+  let subscriptions: any[] = [];
+  try {
+    subscriptions = await prisma.subscription.findMany({
+      where: {
+        userId: finalUserId,
+        status: 'ACTIVE',
+      },
+      include: {
+        server: {
+          select: {
+            id: true,
+            name: true,
+            status: true,
+          },
         },
       },
-    },
-  }).catch(() => []);
+    });
+    // Konvertáljuk az enum értékeket stringgé
+    subscriptions = subscriptions.map(sub => ({
+      ...sub,
+      status: String(sub.status),
+      server: sub.server ? {
+        ...sub.server,
+        status: String(sub.server.status),
+      } : null,
+    }));
+  } catch (error) {
+    console.error('Error fetching subscriptions:', error);
+    subscriptions = [];
+  }
 
   const onlineServers = servers.filter((s: { status: string }) => s.status === 'ONLINE').length;
 
