@@ -210,11 +210,11 @@ export function SystemManagement({
   return (
     <div className="space-y-6">
       {/* Karbantartási mód */}
-      <div className="card">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
         <div className="flex justify-between items-center">
           <div>
-            <h2 className="text-xl font-bold mb-2">Karbantartási Mód</h2>
-            <p className="text-gray-600 text-sm">
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Karbantartási Mód</h2>
+            <p className="text-gray-700 text-sm">
               Ha be van kapcsolva, csak az adminok férhetnek hozzá az oldalhoz.
               A felhasználók egy karbantartási üzenetet látnak.
             </p>
@@ -240,14 +240,14 @@ export function SystemManagement({
       </div>
 
       {/* Rendszer frissítés */}
-      <div className="card">
-        <h2 className="text-xl font-bold mb-4">Rendszer Frissítés</h2>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Rendszer Frissítés</h2>
         <div className="space-y-4">
           {lastUpdate && (
             <div className="p-3 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-700">
                 Utolsó frissítés:{' '}
-                <span className="font-medium">
+                <span className="font-medium text-gray-900">
                   {new Date(lastUpdate).toLocaleString('hu-HU')}
                 </span>
               </p>

@@ -20,9 +20,9 @@ export default async function AdminThemePage({
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Téma Szerkesztő</h1>
-        <p className="text-gray-600">Weboldal színek, betűtípusok és stílusok testreszabása</p>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Téma Szerkesztő</h1>
+        <p className="text-gray-700">Weboldal színek, betűtípusok és stílusok testreszabása</p>
       </div>
 
       <ThemeEditor themeSettings={themeMap} locale={locale} />
