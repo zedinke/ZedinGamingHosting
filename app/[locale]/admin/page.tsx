@@ -34,25 +34,25 @@ export default async function AdminDashboardPage({
     <div>
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Vezérlőpult</h1>
-        <p className="text-gray-600">Üdvözöljük az admin felületen</p>
+        <p className="text-gray-700">Üdvözöljük az admin felületen</p>
       </div>
 
       {/* Statisztikák */}
       <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-          <h3 className="text-sm font-medium text-gray-600 mb-2">Összes Felhasználó</h3>
+          <h3 className="text-sm font-medium text-gray-700 mb-2">Összes Felhasználó</h3>
           <p className="text-3xl font-bold text-primary-600">{totalUsers}</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-          <h3 className="text-sm font-medium text-gray-600 mb-2">Összes Szerver</h3>
+          <h3 className="text-sm font-medium text-gray-700 mb-2">Összes Szerver</h3>
           <p className="text-3xl font-bold text-primary-600">{totalServers}</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-          <h3 className="text-sm font-medium text-gray-600 mb-2">Aktív Előfizetések</h3>
+          <h3 className="text-sm font-medium text-gray-700 mb-2">Aktív Előfizetések</h3>
           <p className="text-3xl font-bold text-green-600">{activeSubscriptions}</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-          <h3 className="text-sm font-medium text-gray-600 mb-2">Összes Bevétel</h3>
+          <h3 className="text-sm font-medium text-gray-700 mb-2">Összes Bevétel</h3>
           <p className="text-3xl font-bold text-green-600">
             {new Intl.NumberFormat('hu-HU', {
               style: 'currency',
@@ -61,7 +61,7 @@ export default async function AdminDashboardPage({
           </p>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-          <h3 className="text-sm font-medium text-gray-600 mb-2">Nyitott Ticketek</h3>
+          <h3 className="text-sm font-medium text-gray-700 mb-2">Nyitott Ticketek</h3>
           <p className="text-3xl font-bold text-yellow-600">{openTickets}</p>
         </div>
       </div>
@@ -100,7 +100,7 @@ async function RecentUsers() {
         <div key={user.id} className="flex justify-between items-center pb-3 border-b last:border-0">
           <div>
             <p className="font-medium">{user.name || user.email}</p>
-            <p className="text-sm text-gray-600">{user.email}</p>
+            <p className="text-sm text-gray-700">{user.email}</p>
           </div>
           <div className="text-right">
             <span className="text-xs text-gray-500">
@@ -136,7 +136,7 @@ async function RecentServers() {
         <div key={server.id} className="flex justify-between items-center pb-3 border-b last:border-0">
           <div>
             <p className="font-medium">{server.name}</p>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-700">
               {server.gameType} • {server.user.name || server.user.email}
             </p>
           </div>

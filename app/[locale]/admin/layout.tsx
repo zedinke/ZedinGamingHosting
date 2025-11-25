@@ -13,9 +13,9 @@ export default async function AdminLayout({
   const t = getTranslations(locale, 'common');
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-100">
       <AdminNavigation locale={locale} />
-      <main className="lg:ml-64 min-h-screen">
+      <main className="lg:ml-64 min-h-screen bg-white">
         <div className="p-6 lg:p-8">
           {children}
         </div>

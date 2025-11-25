@@ -46,9 +46,11 @@ export default async function AdminInvoicesPage({
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Számlák Kezelése</h1>
-        <p className="text-gray-600">Összes számla: {totalInvoices}</p>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Számlák Kezelése</h1>
+        <p className="text-gray-700">
+          Összes számla: <span className="font-semibold text-gray-900">{totalInvoices}</span>
+        </p>
       </div>
 
       <InvoiceManagement
