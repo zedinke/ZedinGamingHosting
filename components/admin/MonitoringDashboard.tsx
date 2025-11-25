@@ -36,6 +36,7 @@ interface Task {
     };
   } | null;
   server: {
+    id: string;
     name: string;
   } | null;
 }
