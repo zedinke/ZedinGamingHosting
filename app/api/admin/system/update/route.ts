@@ -53,8 +53,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Frissítés indítása háttérben
-    startUpdateProcess();
+    // Frissítés indítása háttérben (nem blokkoló módon)
+    startUpdateProcess().catch((error) => {
+      console.error('Update process error:', error);
+    });
 
     return NextResponse.json({
       success: true,
