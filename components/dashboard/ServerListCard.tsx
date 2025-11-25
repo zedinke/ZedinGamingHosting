@@ -12,7 +12,7 @@ interface Server {
   gameType: string;
   maxPlayers: number;
   ipAddress: string | null;
-  port: number;
+  port: number | null;
   status: string;
 }
 
@@ -81,7 +81,7 @@ export function ServerListCard({ servers, locale }: ServerListCardProps) {
                       {server.gameType}
                     </span>
                     <span>👥 {server.maxPlayers} játékos</span>
-                    {server.ipAddress && (
+                    {server.ipAddress && server.port && (
                       <span>🌐 {server.ipAddress}:{server.port}</span>
                     )}
                   </div>
