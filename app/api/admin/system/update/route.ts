@@ -7,6 +7,14 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import { writeFile, readFile } from 'fs/promises';
 
+import { join } from 'path';
+
+const execAsync = promisify(exec);
+
+// Progress tracking fájl
+const PROGRESS_FILE = join(process.cwd(), '.update-progress.json');
+const LOG_FILE = join(process.cwd(), '.update-log.txt');
+
 async function readLog(): Promise<string> {
   try {
     const data = await readFile(LOG_FILE, 'utf-8');
@@ -15,13 +23,6 @@ async function readLog(): Promise<string> {
     return '';
   }
 }
-import { join } from 'path';
-
-const execAsync = promisify(exec);
-
-// Progress tracking fájl
-const PROGRESS_FILE = join(process.cwd(), '.update-progress.json');
-const LOG_FILE = join(process.cwd(), '.update-log.txt');
 
 async function updateProgress(progress: any) {
   await writeFile(PROGRESS_FILE, JSON.stringify(progress, null, 2));

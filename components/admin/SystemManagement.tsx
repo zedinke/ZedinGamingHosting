@@ -146,6 +146,7 @@ export function SystemManagement({
           
           const progress = await progressResponse.json();
 
+          // Mindig frissítjük a progress-t, még akkor is, ha idle
           setUpdateProgress(progress);
 
           if (progress.status === 'completed' || progress.status === 'error') {
@@ -159,17 +160,19 @@ export function SystemManagement({
             } else {
               toast.error(progress.error || 'Frissítési hiba');
             }
+            return; // Ne folytassuk a polling-ot
           } else if (progress.status === 'starting' || progress.status === 'in_progress') {
             // Folytatjuk a polling-ot
             setTimeout(checkProgress, 1000);
           } else if (progress.status === 'idle') {
             // Ha idle, lehet hogy még nem indult el, várunk egy kicsit
-            if (pollCount < 10) {
+            if (pollCount < 20) {
+              // Növeljük a várakozást 20-ra, hogy legyen idő a fájl létrehozására
               setTimeout(checkProgress, 2000);
             } else {
               setIsUpdating(false);
               setUpdateProgress(null);
-              toast.error('A frissítés nem indult el. Ellenőrizd a konzolt.');
+              toast.error('A frissítés nem indult el. Ellenőrizd a konzolt és a szerver logokat.');
             }
           } else {
             // Más állapot, újra próbáljuk
