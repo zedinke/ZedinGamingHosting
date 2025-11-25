@@ -37,6 +37,10 @@ export async function GET(request: NextRequest) {
 
 // POST - Új webhook létrehozása
 export async function POST(request: NextRequest) {
+  // Rate limit ellenőrzés
+  const rateLimitResult = rateLimitMiddleware(20, 60 * 1000)(request);
+  if (rateLimitResult) return rateLimitResult;
+
   try {
     const session = await getServerSession(authOptions);
 
