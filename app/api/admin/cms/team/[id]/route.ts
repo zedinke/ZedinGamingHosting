@@ -65,7 +65,7 @@ export async function PUT(
         bio: data.bio || null,
         avatar: data.avatar || null,
         email: data.email || null,
-        socialLinks: data.socialLinks || null,
+        socialLinks: data.socialLinks ? (data.socialLinks as any) : null,
         isActive: data.isActive,
         order: data.order,
       },
