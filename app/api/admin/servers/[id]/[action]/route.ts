@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { UserRole, ServerStatus } from '@prisma/client';
 import { createAuditLog, AuditAction } from '@/lib/audit-log';
+import { sendWebhookEvent } from '@/lib/webhook-sender';
 
 export async function POST(
   request: NextRequest,
@@ -128,6 +129,15 @@ export async function POST(
       ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined,
       userAgent: request.headers.get('user-agent') || undefined,
     });
+
+    // Webhook esemény küldése
+    sendWebhookEvent('server_status_change', {
+      serverId: server.id,
+      serverName: server.name,
+      oldStatus: server.status,
+      newStatus: newStatus,
+      action,
+    }).catch(console.error);
 
     return NextResponse.json({
       success: true,

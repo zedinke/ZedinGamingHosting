@@ -227,11 +227,45 @@ export function WebhookManagement({ locale }: WebhookManagementProps) {
                   </div>
                   <div className="flex gap-2">
                     <button
+                      onClick={async () => {
+                        try {
+                          const response = await fetch(`/api/admin/webhooks/${webhook.id}/test`, {
+                            method: 'POST',
+                          });
+                          const data = await response.json();
+                          if (response.ok) {
+                            toast.success('Webhook teszt sikeres');
+                          } else {
+                            toast.error(data.error || 'Webhook teszt sikertelen');
+                          }
+                        } catch (error) {
+                          toast.error('Hiba történt a webhook tesztelése során');
+                        }
+                      }}
                       className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 text-sm"
                     >
                       Teszt
                     </button>
                     <button
+                      onClick={async () => {
+                        if (!confirm(`Biztosan törölni szeretnéd a(z) ${webhook.name} webhookot?`)) {
+                          return;
+                        }
+                        try {
+                          const response = await fetch(`/api/admin/webhooks/${webhook.id}`, {
+                            method: 'DELETE',
+                          });
+                          const data = await response.json();
+                          if (response.ok) {
+                            toast.success('Webhook sikeresen törölve');
+                            loadWebhooks();
+                          } else {
+                            toast.error(data.error || 'Hiba történt');
+                          }
+                        } catch (error) {
+                          toast.error('Hiba történt a webhook törlése során');
+                        }
+                      }}
                       className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
                     >
                       Törlés

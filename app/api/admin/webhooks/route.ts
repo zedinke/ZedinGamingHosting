@@ -17,26 +17,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // TODO: Valós implementációban itt kellene webhook konfigurációk tárolása az adatbázisban
-    // Jelenleg csak mock adatokat adunk vissza
-    const webhooks = [
-      {
-        id: '1',
-        name: 'Discord Notifications',
-        url: 'https://discord.com/api/webhooks/...',
-        events: ['server_status_change', 'task_completed'],
-        active: true,
-        createdAt: new Date(),
-      },
-      {
-        id: '2',
-        name: 'Slack Notifications',
-        url: 'https://hooks.slack.com/services/...',
-        events: ['server_status_change'],
-        active: false,
-        createdAt: new Date(),
-      },
-    ];
+    // Webhookok lekérdezése az adatbázisból
+    const webhooks = await prisma.webhook.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
 
     return NextResponse.json({
       success: true,
@@ -76,16 +60,16 @@ export async function POST(request: NextRequest) {
     // Webhook secret generálása, ha nincs megadva
     const webhookSecret = secret || crypto.randomBytes(32).toString('hex');
 
-    // TODO: Valós implementációban itt kellene webhook mentése az adatbázisba
-    const webhook = {
-      id: crypto.randomUUID(),
-      name,
-      url,
-      events,
-      secret: webhookSecret,
-      active: true,
-      createdAt: new Date(),
-    };
+    // Webhook mentése az adatbázisba
+    const webhook = await prisma.webhook.create({
+      data: {
+        name,
+        url,
+        events,
+        secret: webhookSecret,
+        active: true,
+      },
+    });
 
     return NextResponse.json({
       success: true,

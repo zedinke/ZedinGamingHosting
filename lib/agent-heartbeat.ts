@@ -127,6 +127,13 @@ export async function checkOfflineAgents(): Promise<void> {
           data: { status: 'OFFLINE' },
         });
       }
+
+      // Webhook esemény küldése
+      const { sendWebhookEvent } = await import('./webhook-sender');
+      sendWebhookEvent('agent_offline', {
+        agentId: agent.agentId,
+        machineId: agent.machineId,
+      }).catch(console.error);
     }
   } catch (error) {
     console.error('Check offline agents error:', error);

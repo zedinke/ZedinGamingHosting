@@ -77,6 +77,23 @@ export async function executeTask(taskId: string): Promise<void> {
         result,
       },
     });
+
+    // Webhook esemény küldése (sikeres feladatoknál is)
+    if (task.type === 'BACKUP') {
+      const { sendWebhookEvent } = await import('./webhook-sender');
+      sendWebhookEvent('backup_created', {
+        taskId: task.id,
+        serverId: task.serverId,
+        backupName: result.backupPath,
+      }).catch(console.error);
+    } else {
+      const { sendWebhookEvent } = await import('./webhook-sender');
+      sendWebhookEvent('task_completed', {
+        taskId: task.id,
+        taskType: task.type,
+        serverId: task.serverId,
+      }).catch(console.error);
+    }
   } catch (error: any) {
     // Task hibával befejezve
     await prisma.task.update({
@@ -99,6 +116,15 @@ export async function executeTask(taskId: string): Promise<void> {
     // Email értesítés küldése
     const { sendTaskCompletionNotification } = await import('./email-notifications');
     sendTaskCompletionNotification(taskId).catch(console.error);
+
+    // Webhook esemény küldése
+    const { sendWebhookEvent } = await import('./webhook-sender');
+    sendWebhookEvent('task_failed', {
+      taskId: task.id,
+      taskType: task.type,
+      serverId: task.serverId,
+      error: error.message,
+    }).catch(console.error);
 
     throw error;
   }
