@@ -29,8 +29,15 @@ export function SlideshowManagement({ slides, locale, transitionInterval }: Slid
   const [intervalValue, setIntervalValue] = useState(transitionInterval);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Debug: log slides
-  console.log('SlideshowManagement - slides:', slides);
+  // Debug: log slides with image URLs
+  console.log('SlideshowManagement - slides:', slides.map(s => ({
+    id: s.id,
+    title: s.title,
+    image: s.image,
+    video: s.video,
+    mediaType: s.mediaType,
+    imageUrl: s.image ? (s.image.startsWith('http') ? s.image : `${typeof window !== 'undefined' ? window.location.origin : ''}${s.image}`) : null,
+  })));
 
   const handleSaveInterval = async () => {
     setIsSaving(true);
@@ -109,6 +116,10 @@ export function SlideshowManagement({ slides, locale, transitionInterval }: Slid
                     className="w-full h-full object-cover"
                     muted
                     playsInline
+                    onError={(e) => {
+                      console.error('Video load error:', slide.video);
+                      (e.target as HTMLVideoElement).style.display = 'none';
+                    }}
                   />
                 ) : slide.image ? (
                   <img
@@ -116,7 +127,16 @@ export function SlideshowManagement({ slides, locale, transitionInterval }: Slid
                     alt={slide.title || 'Slide'}
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/placeholder.jpg';
+                      console.error('Image load error:', slide.image);
+                      (e.target as HTMLImageElement).style.display = 'none';
+                      // Show error message
+                      const parent = (e.target as HTMLImageElement).parentElement;
+                      if (parent) {
+                        parent.innerHTML = '<div class="w-full h-full bg-red-100 flex items-center justify-center"><span class="text-red-600 text-xs text-center px-2">Kép nem található<br/>' + slide.image + '</span></div>';
+                      }
+                    }}
+                    onLoad={() => {
+                      console.log('Image loaded successfully:', slide.image);
                     }}
                   />
                 ) : (
