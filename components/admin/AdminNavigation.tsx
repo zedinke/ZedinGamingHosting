@@ -47,6 +47,7 @@ export function AdminNavigation({ locale }: AdminNavigationProps) {
     { href: `/${locale}/admin`, label: 'Vezérlőpult', icon: LayoutDashboard },
     { href: `/${locale}/admin/monitoring`, label: 'Monitoring', icon: BarChart3 },
     { href: `/${locale}/admin/reports`, label: 'Jelentések', icon: BarChart3 },
+    { href: `/${locale}/admin/webhooks`, label: 'Webhookok', icon: Settings },
     { href: `/${locale}/admin/users`, label: 'Felhasználók', icon: Users },
     { href: `/${locale}/admin/servers`, label: 'Szerverek', icon: Server },
     { href: `/${locale}/admin/machines`, label: 'Szerver Gépek', icon: Network },
