@@ -33,6 +33,7 @@ export async function POST(
     }
 
     let newStatus: ServerStatus;
+    let taskType: 'START' | 'STOP' | 'RESTART';
 
     // Művelet végrehajtása
     switch (action) {
@@ -44,8 +45,7 @@ export async function POST(
           );
         }
         newStatus = 'STARTING';
-        // TODO: Itt kellene meghívni a tényleges szerver indítási API-t
-        // Példa: await startServer(server.id);
+        taskType = 'START';
         break;
 
       case 'stop':
@@ -56,8 +56,7 @@ export async function POST(
           );
         }
         newStatus = 'STOPPING';
-        // TODO: Itt kellene meghívni a tényleges szerver leállítási API-t
-        // Példa: await stopServer(server.id);
+        taskType = 'STOP';
         break;
 
       case 'restart':
@@ -68,8 +67,7 @@ export async function POST(
           );
         }
         newStatus = 'RESTARTING';
-        // TODO: Itt kellene meghívni a tényleges szerver újraindítási API-t
-        // Példa: await restartServer(server.id);
+        taskType = 'RESTART';
         break;
 
       default:
@@ -85,25 +83,27 @@ export async function POST(
       data: { status: newStatus },
     });
 
-    // TODO: Valós implementációban itt kellene egy háttérfolyamatot indítani,
-    // ami a tényleges szerver műveletet végzi, majd frissíti a státuszt
-
-    // Szimuláció: 2 másodperc után állítsuk be a végső státuszt
-    setTimeout(async () => {
-      let finalStatus: ServerStatus;
-      if (action === 'start') {
-        finalStatus = 'ONLINE';
-      } else if (action === 'stop') {
-        finalStatus = 'OFFLINE';
-      } else {
-        finalStatus = 'ONLINE';
-      }
-
-      await prisma.server.update({
-        where: { id },
-        data: { status: finalStatus },
+    // Task létrehozása a művelethez
+    if (server.agentId) {
+      const task = await prisma.task.create({
+        data: {
+          agentId: server.agentId,
+          serverId: server.id,
+          type: taskType,
+          status: 'PENDING',
+          command: {
+            action,
+            serverId: server.id,
+          },
+        },
       });
-    }, 2000);
+
+      // Task végrehajtása háttérben
+      const { executeTask } = await import('@/lib/task-executor');
+      executeTask(task.id).catch((error) => {
+        console.error(`Task ${task.id} végrehajtási hiba:`, error);
+      });
+    }
 
     return NextResponse.json({
       success: true,

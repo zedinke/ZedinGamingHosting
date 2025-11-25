@@ -14,6 +14,8 @@ interface Server {
   maxPlayers: number;
   configuration: any;
   resourceUsage: any;
+  machineId: string | null;
+  agentId: string | null;
   createdAt: Date;
   updatedAt: Date;
   user: {
@@ -31,6 +33,18 @@ interface Server {
       status: string;
       createdAt: Date;
     }>;
+  } | null;
+  machine: {
+    id: string;
+    name: string;
+    ipAddress: string;
+    status: string;
+  } | null;
+  agent: {
+    id: string;
+    agentId: string;
+    status: string;
+    lastHeartbeat: Date | null;
   } | null;
 }
 
@@ -154,6 +168,32 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
               <dt className="text-sm text-gray-600">Létrehozva</dt>
               <dd>{new Date(server.createdAt).toLocaleString('hu-HU')}</dd>
             </div>
+            {server.machine && (
+              <div>
+                <dt className="text-sm text-gray-600">Szerver Gép</dt>
+                <dd>
+                  <a
+                    href={`/${locale}/admin/machines/${server.machine.id}`}
+                    className="text-primary-600 hover:underline"
+                  >
+                    {server.machine.name} ({server.machine.ipAddress})
+                  </a>
+                </dd>
+              </div>
+            )}
+            {server.agent && (
+              <div>
+                <dt className="text-sm text-gray-600">Agent</dt>
+                <dd>
+                  <span className="font-mono text-sm">{server.agent.agentId}</span>
+                  {server.agent.lastHeartbeat && (
+                    <span className="text-xs text-gray-500 ml-2">
+                      (utolsó: {new Date(server.agent.lastHeartbeat).toLocaleString('hu-HU')})
+                    </span>
+                  )}
+                </dd>
+              </div>
+            )}
           </dl>
         </div>
 
@@ -253,9 +293,67 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
       {server.resourceUsage && (
         <div className="card">
           <h2 className="text-xl font-bold mb-4">Erőforrás Használat</h2>
-          <pre className="bg-gray-50 p-4 rounded overflow-x-auto text-sm">
-            {JSON.stringify(server.resourceUsage, null, 2)}
-          </pre>
+          <div className="space-y-4">
+            {server.resourceUsage.cpu && (
+              <div>
+                <div className="flex justify-between mb-1">
+                  <span className="text-sm font-medium">CPU</span>
+                  <span className="text-sm text-gray-600">
+                    {server.resourceUsage.cpu.usage}% / {server.resourceUsage.cpu.cores} core
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-primary-600 h-2 rounded-full"
+                    style={{ width: `${server.resourceUsage.cpu.usage}%` }}
+                  />
+                </div>
+              </div>
+            )}
+            {server.resourceUsage.ram && (
+              <div>
+                <div className="flex justify-between mb-1">
+                  <span className="text-sm font-medium">RAM</span>
+                  <span className="text-sm text-gray-600">
+                    {Math.round(server.resourceUsage.ram.used / 1024 / 1024 / 1024)} GB /{' '}
+                    {Math.round(server.resourceUsage.ram.total / 1024 / 1024 / 1024)} GB
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-primary-600 h-2 rounded-full"
+                    style={{
+                      width: `${(server.resourceUsage.ram.used / server.resourceUsage.ram.total) * 100}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+            {server.resourceUsage.disk && (
+              <div>
+                <div className="flex justify-between mb-1">
+                  <span className="text-sm font-medium">Disk</span>
+                  <span className="text-sm text-gray-600">
+                    {Math.round(server.resourceUsage.disk.used / 1024 / 1024 / 1024)} GB /{' '}
+                    {Math.round(server.resourceUsage.disk.total / 1024 / 1024 / 1024)} GB
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-primary-600 h-2 rounded-full"
+                    style={{
+                      width: `${(server.resourceUsage.disk.used / server.resourceUsage.disk.total) * 100}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+            {(!server.resourceUsage.cpu && !server.resourceUsage.ram && !server.resourceUsage.disk) && (
+              <pre className="bg-gray-50 p-4 rounded overflow-x-auto text-sm">
+                {JSON.stringify(server.resourceUsage, null, 2)}
+              </pre>
+            )}
+          </div>
         </div>
       )}
     </div>

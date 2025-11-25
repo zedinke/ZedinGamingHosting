@@ -31,6 +31,22 @@ export default async function AdminServerDetailPage({
           },
         },
       },
+      machine: {
+        select: {
+          id: true,
+          name: true,
+          ipAddress: true,
+          status: true,
+        },
+      },
+      agent: {
+        select: {
+          id: true,
+          agentId: true,
+          status: true,
+          lastHeartbeat: true,
+        },
+      },
     },
   });
 

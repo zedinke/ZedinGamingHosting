@@ -252,7 +252,7 @@ async function startUpdateProcess() {
           await appendLog('  - npm install (ez eltarthat néhány percig)...');
           // Install all dependencies including devDependencies (needed for build)
           // Unset NODE_ENV to ensure devDependencies are installed
-          const env = { ...process.env };
+          const env = { ...process.env } as Record<string, string | undefined>;
           delete env.NODE_ENV;
           await execAsync('npm install --legacy-peer-deps', { 
             cwd: PROJECT_ROOT,

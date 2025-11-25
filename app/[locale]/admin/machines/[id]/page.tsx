@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { UserRole } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
+import { MachineDetail } from '@/components/admin/MachineDetail';
 
 export default async function AdminMachineDetailPage({
   params: { locale, id },
@@ -59,12 +60,7 @@ export default async function AdminMachineDetailPage({
         <h1 className="text-3xl font-bold">Szerver Gép Részletei</h1>
       </div>
 
-      <div className="p-6 bg-white rounded-lg shadow">
-        <p className="text-gray-600">Machine Detail - Coming soon</p>
-        <pre className="mt-4 text-xs bg-gray-100 p-4 rounded overflow-auto">
-          {JSON.stringify(machine, null, 2)}
-        </pre>
-      </div>
+      <MachineDetail machine={machine as any} locale={locale} />
     </div>
   );
 }

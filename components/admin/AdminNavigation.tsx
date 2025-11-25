@@ -45,9 +45,12 @@ export function AdminNavigation({ locale }: AdminNavigationProps) {
 
   const menuItems = [
     { href: `/${locale}/admin`, label: 'Vezérlőpult', icon: LayoutDashboard },
+    { href: `/${locale}/admin/monitoring`, label: 'Monitoring', icon: BarChart3 },
     { href: `/${locale}/admin/users`, label: 'Felhasználók', icon: Users },
     { href: `/${locale}/admin/servers`, label: 'Szerverek', icon: Server },
     { href: `/${locale}/admin/machines`, label: 'Szerver Gépek', icon: Network },
+    { href: `/${locale}/admin/agents`, label: 'Agentek', icon: Server },
+    { href: `/${locale}/admin/tasks`, label: 'Feladatok', icon: FileText },
     { href: `/${locale}/admin/subscriptions`, label: 'Előfizetések', icon: CreditCard },
     { href: `/${locale}/admin/invoices`, label: 'Számlák', icon: FileText },
     { href: `/${locale}/admin/tickets`, label: 'Ticketek', icon: Ticket },
