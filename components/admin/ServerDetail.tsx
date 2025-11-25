@@ -10,6 +10,7 @@ import { ServerResourceMonitor } from './ServerResourceMonitor';
 import { ServerConfigEditor } from './ServerConfigEditor';
 import { ServerLogsViewer } from './ServerLogsViewer';
 import { ServerMetrics } from './ServerMetrics';
+import { ResourceLimitsEditor } from './ResourceLimitsEditor';
 
 interface Server {
   id: string;
@@ -63,7 +64,7 @@ interface ServerDetailProps {
 export function ServerDetail({ server, locale }: ServerDetailProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [serverStatus, setServerStatus] = useState(server.status);
-  const [activeTab, setActiveTab] = useState<'files' | 'console' | 'backup' | 'config' | 'logs'>('files');
+  const [activeTab, setActiveTab] = useState<'files' | 'console' | 'backup' | 'config' | 'logs' | 'limits'>('files');
 
   const handleServerAction = async (action: string) => {
     setIsLoading(true);
@@ -352,6 +353,16 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
             >
               Logok
             </button>
+            <button
+              onClick={() => setActiveTab('limits')}
+              className={`px-4 py-2 border-b-2 ${
+                activeTab === 'limits'
+                  ? 'border-primary-600 text-primary-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-800'
+              }`}
+            >
+              Erőforrás Limitok
+            </button>
           </div>
         </div>
         {activeTab === 'files' && <ServerFileManager serverId={server.id} locale={locale} />}
@@ -366,6 +377,7 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
           />
         )}
         {activeTab === 'logs' && <ServerLogsViewer serverId={server.id} autoRefresh={true} />}
+        {activeTab === 'limits' && <ResourceLimitsEditor serverId={server.id} />}
       </div>
 
       {/* Erőforrás használat - Real-time monitoring */}
