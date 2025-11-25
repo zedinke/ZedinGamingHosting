@@ -322,10 +322,10 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
   }
 
   return (
-    <div className="space-y-6">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <div className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <Card padding="lg" className="bg-white border border-gray-200">
-          <h2 className="text-xl font-bold mb-4 text-gray-900">Slide Információk</h2>
+          <h2 className="text-lg font-bold mb-3 text-gray-900">Slide Információk</h2>
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-2 text-gray-900">Cím</label>
@@ -554,7 +554,7 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
       </Card>
 
         <Card padding="lg" className="bg-white border border-gray-200">
-          <h2 className="text-xl font-bold mb-4 text-gray-900">Beállítások</h2>
+          <h2 className="text-lg font-bold mb-3 text-gray-900">Beállítások</h2>
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-2 text-gray-900">Nyelv *</label>

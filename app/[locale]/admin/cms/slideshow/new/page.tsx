@@ -16,20 +16,20 @@ export default async function NewSlideshowSlidePage({
 
   return (
     <div>
-      <div className="mb-6 flex justify-between items-center">
+      <div className="mb-4 flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Új Slideshow Slide</h1>
-          <p className="text-gray-700">Slideshow slide hozzáadása</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-1">Új Slideshow Slide</h1>
+          <p className="text-sm text-gray-600">Slideshow slide hozzáadása</p>
         </div>
         <a
           href={`/${locale}/admin/cms/slideshow`}
-          className="bg-gray-100 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+          className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors font-medium text-sm"
         >
           Vissza
         </a>
       </div>
 
-      <div className="max-w-4xl">
+      <div className="max-w-4xl mt-4">
         <ErrorBoundary>
           <SlideshowForm locale={validLocale} />
         </ErrorBoundary>
