@@ -78,7 +78,7 @@ export function ServerBackupManager({ serverId, locale }: ServerBackupManagerPro
 
   const handleDownloadBackup = async (backup: Backup) => {
     // TODO: Backup letöltési logika
-    toast.info('Backup letöltés hamarosan elérhető');
+    toast('Backup letöltés hamarosan elérhető');
   };
 
   const handleDeleteBackup = async (backup: Backup) => {
@@ -87,7 +87,7 @@ export function ServerBackupManager({ serverId, locale }: ServerBackupManagerPro
     }
 
     // TODO: Backup törlési logika
-    toast.info('Backup törlés hamarosan elérhető');
+    toast('Backup törlés hamarosan elérhető');
   };
 
   const formatSize = (bytes: number) => {

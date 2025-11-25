@@ -91,11 +91,11 @@ export function ServerManagement({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Keresés szerver név vagy felhasználó alapján..."
-            className="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white text-gray-900"
           />
           <button
             type="submit"
-            className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700"
+            className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition-colors font-medium shadow-sm hover:shadow-md"
           >
             Keresés
           </button>
@@ -130,25 +130,25 @@ export function ServerManagement({
       </div>
 
       {/* Szerverek táblázata */}
-      <div className="card overflow-x-auto">
-        <table className="w-full">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
+        <table className="w-full text-gray-700">
           <thead>
-            <tr className="border-b">
-              <th className="text-left p-3">Név</th>
-              <th className="text-left p-3">Játék</th>
-              <th className="text-left p-3">Tulajdonos</th>
-              <th className="text-left p-3">Státusz</th>
-              <th className="text-left p-3">IP:Port</th>
-              <th className="text-left p-3">Játékosok</th>
-              <th className="text-left p-3">Előfizetés</th>
-              <th className="text-left p-3">Létrehozva</th>
-              <th className="text-left p-3">Műveletek</th>
+            <tr className="border-b border-gray-200 bg-gray-50">
+              <th className="text-left p-3 font-semibold text-gray-900">Név</th>
+              <th className="text-left p-3 font-semibold text-gray-900">Játék</th>
+              <th className="text-left p-3 font-semibold text-gray-900">Tulajdonos</th>
+              <th className="text-left p-3 font-semibold text-gray-900">Státusz</th>
+              <th className="text-left p-3 font-semibold text-gray-900">IP:Port</th>
+              <th className="text-left p-3 font-semibold text-gray-900">Játékosok</th>
+              <th className="text-left p-3 font-semibold text-gray-900">Előfizetés</th>
+              <th className="text-left p-3 font-semibold text-gray-900">Létrehozva</th>
+              <th className="text-left p-3 font-semibold text-gray-900">Műveletek</th>
             </tr>
           </thead>
           <tbody>
             {servers.map((server) => (
-              <tr key={server.id} className="border-b hover:bg-gray-50">
-                <td className="p-3 font-medium">{server.name}</td>
+              <tr key={server.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                <td className="p-3 font-medium text-gray-800">{server.name}</td>
                 <td className="p-3">
                   <span className="text-sm">{getGameTypeLabel(server.gameType)}</span>
                 </td>
@@ -169,12 +169,12 @@ export function ServerManagement({
                     {server.status}
                   </span>
                 </td>
-                <td className="p-3 text-sm text-gray-600">
+                <td className="p-3 text-sm text-gray-700">
                   {server.ipAddress && server.port
                     ? `${server.ipAddress}:${server.port}`
                     : '-'}
                 </td>
-                <td className="p-3">{server.maxPlayers}</td>
+                <td className="p-3 text-gray-800">{server.maxPlayers}</td>
                 <td className="p-3">
                   {server.subscription ? (
                     <span
@@ -190,7 +190,7 @@ export function ServerManagement({
                     <span className="text-gray-400 text-sm">Nincs</span>
                   )}
                 </td>
-                <td className="p-3 text-sm text-gray-600">
+                <td className="p-3 text-sm text-gray-700">
                   {new Date(server.createdAt).toLocaleDateString('hu-HU')}
                 </td>
                 <td className="p-3">
@@ -213,18 +213,18 @@ export function ServerManagement({
           {currentPage > 1 && (
             <Link
               href={`/${locale}/admin/servers?page=${currentPage - 1}${statusFilter ? `&status=${statusFilter}` : ''}`}
-              className="px-4 py-2 border rounded-lg hover:bg-gray-50"
+              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 text-gray-700 transition-colors"
             >
               Előző
             </Link>
           )}
-          <span className="px-4 py-2">
+          <span className="px-4 py-2 text-gray-700">
             Oldal {currentPage} / {totalPages}
           </span>
           {currentPage < totalPages && (
             <Link
               href={`/${locale}/admin/servers?page=${currentPage + 1}${statusFilter ? `&status=${statusFilter}` : ''}`}
-              className="px-4 py-2 border rounded-lg hover:bg-gray-50"
+              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 text-gray-700 transition-colors"
             >
               Következő
             </Link>

@@ -52,6 +52,13 @@ const copyRecursive = (src, dest) => {
 try {
   copyRecursive(publicDir, standalonePublicDir);
   console.log('✓ Public folder copied to standalone build');
+  
+  // Also ensure uploads directory exists in standalone
+  const standaloneUploadsDir = path.join(standalonePublicDir, 'uploads', 'slideshow');
+  if (!fs.existsSync(standaloneUploadsDir)) {
+    fs.mkdirSync(standaloneUploadsDir, { recursive: true });
+    console.log('✓ Created standalone uploads directory');
+  }
 } catch (error) {
   console.error('✗ Error copying public folder:', error);
   process.exit(1);

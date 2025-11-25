@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { MachineStatus, AgentStatus, TaskStatus } from '@prisma/client';
+import { useServerSentEvents } from '@/lib/use-server-sent-events';
 
 interface Machine {
   id: string;
@@ -71,23 +72,25 @@ interface MonitoringDashboardProps {
 }
 
 export function MonitoringDashboard({
-  stats,
-  machines,
+  stats: initialStats,
+  machines: initialMachines,
   recentTasks,
   locale,
 }: MonitoringDashboardProps) {
   const [autoRefresh, setAutoRefresh] = useState(true);
-  const [refreshInterval, setRefreshInterval] = useState(30); // másodperc
+  const [stats, setStats] = useState(initialStats);
+  const [machines, setMachines] = useState(initialMachines);
 
-  useEffect(() => {
-    if (!autoRefresh) return;
-
-    const interval = setInterval(() => {
-      window.location.reload();
-    }, refreshInterval * 1000);
-
-    return () => clearInterval(interval);
-  }, [autoRefresh, refreshInterval]);
+  // Real-time monitoring SSE stream
+  const { data: streamData, connected } = useServerSentEvents({
+    url: '/api/admin/monitoring/stream',
+    enabled: autoRefresh,
+    onMessage: (data) => {
+      if (data.type === 'stats') {
+        setStats(data.data);
+      }
+    },
+  });
 
   const getStatusBadgeColor = (status: MachineStatus | AgentStatus) => {
     switch (status) {
@@ -135,20 +138,18 @@ export function MonitoringDashboard({
                 onChange={(e) => setAutoRefresh(e.target.checked)}
                 className="rounded"
               />
-              <span className="text-sm">Automatikus frissítés</span>
+              <span className="text-sm">Real-time frissítés</span>
             </label>
-            {autoRefresh && (
-              <select
-                value={refreshInterval}
-                onChange={(e) => setRefreshInterval(parseInt(e.target.value))}
-                className="px-3 py-1 border rounded text-sm"
-              >
-                <option value="10">10 másodperc</option>
-                <option value="30">30 másodperc</option>
-                <option value="60">1 perc</option>
-                <option value="300">5 perc</option>
-              </select>
-            )}
+            <div className="flex items-center gap-2">
+              <div
+                className={`w-2 h-2 rounded-full ${
+                  connected ? 'bg-green-500' : 'bg-red-500'
+                }`}
+              />
+              <span className="text-xs text-gray-600">
+                {connected ? 'Csatlakozva' : 'Kapcsolat megszakadt'}
+              </span>
+            </div>
           </div>
           <button
             onClick={() => window.location.reload()}

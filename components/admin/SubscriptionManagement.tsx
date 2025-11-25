@@ -85,22 +85,22 @@ export function SubscriptionManagement({
       </div>
 
       {/* Előfizetések táblázata */}
-      <div className="card overflow-x-auto">
-        <table className="w-full">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
+        <table className="w-full text-gray-700">
           <thead>
-            <tr className="border-b">
-              <th className="text-left p-3">Felhasználó</th>
-              <th className="text-left p-3">Szerver</th>
-              <th className="text-left p-3">Státusz</th>
-              <th className="text-left p-3">Periódus</th>
-              <th className="text-left p-3">Törlés</th>
-              <th className="text-left p-3">Létrehozva</th>
-              <th className="text-left p-3">Műveletek</th>
+            <tr className="border-b border-gray-200 bg-gray-50">
+              <th className="text-left p-3 font-semibold text-gray-900">Felhasználó</th>
+              <th className="text-left p-3 font-semibold text-gray-900">Szerver</th>
+              <th className="text-left p-3 font-semibold text-gray-900">Státusz</th>
+              <th className="text-left p-3 font-semibold text-gray-900">Periódus</th>
+              <th className="text-left p-3 font-semibold text-gray-900">Törlés</th>
+              <th className="text-left p-3 font-semibold text-gray-900">Létrehozva</th>
+              <th className="text-left p-3 font-semibold text-gray-900">Műveletek</th>
             </tr>
           </thead>
           <tbody>
             {subscriptions.map((subscription) => (
-              <tr key={subscription.id} className="border-b hover:bg-gray-50">
+              <tr key={subscription.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                 <td className="p-3">
                   <Link
                     href={`/${locale}/admin/users/${subscription.user.id}`}
@@ -151,7 +151,7 @@ export function SubscriptionManagement({
                     <span className="text-gray-400">Nem</span>
                   )}
                 </td>
-                <td className="p-3 text-sm text-gray-600">
+                <td className="p-3 text-sm text-gray-700">
                   {new Date(subscription.createdAt).toLocaleDateString('hu-HU')}
                 </td>
                 <td className="p-3">
@@ -174,18 +174,18 @@ export function SubscriptionManagement({
           {currentPage > 1 && (
             <Link
               href={`/${locale}/admin/subscriptions?page=${currentPage - 1}${statusFilter ? `&status=${statusFilter}` : ''}`}
-              className="px-4 py-2 border rounded-lg hover:bg-gray-50"
+              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 text-gray-700 transition-colors"
             >
               Előző
             </Link>
           )}
-          <span className="px-4 py-2">
+          <span className="px-4 py-2 text-gray-700">
             Oldal {currentPage} / {totalPages}
           </span>
           {currentPage < totalPages && (
             <Link
               href={`/${locale}/admin/subscriptions?page=${currentPage + 1}${statusFilter ? `&status=${statusFilter}` : ''}`}
-              className="px-4 py-2 border rounded-lg hover:bg-gray-50"
+              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 text-gray-700 transition-colors"
             >
               Következő
             </Link>

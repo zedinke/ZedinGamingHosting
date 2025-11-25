@@ -2,9 +2,50 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { UserRole } from '@prisma/client';
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
+import { writeFile, mkdir, stat } from 'fs/promises';
+import { join, resolve } from 'path';
 import { existsSync } from 'fs';
+
+// Helper function to find project root reliably
+function findProjectRoot(): string {
+  let currentDir = process.cwd();
+  const originalCwd = currentDir;
+  
+  // If we're in .next/standalone, go up to project root
+  if (currentDir.includes('.next/standalone')) {
+    // .next/standalone -> .next -> project root
+    currentDir = resolve(currentDir, '..', '..', '..');
+  }
+  
+  // Verify it's the project root
+  const checks = [
+    join(currentDir, 'package.json'),
+    join(currentDir, 'next.config.js'),
+    join(currentDir, 'app'),
+    join(currentDir, 'public'),
+  ];
+  
+  const isValidRoot = checks.some(check => existsSync(check));
+  
+  if (isValidRoot) {
+    return currentDir;
+  }
+  
+  // Try parent directory
+  const parentDir = resolve(currentDir, '..');
+  const parentChecks = [
+    join(parentDir, 'package.json'),
+    join(parentDir, 'next.config.js'),
+  ];
+  
+  if (parentChecks.some(check => existsSync(check))) {
+    return parentDir;
+  }
+  
+  // Last resort: return current directory
+  console.warn('Could not find project root, using:', currentDir);
+  return currentDir;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -44,112 +85,36 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Determine the correct upload directory
-    // Try multiple strategies to find the project root
-    let baseDir = process.cwd();
-    const originalCwd = baseDir;
-    const isStandalone = baseDir.includes('.next/standalone') || existsSync(join(baseDir, 'server.js'));
-    
-    console.log('=== Upload Debug Info ===');
-    console.log('Original process.cwd():', originalCwd);
-    console.log('Is standalone:', isStandalone);
-    
-    // Strategy 1: If in standalone, go up to project root
-    if (isStandalone && baseDir.includes('.next/standalone')) {
-      // Go up: .next/standalone -> .next -> project root
-      baseDir = join(baseDir, '..', '..', '..');
-      const path = require('path');
-      baseDir = path.resolve(baseDir);
-      console.log('Strategy 1: Standalone detected, going up to:', baseDir);
+    // Find project root
+    const projectRoot = findProjectRoot();
+    const publicDir = join(projectRoot, 'public');
+    const uploadsDir = join(publicDir, 'uploads', 'slideshow');
+
+    console.log('=== Image Upload Debug ===');
+    console.log('Project root:', projectRoot);
+    console.log('Public dir:', publicDir);
+    console.log('Uploads dir:', uploadsDir);
+    console.log('Public dir exists:', existsSync(publicDir));
+    console.log('Uploads dir exists:', existsSync(uploadsDir));
+
+    // Ensure public directory exists
+    if (!existsSync(publicDir)) {
+      console.error('Public directory does not exist:', publicDir);
+      throw new Error(`A public mappa nem létezik: ${publicDir}`);
     }
-    
-    // Strategy 2: Check if we're in the right place by looking for app/ or public/ directory
-    const path = require('path');
-    const hasAppDir = existsSync(join(baseDir, 'app'));
-    const hasPublicDir = existsSync(join(baseDir, 'public'));
-    const hasPackageJson = existsSync(join(baseDir, 'package.json'));
-    
-    console.log('Directory check:', {
-      baseDir,
-      hasAppDir,
-      hasPublicDir,
-      hasPackageJson,
-    });
-    
-    // If we don't have the expected directories, try to find project root
-    if (!hasPublicDir && !hasAppDir) {
-      // Try going up one more level
-      const parentDir = path.resolve(join(baseDir, '..'));
-      if (existsSync(join(parentDir, 'public')) || existsSync(join(parentDir, 'app'))) {
-        baseDir = parentDir;
-        console.log('Strategy 2: Found project root at:', baseDir);
-      }
-    }
-    
-    // Final check: ensure we have a public directory
-    const finalPublicDir = join(baseDir, 'public');
-    if (!existsSync(finalPublicDir)) {
-      console.error('ERROR: Cannot find public directory!');
-      console.error('Searched in:', baseDir);
-      throw new Error(`Nem található a public mappa a következő helyen: ${baseDir}`);
-    }
-    
-    // Primary upload directory - always use project root public
-    const uploadsDir = join(baseDir, 'public', 'uploads', 'slideshow');
-    
-    // Also save to standalone public if in standalone (for Next.js to serve)
-    const standalonePublicDir = isStandalone && originalCwd.includes('.next/standalone')
-      ? join(originalCwd, 'public', 'uploads', 'slideshow')
-      : null;
-    
-    console.log('Final directories:', {
-      baseDir,
-      uploadsDir,
-      standalonePublicDir,
-    });
-    
-    // Create primary directory (project root)
+
+    // Create uploads directory if it doesn't exist
     try {
       if (!existsSync(uploadsDir)) {
         await mkdir(uploadsDir, { recursive: true });
         console.log('✓ Created uploads directory:', uploadsDir);
       }
     } catch (error: any) {
-      console.error('Error creating primary uploads directory:', error);
+      console.error('Error creating uploads directory:', error);
       throw new Error(`Nem sikerült létrehozni az uploads mappát: ${error.message}`);
     }
-    
-    // Create standalone directory if needed
-    if (standalonePublicDir) {
-      try {
-        if (!existsSync(standalonePublicDir)) {
-          await mkdir(standalonePublicDir, { recursive: true });
-          console.log('✓ Created standalone uploads directory:', standalonePublicDir);
-        }
-      } catch (error: any) {
-        console.warn('Warning: Could not create standalone uploads directory:', error);
-        // Don't throw, primary directory is more important
-      }
-    }
-    
-    // Debug: log directory info
-    console.log('Upload info:', {
-      processCwd: process.cwd(),
-      baseDir,
-      isStandalone,
-      uploadsDir,
-      uploadsDirExists: existsSync(uploadsDir),
-      standalonePublicDir,
-      standaloneExists: standalonePublicDir ? existsSync(standalonePublicDir) : null,
-    });
-    
-    // Verify the directory exists and is writable
-    if (!existsSync(uploadsDir)) {
-      console.error('Uploads directory does not exist:', uploadsDir);
-      throw new Error(`Az uploads mappa nem létezik: ${uploadsDir}`);
-    }
-    
-    // Test write permissions
+
+    // Verify directory is writable
     try {
       const testFile = join(uploadsDir, '.test-write');
       await writeFile(testFile, 'test');
@@ -161,25 +126,23 @@ export async function POST(request: NextRequest) {
       throw new Error(`Az uploads mappa nem írható: ${error.message}`);
     }
 
-    // Egyedi fájlnév generálása
+    // Generate unique filename
     const timestamp = Date.now();
     const randomString = Math.random().toString(36).substring(2, 15);
-    const fileExtension = file.name.split('.').pop();
+    const fileExtension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
     const fileName = `${timestamp}-${randomString}.${fileExtension}`;
     const filePath = join(uploadsDir, fileName);
 
-    // Fájl mentése
+    // Save file
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
     
-    // Save to primary location (project root)
     try {
       await writeFile(filePath, buffer);
-      console.log('✓ File saved to primary location:', filePath);
+      console.log('✓ File saved:', filePath);
       
-      // Verify file was actually written
-      const { statSync } = require('fs');
-      const stats = statSync(filePath);
+      // Verify file was written
+      const stats = await stat(filePath);
       console.log('✓ File verified:', {
         path: filePath,
         size: stats.size,
@@ -189,48 +152,31 @@ export async function POST(request: NextRequest) {
       if (stats.size === 0) {
         throw new Error('A fájl üres, valószínűleg nem sikerült menteni');
       }
+      
+      if (stats.size !== buffer.length) {
+        throw new Error(`Fájl méret eltérés: várt ${buffer.length}, kapott ${stats.size}`);
+      }
     } catch (error: any) {
-      console.error('Error saving file to primary location:', error);
+      console.error('Error saving file:', error);
       console.error('File path:', filePath);
       console.error('Directory exists:', existsSync(uploadsDir));
       throw new Error(`Nem sikerült menteni a fájlt: ${error.message}`);
     }
-    
-    // Also save to standalone public if in standalone (for Next.js to serve)
-    if (standalonePublicDir) {
-      const standaloneFilePath = join(standalonePublicDir, fileName);
-      try {
-        // Ensure standalone directory exists
-        const standaloneDir = require('path').dirname(standaloneFilePath);
-        if (!existsSync(standaloneDir)) {
-          await mkdir(standaloneDir, { recursive: true });
-        }
-        
-        await writeFile(standaloneFilePath, buffer);
-        console.log('✓ File also saved to standalone location:', standaloneFilePath);
-      } catch (error: any) {
-        console.warn('⚠ Could not save to standalone location:', error);
-        // Don't throw, primary save succeeded
-      }
-    }
 
-    // URL visszaadása
+    // Return URL (relative to public directory)
     const fileUrl = `/uploads/slideshow/${fileName}`;
     
-    // Verify file exists before returning
+    // Final verification
     if (!existsSync(filePath)) {
       console.error('ERROR: File was not saved:', filePath);
       throw new Error('A fájl nem található a mentés után');
     }
     
-    // Debug: log file info
-    console.log('File saved successfully:', {
+    console.log('✓ Upload successful:', {
       fileName,
       filePath,
       fileUrl,
       fileSize: buffer.length,
-      uploadsDirExists: existsSync(uploadsDir),
-      fileExists: existsSync(filePath),
     });
 
     return NextResponse.json({
@@ -246,4 +192,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
