@@ -48,7 +48,9 @@ export async function GET(
     }
 
     // PDF válasz küldése
-    return new NextResponse(pdfBuffer, {
+    // Buffer konvertálása Uint8Array-re a NextResponse kompatibilitáshoz
+    const pdfArray = new Uint8Array(pdfBuffer);
+    return new NextResponse(pdfArray, {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="szamla-${invoice.invoiceNumber}.pdf"`,
