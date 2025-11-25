@@ -1,139 +1,132 @@
-# Node.js és npm Telepítése
+# Node.js 20+ Telepítése Hestia CP Szerveren
 
-## Debian/Ubuntu (Hestia CP általában ezt használja)
+Ez az útmutató bemutatja, hogyan telepítsd a Node.js 20-at és az npm-et egy Hestia CP szerveren.
 
-### Módszer 1: NodeSource Repository (Ajánlott - Legújabb verzió)
+## 🚀 Gyors Telepítés (Ajánlott)
+
+### 1. NodeSource Repository Hozzáadása
 
 ```bash
 # Frissítsd a csomag listát
 apt update
 
-# Telepítsd a curl-t (ha nincs)
+# Telepítsd a curl-t (ha nincs telepítve)
 apt install -y curl
 
-# Node.js 20.x telepítése (LTS verzió)
+# NodeSource repository hozzáadása (Node.js 20.x)
 curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-
-# Node.js és npm telepítése
-apt install -y nodejs
-
-# Ellenőrizd a verziókat
-node --version
-npm --version
 ```
 
-### Módszer 2: Apt Repository (Egyszerűbb, de régebbi verzió)
+### 2. Node.js és npm Telepítése
 
 ```bash
-# Frissítsd a csomag listát
-apt update
+# Node.js 20.x telepítése (npm automatikusan települ vele)
+apt install -y nodejs
 
-# Node.js és npm telepítése
-apt install -y nodejs npm
-
-# Ellenőrizd a verziókat
+# Ellenőrizd a telepítést
 node --version
 npm --version
 ```
 
-### Módszer 3: NVM (Node Version Manager) - Fejlesztéshez ajánlott
+**Várt kimenet:**
+- Node.js: `v20.x.x` vagy újabb
+- npm: `10.x.x` vagy újabb
+
+## 🔄 Alternatív Módszer: NVM Használata
+
+Ha több Node.js verziót szeretnél kezelni, használd az NVM-et:
 
 ```bash
 # NVM telepítése
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
 
-# Terminal újratöltése
-source ~/.bashrc
+# Terminal újratöltése vagy:
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
 # Node.js 20 telepítése
 nvm install 20
 nvm use 20
-
-# Alapértelmezett verzió beállítása
 nvm alias default 20
 
-# Ellenőrizd
+# Ellenőrzés
 node --version
 npm --version
 ```
 
-## Telepítés Utáni Ellenőrzés
+## ✅ Telepítés Ellenőrzése
 
 ```bash
 # Node.js verzió
-node -v
-# Várható kimenet: v20.x.x vagy újabb
+node --version
 
 # npm verzió
-npm -v
-# Várható kimenet: 10.x.x vagy újabb
+npm --version
 
-# npm globális csomagok telepítése (ha szükséges)
-npm install -g pm2
+# Telepítési helyek
+which node
+which npm
 ```
 
-## Ha a Verzió Túl Régi
+## 🔧 Hibaelhárítás
 
-Ha a telepített verzió túl régi (< 18), használd a NodeSource módszert:
+### Ha a `node` vagy `npm` parancs nem található
 
 ```bash
-# Régi verzió eltávolítása
+# Ellenőrizd, hogy telepítve van-e
+dpkg -l | grep nodejs
+
+# Ha nincs telepítve, próbáld újra:
+apt update
+apt install -y nodejs npm
+
+# Vagy használd a teljes elérési utat:
+/usr/bin/node --version
+/usr/bin/npm --version
+```
+
+### Ha a verzió nem megfelelő
+
+```bash
+# Távolítsd el a régi verziót
 apt remove -y nodejs npm
 
-# NodeSource repository hozzáadása
+# Telepítsd újra a NodeSource-ból
 curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-
-# Újra telepítés
 apt install -y nodejs
 ```
 
-## PM2 Telepítése (Process Manager)
+### Permission hibák
+
+Ha permission hibákat kapsz npm telepítéskor:
 
 ```bash
-# PM2 globális telepítése
-npm install -g pm2
+# npm cache és prefix beállítása (root esetén nem szükséges, de user esetén igen)
+mkdir -p ~/.npm-global
+npm config set prefix '~/.npm-global'
 
-# PM2 verzió ellenőrzése
-pm2 --version
+# PATH hozzáadása (ha user vagy)
+echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.bashrc
+source ~/.bashrc
 ```
 
-## További Hasznos Csomagok
+## 📝 Telepítés Után
+
+Miután a Node.js és npm telepítve van, folytasd a projekt telepítését:
 
 ```bash
-# TypeScript globális telepítése (ha szükséges)
-npm install -g typescript tsx
+# Navigálj a projekt könyvtárába
+cd /home/ZedGamingHosting/web/zedgaminghosting.hu/public_html
 
-# Prisma CLI globális telepítése (opcionális)
-npm install -g prisma
+# Függőségek telepítése
+npm install
+
+# Prisma client generálása
+npm run db:generate
 ```
 
-## Hibaelhárítás
+## 🔗 További Információk
 
-### "E: Unable to locate package nodejs"
-
-```bash
-# Frissítsd a csomag listát
-apt update
-apt upgrade
-```
-
-### "Permission denied" npm install-nél
-
-```bash
-# npm prefix beállítása (root esetén nem szükséges, de user esetén)
-npm config set prefix ~/.npm-global
-export PATH=~/.npm-global/bin:$PATH
-```
-
-### Node.js verzió ellenőrzése
-
-```bash
-# Melyik Node.js verzió van telepítve
-which node
-node -v
-
-# Melyik npm verzió van telepítve
-which npm
-npm -v
-```
-
+- [NodeSource Repository](https://github.com/nodesource/distributions)
+- [NVM GitHub](https://github.com/nvm-sh/nvm)
+- [Node.js Hivatalos Dokumentáció](https://nodejs.org/)

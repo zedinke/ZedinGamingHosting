@@ -1,0 +1,171 @@
+import axios from 'axios';
+import crypto from 'crypto';
+import { prisma } from '@/lib/prisma';
+
+const revolutApiUrl = process.env.REVOLUT_API_URL || 'https://b2b.revolut.com/api/1.0';
+const revolutApiKey = process.env.REVOLUT_API_KEY || '';
+const revolutWebhookSecret = process.env.REVOLUT_WEBHOOK_SECRET || '';
+
+/**
+ * Revolut API client
+ */
+const revolutClient = axios.create({
+  baseURL: revolutApiUrl,
+  headers: {
+    'Authorization': `Bearer ${revolutApiKey}`,
+    'Content-Type': 'application/json',
+  },
+});
+
+/**
+ * Revolut order létrehozása
+ */
+export async function createRevolutOrder(
+  userId: string,
+  serverId: string,
+  amount: number,
+  currency: string = 'HUF',
+  description: string = 'Game Server Subscription'
+): Promise<{ orderId: string; publicId: string; checkoutUrl: string }> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new Error('Felhasználó nem található');
+  }
+
+  // Revolut order létrehozása
+  const response = await revolutClient.post('/orders', {
+    amount: Math.round(amount * 100), // Centben
+    currency,
+    description,
+    customer_email: user.email || undefined,
+    metadata: {
+      userId,
+      serverId,
+    },
+    capture_mode: 'MANUAL', // Manuális capture (előfizetés esetén)
+  });
+
+  const order = response.data;
+
+  return {
+    orderId: order.id,
+    publicId: order.public_id,
+    checkoutUrl: `https://pay.revolut.com/${order.public_id}`,
+  };
+}
+
+/**
+ * Revolut order capture (fizetés megerősítése)
+ */
+export async function captureRevolutOrder(orderId: string): Promise<void> {
+  await revolutClient.post(`/orders/${orderId}/capture`);
+}
+
+/**
+ * Revolut order státusz lekérdezése
+ */
+export async function getRevolutOrderStatus(orderId: string): Promise<{
+  state: string;
+  amount: number;
+  currency: string;
+}> {
+  const response = await revolutClient.get(`/orders/${orderId}`);
+  return {
+    state: response.data.state,
+    amount: response.data.amount / 100, // Centből
+    currency: response.data.currency,
+  };
+}
+
+/**
+ * Revolut webhook validálás
+ */
+export function verifyRevolutWebhook(
+  payload: string,
+  signature: string
+): boolean {
+  const hmac = crypto.createHmac('sha256', revolutWebhookSecret);
+  const calculatedSignature = hmac.update(payload).digest('hex');
+  return calculatedSignature === signature;
+}
+
+/**
+ * Revolut webhook esemény kezelése
+ */
+export async function handleRevolutWebhook(event: any): Promise<void> {
+  const { type, data } = event;
+
+  switch (type) {
+    case 'ORDER_COMPLETED':
+      await handleOrderCompleted(data);
+      break;
+    case 'ORDER_AUTHORISED':
+      await handleOrderAuthorised(data);
+      break;
+    case 'ORDER_PAYMENT_FAILED':
+      await handleOrderPaymentFailed(data);
+      break;
+  }
+}
+
+async function handleOrderCompleted(order: any) {
+  const userId = order.metadata?.userId;
+  const serverId = order.metadata?.serverId;
+
+  if (!userId || !serverId) {
+    return;
+  }
+
+  // Előfizetés létrehozása
+  await prisma.subscription.create({
+    data: {
+      userId,
+      serverId,
+      paymentProvider: 'REVOLUT',
+      revolutOrderId: order.id,
+      revolutPaymentId: order.payments?.[0]?.id,
+      status: 'ACTIVE',
+      currentPeriodStart: new Date(),
+      currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    },
+  });
+
+  // Számla létrehozása
+  const invoiceNumber = `INV-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  await prisma.invoice.create({
+    data: {
+      userId,
+      subscriptionId: (await prisma.subscription.findFirst({
+        where: { revolutOrderId: order.id },
+      }))?.id,
+      paymentProvider: 'REVOLUT',
+      revolutOrderId: order.id,
+      revolutPaymentId: order.payments?.[0]?.id,
+      amount: order.amount / 100,
+      currency: order.currency,
+      status: 'PAID',
+      invoiceNumber,
+      paidAt: new Date(),
+    },
+  });
+}
+
+async function handleOrderAuthorised(order: any) {
+  // Order authorized, de még nincs captured
+  // Itt lehet manuális capture-t kezdeményezni
+}
+
+async function handleOrderPaymentFailed(order: any) {
+  await prisma.invoice.updateMany({
+    where: {
+      revolutOrderId: order.id,
+    },
+    data: {
+      status: 'FAILED',
+    },
+  });
+}
+

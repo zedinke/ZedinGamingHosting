@@ -146,9 +146,23 @@ model Subscription {
   id                String            @id @default(cuid())
   userId            String
   serverId          String?           @unique
+  paymentProvider   PaymentProvider   @default(STRIPE)
+  
+  // Stripe
   stripeCustomerId  String?
   stripeSubscriptionId String?        @unique
   stripePriceId     String?
+  
+  // Revolut
+  revolutCustomerId String?
+  revolutOrderId    String?          @unique
+  revolutPaymentId  String?
+  
+  // PayPal
+  paypalSubscriptionId String?        @unique
+  paypalPlanId      String?
+  paypalBillingToken String?
+  
   status            SubscriptionStatus @default(ACTIVE)
   currentPeriodStart DateTime?
   currentPeriodEnd   DateTime?
@@ -161,6 +175,12 @@ model Subscription {
   invoices          Invoice[]
 
   @@map("subscriptions")
+}
+
+enum PaymentProvider {
+  STRIPE
+  REVOLUT
+  PAYPAL
 }
 
 enum SubscriptionStatus {
@@ -176,7 +196,19 @@ model Invoice {
   id                String        @id @default(cuid())
   userId            String
   subscriptionId    String?
+  paymentProvider   PaymentProvider @default(STRIPE)
+  
+  // Stripe
   stripeInvoiceId   String?       @unique
+  
+  // Revolut
+  revolutOrderId    String?       @unique
+  revolutPaymentId  String?
+  
+  // PayPal
+  paypalInvoiceId   String?       @unique
+  paypalTransactionId String?
+  
   amount            Float
   currency          String        @default("HUF")
   status            InvoiceStatus @default(PENDING)
