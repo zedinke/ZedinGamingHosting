@@ -411,14 +411,30 @@ function generateInvoiceHTML(invoice: any, settings: InvoiceSettings): string {
  * Számla tételek generálása
  */
 function generateInvoiceItems(invoice: any, vatRate: number): string {
-  const items = invoice.items || [
-    {
-      name: invoice.subscription?.server?.name || 'Game Server Subscription',
-      quantity: 1,
-      unitPrice: invoice.subtotal || invoice.amount / (1 + vatRate / 100),
-      vatRate: vatRate,
-    },
-  ];
+  let items: any[] = [];
+  
+  // Ha van items JSON, próbáljuk parse-olni
+  if (invoice.items) {
+    try {
+      items = typeof invoice.items === 'string' 
+        ? JSON.parse(invoice.items) 
+        : invoice.items;
+    } catch (e) {
+      // Ha nem sikerül parse-olni, használjuk az alapértelmezettet
+    }
+  }
+  
+  // Ha nincs items, hozzunk létre egy alapértelmezettet
+  if (!items || items.length === 0) {
+    items = [
+      {
+        name: invoice.subscription?.server?.name || 'Game Server Subscription',
+        quantity: 1,
+        unitPrice: invoice.subtotal || invoice.amount / (1 + vatRate / 100),
+        vatRate: vatRate,
+      },
+    ];
+  }
 
   return items
     .map((item: any) => {

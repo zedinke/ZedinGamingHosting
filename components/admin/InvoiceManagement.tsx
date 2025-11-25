@@ -178,13 +178,14 @@ export function InvoiceManagement({
                         <Button
                           size="sm"
                           variant="outline"
-                        onClick={() => handleResend(invoice.id)}
-                        disabled={resendingIds.has(invoice.id)}
-                        className="text-gray-700 border-gray-300 hover:bg-gray-50"
-                      >
-                        <Mail className="w-4 h-4 mr-1" />
-                        {resendingIds.has(invoice.id) ? 'Küldés...' : 'Újraküldés'}
-                      </Button>
+                          onClick={() => handleResend(invoice.id)}
+                          disabled={resendingIds.has(invoice.id)}
+                          className="text-gray-700 border-gray-300 hover:bg-gray-50"
+                        >
+                          <Mail className="w-4 h-4 mr-1" />
+                          {resendingIds.has(invoice.id) ? 'Küldés...' : 'Újraküldés'}
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))
