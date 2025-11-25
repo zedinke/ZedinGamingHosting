@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { UserRole } from '@prisma/client';
+import { rateLimitMiddleware } from '@/lib/rate-limit';
 import crypto from 'crypto';
 
 // GET - Webhook konfigurációk listája
