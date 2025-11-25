@@ -13,17 +13,17 @@ datasource db {
 
 // Felhasználók
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  emailVerified DateTime?
-  password      String?   // Hashelt jelszó
-  name          String?
-  image         String?   // Avatar URL
-  role          UserRole  @default(USER)
-  twoFactorEnabled Boolean @default(false)
-  twoFactorSecret String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id               String    @id @default(cuid())
+  email            String    @unique
+  emailVerified    DateTime?
+  password         String? // Hashelt jelszó
+  name             String?
+  image            String? // Avatar URL
+  role             UserRole  @default(USER)
+  twoFactorEnabled Boolean   @default(false)
+  twoFactorSecret  String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   // Kapcsolatok
   accounts      Account[]
@@ -33,7 +33,8 @@ model User {
   tickets       SupportTicket[]
   subscriptions Subscription[]
   auditLogs     AuditLog[]
-  
+  notifications Notification[]
+
   @@map("users")
 }
 
@@ -98,26 +99,26 @@ model PasswordResetToken {
 
 // Játék szerverek
 model Server {
-  id            String      @id @default(cuid())
+  id            String       @id @default(cuid())
   userId        String
   gameType      GameType
   name          String
   status        ServerStatus @default(OFFLINE)
   ipAddress     String?
   port          Int?
-  maxPlayers    Int         @default(10)
-  configuration Json?       // Szerver konfiguráció JSON formátumban
-  resourceUsage Json?       // CPU, RAM, Disk használat
-  machineId     String?     // Melyik gépen fut
-  agentId       String?     // Melyik agent kezeli
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  maxPlayers    Int          @default(10)
+  configuration Json? // Szerver konfiguráció JSON formátumban
+  resourceUsage Json? // CPU, RAM, Disk használat
+  machineId     String? // Melyik gépen fut
+  agentId       String? // Melyik agent kezeli
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
-  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  subscription  Subscription?
-  machine       ServerMachine? @relation(fields: [machineId], references: [id], onDelete: SetNull)
-  agent         Agent?         @relation(fields: [agentId], references: [id], onDelete: SetNull)
-  tasks         Task[]
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription Subscription?
+  machine      ServerMachine? @relation(fields: [machineId], references: [id], onDelete: SetNull)
+  agent        Agent?         @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  tasks        Task[]
 
   @@map("servers")
 }
@@ -143,36 +144,36 @@ enum ServerStatus {
 
 // Előfizetések
 model Subscription {
-  id                String            @id @default(cuid())
-  userId            String
-  serverId          String?           @unique
-  paymentProvider   PaymentProvider   @default(STRIPE)
-  
+  id              String          @id @default(cuid())
+  userId          String
+  serverId        String?         @unique
+  paymentProvider PaymentProvider @default(STRIPE)
+
   // Stripe
-  stripeCustomerId  String?
-  stripeSubscriptionId String?        @unique
-  stripePriceId     String?
-  
+  stripeCustomerId     String?
+  stripeSubscriptionId String? @unique
+  stripePriceId        String?
+
   // Revolut
   revolutCustomerId String?
-  revolutOrderId    String?          @unique
+  revolutOrderId    String? @unique
   revolutPaymentId  String?
-  
+
   // PayPal
-  paypalSubscriptionId String?        @unique
-  paypalPlanId      String?
-  paypalBillingToken String?
-  
-  status            SubscriptionStatus @default(ACTIVE)
+  paypalSubscriptionId String? @unique
+  paypalPlanId         String?
+  paypalBillingToken   String?
+
+  status             SubscriptionStatus @default(ACTIVE)
   currentPeriodStart DateTime?
   currentPeriodEnd   DateTime?
-  cancelAtPeriodEnd  Boolean          @default(false)
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
+  cancelAtPeriodEnd  Boolean            @default(false)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
 
-  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  server            Server?           @relation(fields: [serverId], references: [id], onDelete: Cascade)
-  invoices          Invoice[]
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  server   Server?   @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  invoices Invoice[]
 
   @@map("subscriptions")
 }
@@ -193,56 +194,56 @@ enum SubscriptionStatus {
 
 // Számlák
 model Invoice {
-  id                String        @id @default(cuid())
-  userId            String
-  subscriptionId    String?
-  paymentProvider   PaymentProvider @default(STRIPE)
-  
-  // Stripe
-  stripeInvoiceId   String?       @unique
-  
-  // Revolut
-  revolutOrderId    String?       @unique
-  revolutPaymentId  String?
-  
-  // PayPal
-  paypalInvoiceId   String?       @unique
-  paypalTransactionId String?
-  
-  amount            Float
-  currency          String        @default("HUF")
-  status            InvoiceStatus @default(PENDING)
-  dueDate           DateTime?
-  paidAt            DateTime?
-  invoiceNumber     String        @unique
-  pdfUrl            String?
-  
-  // Hatósági követelmények - számlázási adatok
-  taxAmount         Float?        // ÁFA összeg
-  taxRate           Float?        // ÁFA kulcs (pl. 27%)
-  subtotal          Float?        // Nettó összeg
-  items             Json?         // Számla tételek (tömb)
-  
-  // Céginformációk (ha van)
-  companyName       String?       // Cégnév
-  companyTaxNumber  String?       // Adószám
-  companyAddress    String?       @db.Text // Cím
-  companyVatNumber  String?       // ÁFA szám
-  
-  // Számlázási cím
-  billingName       String?       // Számlázási név
-  billingAddress    String?       @db.Text // Számlázási cím
-  billingTaxNumber  String?       // Számlázási adószám
-  
-  // Fizetési információk
-  paymentMethod     String?       // Fizetési mód
-  paymentReference  String?       // Fizetési referencia
-  
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
+  id              String          @id @default(cuid())
+  userId          String
+  subscriptionId  String?
+  paymentProvider PaymentProvider @default(STRIPE)
 
-  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  subscription      Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  // Stripe
+  stripeInvoiceId String? @unique
+
+  // Revolut
+  revolutOrderId   String? @unique
+  revolutPaymentId String?
+
+  // PayPal
+  paypalInvoiceId     String? @unique
+  paypalTransactionId String?
+
+  amount        Float
+  currency      String        @default("HUF")
+  status        InvoiceStatus @default(PENDING)
+  dueDate       DateTime?
+  paidAt        DateTime?
+  invoiceNumber String        @unique
+  pdfUrl        String?
+
+  // Hatósági követelmények - számlázási adatok
+  taxAmount Float? // ÁFA összeg
+  taxRate   Float? // ÁFA kulcs (pl. 27%)
+  subtotal  Float? // Nettó összeg
+  items     Json? // Számla tételek (tömb)
+
+  // Céginformációk (ha van)
+  companyName      String? // Cégnév
+  companyTaxNumber String? // Adószám
+  companyAddress   String? @db.Text // Cím
+  companyVatNumber String? // ÁFA szám
+
+  // Számlázási cím
+  billingName      String? // Számlázási név
+  billingAddress   String? @db.Text // Számlázási cím
+  billingTaxNumber String? // Számlázási adószám
+
+  // Fizetési információk
+  paymentMethod    String? // Fizetési mód
+  paymentReference String? // Fizetési referencia
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
 
   @@map("invoices")
 }
@@ -257,17 +258,17 @@ enum InvoiceStatus {
 
 // Kuponok
 model Coupon {
-  id            String   @id @default(cuid())
-  code          String   @unique
+  id            String       @id @default(cuid())
+  code          String       @unique
   discountType  DiscountType
   discountValue Float
   maxUses       Int?
-  usedCount     Int      @default(0)
+  usedCount     Int          @default(0)
   validFrom     DateTime
   validUntil    DateTime
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  isActive      Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
   @@map("coupons")
 }
@@ -279,18 +280,18 @@ enum DiscountType {
 
 // Támogatási ticketek
 model SupportTicket {
-  id          String          @id @default(cuid())
-  userId      String
-  subject     String
-  category    TicketCategory
-  status      TicketStatus    @default(OPEN)
-  priority    TicketPriority  @default(MEDIUM)
-  messages    TicketMessage[]
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
-  closedAt    DateTime?
+  id        String          @id @default(cuid())
+  userId    String
+  subject   String
+  category  TicketCategory
+  status    TicketStatus    @default(OPEN)
+  priority  TicketPriority  @default(MEDIUM)
+  messages  TicketMessage[]
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  closedAt  DateTime?
 
-  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("support_tickets")
 }
@@ -319,28 +320,28 @@ enum TicketPriority {
 model TicketMessage {
   id        String   @id @default(cuid())
   ticketId  String
-  userId    String?  // null ha admin válasz
+  userId    String? // null ha admin válasz
   content   String   @db.Text
   isAdmin   Boolean  @default(false)
   createdAt DateTime @default(now())
 
-  ticket    SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 
   @@map("ticket_messages")
 }
 
 // CMS - Oldalak
 model Page {
-  id          String   @id @default(cuid())
-  slug        String
-  title       String
-  content     Json     // Rich text content
-  isPublished Boolean  @default(false)
-  locale      String   @default("hu")
-  seoTitle    String?
+  id             String   @id @default(cuid())
+  slug           String
+  title          String
+  content        Json // Rich text content
+  isPublished    Boolean  @default(false)
+  locale         String   @default("hu")
+  seoTitle       String?
   seoDescription String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@unique([slug, locale])
   @@map("pages")
@@ -348,20 +349,20 @@ model Page {
 
 // CMS - Blog bejegyzések
 model BlogPost {
-  id          String   @id @default(cuid())
-  slug        String
-  title       String
-  excerpt     String?
-  content     Json
-  coverImage  String?
-  authorId    String
-  isPublished Boolean  @default(false)
-  publishedAt DateTime?
-  locale      String   @default("hu")
-  seoTitle    String?
+  id             String    @id @default(cuid())
+  slug           String
+  title          String
+  excerpt        String?
+  content        Json
+  coverImage     String?
+  authorId       String
+  isPublished    Boolean   @default(false)
+  publishedAt    DateTime?
+  locale         String    @default("hu")
+  seoTitle       String?
   seoDescription String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   @@unique([slug, locale])
   @@map("blog_posts")
@@ -390,7 +391,7 @@ model PricingPlan {
   currency      String   @default("HUF")
   interval      String   @default("month") // month, year
   stripePriceId String?
-  features      Json     // Features array
+  features      Json // Features array
   isActive      Boolean  @default(true)
   order         Int      @default(0)
   createdAt     DateTime @default(now())
@@ -418,55 +419,55 @@ model Testimonial {
 
 // CMS - Team tagok
 model TeamMember {
-  id        String   @id @default(cuid())
-  name      String
-  role      String
-  bio       String?  @db.Text
-  avatar    String?
-  email     String?
-  socialLinks Json?  // { twitter, linkedin, github, etc. }
-  isActive  Boolean  @default(true)
-  order     Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(cuid())
+  name        String
+  role        String
+  bio         String?  @db.Text
+  avatar      String?
+  email       String?
+  socialLinks Json? // { twitter, linkedin, github, etc. }
+  isActive    Boolean  @default(true)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@map("team_members")
 }
 
 // Homepage Sections CMS
 model HomepageSection {
-  id          String   @id @default(cuid())
-  type        String   // hero, features, stats, cta, slideshow
-  title       String?
-  subtitle    String?  @db.Text
-  content     Json?    // Section specific content
-  image       String?
-  buttonText  String?
-  buttonLink  String?
-  isActive    Boolean  @default(true)
-  order       Int      @default(0)
-  locale      String   @default("hu")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(cuid())
+  type       String // hero, features, stats, cta, slideshow
+  title      String?
+  subtitle   String?  @db.Text
+  content    Json? // Section specific content
+  image      String?
+  buttonText String?
+  buttonLink String?
+  isActive   Boolean  @default(true)
+  order      Int      @default(0)
+  locale     String   @default("hu")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@map("homepage_sections")
 }
 
 // Slideshow
 model SlideshowSlide {
-  id          String   @id @default(cuid())
-  title       String?
-  subtitle    String?  @db.Text
-  image       String?  // Opcionális, ha video van
-  video       String?  // Opcionális, ha image van
-  mediaType   String   @default("image") // "image" vagy "video"
-  link        String?
-  buttonText  String?
-  isActive    Boolean  @default(true)
-  order       Int      @default(0)
-  locale      String   @default("hu")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(cuid())
+  title      String?
+  subtitle   String?  @db.Text
+  image      String? // Opcionális, ha video van
+  video      String? // Opcionális, ha image van
+  mediaType  String   @default("image") // "image" vagy "video"
+  link       String?
+  buttonText String?
+  isActive   Boolean  @default(true)
+  order      Int      @default(0)
+  locale     String   @default("hu")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@map("slideshow_slides")
 }
@@ -478,14 +479,14 @@ model GameCategory {
   slug        String   @unique
   description String?  @db.Text
   icon        String?
-  color       String?  // Hex color
+  color       String? // Hex color
   isActive    Boolean  @default(true)
   order       Int      @default(0)
   locale      String   @default("hu")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  games       Game[]
+  games Game[]
 
   @@map("game_categories")
 }
@@ -503,7 +504,7 @@ model Game {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  category    GameCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  category GameCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
   @@map("games")
 }
@@ -512,7 +513,7 @@ model Game {
 model ThemeSetting {
   id        String   @id @default(cuid())
   key       String   @unique
-  value     Json     // Theme configuration
+  value     Json // Theme configuration
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -521,23 +522,23 @@ model ThemeSetting {
 
 // Szerver gépek (host nodes)
 model ServerMachine {
-  id            String   @id @default(cuid())
+  id            String        @id @default(cuid())
   name          String
-  ipAddress     String  @unique
-  sshPort       Int     @default(22)
+  ipAddress     String        @unique
+  sshPort       Int           @default(22)
   sshUser       String
-  sshKeyPath    String? @db.Text // SSH kulcs elérési út
+  sshKeyPath    String?       @db.Text // SSH kulcs elérési út
   status        MachineStatus @default(OFFLINE)
   agentVersion  String?
   lastHeartbeat DateTime?
-  resources     Json?    // CPU, RAM, Disk kapacitás { cpu: { cores, usage }, ram: { total, used }, disk: { total, used } }
-  notes         String?  @db.Text
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
-  agents        Agent[]
-  servers       Server[]
-  
+  resources     Json? // CPU, RAM, Disk kapacitás { cpu: { cores, usage }, ram: { total, used }, disk: { total, used } }
+  notes         String?       @db.Text
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  agents  Agent[]
+  servers Server[]
+
   @@map("server_machines")
 }
 
@@ -550,21 +551,21 @@ enum MachineStatus {
 
 // Game Server Agents
 model Agent {
-  id            String   @id @default(cuid())
+  id            String      @id @default(cuid())
   machineId     String
-  agentId       String   @unique // Egyedi agent azonosító
-  apiKey        String?  @unique // API kulcs az autentikációhoz
+  agentId       String      @unique // Egyedi agent azonosító
+  apiKey        String?     @unique // API kulcs az autentikációhoz
   version       String
   status        AgentStatus @default(OFFLINE)
   lastHeartbeat DateTime?
-  capabilities  Json?    // Agent képességek { docker: true, systemd: true, etc. }
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
-  machine       ServerMachine @relation(fields: [machineId], references: [id], onDelete: Cascade)
-  servers       Server[]
-  tasks         Task[]
-  
+  capabilities  Json? // Agent képességek { docker: true, systemd: true, etc. }
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  machine ServerMachine @relation(fields: [machineId], references: [id], onDelete: Cascade)
+  servers Server[]
+  tasks   Task[]
+
   @@map("agents")
 }
 
@@ -572,15 +573,15 @@ model Agent {
 model AuditLog {
   id           String   @id @default(cuid())
   userId       String?
-  action       String   // CREATE, UPDATE, DELETE, LOGIN, etc.
-  resourceType String   // User, Server, Machine, etc.
+  action       String // CREATE, UPDATE, DELETE, LOGIN, etc.
+  resourceType String // User, Server, Machine, etc.
   resourceId   String?
-  details      Json?    // További információk
+  details      Json? // További információk
   ipAddress    String?
   userAgent    String?
   createdAt    DateTime @default(now())
 
-  user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([action])
@@ -594,7 +595,7 @@ model Setting {
   id        String   @id @default(cuid())
   key       String   @unique
   value     String   @db.Text
-  category  String?  // system, email, payment, etc.
+  category  String? // system, email, payment, etc.
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -607,7 +608,7 @@ model Webhook {
   name      String
   url       String   @db.Text
   secret    String?
-  events    Json     // Események listája
+  events    Json // Események listája
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -617,18 +618,18 @@ model Webhook {
 
 // Felhasználói értesítések
 model Notification {
-  id        String             @id @default(cuid())
+  id        String    @id @default(cuid())
   userId    String
-  type      String             // Értesítés típusa
+  type      String // Értesítés típusa
   title     String
-  message   String             @db.Text
-  priority  String             @default("medium") // low, medium, high, urgent
-  data      Json?              // További adatok
-  read      Boolean            @default(false)
+  message   String    @db.Text
+  priority  String    @default("medium") // low, medium, high, urgent
+  data      Json? // További adatok
+  read      Boolean   @default(false)
   readAt    DateTime?
-  createdAt DateTime           @default(now())
+  createdAt DateTime  @default(now())
 
-  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, read])
   @@index([userId, createdAt])
@@ -644,22 +645,22 @@ enum AgentStatus {
 
 // Feladatütemezés
 model Task {
-  id          String   @id @default(cuid())
+  id          String     @id @default(cuid())
   agentId     String?
   serverId    String?
   type        TaskType
   status      TaskStatus @default(PENDING)
-  command     Json     // Parancs adatok { action, params, etc. }
-  result      Json?    // Eredmény
-  error       String?  @db.Text
+  command     Json // Parancs adatok { action, params, etc. }
+  result      Json? // Eredmény
+  error       String?    @db.Text
   startedAt   DateTime?
   completedAt DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  agent       Agent?   @relation(fields: [agentId], references: [id], onDelete: SetNull)
-  server      Server?  @relation(fields: [serverId], references: [id], onDelete: SetNull)
-  
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  agent  Agent?  @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  server Server? @relation(fields: [serverId], references: [id], onDelete: SetNull)
+
   @@map("tasks")
 }
 
@@ -681,4 +682,3 @@ enum TaskStatus {
   FAILED
   CANCELLED
 }
-
