@@ -1,15 +1,32 @@
-import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { prisma } from '@/lib/prisma';
 
-// S3 Client inicializálása
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION || 'eu-central-1',
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
-  },
-});
+// S3 Client inicializálása (lazy loading)
+let s3Client: any = null;
+let s3ClientPromise: Promise<any> | null = null;
+
+async function getS3Client() {
+  if (s3Client) {
+    return s3Client;
+  }
+  
+  if (s3ClientPromise) {
+    return s3ClientPromise;
+  }
+  
+  try {
+    const { S3Client } = await import('@aws-sdk/client-s3');
+    s3Client = new S3Client({
+      region: process.env.AWS_REGION || 'eu-central-1',
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
+      },
+    });
+    return s3Client;
+  } catch (error) {
+    throw new Error('AWS SDK modulok nincsenek telepítve. Telepítsd: npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner');
+  }
+}
 
 const BUCKET_NAME = process.env.AWS_S3_BUCKET || 'zedingaming-backups';
 
@@ -22,6 +39,8 @@ export async function uploadBackupToS3(
   backupName: string
 ): Promise<{ success: boolean; s3Key?: string; error?: string }> {
   try {
+    const client = await getS3Client();
+    const { PutObjectCommand } = await import('@aws-sdk/client-s3');
     const { readFile } = await import('fs/promises');
     const { existsSync } = await import('fs');
 
@@ -46,13 +65,19 @@ export async function uploadBackupToS3(
       },
     });
 
-    await s3Client.send(command);
+    await client.send(command);
 
     return {
       success: true,
       s3Key,
     };
   } catch (error: any) {
+    if (error.message?.includes('AWS SDK modulok nincsenek telepítve')) {
+      return {
+        success: false,
+        error: 'S3 támogatás nincs telepítve. Telepítsd: npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner',
+      };
+    }
     console.error('S3 upload error:', error);
     return {
       success: false,
@@ -69,6 +94,8 @@ export async function downloadBackupFromS3(
   localPath: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    const client = await getS3Client();
+    const { GetObjectCommand } = await import('@aws-sdk/client-s3');
     const { writeFile } = await import('fs/promises');
     const { createWriteStream } = await import('fs');
 
@@ -77,7 +104,7 @@ export async function downloadBackupFromS3(
       Key: s3Key,
     });
 
-    const response = await s3Client.send(command);
+    const response = await client.send(command);
     const stream = response.Body as any;
 
     if (!stream) {
@@ -99,6 +126,12 @@ export async function downloadBackupFromS3(
       success: true,
     };
   } catch (error: any) {
+    if (error.message?.includes('AWS SDK modulok nincsenek telepítve')) {
+      return {
+        success: false,
+        error: 'S3 támogatás nincs telepítve. Telepítsd: npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner',
+      };
+    }
     console.error('S3 download error:', error);
     return {
       success: false,
@@ -114,17 +147,26 @@ export async function deleteBackupFromS3(
   s3Key: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    const client = await getS3Client();
+    const { DeleteObjectCommand } = await import('@aws-sdk/client-s3');
+
     const command = new DeleteObjectCommand({
       Bucket: BUCKET_NAME,
       Key: s3Key,
     });
 
-    await s3Client.send(command);
+    await client.send(command);
 
     return {
       success: true,
     };
   } catch (error: any) {
+    if (error.message?.includes('AWS SDK modulok nincsenek telepítve')) {
+      return {
+        success: false,
+        error: 'S3 támogatás nincs telepítve. Telepítsd: npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner',
+      };
+    }
     console.error('S3 delete error:', error);
     return {
       success: false,
@@ -140,12 +182,15 @@ export async function listBackupsFromS3(
   serverId: string
 ): Promise<Array<{ key: string; size: number; lastModified: Date }>> {
   try {
+    const client = await getS3Client();
+    const { ListObjectsV2Command } = await import('@aws-sdk/client-s3');
+
     const command = new ListObjectsV2Command({
       Bucket: BUCKET_NAME,
       Prefix: `servers/${serverId}/`,
     });
 
-    const response = await s3Client.send(command);
+    const response = await client.send(command);
 
     if (!response.Contents) {
       return [];
@@ -156,7 +201,11 @@ export async function listBackupsFromS3(
       size: object.Size || 0,
       lastModified: object.LastModified || new Date(),
     }));
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message?.includes('AWS SDK modulok nincsenek telepítve')) {
+      console.warn('S3 támogatás nincs telepítve. Telepítsd: npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner');
+      return [];
+    }
     console.error('S3 list error:', error);
     return [];
   }
@@ -169,11 +218,22 @@ export async function generateBackupDownloadUrl(
   s3Key: string,
   expiresIn: number = 3600
 ): Promise<string> {
-  const command = new GetObjectCommand({
-    Bucket: BUCKET_NAME,
-    Key: s3Key,
-  });
+  try {
+    const client = await getS3Client();
+    const { GetObjectCommand } = await import('@aws-sdk/client-s3');
+    const { getSignedUrl } = await import('@aws-sdk/s3-request-presigner');
 
-  return await getSignedUrl(s3Client, command, { expiresIn });
+    const command = new GetObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: s3Key,
+    });
+
+    return await getSignedUrl(client, command, { expiresIn });
+  } catch (error: any) {
+    if (error.message?.includes('AWS SDK modulok nincsenek telepítve')) {
+      throw new Error('S3 támogatás nincs telepítve. Telepítsd: npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner');
+    }
+    throw error;
+  }
 }
 

@@ -1,13 +1,17 @@
-import { Client } from 'basic-ftp';
 import { prisma } from '@/lib/prisma';
 
 /**
  * FTP kapcsolat létrehozása
  */
-function createFTPClient(): Client {
-  const client = new Client();
-  client.ftp.verbose = process.env.FTP_VERBOSE === 'true';
-  return client;
+async function createFTPClient() {
+  try {
+    const { Client } = await import('basic-ftp');
+    const client = new Client();
+    client.ftp.verbose = process.env.FTP_VERBOSE === 'true';
+    return client;
+  } catch (error) {
+    throw new Error('basic-ftp modul nincs telepítve. Telepítsd: npm install basic-ftp');
+  }
 }
 
 /**
@@ -18,7 +22,8 @@ export async function uploadBackupToFTP(
   backupPath: string,
   backupName: string
 ): Promise<{ success: boolean; ftpPath?: string; error?: string }> {
-  const client = createFTPClient();
+  try {
+    const client = await createFTPClient();
   
   try {
     const { readFile } = await import('fs/promises');
@@ -62,6 +67,14 @@ export async function uploadBackupToFTP(
       success: false,
       error: error.message || 'FTP feltöltési hiba',
     };
+  } catch (error: any) {
+    if (error.message?.includes('basic-ftp modul nincs telepítve')) {
+      return {
+        success: false,
+        error: 'FTP támogatás nincs telepítve. Telepítsd: npm install basic-ftp',
+      };
+    }
+    throw error;
   }
 }
 
@@ -72,7 +85,8 @@ export async function downloadBackupFromFTP(
   ftpPath: string,
   localPath: string
 ): Promise<{ success: boolean; error?: string }> {
-  const client = createFTPClient();
+  try {
+    const client = await createFTPClient();
   
   try {
     await client.access({
@@ -97,6 +111,14 @@ export async function downloadBackupFromFTP(
       success: false,
       error: error.message || 'FTP letöltési hiba',
     };
+  } catch (error: any) {
+    if (error.message?.includes('basic-ftp modul nincs telepítve')) {
+      return {
+        success: false,
+        error: 'FTP támogatás nincs telepítve. Telepítsd: npm install basic-ftp',
+      };
+    }
+    throw error;
   }
 }
 
@@ -106,7 +128,8 @@ export async function downloadBackupFromFTP(
 export async function deleteBackupFromFTP(
   ftpPath: string
 ): Promise<{ success: boolean; error?: string }> {
-  const client = createFTPClient();
+  try {
+    const client = await createFTPClient();
   
   try {
     await client.access({
@@ -131,6 +154,14 @@ export async function deleteBackupFromFTP(
       success: false,
       error: error.message || 'FTP törlési hiba',
     };
+  } catch (error: any) {
+    if (error.message?.includes('basic-ftp modul nincs telepítve')) {
+      return {
+        success: false,
+        error: 'FTP támogatás nincs telepítve. Telepítsd: npm install basic-ftp',
+      };
+    }
+    throw error;
   }
 }
 
@@ -140,7 +171,8 @@ export async function deleteBackupFromFTP(
 export async function listBackupsFromFTP(
   serverId: string
 ): Promise<Array<{ name: string; size: number; modified: Date }>> {
-  const client = createFTPClient();
+  try {
+    const client = await createFTPClient();
   
   try {
     await client.access({
@@ -163,8 +195,14 @@ export async function listBackupsFromFTP(
         size: file.size || 0,
         modified: file.modifiedAt || new Date(),
       }));
-  } catch (error) {
-    client.close();
+  } catch (error: any) {
+    if (client) {
+      client.close();
+    }
+    if (error.message?.includes('basic-ftp modul nincs telepítve')) {
+      console.warn('FTP támogatás nincs telepítve. Telepítsd: npm install basic-ftp');
+      return [];
+    }
     console.error('FTP list error:', error);
     return [];
   }
