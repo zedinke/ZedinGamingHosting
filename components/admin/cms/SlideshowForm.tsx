@@ -22,7 +22,8 @@ const slideshowSlideSchema = z.object({
   link: z.union([
     z.string().url('Érvényes URL szükséges'),
     z.literal(''),
-  ]).optional(),
+    z.null(),
+  ]).optional().nullable(),
   buttonText: z.string().optional().or(z.literal('')),
   isActive: z.boolean(),
   order: z.number().int().min(0),
@@ -286,11 +287,28 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
               Link (opcionális - csak akkor szükséges, ha gombot szeretnél megjeleníteni)
             </label>
             <input
-              {...register('link')}
-              type="url"
+              {...register('link', {
+                validate: (value) => {
+                  // Ha üres vagy null, akkor OK (opcionális mező)
+                  if (!value || value.trim() === '') {
+                    return true;
+                  }
+                  // Ha van érték, akkor URL-nek kell lennie
+                  try {
+                    new URL(value);
+                    return true;
+                  } catch {
+                    return 'Érvényes URL szükséges';
+                  }
+                },
+              })}
+              type="text"
               placeholder="https://example.com"
               className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
             />
+            {errors.link && (
+              <p className="text-red-500 text-sm mt-1">{errors.link.message}</p>
+            )}
             <p className="text-xs text-gray-500 mt-1">
               Ha nem adsz meg linket, a slide csak képként jelenik meg, gomb nélkül.
             </p>

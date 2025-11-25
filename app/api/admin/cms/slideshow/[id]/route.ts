@@ -19,7 +19,7 @@ const slideshowSlideSchema = z.object({
     z.string().url('Érvényes URL szükséges'),
     z.literal(''),
     z.null(),
-  ]).optional(),
+  ]).optional().or(z.literal('')).nullable(),
   buttonText: z.string().optional().nullable(),
   isActive: z.boolean(),
   order: z.number().int().min(0),
