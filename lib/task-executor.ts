@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { TaskStatus, TaskType, ServerStatus } from '@prisma/client';
+import { generateServerPort } from './server-provisioning';
 
 /**
  * Feladat végrehajtása
@@ -110,6 +111,29 @@ async function executeProvisionTask(task: any): Promise<any> {
   const server = task.server;
   const agent = task.agent;
 
+  // Szerver státusz frissítése STARTING-re
+  await prisma.server.update({
+    where: { id: task.serverId },
+    data: { status: 'STARTING' },
+  });
+
+  // Port generálása, ha nincs
+  if (!server.port) {
+    const port = await generateServerPort(server.gameType);
+    await prisma.server.update({
+      where: { id: task.serverId },
+      data: { port },
+    });
+  }
+
+  // IP cím beállítása, ha nincs
+  if (!server.ipAddress && agent.machine) {
+    await prisma.server.update({
+      where: { id: task.serverId },
+      data: { ipAddress: agent.machine.ipAddress },
+    });
+  }
+
   // TODO: Valós implementációban itt kellene:
   // 1. Docker container létrehozása az agent gépen
   // 2. Game szerver telepítése
@@ -118,24 +142,18 @@ async function executeProvisionTask(task: any): Promise<any> {
   // 5. Szerver indítása
 
   // Szimuláció
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+  await new Promise((resolve) => setTimeout(resolve, 5000));
 
-  // Szerver státusz frissítése
+  // Szerver státusz frissítése ONLINE-ra
   await prisma.server.update({
     where: { id: task.serverId },
-    data: {
-      status: 'OFFLINE',
-      machineId: agent.machineId,
-      agentId: task.agentId,
-      ipAddress: agent.machine.ipAddress,
-      port: 25565, // Alapértelmezett port (Minecraft)
-    },
+    data: { status: 'ONLINE' },
   });
 
   return {
-    message: 'Szerver sikeresen telepítve',
-    ipAddress: agent.machine.ipAddress,
-    port: 25565,
+    message: 'Szerver sikeresen telepítve és elindítva',
+    ipAddress: agent.machine?.ipAddress,
+    port: server.port,
   };
 }
 
@@ -328,4 +346,3 @@ export async function processPendingTasks(): Promise<void> {
     }
   }
 }
-

@@ -38,6 +38,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Port generálása
+    const { generateServerPort } = await import('@/lib/server-provisioning');
+    const port = await generateServerPort(gameType as GameType);
+
     // Szerver létrehozása
     const server = await prisma.server.create({
       data: {
@@ -46,9 +50,23 @@ export async function POST(request: NextRequest) {
         gameType: gameType as GameType,
         maxPlayers: parseInt(maxPlayers),
         status: 'OFFLINE',
-        // TODO: Itt kellene a tényleges szerver provisioning logika
-        // Példa: await provisionServer(server.id, plan);
+        port,
       },
+    });
+
+    // Szerver provisioning háttérben
+    const { provisionServer } = await import('@/lib/server-provisioning');
+    provisionServer(server.id, {
+      gameType: gameType as GameType,
+      maxPlayers: parseInt(maxPlayers),
+      planId,
+    }).catch((error) => {
+      console.error('Server provisioning error:', error);
+      // Szerver státusz frissítése hibára
+      prisma.server.update({
+        where: { id: server.id },
+        data: { status: 'ERROR' },
+      });
     });
 
     // Előfizetés létrehozása (TODO: Stripe integrációval)
