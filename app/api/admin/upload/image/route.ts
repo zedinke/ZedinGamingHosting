@@ -48,7 +48,12 @@ export async function POST(request: NextRequest) {
     const uploadsDir = join(process.cwd(), 'public', 'uploads', 'slideshow');
     if (!existsSync(uploadsDir)) {
       await mkdir(uploadsDir, { recursive: true });
+      console.log('✓ Created uploads directory:', uploadsDir);
     }
+    
+    // Debug: log directory existence
+    console.log('Upload directory exists:', existsSync(uploadsDir));
+    console.log('Upload directory path:', uploadsDir);
 
     // Egyedi fájlnév generálása
     const timestamp = Date.now();
@@ -64,6 +69,15 @@ export async function POST(request: NextRequest) {
 
     // URL visszaadása
     const fileUrl = `/uploads/slideshow/${fileName}`;
+    
+    // Debug: log file info
+    console.log('File saved successfully:', {
+      fileName,
+      filePath,
+      fileUrl,
+      fileSize: buffer.length,
+      uploadsDirExists: existsSync(uploadsDir),
+    });
 
     return NextResponse.json({
       success: true,

@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "postinstall": "node scripts/create-uploads-dirs.js",
     "build": "next build && node scripts/copy-public-to-standalone.js",
     "start": "next start",
     "lint": "next lint",

@@ -48,7 +48,12 @@ export async function POST(request: NextRequest) {
     const uploadsDir = join(process.cwd(), 'public', 'uploads', 'slideshow', 'videos');
     if (!existsSync(uploadsDir)) {
       await mkdir(uploadsDir, { recursive: true });
+      console.log('✓ Created video uploads directory:', uploadsDir);
     }
+    
+    // Debug: log directory existence
+    console.log('Video upload directory exists:', existsSync(uploadsDir));
+    console.log('Video upload directory path:', uploadsDir);
 
     // Egyedi fájlnév generálása
     const timestamp = Date.now();
@@ -64,6 +69,15 @@ export async function POST(request: NextRequest) {
 
     // URL visszaadása
     const fileUrl = `/uploads/slideshow/videos/${fileName}`;
+    
+    // Debug: log file info
+    console.log('Video file saved successfully:', {
+      fileName,
+      filePath,
+      fileUrl,
+      fileSize: buffer.length,
+      uploadsDirExists: existsSync(uploadsDir),
+    });
 
     return NextResponse.json({
       success: true,
