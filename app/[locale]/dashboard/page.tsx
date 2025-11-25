@@ -14,16 +14,17 @@ export default async function DashboardPage({
 }: {
   params: { locale: string };
 }) {
-  const session = await getServerSession(authOptions);
-  
-  if (!session || !session.user) {
-    redirect(`/${locale}/login`);
-  }
+  try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session || !session.user) {
+      redirect(`/${locale}/login`);
+    }
 
-  // Szerializálható adatok kinyerése a session-ből
-  const userEmail = session.user.email;
-  const userName = session.user.name;
-  const userId = (session.user as any)?.id;
+    // Szerializálható adatok kinyerése a session-ből
+    const userEmail = session.user.email || '';
+    const userName = session.user.name || '';
+    const userId = (session.user as any)?.id;
   
   // Ha nincs ID, próbáljuk meg lekérni a user-t az email alapján
   let finalUserId = userId;
@@ -135,9 +136,12 @@ export default async function DashboardPage({
 
   const onlineServers = serializableServers.filter((s: { status: string }) => s.status === 'ONLINE').length;
 
+  // Biztosítjuk, hogy a locale érvényes legyen
+  const validLocale = locale === 'hu' || locale === 'en' ? locale : 'hu';
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navigation locale={locale} />
+      <Navigation locale={validLocale} />
       <main className="container mx-auto px-4 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
@@ -206,6 +210,23 @@ export default async function DashboardPage({
         <ServerListCard servers={serializableServers} locale={locale} />
       </main>
     </div>
-  );
+    );
+  } catch (error: any) {
+    console.error('Dashboard page error:', error);
+    // Ha hiba van, próbáljuk meg egy egyszerűbb verziót renderelni
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="container mx-auto px-4 py-8">
+          <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
+          <p className="text-red-600">
+            Hiba történt a dashboard betöltése során. Kérjük, próbáld újra később.
+          </p>
+          <p className="text-sm text-gray-500 mt-2">
+            {error?.message || 'Ismeretlen hiba'}
+          </p>
+        </div>
+      </div>
+    );
+  }
 }
 

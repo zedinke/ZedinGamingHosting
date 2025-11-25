@@ -44,11 +44,25 @@ function getNestedValue(obj: any, path: string): string {
 
 // Server-side translation hook
 export function getTranslations(locale: string, namespace: string = 'common') {
-  const translations = loadTranslations(locale, namespace);
-  
-  return function t(key: TranslationKey): string {
-    return getNestedValue(translations, key);
-  };
+  try {
+    const translations = loadTranslations(locale, namespace);
+    
+    return function t(key: TranslationKey): string {
+      try {
+        const value = getNestedValue(translations, key);
+        return value || key;
+      } catch (error) {
+        console.error(`Translation error for key "${key}":`, error);
+        return key;
+      }
+    };
+  } catch (error) {
+    console.error(`Error in getTranslations for ${locale}/${namespace}:`, error);
+    // Fallback function
+    return function t(key: TranslationKey): string {
+      return key;
+    };
+  }
 }
 
 // Client-side translation hook (csak client komponensekben használd)
