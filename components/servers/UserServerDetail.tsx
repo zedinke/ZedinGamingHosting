@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { ServerStatus, GameType } from '@prisma/client';
 import toast from 'react-hot-toast';
+import { UserServerConfigEditor } from './UserServerConfigEditor';
 
 interface Server {
   id: string;
@@ -38,6 +39,7 @@ interface UserServerDetailProps {
 export function UserServerDetail({ server, locale }: UserServerDetailProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [serverStatus, setServerStatus] = useState(server.status);
+  const [activeTab, setActiveTab] = useState<'info' | 'config'>('info');
 
   const handleServerAction = async (action: string) => {
     setIsLoading(true);
@@ -109,8 +111,38 @@ export function UserServerDetail({ server, locale }: UserServerDetailProps) {
 
   return (
     <div className="space-y-6">
-      {/* Szerver információk */}
-      <div className="grid md:grid-cols-2 gap-6">
+      {/* Tabs */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div className="border-b border-gray-200">
+          <div className="flex gap-4 px-6">
+            <button
+              onClick={() => setActiveTab('info')}
+              className={`px-4 py-3 border-b-2 font-medium transition-colors ${
+                activeTab === 'info'
+                  ? 'border-primary-600 text-primary-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Információk
+            </button>
+            <button
+              onClick={() => setActiveTab('config')}
+              className={`px-4 py-3 border-b-2 font-medium transition-colors ${
+                activeTab === 'config'
+                  ? 'border-primary-600 text-primary-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Beállítások
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {activeTab === 'info' && (
+        <>
+          {/* Szerver információk */}
+          <div className="grid md:grid-cols-2 gap-6">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h2 className="text-xl font-bold text-gray-900 mb-4">Szerver Információk</h2>
           <dl className="space-y-3">
@@ -303,6 +335,15 @@ export function UserServerDetail({ server, locale }: UserServerDetailProps) {
             )}
           </div>
         </div>
+      )}
+
+      {activeTab === 'config' && (
+        <UserServerConfigEditor
+          serverId={server.id}
+          gameType={server.gameType}
+          maxPlayers={server.maxPlayers}
+          initialConfig={server.configuration}
+        />
       )}
     </div>
   );
