@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { TaskStatus, TaskType, ServerStatus } from '@prisma/client';
+import { TaskStatus, TaskType, ServerStatus, GameType } from '@prisma/client';
 import { generateServerPort } from './server-provisioning';
 import { logger } from './logger';
 import { AppError, ErrorCodes } from './error-handler';
@@ -424,7 +424,7 @@ async function executeUpdateTask(task: any): Promise<any> {
     // SteamCMD frissítés (ha Steam játék)
     if (['ARK_EVOLVED', 'ARK_ASCENDED', 'RUST', 'VALHEIM', 'SEVEN_DAYS_TO_DIE', 'CONAN_EXILES', 'DAYZ', 'PALWORLD'].includes(gameType)) {
       const { ALL_GAME_SERVER_CONFIGS } = await import('./game-server-configs');
-      const gameConfig = ALL_GAME_SERVER_CONFIGS[gameType];
+      const gameConfig = ALL_GAME_SERVER_CONFIGS[gameType as GameType];
       
       if (gameConfig && gameConfig.steamAppId) {
         // SteamCMD frissítés

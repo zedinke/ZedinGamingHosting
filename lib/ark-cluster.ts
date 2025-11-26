@@ -160,7 +160,6 @@ ClusterId=${clusterId}
     await prisma.server.update({
       where: { id: serverId },
       data: {
-        arkClusterId: clusterId,
         configuration: {
           ...currentConfig,
           clusterId,
@@ -228,7 +227,6 @@ export async function removeServerFromCluster(
     await prisma.server.update({
       where: { id: serverId },
       data: {
-        arkClusterId: null,
         configuration: restConfig,
       },
     });
@@ -251,12 +249,11 @@ export async function removeServerFromCluster(
  * Cluster szerverek listázása
  */
 export async function getClusterServers(clusterId: string) {
-  return await prisma.server.findMany({
+  const servers = await prisma.server.findMany({
     where: {
       gameType: {
         in: ['ARK_EVOLVED', 'ARK_ASCENDED'],
       },
-      arkClusterId: clusterId,
     },
     include: {
       user: {
@@ -274,6 +271,12 @@ export async function getClusterServers(clusterId: string) {
         },
       },
     },
+  });
+
+  // Filter by clusterId from configuration JSON
+  return servers.filter((server) => {
+    const config = server.configuration as any;
+    return config?.clusterId === clusterId;
   });
 }
 

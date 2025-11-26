@@ -100,7 +100,7 @@ export function ServerListCard({ servers, locale }: ServerListCardProps) {
           ))}
         </div>
       )}
-    </Card>
+    </div>
   );
 }
 

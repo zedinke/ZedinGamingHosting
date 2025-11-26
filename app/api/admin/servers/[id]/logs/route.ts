@@ -121,7 +121,7 @@ export async function GET(
 
     return NextResponse.json({
       success: true,
-      logs: mockLogs,
+      logs: logs,
       server: {
         id: server.id,
         name: server.name,
