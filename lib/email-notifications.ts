@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { sendEmail } from './email';
+import { getServerStatusEmailTemplate, getTaskCompletionEmailTemplate } from './email-templates';
 
 /**
  * Email értesítés küldése szerver állapot változásról
@@ -27,22 +28,19 @@ export async function sendServerStatusNotification(
       (oldStatus === 'ONLINE' && newStatus === 'ERROR') ||
       (oldStatus === 'OFFLINE' && newStatus === 'ONLINE')
     ) {
-      const subject = `Szerver állapot változás: ${server.name}`;
-      const message = `
-        <h2>Szerver állapot változás</h2>
-        <p>Kedves ${server.user.name || server.user.email},</p>
-        <p>A(z) <strong>${server.name}</strong> szerver állapota megváltozott:</p>
-        <ul>
-          <li>Régi állapot: <strong>${oldStatus}</strong></li>
-          <li>Új állapot: <strong>${newStatus}</strong></li>
-        </ul>
-        <p>Részletek: <a href="${process.env.NEXTAUTH_URL}/dashboard/servers/${server.id}">Szerver részletek</a></p>
-      `;
+      const html = getServerStatusEmailTemplate(
+        server.name,
+        oldStatus,
+        newStatus,
+        server.id,
+        server.user.name || server.user.email,
+        'hu' // TODO: Get locale from user preferences
+      );
 
       await sendEmail({
         to: server.user.email,
-        subject,
-        html: message,
+        subject: `Szerver állapot változás: ${server.name}`,
+        html,
       });
     }
   } catch (error) {
@@ -74,19 +72,19 @@ export async function sendTaskCompletionNotification(
 
     // Csak sikertelen feladatoknál küldünk emailt
     if (task.status === 'FAILED') {
-      const subject = `Feladat sikertelen: ${task.type} - ${task.server.name}`;
-      const message = `
-        <h2>Feladat sikertelen</h2>
-        <p>Kedves ${task.server.user.name || task.server.user.email},</p>
-        <p>A(z) <strong>${task.server.name}</strong> szerveren végrehajtott <strong>${task.type}</strong> feladat sikertelen volt.</p>
-        ${task.error ? `<p>Hibaüzenet: <strong>${task.error}</strong></p>` : ''}
-        <p>Részletek: <a href="${process.env.NEXTAUTH_URL}/dashboard/servers/${task.server.id}">Szerver részletek</a></p>
-      `;
+      const html = getTaskCompletionEmailTemplate(
+        task.type,
+        task.server.name,
+        task.server.id,
+        task.server.user.name || task.server.user.email,
+        task.error,
+        'hu' // TODO: Get locale from user preferences
+      );
 
       await sendEmail({
         to: task.server.user.email,
-        subject,
-        html: message,
+        subject: `Feladat sikertelen: ${task.type} - ${task.server.name}`,
+        html,
       });
     }
   } catch (error) {

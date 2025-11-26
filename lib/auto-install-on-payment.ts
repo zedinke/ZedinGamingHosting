@@ -8,6 +8,11 @@ import { provisionServer } from './server-provisioning';
 import { sendNotification } from './notifications';
 import { sendEmail } from './email';
 import { logger } from './logger';
+import { 
+  getServerProvisioningFailedEmailTemplate,
+  getServerInstallationFailedEmailTemplate,
+  getServerInstallationSuccessEmailTemplate
+} from './email-templates';
 
 /**
  * Automatikus telepítés triggerelése fizetés után
@@ -97,17 +102,17 @@ export async function triggerAutoInstallOnPayment(
       });
 
       // Email küldése
+      const html = getServerProvisioningFailedEmailTemplate(
+        server.name,
+        server.user.name || 'Felhasználó',
+        provisioningResult.error || 'Ismeretlen hiba',
+        'hu' // TODO: Get locale from user preferences
+      );
+
       await sendEmail({
         to: server.user.email || '',
         subject: 'Szerver telepítési hiba - ZedinGamingHosting',
-        html: `
-          <h2>Szerver telepítési hiba</h2>
-          <p>Kedves ${server.user.name || 'Felhasználó'}!</p>
-          <p>A(z) "${server.name}" szerver telepítése sikertelen volt.</p>
-          <p>Hiba: ${provisioningResult.error || 'Ismeretlen hiba'}</p>
-          <p>Kérjük, lépjen kapcsolatba az ügyfélszolgálattal a probléma megoldásához.</p>
-          <p>Üdvözlettel,<br>ZedinGamingHosting Csapat</p>
-        `,
+        html,
       });
 
       return {
@@ -185,17 +190,17 @@ export async function triggerAutoInstallOnPayment(
       });
 
       // Email küldése
+      const html = getServerInstallationFailedEmailTemplate(
+        server.name,
+        server.user.name || 'Felhasználó',
+        installResult.error || 'Ismeretlen hiba',
+        'hu' // TODO: Get locale from user preferences
+      );
+
       await sendEmail({
         to: server.user.email || '',
         subject: 'Játékszerver telepítési hiba - ZedinGamingHosting',
-        html: `
-          <h2>Játékszerver telepítési hiba</h2>
-          <p>Kedves ${server.user.name || 'Felhasználó'}!</p>
-          <p>A(z) "${server.name}" játékszerver telepítése sikertelen volt.</p>
-          <p>Hiba: ${installResult.error || 'Ismeretlen hiba'}</p>
-          <p>Kérjük, lépjen kapcsolatba az ügyfélszolgálattal a probléma megoldásához.</p>
-          <p>Üdvözlettel,<br>ZedinGamingHosting Csapat</p>
-        `,
+        html,
       });
 
       return {
@@ -224,24 +229,21 @@ export async function triggerAutoInstallOnPayment(
     });
 
     // Email küldése
+    const html = getServerInstallationSuccessEmailTemplate(
+      server.name,
+      server.gameType,
+      updatedServer.agent.machine.ipAddress,
+      server.port || 25565,
+      server.maxPlayers,
+      server.user.name || 'Felhasználó',
+      server.id,
+      'hu' // TODO: Get locale from user preferences
+    );
+
     await sendEmail({
       to: server.user.email || '',
       subject: 'Szerver sikeresen telepítve - ZedinGamingHosting',
-      html: `
-        <h2>Szerver sikeresen telepítve!</h2>
-        <p>Kedves ${server.user.name || 'Felhasználó'}!</p>
-        <p>A(z) "${server.name}" szervered sikeresen telepítve és elindítva.</p>
-        <h3>Szerver információk:</h3>
-        <ul>
-          <li><strong>Név:</strong> ${server.name}</li>
-          <li><strong>Játék:</strong> ${server.gameType}</li>
-          <li><strong>IP cím:</strong> ${updatedServer.agent.machine.ipAddress}</li>
-          <li><strong>Port:</strong> ${server.port}</li>
-          <li><strong>Max játékosok:</strong> ${server.maxPlayers}</li>
-        </ul>
-        <p>Most már csatlakozhatsz a szerverhez!</p>
-        <p>Üdvözlettel,<br>ZedinGamingHosting Csapat</p>
-      `,
+      html,
     });
 
     logger.info('Auto-install completed successfully', {

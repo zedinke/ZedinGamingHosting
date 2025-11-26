@@ -425,3 +425,412 @@ export function getInvoiceEmailTemplate(invoice: any, locale: string = 'hu'): st
   return getEmailWrapper(content, locale);
 }
 
+/**
+ * Server status change notification email template
+ */
+export function getServerStatusEmailTemplate(
+  serverName: string,
+  oldStatus: string,
+  newStatus: string,
+  serverId: string,
+  userName: string,
+  locale: string = 'hu'
+): string {
+  const serverUrl = `${process.env.NEXTAUTH_URL}/dashboard/servers/${serverId}`;
+  
+  const translations = {
+    hu: {
+      title: 'Szerver állapot változás 🔄',
+      greeting: `Kedves ${userName}!`,
+      message: `A(z) <strong>${serverName}</strong> szerver állapota megváltozott:`,
+      oldStatus: 'Régi állapot',
+      newStatus: 'Új állapot',
+      details: 'Szerver részletek',
+      button: 'Szerver megtekintése',
+    },
+    en: {
+      title: 'Server Status Change 🔄',
+      greeting: `Dear ${userName}!`,
+      message: `The status of your server <strong>${serverName}</strong> has changed:`,
+      oldStatus: 'Old Status',
+      newStatus: 'New Status',
+      details: 'Server Details',
+      button: 'View Server',
+    },
+  };
+  
+  const t = translations[locale as keyof typeof translations] || translations.hu;
+  
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'ONLINE':
+        return '#22c55e';
+      case 'OFFLINE':
+        return '#71717a';
+      case 'ERROR':
+        return '#ef4444';
+      default:
+        return '#71717a';
+    }
+  };
+  
+  const content = `
+    <h1>${t.title}</h1>
+    <p>${t.greeting}</p>
+    <p>${t.message}</p>
+    
+    <div class="info-box">
+      <p><strong>${t.oldStatus}:</strong> 
+        <span style="display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; 
+          background: rgba(113, 113, 122, 0.2); 
+          color: ${getStatusColor(oldStatus)};">
+          ${oldStatus}
+        </span>
+      </p>
+      <p><strong>${t.newStatus}:</strong> 
+        <span style="display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; 
+          background: rgba(34, 197, 94, 0.2); 
+          color: ${getStatusColor(newStatus)};">
+          ${newStatus}
+        </span>
+      </p>
+    </div>
+    
+    <div style="text-align: center;">
+      <a href="${serverUrl}" class="button">${t.button}</a>
+    </div>
+  `;
+  
+  return getEmailWrapper(content, locale);
+}
+
+/**
+ * Task completion notification email template
+ */
+export function getTaskCompletionEmailTemplate(
+  taskType: string,
+  serverName: string,
+  serverId: string,
+  userName: string,
+  error: string | null,
+  locale: string = 'hu'
+): string {
+  const serverUrl = `${process.env.NEXTAUTH_URL}/dashboard/servers/${serverId}`;
+  
+  const translations = {
+    hu: {
+      title: 'Feladat sikertelen ⚠️',
+      greeting: `Kedves ${userName}!`,
+      message: `A(z) <strong>${serverName}</strong> szerveren végrehajtott <strong>${taskType}</strong> feladat sikertelen volt.`,
+      error: 'Hibaüzenet',
+      details: 'Szerver részletek',
+      button: 'Szerver megtekintése',
+      support: 'Ha további segítségre van szükséged, kérjük, lépj kapcsolatba az ügyfélszolgálattal.',
+    },
+    en: {
+      title: 'Task Failed ⚠️',
+      greeting: `Dear ${userName}!`,
+      message: `The <strong>${taskType}</strong> task on your server <strong>${serverName}</strong> has failed.`,
+      error: 'Error Message',
+      details: 'Server Details',
+      button: 'View Server',
+      support: 'If you need further assistance, please contact our support team.',
+    },
+  };
+  
+  const t = translations[locale as keyof typeof translations] || translations.hu;
+  
+  const content = `
+    <h1>${t.title}</h1>
+    <p>${t.greeting}</p>
+    <p>${t.message}</p>
+    
+    ${error ? `
+      <div class="info-box" style="background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3);">
+        <p><strong>${t.error}:</strong></p>
+        <p style="color: #ef4444; word-break: break-word;">${error}</p>
+      </div>
+    ` : ''}
+    
+    <div style="text-align: center;">
+      <a href="${serverUrl}" class="button">${t.button}</a>
+    </div>
+    
+    <div class="info-box" style="margin-top: 32px;">
+      <p>${t.support}</p>
+      <p><a href="${process.env.NEXTAUTH_URL}/${locale}/dashboard/support">Ügyfélszolgálat</a></p>
+    </div>
+  `;
+  
+  return getEmailWrapper(content, locale);
+}
+
+/**
+ * Server provisioning failed email template
+ */
+export function getServerProvisioningFailedEmailTemplate(
+  serverName: string,
+  userName: string,
+  error: string,
+  locale: string = 'hu'
+): string {
+  const translations = {
+    hu: {
+      title: 'Szerver telepítési hiba ⚠️',
+      greeting: `Kedves ${userName}!`,
+      message: `A(z) <strong>"${serverName}"</strong> szerver telepítése sikertelen volt.`,
+      error: 'Hiba',
+      support: 'Kérjük, lépjen kapcsolatba az ügyfélszolgálattal a probléma megoldásához.',
+      button: 'Ügyfélszolgálat',
+    },
+    en: {
+      title: 'Server Provisioning Failed ⚠️',
+      greeting: `Dear ${userName}!`,
+      message: `The installation of your server <strong>"${serverName}"</strong> has failed.`,
+      error: 'Error',
+      support: 'Please contact our support team to resolve this issue.',
+      button: 'Contact Support',
+    },
+  };
+  
+  const t = translations[locale as keyof typeof translations] || translations.hu;
+  
+  const content = `
+    <h1>${t.title}</h1>
+    <p>${t.greeting}</p>
+    <p>${t.message}</p>
+    
+    <div class="info-box" style="background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3);">
+      <p><strong>${t.error}:</strong></p>
+      <p style="color: #ef4444; word-break: break-word;">${error}</p>
+    </div>
+    
+    <p>${t.support}</p>
+    
+    <div style="text-align: center;">
+      <a href="${process.env.NEXTAUTH_URL}/${locale}/dashboard/support" class="button">${t.button}</a>
+    </div>
+  `;
+  
+  return getEmailWrapper(content, locale);
+}
+
+/**
+ * Server installation failed email template
+ */
+export function getServerInstallationFailedEmailTemplate(
+  serverName: string,
+  userName: string,
+  error: string,
+  locale: string = 'hu'
+): string {
+  const translations = {
+    hu: {
+      title: 'Játékszerver telepítési hiba ⚠️',
+      greeting: `Kedves ${userName}!`,
+      message: `A(z) <strong>"${serverName}"</strong> játékszerver telepítése sikertelen volt.`,
+      error: 'Hiba',
+      support: 'Kérjük, lépjen kapcsolatba az ügyfélszolgálattal a probléma megoldásához.',
+      button: 'Ügyfélszolgálat',
+    },
+    en: {
+      title: 'Game Server Installation Failed ⚠️',
+      greeting: `Dear ${userName}!`,
+      message: `The installation of your game server <strong>"${serverName}"</strong> has failed.`,
+      error: 'Error',
+      support: 'Please contact our support team to resolve this issue.',
+      button: 'Contact Support',
+    },
+  };
+  
+  const t = translations[locale as keyof typeof translations] || translations.hu;
+  
+  const content = `
+    <h1>${t.title}</h1>
+    <p>${t.greeting}</p>
+    <p>${t.message}</p>
+    
+    <div class="info-box" style="background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3);">
+      <p><strong>${t.error}:</strong></p>
+      <p style="color: #ef4444; word-break: break-word;">${error}</p>
+    </div>
+    
+    <p>${t.support}</p>
+    
+    <div style="text-align: center;">
+      <a href="${process.env.NEXTAUTH_URL}/${locale}/dashboard/support" class="button">${t.button}</a>
+    </div>
+  `;
+  
+  return getEmailWrapper(content, locale);
+}
+
+/**
+ * Server installation success email template
+ */
+export function getServerInstallationSuccessEmailTemplate(
+  serverName: string,
+  gameType: string,
+  ipAddress: string,
+  port: number,
+  maxPlayers: number,
+  userName: string,
+  serverId: string,
+  locale: string = 'hu'
+): string {
+  const serverUrl = `${process.env.NEXTAUTH_URL}/dashboard/servers/${serverId}`;
+  
+  const translations = {
+    hu: {
+      title: 'Szerver sikeresen telepítve! 🎉',
+      greeting: `Kedves ${userName}!`,
+      message: `A(z) <strong>"${serverName}"</strong> szervered sikeresen telepítve és elindítva.`,
+      info: 'Szerver információk',
+      name: 'Név',
+      game: 'Játék',
+      ip: 'IP cím',
+      port: 'Port',
+      maxPlayers: 'Max játékosok',
+      connect: 'Most már csatlakozhatsz a szerverhez!',
+      button: 'Szerver megtekintése',
+    },
+    en: {
+      title: 'Server Successfully Installed! 🎉',
+      greeting: `Dear ${userName}!`,
+      message: `Your server <strong>"${serverName}"</strong> has been successfully installed and started.`,
+      info: 'Server Information',
+      name: 'Name',
+      game: 'Game',
+      ip: 'IP Address',
+      port: 'Port',
+      maxPlayers: 'Max Players',
+      connect: 'You can now connect to your server!',
+      button: 'View Server',
+    },
+  };
+  
+  const t = translations[locale as keyof typeof translations] || translations.hu;
+  
+  const content = `
+    <h1>${t.title}</h1>
+    <p>${t.greeting}</p>
+    <p>${t.message}</p>
+    
+    <div class="info-box">
+      <h2 style="margin-top: 0;">${t.info}</h2>
+      <p><strong>${t.name}:</strong> ${serverName}</p>
+      <p><strong>${t.game}:</strong> ${gameType}</p>
+      <p><strong>${t.ip}:</strong> <code style="background: rgba(91, 111, 255, 0.2); padding: 4px 8px; border-radius: 4px; font-family: monospace;">${ipAddress}</code></p>
+      <p><strong>${t.port}:</strong> <code style="background: rgba(91, 111, 255, 0.2); padding: 4px 8px; border-radius: 4px; font-family: monospace;">${port}</code></p>
+      <p><strong>${t.maxPlayers}:</strong> ${maxPlayers}</p>
+    </div>
+    
+    <p style="text-align: center; font-size: 18px; font-weight: 600; color: #22c55e; margin: 24px 0;">
+      ${t.connect}
+    </p>
+    
+    <div style="text-align: center;">
+      <a href="${serverUrl}" class="button">${t.button}</a>
+    </div>
+  `;
+  
+  return getEmailWrapper(content, locale);
+}
+
+/**
+ * Server deleted email template (for user)
+ */
+export function getServerDeletedUserEmailTemplate(
+  serverName: string,
+  userName: string,
+  reason: string,
+  locale: string = 'hu'
+): string {
+  const translations = {
+    hu: {
+      title: 'Szerver törölve 🗑️',
+      greeting: `Kedves ${userName}!`,
+      message: `A(z) <strong>"${serverName}"</strong> szervered törölve lett.`,
+      reason: 'Indoklás',
+      support: 'Ha kérdésed van, kérjük, lépj kapcsolatba az ügyfélszolgálattal.',
+      button: 'Ügyfélszolgálat',
+    },
+    en: {
+      title: 'Server Deleted 🗑️',
+      greeting: `Dear ${userName}!`,
+      message: `Your server <strong>"${serverName}"</strong> has been deleted.`,
+      reason: 'Reason',
+      support: 'If you have any questions, please contact our support team.',
+      button: 'Contact Support',
+    },
+  };
+  
+  const t = translations[locale as keyof typeof translations] || translations.hu;
+  
+  const content = `
+    <h1>${t.title}</h1>
+    <p>${t.greeting}</p>
+    <p>${t.message}</p>
+    
+    <div class="info-box">
+      <p><strong>${t.reason}:</strong></p>
+      <p>${reason}</p>
+    </div>
+    
+    <p>${t.support}</p>
+    
+    <div style="text-align: center;">
+      <a href="${process.env.NEXTAUTH_URL}/${locale}/dashboard/support" class="button">${t.button}</a>
+    </div>
+  `;
+  
+  return getEmailWrapper(content, locale);
+}
+
+/**
+ * Server deleted email template (for admin)
+ */
+export function getServerDeletedAdminEmailTemplate(
+  serverName: string,
+  userName: string,
+  userEmail: string,
+  reason: string,
+  deletedBy: string,
+  locale: string = 'hu'
+): string {
+  const translations = {
+    hu: {
+      title: 'Szerver törölve 🗑️',
+      greeting: `Kedves Admin!`,
+      message: `A(z) <strong>"${serverName}"</strong> szerver törölve lett.`,
+      user: 'Felhasználó',
+      reason: 'Indoklás',
+      deletedBy: 'Törölte',
+    },
+    en: {
+      title: 'Server Deleted 🗑️',
+      greeting: `Dear Admin!`,
+      message: `The server <strong>"${serverName}"</strong> has been deleted.`,
+      user: 'User',
+      reason: 'Reason',
+      deletedBy: 'Deleted By',
+    },
+  };
+  
+  const t = translations[locale as keyof typeof translations] || translations.hu;
+  
+  const content = `
+    <h1>${t.title}</h1>
+    <p>${t.greeting}</p>
+    <p>${t.message}</p>
+    
+    <div class="info-box">
+      <p><strong>${t.user}:</strong> ${userName} (${userEmail})</p>
+      <p><strong>${t.reason}:</strong> ${reason}</p>
+      <p><strong>${t.deletedBy}:</strong> ${deletedBy}</p>
+    </div>
+  `;
+  
+  return getEmailWrapper(content, locale);
+}
+

@@ -8,6 +8,7 @@ import { sendEmail } from '@/lib/email';
 import { executeSSHCommand } from '@/lib/ssh-client';
 import { logger } from '@/lib/logger';
 import { createAuditLog, AuditAction } from '@/lib/audit-log';
+import { getServerDeletedUserEmailTemplate, getServerDeletedAdminEmailTemplate } from '@/lib/email-templates';
 
 // DELETE - Szerver törlése indoklással
 export async function DELETE(
@@ -156,17 +157,17 @@ export async function DELETE(
 
     // Email küldése a felhasználónak
     if (server.user.email) {
+      const html = getServerDeletedUserEmailTemplate(
+        server.name,
+        server.user.name || 'Felhasználó',
+        reason,
+        'hu' // TODO: Get locale from user preferences
+      );
+
       await sendEmail({
         to: server.user.email,
         subject: `Szerver törölve - ${server.name}`,
-        html: `
-          <h2>Szerver törölve</h2>
-          <p>Kedves ${server.user.name || 'Felhasználó'}!</p>
-          <p>A(z) <strong>"${server.name}"</strong> szervered törölve lett.</p>
-          <p><strong>Indoklás:</strong> ${reason}</p>
-          <p>Ha kérdésed van, kérjük, lépj kapcsolatba az ügyfélszolgálattal.</p>
-          <p>Üdvözlettel,<br>ZedinGamingHosting Csapat</p>
-        `,
+        html,
       }).catch(console.error);
     }
 
@@ -192,18 +193,19 @@ export async function DELETE(
 
         // Email küldése admin-oknak/manager-eknek
         if (admin.email) {
+          const html = getServerDeletedAdminEmailTemplate(
+            server.name,
+            server.user.name || server.user.email,
+            server.user.email,
+            reason,
+            (session.user as any).name || (session.user as any).email,
+            'hu' // TODO: Get locale from admin preferences
+          );
+
           await sendEmail({
             to: admin.email,
             subject: `Szerver törölve - ${server.name}`,
-            html: `
-              <h2>Szerver törölve</h2>
-              <p>Kedves ${admin.name || 'Admin'}!</p>
-              <p>A(z) <strong>"${server.name}"</strong> szerver törölve lett.</p>
-              <p><strong>Felhasználó:</strong> ${server.user.name || server.user.email}</p>
-              <p><strong>Indoklás:</strong> ${reason}</p>
-              <p><strong>Törölte:</strong> ${(session.user as any).name || (session.user as any).email}</p>
-              <p>Üdvözlettel,<br>ZedinGamingHosting Rendszer</p>
-            `,
+            html,
           }).catch(console.error);
         }
       }
