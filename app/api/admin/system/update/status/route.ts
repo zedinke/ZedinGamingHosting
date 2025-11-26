@@ -9,22 +9,24 @@ function getProjectRoot(): string {
   
   // If we're in .next/standalone, go up to project root
   if (currentDir.includes('.next/standalone')) {
-    // .next/standalone -> .next -> public_html -> project root
-    // Try to find the actual project root with .git folder
-    let searchDir = resolve(currentDir, '..', '..', '..');
+    // .next/standalone -> .next -> public_html (project root)
+    // Go up 2 levels to get to public_html
+    let searchDir = resolve(currentDir, '..', '..');
     
     // Check if this is the project root (has .git and package.json)
     if (existsSync(join(searchDir, '.git')) && existsSync(join(searchDir, 'package.json'))) {
       return searchDir;
     }
     
-    // If not, try public_html directory (common Hestia CP structure)
-    const publicHtmlDir = join(searchDir, 'public_html');
+    // If not found, try going up one more level and then into public_html
+    const parentDir = resolve(searchDir, '..');
+    const publicHtmlDir = join(parentDir, 'public_html');
+    
     if (existsSync(join(publicHtmlDir, '.git')) && existsSync(join(publicHtmlDir, 'package.json'))) {
       return publicHtmlDir;
     }
     
-    // Fallback: use the directory we found
+    // Fallback: use the directory we found (public_html)
     currentDir = searchDir;
   }
   
@@ -44,6 +46,11 @@ function getProjectRoot(): string {
       const publicHtmlDir = join(currentDir, 'public_html');
       if (existsSync(join(publicHtmlDir, '.git')) && existsSync(join(publicHtmlDir, 'package.json'))) {
         return publicHtmlDir;
+      }
+      // Also try parent/public_html
+      const parentPublicHtml = join(resolve(currentDir, '..'), 'public_html');
+      if (existsSync(join(parentPublicHtml, '.git')) && existsSync(join(parentPublicHtml, 'package.json'))) {
+        return parentPublicHtml;
       }
     }
     return currentDir;
@@ -69,8 +76,8 @@ function getProjectRoot(): string {
     return parentDir;
   }
   
-  // Try to find public_html directory
-  const possiblePublicHtml = join(originalCwd, '..', '..', '..', 'public_html');
+  // Try to find public_html directory from original cwd
+  const possiblePublicHtml = resolve(originalCwd, '..', '..', 'public_html');
   if (existsSync(join(possiblePublicHtml, '.git')) && existsSync(join(possiblePublicHtml, 'package.json'))) {
     return possiblePublicHtml;
   }
