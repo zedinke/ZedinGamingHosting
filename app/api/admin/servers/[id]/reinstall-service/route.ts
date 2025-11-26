@@ -204,7 +204,9 @@ export async function POST(
           });
         }
       } catch (error) {
-        logger.error('Error restarting server after service reinstall', { error });
+        logger.error('Error restarting server after service reinstall', error as Error, {
+          serverId: id,
+        });
         await prisma.server.update({
           where: { id },
           data: { status: 'ERROR' },
