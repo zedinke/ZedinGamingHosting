@@ -90,26 +90,51 @@ export function MachineManagement({
     }
   };
 
+  const [installingAgents, setInstallingAgents] = useState<Set<string>>(new Set());
+
   const handleInstallAgent = async (machineId: string) => {
     if (!confirm('Biztosan telepíteni szeretnéd az agentet erre a gépre?')) {
       return;
     }
 
+    setInstallingAgents((prev) => new Set(prev).add(machineId));
+
     try {
+      console.log('Agent telepítés indítása...', machineId);
+      
       const response = await fetch(`/api/admin/machines/${machineId}/install-agent`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
 
+      console.log('Response status:', response.status);
+
       const result = await response.json();
+      console.log('Response result:', result);
 
       if (!response.ok) {
-        toast.error(result.error || 'Hiba történt');
+        console.error('Agent telepítési hiba:', result);
+        toast.error(result.error || 'Hiba történt az agent telepítése során');
         return;
       }
 
-      toast.success('Agent telepítési feladat létrehozva');
+      toast.success('Agent telepítési feladat elindítva. A telepítés háttérben folyik...');
+      
+      // Oldal frissítése 3 másodperc után
+      setTimeout(() => {
+        window.location.reload();
+      }, 3000);
     } catch (error) {
-      toast.error('Hiba történt');
+      console.error('Agent telepítési hiba:', error);
+      toast.error('Hiba történt az agent telepítése során. Ellenőrizd a konzolt a részletekért.');
+    } finally {
+      setInstallingAgents((prev) => {
+        const next = new Set(prev);
+        next.delete(machineId);
+        return next;
+      });
     }
   };
 
@@ -344,9 +369,10 @@ export function MachineManagement({
                       {machine._count.agents === 0 && (
                         <button
                           onClick={() => handleInstallAgent(machine.id)}
-                          className="text-blue-600 hover:text-blue-700 hover:underline text-sm font-medium"
+                          disabled={installingAgents.has(machine.id)}
+                          className="text-blue-600 hover:text-blue-700 hover:underline text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          Agent telepítés
+                          {installingAgents.has(machine.id) ? 'Telepítés...' : 'Agent telepítés'}
                         </button>
                       )}
                     </div>

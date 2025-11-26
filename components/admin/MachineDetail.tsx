@@ -50,6 +50,8 @@ interface MachineDetailProps {
 
 export function MachineDetail({ machine, locale }: MachineDetailProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const [isInstallingAgent, setIsInstallingAgent] = useState(false);
+  const [isTestingSSH, setIsTestingSSH] = useState(false);
   const [formData, setFormData] = useState({
     name: machine.name,
     sshPort: machine.sshPort.toString(),
@@ -91,25 +93,46 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
       return;
     }
 
+    setIsInstallingAgent(true);
+
     try {
+      console.log('Agent telepítés indítása...', machine.id);
+      
       const response = await fetch(`/api/admin/machines/${machine.id}/install-agent`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
 
+      console.log('Response status:', response.status);
+
       const result = await response.json();
+      console.log('Response result:', result);
 
       if (!response.ok) {
-        toast.error(result.error || 'Hiba történt');
+        console.error('Agent telepítési hiba:', result);
+        toast.error(result.error || 'Hiba történt az agent telepítése során');
         return;
       }
 
-      toast.success('Agent telepítési feladat létrehozva');
+      toast.success('Agent telepítési feladat elindítva. A telepítés háttérben folyik...');
+      
+      // Oldal frissítése 3 másodperc után, hogy lássuk az új agentet
+      setTimeout(() => {
+        window.location.reload();
+      }, 3000);
     } catch (error) {
-      toast.error('Hiba történt');
+      console.error('Agent telepítési hiba:', error);
+      toast.error('Hiba történt az agent telepítése során. Ellenőrizd a konzolt a részletekért.');
+    } finally {
+      setIsInstallingAgent(false);
     }
   };
 
   const handleTestSSH = async () => {
+    setIsTestingSSH(true);
+
     try {
       const response = await fetch(`/api/admin/machines/${machine.id}/test-ssh`, {
         method: 'POST',
@@ -126,7 +149,10 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
 
       toast.success('SSH kapcsolat sikeres');
     } catch (error) {
+      console.error('SSH tesztelési hiba:', error);
       toast.error('Hiba történt az SSH tesztelése során');
+    } finally {
+      setIsTestingSSH(false);
     }
   };
 
@@ -309,16 +335,18 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
           <div className="space-y-3">
             <button
               onClick={handleTestSSH}
-              className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors"
+              disabled={isTestingSSH}
+              className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              SSH Kapcsolat Tesztelése
+              {isTestingSSH ? 'Tesztelés...' : 'SSH Kapcsolat Tesztelése'}
             </button>
             {machine.agents.length === 0 && (
               <button
                 onClick={handleInstallAgent}
-                className="w-full bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 font-medium transition-colors"
+                disabled={isInstallingAgent}
+                className="w-full bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Agent Telepítés
+                {isInstallingAgent ? 'Telepítés...' : 'Agent Telepítés'}
               </button>
             )}
           </div>
@@ -397,9 +425,10 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
           {machine.agents.length === 0 && (
             <button
               onClick={handleInstallAgent}
-              className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 text-sm font-medium"
+              disabled={isInstallingAgent}
+              className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Agent Telepítés
+              {isInstallingAgent ? 'Telepítés...' : 'Agent Telepítés'}
             </button>
           )}
         </div>

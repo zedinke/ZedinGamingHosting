@@ -52,35 +52,70 @@ export async function installAgentViaSSH(
     // Agent telepítési script generálása
     const installScript = generateInstallScript(managerUrl);
     
-    // Script közvetlenül SSH-n keresztül futtatása (heredoc használatával)
-    // Ez elkerüli a fájl feltöltését
-    const scriptCommand = installScript
-      .replace(/\$/g, '\\$') // Escape $ karakterek
-      .replace(/`/g, '\\`') // Escape backticks
-      .replace(/"/g, '\\"'); // Escape quotes
-
-    const remoteCommand = `bash << 'AGENT_INSTALL_EOF'
-${installScript}
-AGENT_INSTALL_EOF`;
-
     logs.push('Agent telepítési script előkészítve');
-    logs.push('Script futtatása SSH-n keresztül...');
 
-    // Script futtatása SSH-n keresztül
-    const { executeSSHCommand } = await import('./ssh-client');
-    const scriptResult = await executeSSHCommand(config, remoteCommand);
+    // Script feltöltése SCP-vel ideiglenes fájlként, majd futtatása
+    // Ez a legbiztonságosabb módszer, mert nincs szükség escaping-re
+    const { writeFile, unlink } = await import('fs/promises');
+    const { join } = await import('path');
+    const { randomBytes } = await import('crypto');
+    const os = await import('os');
+    
+    // Ideiglenes fájl létrehozása lokálisan
+    const tempLocalPath = join(os.tmpdir(), `agent-install-${randomBytes(8).toString('hex')}.sh`);
+    const tempRemotePath = `/tmp/agent-install-${randomBytes(8).toString('hex')}.sh`;
+    
+    try {
+      // Script írása lokális ideiglenes fájlba
+      await writeFile(tempLocalPath, installScript, { mode: 0o755 });
+      logs.push('Lokális ideiglenes fájl létrehozva');
 
-    if (scriptResult.exitCode !== 0) {
-      logs.push(`Script futtatási hiba: ${scriptResult.stderr}`);
-      return {
-        success: false,
-        error: `Agent telepítési script sikertelen: ${scriptResult.stderr}`,
-        logs,
-      };
+      // Script másolása a szerverre SCP-vel
+      const { copyFileViaSSH, executeSSHCommand } = await import('./ssh-client');
+      logs.push('Script másolása a szerverre SCP-vel...');
+      
+      const copyResult = await copyFileViaSSH(config, tempLocalPath, tempRemotePath);
+      
+      if (copyResult.exitCode !== 0) {
+        logs.push(`SCP hiba: ${copyResult.stderr}`);
+        return {
+          success: false,
+          error: `Script másolási hiba: ${copyResult.stderr}`,
+          logs,
+        };
+      }
+      
+      logs.push('Script sikeresen másolva a szerverre');
+      
+      // Script futtatása a szerveren
+      logs.push('Script futtatása a szerveren...');
+      const scriptResult = await executeSSHCommand(config, `bash ${tempRemotePath}`);
+      
+      // Ideiglenes fájl törlése a szerverről
+      await executeSSHCommand(config, `rm -f ${tempRemotePath}`).catch(() => {
+        // Ignore cleanup errors
+      });
+
+      if (scriptResult.exitCode !== 0) {
+        logs.push(`Script futtatási hiba: ${scriptResult.stderr}`);
+        logs.push(`Script stdout: ${scriptResult.stdout.substring(0, 1000)}`);
+        return {
+          success: false,
+          error: `Agent telepítési script sikertelen: ${scriptResult.stderr || scriptResult.stdout.substring(0, 200)}`,
+          logs,
+        };
+      }
+
+      logs.push('Agent telepítési script sikeresen lefutott');
+      logs.push(`Script output (első 500 karakter): ${scriptResult.stdout.substring(0, 500)}...`);
+    } finally {
+      // Lokális ideiglenes fájl törlése
+      try {
+        await unlink(tempLocalPath);
+      } catch (error) {
+        // Ignore cleanup errors
+      }
     }
-
-    logs.push('Agent telepítési script sikeresen lefutott');
-    logs.push(`Script output: ${scriptResult.stdout}`);
 
     // Agent ID generálása (a script generálja, de itt is generálunk egyet)
     const agentId = `agent-${config.host.replace(/\./g, '-')}-${Date.now()}`;

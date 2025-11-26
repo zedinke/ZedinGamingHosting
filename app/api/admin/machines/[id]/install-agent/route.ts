@@ -52,6 +52,7 @@ export async function POST(
     });
 
     // Agent telepítés háttérben (async)
+    // Ne várjuk meg a befejezését, azonnal visszatérünk
     installAgentViaSSH(
       {
         host: machine.ipAddress,
@@ -62,35 +63,44 @@ export async function POST(
       managerUrl
     )
       .then(async (result) => {
+        console.log('Agent telepítés eredmény:', result);
+        
         if (result.success && result.agentId) {
-          // Agent létrehozása az adatbázisban
-          await prisma.agent.create({
-            data: {
-              machineId: machine.id,
-              agentId: result.agentId,
-              version: '1.0.0',
-              status: 'ONLINE',
-              lastHeartbeat: new Date(),
-            },
-          });
+          try {
+            // Agent létrehozása az adatbázisban
+            await prisma.agent.create({
+              data: {
+                machineId: machine.id,
+                agentId: result.agentId,
+                version: '1.0.0',
+                status: 'ONLINE',
+                lastHeartbeat: new Date(),
+              },
+            });
 
-          // Task frissítése
-          await prisma.task.update({
-            where: { id: task.id },
-            data: {
-              status: 'COMPLETED',
-              completedAt: new Date(),
-              result: { agentId: result.agentId, logs: result.logs },
-            },
-          });
+            // Task frissítése
+            await prisma.task.update({
+              where: { id: task.id },
+              data: {
+                status: 'COMPLETED',
+                completedAt: new Date(),
+                result: { agentId: result.agentId, logs: result.logs },
+              },
+            });
 
-          // Machine státusz frissítése
-          await prisma.serverMachine.update({
-            where: { id: machine.id },
-            data: { status: 'ONLINE' },
-          });
+            // Machine státusz frissítése
+            await prisma.serverMachine.update({
+              where: { id: machine.id },
+              data: { status: 'ONLINE' },
+            });
+
+            console.log('Agent sikeresen létrehozva:', result.agentId);
+          } catch (dbError: any) {
+            console.error('Adatbázis hiba agent létrehozásakor:', dbError);
+          }
         } else {
           // Task hibával frissítése
+          console.error('Agent telepítés sikertelen:', result.error);
           await prisma.task.update({
             where: { id: task.id },
             data: {
@@ -103,12 +113,13 @@ export async function POST(
         }
       })
       .catch(async (error) => {
+        console.error('Agent telepítés kivétel:', error);
         await prisma.task.update({
           where: { id: task.id },
           data: {
             status: 'FAILED',
             completedAt: new Date(),
-            error: error.message,
+            error: error.message || 'Ismeretlen hiba',
           },
         });
       });
