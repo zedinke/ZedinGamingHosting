@@ -115,7 +115,7 @@ export function ResourceLimitsEditor({ serverId }: ResourceLimitsEditorProps) {
                 max="100"
                 value={limits.cpu.min}
                 onChange={(e) => updateLimit('cpu', 'min', parseInt(e.target.value) || 0)}
-                className="w-full px-3 py-2 border rounded-lg"
+                className="w-full px-3 py-2 border rounded-lg text-gray-900 bg-white"
               />
             </div>
             <div>
@@ -128,7 +128,7 @@ export function ResourceLimitsEditor({ serverId }: ResourceLimitsEditorProps) {
                 max="100"
                 value={limits.cpu.max}
                 onChange={(e) => updateLimit('cpu', 'max', parseInt(e.target.value) || 100)}
-                className="w-full px-3 py-2 border rounded-lg"
+                className="w-full px-3 py-2 border rounded-lg text-gray-900 bg-white"
               />
             </div>
           </div>
@@ -147,7 +147,7 @@ export function ResourceLimitsEditor({ serverId }: ResourceLimitsEditorProps) {
                 min="256"
                 value={limits.ram.min}
                 onChange={(e) => updateLimit('ram', 'min', parseInt(e.target.value) || 256)}
-                className="w-full px-3 py-2 border rounded-lg"
+                className="w-full px-3 py-2 border rounded-lg text-gray-900 bg-white"
               />
             </div>
             <div>
@@ -159,7 +159,7 @@ export function ResourceLimitsEditor({ serverId }: ResourceLimitsEditorProps) {
                 min="512"
                 value={limits.ram.max}
                 onChange={(e) => updateLimit('ram', 'max', parseInt(e.target.value) || 512)}
-                className="w-full px-3 py-2 border rounded-lg"
+                className="w-full px-3 py-2 border rounded-lg text-gray-900 bg-white"
               />
             </div>
           </div>
@@ -181,7 +181,7 @@ export function ResourceLimitsEditor({ serverId }: ResourceLimitsEditorProps) {
                 min="1024"
                 value={limits.disk.min}
                 onChange={(e) => updateLimit('disk', 'min', parseInt(e.target.value) || 1024)}
-                className="w-full px-3 py-2 border rounded-lg"
+                className="w-full px-3 py-2 border rounded-lg text-gray-900 bg-white"
               />
             </div>
             <div>
@@ -193,7 +193,7 @@ export function ResourceLimitsEditor({ serverId }: ResourceLimitsEditorProps) {
                 min="2048"
                 value={limits.disk.max}
                 onChange={(e) => updateLimit('disk', 'max', parseInt(e.target.value) || 2048)}
-                className="w-full px-3 py-2 border rounded-lg"
+                className="w-full px-3 py-2 border rounded-lg text-gray-900 bg-white"
               />
             </div>
           </div>

@@ -209,7 +209,7 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white"
                 />
               </div>
               <div>
@@ -218,7 +218,7 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
                   type="number"
                   value={formData.sshPort}
                   onChange={(e) => setFormData({ ...formData, sshPort: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white"
                 />
               </div>
               <div>
@@ -227,7 +227,7 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
                   type="text"
                   value={formData.sshUser}
                   onChange={(e) => setFormData({ ...formData, sshUser: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white"
                 />
               </div>
               <div>
@@ -236,7 +236,7 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
                   type="text"
                   value={formData.sshKeyPath}
                   onChange={(e) => setFormData({ ...formData, sshKeyPath: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 font-mono text-sm"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 font-mono text-sm text-gray-900 bg-white"
                 />
               </div>
               <div>
@@ -244,7 +244,7 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
                 <select
                   value={formData.status}
                   onChange={(e) => setFormData({ ...formData, status: e.target.value as MachineStatus })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white"
                 >
                   <option value="ONLINE">ONLINE</option>
                   <option value="OFFLINE">OFFLINE</option>
@@ -257,7 +257,7 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
                 <textarea
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-400"
                   rows={3}
                 />
               </div>

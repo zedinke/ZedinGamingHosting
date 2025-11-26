@@ -134,14 +134,14 @@ export function ServerConfigEditor({
                 type="number"
                 value={config[key] ?? defaultValue}
                 onChange={(e) => updateConfig(key, parseFloat(e.target.value) || 0)}
-                className="w-full px-3 py-2 border rounded-lg"
+                className="w-full px-3 py-2 border rounded-lg text-gray-900 bg-white"
               />
             ) : (
               <input
                 type="text"
                 value={config[key] ?? defaultValue}
                 onChange={(e) => updateConfig(key, e.target.value)}
-                className="w-full px-3 py-2 border rounded-lg"
+                className="w-full px-3 py-2 border rounded-lg text-gray-900 bg-white"
               />
             )}
           </div>
@@ -169,7 +169,7 @@ export function ServerConfigEditor({
                 // Invalid JSON, ignore
               }
             }}
-            className="w-full h-64 px-3 py-2 border rounded-lg font-mono text-sm"
+            className="w-full h-64 px-3 py-2 border rounded-lg font-mono text-sm text-gray-900 bg-white placeholder:text-gray-400"
             placeholder="JSON konfiguráció..."
           />
         </details>

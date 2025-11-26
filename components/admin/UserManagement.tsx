@@ -115,7 +115,7 @@ export function UserManagement({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Keresés email vagy név alapján..."
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all text-gray-900 bg-white placeholder:text-gray-400"
             />
           </div>
           <button

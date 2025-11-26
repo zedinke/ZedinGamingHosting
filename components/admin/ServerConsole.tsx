@@ -141,7 +141,7 @@ export function ServerConsole({ serverId, locale }: ServerConsoleProps) {
             value={command}
             onChange={(e) => setCommand(e.target.value)}
             placeholder="Parancs (pl: say Hello World)"
-            className="flex-1 px-4 py-2 border rounded-lg font-mono"
+            className="flex-1 px-4 py-2 border rounded-lg font-mono text-gray-900 bg-white placeholder:text-gray-400"
             disabled={loading}
           />
           <button

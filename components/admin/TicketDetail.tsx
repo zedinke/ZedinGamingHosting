@@ -283,7 +283,7 @@ export function TicketDetail({ ticket, locale, adminId }: TicketDetailProps) {
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Írj egy választ..."
-            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 min-h-[100px]"
+            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 min-h-[100px] text-gray-900 bg-white placeholder:text-gray-400"
             required
           />
           <button

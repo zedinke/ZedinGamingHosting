@@ -130,7 +130,7 @@ export function WebhookManagement({ locale }: WebhookManagementProps) {
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg"
+                className="w-full px-3 py-2 border rounded-lg text-gray-900 bg-white"
                 required
               />
             </div>
@@ -142,7 +142,7 @@ export function WebhookManagement({ locale }: WebhookManagementProps) {
                 type="url"
                 value={formData.url}
                 onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg"
+                className="w-full px-3 py-2 border rounded-lg text-gray-900 bg-white"
                 required
               />
             </div>
@@ -172,7 +172,7 @@ export function WebhookManagement({ locale }: WebhookManagementProps) {
                 type="text"
                 value={formData.secret}
                 onChange={(e) => setFormData({ ...formData, secret: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg"
+                className="w-full px-3 py-2 border rounded-lg text-gray-900 bg-white placeholder:text-gray-400"
                 placeholder="Üresen hagyva automatikusan generálódik"
               />
             </div>
