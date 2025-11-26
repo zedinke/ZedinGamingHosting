@@ -290,6 +290,8 @@ async function executeStartTask(task: any): Promise<any> {
     
     // Systemd service indítása
     const serviceName = `server-${task.serverId}`;
+    
+    // Először indítjuk
     const startResult = await executeSSHCommand(
       {
         host: machine.ipAddress,
@@ -297,17 +299,58 @@ async function executeStartTask(task: any): Promise<any> {
         user: machine.sshUser,
         keyPath: machine.sshKeyPath || undefined,
       },
-      `systemctl start ${serviceName} && systemctl is-active ${serviceName} || echo "failed"`
+      `systemctl start ${serviceName} 2>/dev/null || true`
     );
 
-    if (startResult.stdout.trim() === 'active') {
+    // Ellenőrizzük a státuszt
+    const statusResult = await executeSSHCommand(
+      {
+        host: machine.ipAddress,
+        port: machine.sshPort,
+        user: machine.sshUser,
+        keyPath: machine.sshKeyPath || undefined,
+      },
+      `systemctl is-active ${serviceName} 2>&1 || echo "inactive"`
+    );
+
+    const isActive = statusResult.stdout.trim() === 'active';
+
+    // Szűrjük ki a nem-kritikus stderr üzeneteket (pl. "Permanently added")
+    const criticalError = startResult.stderr && 
+      !startResult.stderr.includes('Permanently added') &&
+      !startResult.stderr.includes('Warning:') &&
+      startResult.exitCode !== 0 &&
+      !isActive;
+
+    if (isActive) {
       // Szerver státusz frissítése ONLINE-ra
       await prisma.server.update({
         where: { id: task.serverId },
         data: { status: 'ONLINE' },
       });
+    } else if (criticalError) {
+      throw new Error(`Szerver indítás sikertelen: ${startResult.stderr || statusResult.stderr || 'Ismeretlen hiba'}`);
     } else {
-      throw new Error(`Szerver indítás sikertelen: ${startResult.stderr}`);
+      // Ha nem aktív, de nincs kritikus hiba, akkor próbáljuk meg még egyszer
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      const retryStatus = await executeSSHCommand(
+        {
+          host: machine.ipAddress,
+          port: machine.sshPort,
+          user: machine.sshUser,
+          keyPath: machine.sshKeyPath || undefined,
+        },
+        `systemctl is-active ${serviceName} 2>&1 || echo "inactive"`
+      );
+      
+      if (retryStatus.stdout.trim() === 'active') {
+        await prisma.server.update({
+          where: { id: task.serverId },
+          data: { status: 'ONLINE' },
+        });
+      } else {
+        throw new Error(`Szerver indítás sikertelen: A szerver nem indult el`);
+      }
     }
   } else {
     throw new Error('Agent vagy machine nem található');
@@ -342,6 +385,8 @@ async function executeStopTask(task: any): Promise<any> {
     
     // Systemd service leállítása
     const serviceName = `server-${task.serverId}`;
+    
+    // Először csak leállítjuk
     const stopResult = await executeSSHCommand(
       {
         host: machine.ipAddress,
@@ -349,17 +394,40 @@ async function executeStopTask(task: any): Promise<any> {
         user: machine.sshUser,
         keyPath: machine.sshKeyPath || undefined,
       },
-      `systemctl stop ${serviceName} && systemctl is-active ${serviceName} || echo "inactive"`
+      `systemctl stop ${serviceName} 2>/dev/null || true`
     );
 
-    if (stopResult.stdout.trim() === 'inactive' || stopResult.stdout.trim() === '') {
+    // Ellenőrizzük a státuszt
+    const statusResult = await executeSSHCommand(
+      {
+        host: machine.ipAddress,
+        port: machine.sshPort,
+        user: machine.sshUser,
+        keyPath: machine.sshKeyPath || undefined,
+      },
+      `systemctl is-active ${serviceName} 2>&1 || echo "inactive"`
+    );
+
+    const isInactive = statusResult.stdout.trim() === 'inactive' || 
+                       statusResult.stdout.trim() === '' ||
+                       statusResult.stdout.includes('inactive');
+
+    // Szűrjük ki a nem-kritikus stderr üzeneteket (pl. "Permanently added")
+    const criticalError = stopResult.stderr && 
+      !stopResult.stderr.includes('Permanently added') &&
+      !stopResult.stderr.includes('Warning:') &&
+      stopResult.exitCode !== 0 &&
+      !isInactive;
+
+    if (isInactive || (!criticalError && stopResult.exitCode === 0)) {
       // Szerver státusz frissítése OFFLINE-ra
       await prisma.server.update({
         where: { id: task.serverId },
         data: { status: 'OFFLINE' },
       });
     } else {
-      throw new Error(`Szerver leállítás sikertelen: ${stopResult.stderr}`);
+      // Ha kritikus hiba van, dobjunk hibát
+      throw new Error(`Szerver leállítás sikertelen: ${stopResult.stderr || statusResult.stderr || 'Ismeretlen hiba'}`);
     }
   } else {
     throw new Error('Agent vagy machine nem található');
