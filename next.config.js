@@ -25,7 +25,7 @@ const nextConfig = {
     domains: ['localhost'],
   },
   // Server Actions are available by default in Next.js 14+
-  output: 'standalone', // Docker optimalizáláshoz
+  // output: 'standalone', // Ideiglenesen kikapcsolva - standalone build hiányos route fájlokat tartalmaz
   // Fix for Next.js 14.0.4 build ID generation bug
   generateBuildId: () => {
     // Return a simple build ID - Next.js will use this instead of trying to call generate()
