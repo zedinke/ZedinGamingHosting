@@ -658,6 +658,7 @@ function getInvoiceStatusLabel(status: string): string {
 async function generatePDFFromHTML(html: string): Promise<Buffer> {
   try {
     // Lazy loading: csak akkor töltjük be a Puppeteer-t, ha szükséges
+    // @ts-ignore - puppeteer is an optional dependency
     const puppeteer = await import('puppeteer');
     
     const browser = await puppeteer.launch({
