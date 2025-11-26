@@ -34,7 +34,6 @@ export async function POST(
             sshPort: true,
             sshUser: true,
             sshKeyPath: true,
-            sshPassword: true,
           },
         },
       },
@@ -64,7 +63,6 @@ export async function POST(
         port: machine.sshPort,
         user: machine.sshUser,
         keyPath: machine.sshKeyPath || undefined,
-        password: machine.sshPassword || undefined,
       },
       managerUrl
     );
