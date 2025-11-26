@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import toast from 'react-hot-toast';
-import Link from 'next/link';
 
 interface Notification {
   id: string;
@@ -14,15 +13,15 @@ interface Notification {
   createdAt: string;
 }
 
-interface NotificationsPanelProps {
+interface NotificationsListProps {
   locale: string;
 }
 
-export function NotificationsPanel({ locale }: NotificationsPanelProps) {
+export function NotificationsList({ locale }: NotificationsListProps) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [showAll, setShowAll] = useState(false);
+  const [showAll, setShowAll] = useState(true);
 
   useEffect(() => {
     loadNotifications();
@@ -35,7 +34,7 @@ export function NotificationsPanel({ locale }: NotificationsPanelProps) {
   const loadNotifications = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/notifications?limit=${showAll ? 50 : 10}&unreadOnly=${!showAll}`);
+      const response = await fetch(`/api/notifications?limit=100&unreadOnly=${!showAll}`);
       const data = await response.json();
 
       if (response.ok) {
@@ -96,22 +95,9 @@ export function NotificationsPanel({ locale }: NotificationsPanelProps) {
     );
   }, [notifications]);
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'urgent':
-        return 'bg-red-100 text-red-800 border-red-300';
-      case 'high':
-        return 'bg-orange-100 text-orange-800 border-orange-300';
-      case 'medium':
-        return 'bg-blue-100 text-blue-800 border-blue-300';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-300';
-    }
-  };
-
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold text-gray-900">
           Értesítések
           {unreadCount > 0 && (
@@ -121,22 +107,30 @@ export function NotificationsPanel({ locale }: NotificationsPanelProps) {
           )}
         </h2>
         <div className="flex gap-2">
-          <Link
-            href={`/${locale}/dashboard/notifications`}
-            className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+          {unreadCount > 0 && (
+            <button
+              onClick={markAllAsRead}
+              className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+            >
+              Összes olvasottnak jelöl
+            </button>
+          )}
+          <button
+            onClick={() => setShowAll(!showAll)}
+            className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
           >
-            Összes
-          </Link>
+            {showAll ? 'Csak olvasatlanok' : 'Összes'}
+          </button>
         </div>
       </div>
 
       {loading ? (
-        <div className="text-center py-8 text-gray-600">Betöltés...</div>
+        <div className="text-center py-12 text-gray-600">Betöltés...</div>
       ) : filteredNotifications.length === 0 ? (
-        <div className="text-center py-8 text-gray-600">Nincs értesítés</div>
+        <div className="text-center py-12 text-gray-600">Nincs értesítés</div>
       ) : (
-        <div className="space-y-2">
-          {filteredNotifications.slice(0, 5).map((notification) => (
+        <div className="space-y-3">
+          {filteredNotifications.map((notification) => (
             <div
               key={notification.id}
               className={`p-4 border rounded-lg cursor-pointer hover:shadow-md transition-all ${
@@ -169,16 +163,6 @@ export function NotificationsPanel({ locale }: NotificationsPanelProps) {
               </div>
             </div>
           ))}
-          {filteredNotifications.length > 5 && (
-            <div className="text-center pt-2">
-              <Link
-                href={`/${locale}/dashboard/notifications`}
-                className="text-sm text-primary-600 hover:text-primary-700 font-medium"
-              >
-                További értesítések megtekintése ({filteredNotifications.length - 5})
-              </Link>
-            </div>
-          )}
         </div>
       )}
     </div>
