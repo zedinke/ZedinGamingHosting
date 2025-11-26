@@ -126,13 +126,19 @@ export function AgentManagement({
               <th className="text-left p-3 font-semibold text-gray-900">Feladatok</th>
               <th className="text-left p-3 font-semibold text-gray-900">Utolsó Heartbeat</th>
               <th className="text-left p-3 font-semibold text-gray-900">Képességek</th>
+              <th className="text-left p-3 font-semibold text-gray-900">Műveletek</th>
             </tr>
           </thead>
           <tbody>
             {agents.map((agent) => (
               <tr key={agent.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                 <td className="p-3">
-                  <span className="font-mono text-sm text-gray-800">{agent.agentId}</span>
+                  <Link
+                    href={`/${locale}/admin/agents/${agent.id}`}
+                    className="font-mono text-sm text-primary-600 hover:underline text-gray-800"
+                  >
+                    {agent.agentId}
+                  </Link>
                 </td>
                 <td className="p-3 text-sm text-gray-700">{agent.version}</td>
                 <td className="p-3">
@@ -167,6 +173,14 @@ export function AgentManagement({
                         .map(([k]) => k)
                         .join(', ') || '-'
                     : '-'}
+                </td>
+                <td className="p-3">
+                  <Link
+                    href={`/${locale}/admin/agents/${agent.id}`}
+                    className="text-primary-600 hover:underline text-sm font-medium"
+                  >
+                    Részletek →
+                  </Link>
                 </td>
               </tr>
             ))}
