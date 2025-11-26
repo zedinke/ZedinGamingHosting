@@ -87,14 +87,16 @@ function getProjectRoot(): string {
   return currentDir;
 }
 
-const PROJECT_ROOT = getProjectRoot();
-const PROGRESS_FILE = join(PROJECT_ROOT, '.update-progress.json');
-const LOG_FILE = join(PROJECT_ROOT, '.update-log.txt');
-
 export async function GET(request: NextRequest) {
   try {
+    // Dinamikusan számoljuk ki a PROJECT_ROOT-ot minden kéréskor
+    // Ez fontos, mert különben cache-elődhet az eredmény
+    const projectRoot = getProjectRoot();
+    const progressFile = join(projectRoot, '.update-progress.json');
+    const logFile = join(projectRoot, '.update-log.txt');
+    
     // Check if progress file exists
-    if (!existsSync(PROGRESS_FILE)) {
+    if (!existsSync(progressFile)) {
       return NextResponse.json({
         status: 'idle',
         message: 'Nincs aktív frissítés',
@@ -105,14 +107,14 @@ export async function GET(request: NextRequest) {
     }
 
     // Read progress file
-    const progressData = await readFile(PROGRESS_FILE, 'utf-8');
+    const progressData = await readFile(progressFile, 'utf-8');
     const progress = JSON.parse(progressData);
     
     // Read log file if exists
     let log = '';
-    if (existsSync(LOG_FILE)) {
+    if (existsSync(logFile)) {
       try {
-        log = await readFile(LOG_FILE, 'utf-8');
+        log = await readFile(logFile, 'utf-8');
       } catch {
         log = '';
       }
