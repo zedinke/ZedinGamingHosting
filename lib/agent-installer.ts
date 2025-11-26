@@ -91,30 +91,57 @@ export async function installAgentViaSSH(
       
       // Script végrehajthatóvá tétele és futtatása
       logs.push('Script végrehajthatóvá tétele...');
-      await executeSSHCommand(config, `chmod +x ${tempRemotePath}`);
+      const chmodResult = await executeSSHCommand(config, `chmod +x ${tempRemotePath}`, 10000);
+      if (chmodResult.exitCode !== 0) {
+        logs.push(`Figyelmeztetés: chmod hiba: ${chmodResult.stderr}`);
+      }
       
-      logs.push('Script futtatása a szerveren...');
-      const scriptResult = await executeSSHCommand(config, `bash ${tempRemotePath} 2>&1`);
+      logs.push('Script futtatása a szerveren (ez eltarthat néhány percig)...');
+      // Hosszabb timeout az agent telepítéshez (5 perc)
+      const scriptResult = await executeSSHCommand(config, `bash ${tempRemotePath} 2>&1`, 300000);
       
       // Ideiglenes fájl törlése a szerverről
-      await executeSSHCommand(config, `rm -f ${tempRemotePath}`).catch(() => {
+      await executeSSHCommand(config, `rm -f ${tempRemotePath}`, 10000).catch(() => {
         // Ignore cleanup errors
       });
 
       // A script output tartalmazza mind a stdout-ot, mind a stderr-t (2>&1 miatt)
-      const scriptOutput = scriptResult.stdout || scriptResult.stderr || '';
+      const scriptOutput = (scriptResult.stdout || '') + (scriptResult.stderr || '');
+      
+      // Logoljuk a teljes output-ot részletekben
+      if (scriptResult.stdout) {
+        logs.push(`Script stdout (${scriptResult.stdout.length} karakter):`);
+        const stdoutLines = scriptResult.stdout.split('\n');
+        stdoutLines.slice(0, 50).forEach((line, idx) => {
+          if (line.trim()) logs.push(`  [${idx + 1}] ${line}`);
+        });
+        if (stdoutLines.length > 50) {
+          logs.push(`  ... és még ${stdoutLines.length - 50} sor`);
+        }
+      }
+      
+      if (scriptResult.stderr && !scriptResult.stdout.includes(scriptResult.stderr)) {
+        logs.push(`Script stderr (${scriptResult.stderr.length} karakter):`);
+        const stderrLines = scriptResult.stderr.split('\n');
+        stderrLines.slice(0, 50).forEach((line, idx) => {
+          if (line.trim()) logs.push(`  [${idx + 1}] ${line}`);
+        });
+        if (stderrLines.length > 50) {
+          logs.push(`  ... és még ${stderrLines.length - 50} sor`);
+        }
+      }
       
       if (scriptResult.exitCode !== 0) {
         logs.push(`Script futtatási hiba (exit code: ${scriptResult.exitCode})`);
-        logs.push(`Script stderr: ${scriptResult.stderr || 'Nincs stderr'}`);
-        logs.push(`Script stdout: ${scriptOutput.substring(0, 2000)}`);
         
-        // Részletesebb hibaüzenet
-        const errorMessage = scriptResult.stderr 
-          ? `Agent telepítési script sikertelen: ${scriptResult.stderr.substring(0, 500)}`
-          : scriptOutput 
-            ? `Agent telepítési script sikertelen: ${scriptOutput.substring(0, 500)}`
-            : 'Agent telepítési script sikertelen (ismeretlen hiba)';
+        // Részletesebb hibaüzenet - az utolsó 20 sor a legfontosabb
+        const allLines = scriptOutput.split('\n').filter(l => l.trim());
+        const lastLines = allLines.slice(-20).join('\n');
+        const errorMessage = lastLines 
+          ? `Agent telepítési script sikertelen (exit code: ${scriptResult.exitCode}):\n${lastLines}`
+          : scriptResult.stderr 
+            ? `Agent telepítési script sikertelen: ${scriptResult.stderr.substring(0, 1000)}`
+            : `Agent telepítési script sikertelen (exit code: ${scriptResult.exitCode}, ismeretlen hiba)`;
         
         return {
           success: false,
@@ -124,7 +151,7 @@ export async function installAgentViaSSH(
       }
 
       logs.push('Agent telepítési script sikeresen lefutott');
-      logs.push(`Script output (első 1000 karakter): ${scriptOutput.substring(0, 1000)}...`);
+      logs.push(`Script output összesen: ${scriptOutput.length} karakter`);
     } finally {
       // Lokális ideiglenes fájl törlése
       try {

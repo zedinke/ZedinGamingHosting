@@ -1,4 +1,4 @@
-import { exec } from 'child_process';
+import { exec, spawn } from 'child_process';
 import { promisify } from 'util';
 import { readFile } from 'fs/promises';
 
@@ -23,37 +23,97 @@ interface SSHCommandResult {
  */
 export async function executeSSHCommand(
   config: SSHConfig,
-  command: string
+  command: string,
+  timeout: number = 300000 // 5 perc timeout (agent telepítés hosszú lehet)
 ): Promise<SSHCommandResult> {
-  try {
+  return new Promise((resolve) => {
+    let sshArgs: string[];
     let sshCommand: string;
 
     if (config.keyPath) {
       // SSH kulcs használata
-      sshCommand = `ssh -i ${config.keyPath} -p ${config.port} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${config.user}@${config.host} "${command}"`;
+      sshCommand = 'ssh';
+      sshArgs = [
+        '-i', config.keyPath,
+        '-p', config.port.toString(),
+        '-o', 'StrictHostKeyChecking=no',
+        '-o', 'UserKnownHostsFile=/dev/null',
+        '-o', 'ConnectTimeout=10',
+        `${config.user}@${config.host}`,
+        command
+      ];
     } else if (config.password) {
       // Jelszó használata (sshpass szükséges)
-      sshCommand = `sshpass -p '${config.password}' ssh -p ${config.port} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${config.user}@${config.host} "${command}"`;
+      sshCommand = 'sshpass';
+      sshArgs = [
+        '-p', config.password,
+        'ssh',
+        '-p', config.port.toString(),
+        '-o', 'StrictHostKeyChecking=no',
+        '-o', 'UserKnownHostsFile=/dev/null',
+        '-o', 'ConnectTimeout=10',
+        `${config.user}@${config.host}`,
+        command
+      ];
     } else {
-      throw new Error('SSH kulcs vagy jelszó szükséges');
+      resolve({
+        stdout: '',
+        stderr: 'SSH kulcs vagy jelszó szükséges',
+        exitCode: 1,
+      });
+      return;
     }
 
-    const { stdout, stderr } = await execAsync(sshCommand, {
-      timeout: 30000, // 30 másodperc timeout
+    const child = spawn(sshCommand, sshArgs, {
+      stdio: ['ignore', 'pipe', 'pipe'],
     });
 
-    return {
-      stdout,
-      stderr,
-      exitCode: 0,
-    };
-  } catch (error: any) {
-    return {
-      stdout: '',
-      stderr: error.message || 'SSH hiba',
-      exitCode: error.code || 1,
-    };
-  }
+    let stdout = '';
+    let stderr = '';
+    let timeoutId: NodeJS.Timeout | null = null;
+
+    // Timeout beállítása
+    if (timeout > 0) {
+      timeoutId = setTimeout(() => {
+        child.kill('SIGTERM');
+        resolve({
+          stdout,
+          stderr: stderr || 'SSH parancs timeout',
+          exitCode: 124, // timeout exit code
+        });
+      }, timeout);
+    }
+
+    child.stdout?.on('data', (data) => {
+      stdout += data.toString();
+    });
+
+    child.stderr?.on('data', (data) => {
+      stderr += data.toString();
+    });
+
+    child.on('close', (code) => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      resolve({
+        stdout,
+        stderr,
+        exitCode: code ?? 1,
+      });
+    });
+
+    child.on('error', (error) => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      resolve({
+        stdout,
+        stderr: stderr || error.message || 'SSH hiba',
+        exitCode: 1,
+      });
+    });
+  });
 }
 
 /**
