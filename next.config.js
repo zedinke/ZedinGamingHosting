@@ -26,11 +26,6 @@ const nextConfig = {
   },
   // Server Actions are available by default in Next.js 14+
   output: 'standalone', // Docker optimalizáláshoz
-  // Explicit build ID generation to fix "generate is not a function" error
-  generateBuildId: async () => {
-    // Use timestamp as build ID for consistency
-    return `build-${Date.now()}`;
-  },
   webpack: (config, { isServer }) => {
     // Exclude optional dependencies from build
     if (isServer) {
