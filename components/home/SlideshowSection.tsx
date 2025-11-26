@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface SlideshowSlide {
@@ -101,12 +101,17 @@ export function SlideshowSection({ slides, locale, transitionInterval = 5 }: Sli
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
   // Use slides from database if available, otherwise use default images
-  const activeSlides = slides.length > 0 
-    ? slides.filter((slide) => slide && (slide.image || slide.video) && slide.isActive !== false)
-    : [];
+  // Memoize to prevent unnecessary recalculations
+  const activeSlides = useMemo(() => {
+    return slides.length > 0 
+      ? slides.filter((slide) => slide && (slide.image || slide.video) && slide.isActive !== false)
+      : [];
+  }, [slides]);
   
   // Always use default images if no slides from database
-  const displaySlides = activeSlides.length > 0 ? activeSlides : defaultGameImages;
+  const displaySlides = useMemo(() => {
+    return activeSlides.length > 0 ? activeSlides : defaultGameImages;
+  }, [activeSlides]);
 
   // Convert seconds to milliseconds
   const intervalMs = transitionInterval * 1000;
@@ -116,14 +121,31 @@ export function SlideshowSection({ slides, locale, transitionInterval = 5 }: Sli
     setCurrentSlide(0);
   }, [displaySlides.length]);
 
+  // Auto-play slideshow
   useEffect(() => {
-    if (!isAutoPlaying || displaySlides.length <= 1) return;
+    if (!isAutoPlaying || displaySlides.length <= 1) {
+      console.log('Slideshow: auto-play disabled or only one slide', { isAutoPlaying, slideCount: displaySlides.length });
+      return;
+    }
+
+    console.log('Slideshow: starting auto-play', { 
+      slideCount: displaySlides.length, 
+      intervalMs, 
+      currentSlide 
+    });
 
     const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % displaySlides.length);
+      setCurrentSlide((prev) => {
+        const next = (prev + 1) % displaySlides.length;
+        console.log('Slideshow: transitioning from slide', prev, 'to', next, 'of', displaySlides.length);
+        return next;
+      });
     }, intervalMs); // Váltási idő beállítása
 
-    return () => clearInterval(interval);
+    return () => {
+      console.log('Slideshow: clearing interval');
+      clearInterval(interval);
+    };
   }, [isAutoPlaying, displaySlides.length, intervalMs]);
 
   if (displaySlides.length === 0) {
