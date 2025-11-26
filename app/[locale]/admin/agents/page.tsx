@@ -66,10 +66,10 @@ export default async function AdminAgentsPage({
   });
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div>
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">Agentek Kezelése</h1>
-        <p className="text-gray-600 mt-2">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Agentek Kezelése</h1>
+        <p className="text-gray-600">
           Kezeld a game szerver agenteket
         </p>
       </div>

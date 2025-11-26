@@ -1,347 +1,130 @@
-# Szervergép Beállítási Útmutató
-
-Ez az útmutató bemutatja, hogyan kell beállítani egy szervergépet a game server hosting rendszerhez.
-
-## 🔐 1. Dedikált Felhasználó Létrehozása
-
-### 1.1 Felhasználó Létrehozása
+# Szerver Gép és Agent Beállítása
 
-```bash
-# SSH kapcsolódás a szerverhez (root vagy sudo jogosultsággal)
-ssh root@your-server-ip
+Ez az útmutató bemutatja, hogyan kell beállítani egy szerver gépet és agentet, hogy a játékszerver telepítés működjön.
 
-# Dedikált felhasználó létrehozása (FONTOS: -s /bin/bash flaggel!)
-# A --system flag NEM használható, mert az /usr/sbin/nologin shell-t állít be
-sudo useradd -m -d /opt/game-servers -s /bin/bash gameserver
+## ⚠️ Fontos
 
-# Vagy ha adduser-t használsz:
-sudo adduser --home /opt/game-servers --shell /bin/bash gameserver
+Ha a következő hibaüzenetet kapod:
+> **"Nincs elérhető gép vagy agent a szerver telepítéséhez"**
 
-# Ellenőrizd, hogy a shell be van-e állítva:
-sudo grep gameserver /etc/passwd
-# Kellene látnod: gameserver:x:UID:GID::/opt/game-servers:/bin/bash
+Ez azt jelenti, hogy nincs beállítva egyetlen szerver gép sem, vagy a gépek nem ONLINE státuszban vannak, vagy nincs agent telepítve rajtuk.
 
-# Ha a shell /usr/sbin/nologin vagy /bin/false, akkor javítsd:
-sudo usermod -s /bin/bash gameserver
+## 📋 Előfeltételek
 
-# Jelszó beállítása (opcionális, ha SSH kulcsot használsz)
-sudo passwd gameserver
-```
+- Admin jogosultság a rendszerben
+- SSH hozzáférés a szerver géphez, ahol a játékszervereket telepíteni szeretnéd
+- A szerver gépen telepített Node.js és Docker
 
-### 1.2 Sudo Jogosultságok Beállítása
+## 🔧 Lépések
 
-Az agent-nek szüksége van sudo jogosultságra bizonyos műveletekhez (systemd service létrehozás, portok kezelése, stb.):
+### 1. Lépés: Szerver Gép Hozzáadása az Admin Felületen
 
-```bash
-# Sudoers fájl szerkesztése
-sudo visudo
+1. Jelentkezz be az admin felületre
+2. Menj az **Admin → Gépek** menüpontra (`/admin/machines`)
+3. Kattints az **Új gép hozzáadása** gombra
+4. Töltsd ki az adatokat:
+   - **Név**: A gép egyedi neve (pl. "Game Server 1", "Helsinki Node 1")
+   - **IP cím**: A szerver gép IP címe (pl. `192.168.1.100` vagy publikus IP)
+   - **SSH Port**: SSH port (alapértelmezett: `22`)
+   - **SSH Felhasználó**: SSH felhasználó (pl. `root`, `ubuntu`, `gameuser`)
+   - **SSH Kulcs útvonal**: Opcionális - SSH privát kulcs útvonala (pl. `/home/user/.ssh/id_rsa`)
+   - **Megjegyzés**: Opcionális - További információk a gépről
 
-# Add hozzá ezt a sort (vagy használd a sudoers.d könyvtárat)
-gameserver ALL=(ALL) NOPASSWD: /usr/bin/systemctl, /usr/sbin/service, /usr/bin/apt-get, /usr/bin/apt, /bin/mount, /bin/umount
-```
+5. Kattints a **Mentés** gombra
 
-**Vagy biztonságosabb módszer - sudoers.d fájl:**
+### 2. Lépés: SSH Kapcsolat Tesztelése
 
-```bash
-# Sudoers.d fájl létrehozása
-sudo tee /etc/sudoers.d/gameserver > /dev/null <<EOF
-# Game Server Agent sudo jogosultságok
-gameserver ALL=(ALL) NOPASSWD: /usr/bin/systemctl
-gameserver ALL=(ALL) NOPASSWD: /usr/sbin/service
-gameserver ALL=(ALL) NOPASSWD: /usr/bin/apt-get
-gameserver ALL=(ALL) NOPASSWD: /usr/bin/apt
-gameserver ALL=(ALL) NOPASSWD: /bin/mount
-gameserver ALL=(ALL) NOPASSWD: /bin/umount
-gameserver ALL=(ALL) NOPASSWD: /bin/mkdir
-gameserver ALL=(ALL) NOPASSWD: /bin/chown
-gameserver ALL=(ALL) NOPASSWD: /usr/bin/tee
-gameserver ALL=(ALL) NOPASSWD: /usr/bin/docker
-gameserver ALL=(ALL) NOPASSWD: /usr/bin/docker-compose
-EOF
+A gép hozzáadása után:
 
-# Fájl jogosultságok beállítása
-sudo chmod 0440 /etc/sudoers.d/gameserver
-```
+1. A gépek listájában kattints a gép nevére
+2. Kattints az **SSH kapcsolat tesztelése** gombra
+3. Ellenőrizd, hogy a kapcsolat sikeres volt
 
-### 1.3 Könyvtárak Létrehozása és Jogosultságok Beállítása
+**Fontos**: Ha a SSH kapcsolat nem működik, ellenőrizd:
+- Hogy az IP cím elérhető-e
+- Hogy a SSH port nyitva van-e (általában 22)
+- Hogy az SSH felhasználó létezik
+- Hogy a SSH kulcs be van állítva (vagy jelszó alapú bejelentkezés engedélyezve van)
 
-```bash
-# Game server könyvtárak létrehozása
-sudo mkdir -p /opt/servers
-sudo mkdir -p /opt/ark-shared
-sudo mkdir -p /opt/ark-clusters
-sudo mkdir -p /opt/backups
-sudo mkdir -p /opt/game-server-agent
+### 3. Lépés: Agent Telepítése
 
-# Tulajdonos beállítása
-sudo chown -R gameserver:gameserver /opt/servers
-sudo chown -R gameserver:gameserver /opt/ark-shared
-sudo chown -R gameserver:gameserver /opt/ark-clusters
-sudo chown -R gameserver:gameserver /opt/backups
-sudo chown -R gameserver:gameserver /opt/game-server-agent
+Az agent a szoftver, ami a szerver gépen fut, és kommunikál a fő szerverrel.
 
-# Jogosultságok beállítása
-sudo chmod 755 /opt/servers
-sudo chmod 755 /opt/ark-shared
-sudo chmod 755 /opt/ark-clusters
-sudo chmod 755 /opt/backups
-sudo chmod 755 /opt/game-server-agent
-```
+1. A gép részletek oldalán kattints az **Agent telepítése** gombra
+2. Az agent automatikusan települ a szerver gépre SSH-n keresztül
+3. Ellenőrizd, hogy az agent státusza **ONLINE** lett
 
-## 🔑 2. SSH Kulcs Beállítása
+**Agent telepítés után**:
+- Az agent egy Docker konténerben fut
+- Port: `3001` (vagy az általad megadott port)
+- Az agent automatikusan csatlakozik a fő szerverhez
 
-### 2.1 SSH Kulcs Generálása (Webszerveren)
+### 4. Lépés: Gép Erőforrások Beállítása
 
-```bash
-# Generáld az SSH kulcsot a webszerveren (ahol a Next.js app fut)
-ssh-keygen -t ed25519 -f ~/.ssh/gameserver_key -N ""
+A gép részletek oldalán állítsd be az erőforrásokat:
 
-# Vagy RSA kulcs (ha ed25519 nem támogatott):
-ssh-keygen -t rsa -b 4096 -f ~/.ssh/gameserver_key -N ""
-```
+- **CPU magok**: Hány CPU mag van (pl. `4`, `8`, `16`)
+- **RAM (GB)**: Mennyi RAM van (pl. `16`, `32`, `64`)
+- **Tárhely (GB)**: Mennyi tárhely van (pl. `100`, `500`, `1000`)
 
-### 2.2 Publikus Kulcs Másolása a Szervergépre
+Ezek az adatok segítenek a rendszernek meghatározni, hogy hány szerver fér el a gépen.
 
-**FONTOS:** Ha a "This account is currently not available" hibát kapsz, akkor a felhasználó shell-je nincs megfelelően beállítva. Javítsd először:
+### 5. Lépés: Ellenőrzés
 
-```bash
-# A szervergépen (root-ként):
-sudo usermod -s /bin/bash gameserver
+A gépek listájában ellenőrizd:
 
-# Ellenőrizd:
-sudo grep gameserver /etc/passwd
-# Kellene látnod: gameserver:x:UID:GID::/opt/game-servers:/bin/bash
-```
+- ✅ **Státusz**: **ONLINE** kell legyen
+- ✅ **Agentek száma**: Legalább 1 ONLINE agent kell legyen
+- ✅ **Erőforrások**: Be vannak állítva
 
-**Ezután próbáld újra:**
+## 🎮 Szerver Telepítés
 
-```bash
-# Webszerverről: Publikus kulcs másolása a szervergépre
-ssh-copy-id -i ~/.ssh/gameserver_key.pub gameserver@your-server-ip
+Miután a gép és agent be van állítva:
 
-# Ha még mindig nem működik, használd a manuális módszert root-ként:
-# Először root-ként másold a kulcsot:
-cat ~/.ssh/gameserver_key.pub | ssh root@your-server-ip "sudo -u gameserver mkdir -p /opt/game-servers/.ssh && sudo -u gameserver chmod 700 /opt/game-servers/.ssh && sudo -u gameserver tee -a /opt/game-servers/.ssh/authorized_keys && sudo -u gameserver chmod 600 /opt/game-servers/.ssh/authorized_keys"
+1. A felhasználók rendelhetnek játékszervereket
+2. A rendszer automatikusan kiválasztja a legjobb gépet és agentet
+3. A szerver telepítés automatikusan megkezdődik
 
-# Vagy egyszerűbben, ha root-ként vagy a szervergépen:
-# 1. Lépj be root-ként a szervergépre
-ssh root@your-server-ip
+## 🔍 Hibaelhárítás
 
-# 2. Másold a publikus kulcsot
-echo "PASTE_YOUR_PUBLIC_KEY_HERE" | sudo -u gameserver tee -a /opt/game-servers/.ssh/authorized_keys
+### Hiba: "Nincs elérhető gép vagy agent"
 
-# 3. Jogosultságok beállítása
-sudo -u gameserver chmod 700 /opt/game-servers/.ssh
-sudo -u gameserver chmod 600 /opt/game-servers/.ssh/authorized_keys
-```
+**Megoldások**:
+1. Ellenőrizd, hogy van-e beállítva szerver gép (Admin → Gépek)
+2. Ellenőrizd, hogy a gép státusza **ONLINE**-e
+3. Ellenőrizd, hogy van-e telepítve és futó agent a gépen
+4. Ellenőrizd, hogy az agent státusza **ONLINE**-e
 
-### 2.3 SSH Konfiguráció (Opcionális, de ajánlott)
+### Hiba: SSH kapcsolat nem működik
 
-A webszerveren hozz létre egy SSH config fájlt:
-
-```bash
-# ~/.ssh/config fájl szerkesztése
-nano ~/.ssh/config
-
-# Add hozzá:
-Host gameserver-*
-    User gameserver
-    IdentityFile ~/.ssh/gameserver_key
-    StrictHostKeyChecking no
-    UserKnownHostsFile /dev/null
-```
-
-## 🛠️ 3. Szükséges Szoftverek Telepítése
-
-### 3.1 Alapvető Csomagok
-
-```bash
-# SSH kapcsolódás a gameserver felhasználóval
-ssh gameserver@your-server-ip
-
-# System update
-sudo apt-get update
-sudo apt-get upgrade -y
-
-# Alapvető eszközök
-sudo apt-get install -y curl wget git unzip tar gzip
-```
-
-### 3.2 SteamCMD Telepítése (Game Server Installer automatikusan telepíti, de előre is lehet)
-
-```bash
-# SteamCMD könyvtár
-sudo mkdir -p /opt/steamcmd
-sudo chown gameserver:gameserver /opt/steamcmd
-
-# SteamCMD letöltése és telepítése
-cd /opt/steamcmd
-wget https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz
-tar -xzf steamcmd_linux.tar.gz
-chmod +x steamcmd.sh
-```
-
-### 3.3 Java Telepítése (Minecraft és más Java alapú játékokhoz)
-
-```bash
-# OpenJDK 17 telepítése
-sudo apt-get install -y openjdk-17-jre-headless
-
-# Vagy OpenJDK 21 (újabb verzió)
-sudo apt-get install -y openjdk-21-jre-headless
-```
-
-### 3.4 Docker (Opcionális, ha Docker-t használsz)
-
-```bash
-# Docker telepítése
-curl -fsSL https://get.docker.com -o get-docker.sh
-sudo sh get-docker.sh
-
-# gameserver felhasználó hozzáadása a docker csoporthoz
-sudo usermod -aG docker gameserver
-```
-
-## 📝 4. Admin Panelben Szervergép Hozzáadása
-
-Az admin panelben (`/admin/machines`) add hozzá a szervergépet:
-
-1. **Név**: Pl. "Game Server 1" vagy "EU Server"
-2. **IP cím**: A szerver IP címe
-3. **SSH Port**: Általában 22
-4. **SSH User**: `gameserver`
-5. **SSH Key Path**: A webszerveren a privát kulcs elérési útja (pl. `/home/user/.ssh/gameserver_key`)
-6. **SSH Password**: Hagyd üresen, ha SSH kulcsot használsz
-7. **Leírás**: Opcionális leírás
-
-### 4.1 SSH Kulcs Elérési Út Beállítása
-
-A webszerveren (ahol a Next.js app fut) győződj meg róla, hogy:
-- Az SSH privát kulcs elérhető
-- A fájl jogosultságok helyesek: `chmod 600 ~/.ssh/gameserver_key`
-- A Next.js app felhasználója hozzáfér a kulcshoz
-
-## ✅ 5. Tesztelés
-
-### 5.1 SSH Kapcsolat Tesztelése
-
-```bash
-# Webszerverről teszteld az SSH kapcsolatot
-ssh -i ~/.ssh/gameserver_key gameserver@your-server-ip "echo 'SSH connection successful'"
-```
-
-### 5.2 Agent Telepítés Tesztelése
-
-Az admin panelben:
-1. Menj a **Szervergépek** oldalra
-2. Kattints a szervergép **"Agent Telepítése"** gombjára
-3. Figyeld a telepítési folyamatot
-4. Ellenőrizd, hogy az agent sikeresen regisztrálódott-e
-
-### 5.3 Szerver Telepítés Tesztelése
-
-1. Rendelj egy teszt szervert
-2. Fizesd ki (vagy használd a PROBA rangot)
-3. Ellenőrizd, hogy a szerver automatikusan települ-e
-
-## 🔒 6. Biztonsági Ajánlások
-
-### 6.1 SSH Biztonság
-
-```bash
-# SSH konfiguráció szerkesztése
-sudo nano /etc/ssh/sshd_config
-
-# Ajánlott beállítások:
-PermitRootLogin no
-PasswordAuthentication no  # Ha csak SSH kulcsot használsz
-PubkeyAuthentication yes
-AllowUsers gameserver
-
-# SSH újraindítása
-sudo systemctl restart sshd
-```
-
-### 6.2 Firewall Beállítás
-
-```bash
-# UFW (Uncomplicated Firewall) telepítése és beállítása
-sudo apt-get install -y ufw
-
-# Alapvető portok engedélyezése
-sudo ufw allow 22/tcp    # SSH
-sudo ufw allow 80/tcp    # HTTP (ha szükséges)
-sudo ufw allow 443/tcp   # HTTPS (ha szükséges)
-
-# Game server portok dinamikusan nyitva lesznek (a rendszer kezeli)
-
-# Firewall engedélyezése
-sudo ufw enable
-```
-
-### 6.3 Fail2Ban (Opcionális, de ajánlott)
-
-```bash
-# Fail2Ban telepítése
-sudo apt-get install -y fail2ban
-
-# Alapértelmezett konfiguráció használata (elég a legtöbb esetben)
-sudo systemctl enable fail2ban
-sudo systemctl start fail2ban
-```
-
-## 📋 7. Ellenőrző Lista
-
-- [ ] Dedikált `gameserver` felhasználó létrehozva
-- [ ] Sudo jogosultságok beállítva
-- [ ] Könyvtárak létrehozva és jogosultságok beállítva
-- [ ] SSH kulcs generálva és másolva
-- [ ] SSH kapcsolat tesztelve
-- [ ] Alapvető szoftverek telepítve (curl, wget, git, stb.)
-- [ ] Java telepítve (ha szükséges)
-- [ ] SteamCMD telepítve (vagy automatikus telepítésre vár)
-- [ ] Szervergép hozzáadva az admin panelben
-- [ ] Agent telepítve és működik
-- [ ] Teszt szerver telepítve és működik
-
-## 🆘 8. Hibaelhárítás
-
-### 8.1 SSH Kapcsolat Sikertelen
-
-```bash
-# SSH verbose módban tesztelés
-ssh -v -i ~/.ssh/gameserver_key gameserver@your-server-ip
-
-# Ellenőrizd a jogosultságokat
-ls -la ~/.ssh/gameserver_key
-# Kellene: -rw------- (600)
-
-# Ellenőrizd a szerver oldali authorized_keys fájlt
-ssh gameserver@your-server-ip "cat ~/.ssh/authorized_keys"
-```
-
-### 8.2 Sudo Jogosultságok Probléma
-
-```bash
-# Teszteld a sudo jogosultságokat
-sudo -u gameserver sudo systemctl status
-
-# Ellenőrizd a sudoers fájlt
-sudo visudo -c
-```
-
-### 8.3 Agent Nem Regisztrálódik
-
-```bash
-# Agent logok ellenőrzése
-ssh gameserver@your-server-ip "journalctl -u game-server-agent -n 50"
-
-# Agent manuális indítása
-ssh gameserver@your-server-ip "sudo systemctl start game-server-agent"
-```
+**Megoldások**:
+1. Ellenőrizd az IP címet és portot
+2. Teszteld a SSH kapcsolatot manuálisan: `ssh user@ip -p port`
+3. Ellenőrizd a tűzfal beállításokat
+4. Ha SSH kulcsot használsz, ellenőrizd hogy a kulcs elérhető-e
+
+### Hiba: Agent nem kapcsolódik
+
+**Megoldások**:
+1. Ellenőrizd az agent logokat a gép részletek oldalán
+2. Ellenőrizd, hogy az agent konténer fut-e: `docker ps | grep agent`
+3. Ellenőrizd a hálózati kapcsolatot a gépről a fő szerverre
+4. Újraindítsd az agentet az admin felületen
+
+### Agent manuális telepítése
+
+Ha az automatikus telepítés nem működik, manuálisan is telepítheted:
+
+1. Csatlakozz SSH-val a szerver gépre
+2. Telepítsd a Docker-t (ha nincs):
+   ```bash
+   curl -fsSL https://get.docker.com -o get-docker.sh
+   sh get-docker.sh
+   ```
+3. Indítsd el az agent konténert (az admin felület részleteiben találod a pontos parancsot)
 
 ## 📚 További Információk
 
-- [Agent Installer Dokumentáció](./AGENT_INSTALLER.md)
-- [Game Server Installer Dokumentáció](./GAME_SERVER_INSTALLER.md)
-- [System Diagnostics](./SYSTEM_DIAGNOSTICS.md)
+- [Agent Architektúra](AGENT_ARCHITECTURE.md)
+- [Szerver Telepítési Útmutató](SERVER_MACHINE_SETUP.md)
+- [Rendszer Funkciók](SYSTEM_FEATURES.md)
