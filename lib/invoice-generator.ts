@@ -161,8 +161,11 @@ export function generateInvoiceNumber(
  * PDF számla generálása (HTML alapú, majd PDF-re konvertálás)
  */
 export async function generateInvoicePDF(invoiceId: string): Promise<Buffer | null> {
+  let invoice: any = null;
+  let settings: InvoiceSettings | null = null;
+  
   try {
-    const invoice = await prisma.invoice.findUnique({
+    invoice = await prisma.invoice.findUnique({
       where: { id: invoiceId },
       include: {
         user: true,
@@ -178,7 +181,7 @@ export async function generateInvoicePDF(invoiceId: string): Promise<Buffer | nu
       throw new Error('Számla nem található');
     }
 
-    const settings = await getInvoiceSettings();
+    settings = await getInvoiceSettings();
     if (!settings) {
       throw new Error('Számla beállítások hiányoznak. Kérjük, állítsa be a számlázási beállításokat az admin felületen.');
     }
@@ -202,6 +205,20 @@ export async function generateInvoicePDF(invoiceId: string): Promise<Buffer | nu
     }
   } catch (error) {
     logger.error('Failed to generate invoice PDF', error as Error, { invoiceId });
+    // Ha a beállítások hiányoznak, null-t adunk vissza
+    if (error instanceof Error && error.message.includes('beállítások')) {
+      return null;
+    }
+    // Ha van invoice és settings, próbáljuk meg HTML-t generálni
+    if (invoice && settings) {
+      try {
+        const html = generateInvoiceHTML(invoice, settings);
+        return Buffer.from(html, 'utf-8');
+      } catch {
+        return null;
+      }
+    }
+    // Egyéb esetekben null-t adunk vissza
     return null;
   }
 }
@@ -699,9 +716,16 @@ async function generatePDFFromHTML(html: string): Promise<Buffer> {
     } finally {
       await browser.close();
     }
-  } catch (error) {
+  } catch (error: any) {
+    // Ha a puppeteer nincs telepítve vagy más hiba történt, HTML-t adunk vissza
+    if (error?.code === 'MODULE_NOT_FOUND' || error?.message?.includes('Cannot find module')) {
+      logger.warn('Puppeteer not installed, falling back to HTML', { error: error.message });
+      // HTML-t adunk vissza fallback-ként
+      return Buffer.from(html, 'utf-8');
+    }
     logger.error('Puppeteer PDF generation error', error as Error);
-    throw error;
+    // Még mindig HTML-t adunk vissza fallback-ként
+    return Buffer.from(html, 'utf-8');
   }
 }
 
