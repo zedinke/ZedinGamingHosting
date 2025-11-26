@@ -315,10 +315,22 @@ export function SystemManagement({
             </ul>
           </div>
 
-          {isUpdating && updateProgress ? (
+          {/* Progress megjelenítés - mindig mutatjuk, ha van progress vagy frissítés folyamatban */}
+          {(isUpdating || updateProgress) && (
             <div className="space-y-4">
-              <UpdateProgress progress={updateProgress} />
-              {(updateProgress.status === 'error' || updateProgress.status === 'in_progress') && (
+              {updateProgress ? (
+                <UpdateProgress progress={updateProgress} />
+              ) : (
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-blue-800">
+                    Frissítés indítása...
+                  </p>
+                  <div className="mt-2 w-full bg-gray-200 rounded-full h-3">
+                    <div className="bg-primary-600 h-3 rounded-full animate-pulse" style={{ width: '10%' }}></div>
+                  </div>
+                </div>
+              )}
+              {(updateProgress?.status === 'error' || updateProgress?.status === 'in_progress' || updateProgress?.status === 'starting') && (
                 <button
                   onClick={async () => {
                     if (!confirm('Biztosan törölni szeretnéd a progress fájlt és újraindítani a frissítést?')) {
@@ -345,7 +357,9 @@ export function SystemManagement({
                 </button>
               )}
             </div>
-          ) : (
+          )}
+          
+          {!isUpdating && !updateProgress && (
             <>
               <button
                 onClick={handleSystemUpdate}
