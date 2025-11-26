@@ -13,6 +13,7 @@ import { ServerMetrics } from './ServerMetrics';
 import { ResourceLimitsEditor } from './ResourceLimitsEditor';
 import { ServerScaling } from './ServerScaling';
 import { ServerMigration } from './ServerMigration';
+import { ServerDeleteDialog } from './ServerDeleteDialog';
 
 interface Server {
   id: string;
@@ -67,6 +68,7 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [serverStatus, setServerStatus] = useState(server.status);
   const [activeTab, setActiveTab] = useState<'files' | 'console' | 'backup' | 'config' | 'logs' | 'limits'>('files');
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const handleServerAction = async (action: string) => {
     setIsLoading(true);
@@ -243,6 +245,15 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
             >
               Újraindítás
             </button>
+            <div className="pt-4 border-t border-gray-200 mt-4">
+              <button
+                onClick={() => setShowDeleteDialog(true)}
+                disabled={isLoading}
+                className="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Szerver Törlése
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -410,6 +421,20 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
         currentMachineId={server.machineId}
         locale={locale}
       />
+
+      {/* Törlés Dialog */}
+      {showDeleteDialog && (
+        <ServerDeleteDialog
+          serverId={server.id}
+          serverName={server.name}
+          locale={locale}
+          onClose={() => setShowDeleteDialog(false)}
+          onDeleted={() => {
+            // Átirányítás a szerverek listájára
+            window.location.href = `/${locale}/admin/servers`;
+          }}
+        />
+      )}
     </div>
   );
 }
