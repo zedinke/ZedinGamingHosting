@@ -79,7 +79,10 @@ export async function POST(
         // Várunk, hogy a szerver leálljon
         await new Promise(resolve => setTimeout(resolve, 3000));
       } catch (error) {
-        logger.warn('Error stopping server before reinstall', { error });
+        logger.warn('Error stopping server before reinstall', {
+          serverId: id,
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
     }
 
