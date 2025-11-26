@@ -273,6 +273,28 @@ $SUDO_CMD chown $AGENT_USER:$AGENT_USER $AGENT_DIR || {
     exit 1
 }
 
+# SteamCMD telepítése (globálisan a szervergépen)
+echo "SteamCMD telepítése..."
+STEAMCMD_DIR="/opt/steamcmd"
+if [ ! -f "$STEAMCMD_DIR/steamcmd.sh" ]; then
+    echo "SteamCMD letöltése és telepítése..."
+    $SUDO_CMD mkdir -p $STEAMCMD_DIR || {
+        echo "HIBA: SteamCMD könyvtár létrehozása sikertelen" >&2
+        exit 1
+    }
+    cd $STEAMCMD_DIR
+    $SUDO_CMD wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | $SUDO_CMD tar zxf - || {
+        echo "HIBA: SteamCMD letöltése sikertelen" >&2
+        exit 1
+    }
+    $SUDO_CMD chown -R $AGENT_USER:$AGENT_USER $STEAMCMD_DIR || {
+        echo "Figyelmeztetés: SteamCMD könyvtár tulajdonjog beállítása sikertelen" >&2
+    }
+    echo "SteamCMD telepítve: $STEAMCMD_DIR/steamcmd.sh"
+else
+    echo "SteamCMD már telepítve: $STEAMCMD_DIR/steamcmd.sh"
+fi
+
 # Könyvtárak létrehozása game serverekhez
 echo "Game server könyvtárak létrehozása..."
 $SUDO_CMD mkdir -p /opt/servers || { echo "Figyelmeztetés: /opt/servers létrehozása sikertelen" >&2; }

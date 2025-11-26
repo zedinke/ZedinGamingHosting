@@ -112,6 +112,37 @@ export async function installGameServer(
     if (!isARK || !(await checkARKSharedInstallation(server.userId, machine.id, gameType, machine))) {
       let installScript = gameConfig.installScript;
       
+      // SteamCMD elérési út beállítása (globális SteamCMD használata)
+      const globalSteamCMD = '/opt/steamcmd/steamcmd.sh';
+      
+      // Eltávolítjuk a SteamCMD letöltési részeket (mert már globálisan telepítve van)
+      // Több soros if blokkok eltávolítása (egyszerűbb regex)
+      installScript = installScript.replace(/if \[ ! -f steamcmd\.sh \]; then[\s\S]*?fi\s*/g, '');
+      installScript = installScript.replace(/if \[ ! -f \.\.\/steamcmd\.sh \]; then[\s\S]*?fi\s*/g, '');
+      
+      // SteamCMD letöltési sorok eltávolítása
+      installScript = installScript.replace(/wget.*steamcmd.*\n/g, '');
+      installScript = installScript.replace(/tar.*steamcmd.*\n/g, '');
+      installScript = installScript.replace(/echo.*[Dd]ownloading.*[Ss]teamCMD.*\n/gi, '');
+      
+      // Cseréljük le a lokális steamcmd.sh hivatkozásokat a globálisra
+      // Először a relatív útvonalakat
+      installScript = installScript.replace(/\.\/steamcmd\.sh/g, globalSteamCMD);
+      // Aztán a sima steamcmd.sh hivatkozásokat (ha nincs előtte /opt/steamcmd/)
+      installScript = installScript.replace(/([^\/]|^)steamcmd\.sh/g, `$1${globalSteamCMD}`);
+      
+      // Ellenőrizzük, hogy a globális SteamCMD létezik-e
+      const steamcmdCheck = `# Globális SteamCMD ellenőrzése
+STEAMCMD="${globalSteamCMD}"
+if [ ! -f "$STEAMCMD" ]; then
+  echo "HIBA: Globális SteamCMD nem található: $STEAMCMD" >&2
+  echo "Kérjük, telepítsd a SteamCMD-et az agent telepítés során!" >&2
+  exit 1
+fi
+`;
+      // Hozzáadjuk az ellenőrzést a script elejéhez (set -e után)
+      installScript = installScript.replace(/(set -e\n)/, `$1${steamcmdCheck}`);
+      
       // ARK-nál a közös path-ot használjuk
       if (isARK && sharedPath) {
         installScript = installScript.replace(/\/opt\/servers\/\{serverId\}/g, sharedPath);
@@ -438,15 +469,17 @@ async function installARKSharedFiles(
     mkdir -p ${sharedPath}
     cd ${sharedPath}
     
-    # SteamCMD letöltése ha nincs
-    if [ ! -f steamcmd.sh ]; then
-      echo "Downloading SteamCMD..."
-      wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf -
+    # Globális SteamCMD használata
+    STEAMCMD="/opt/steamcmd/steamcmd.sh"
+    if [ ! -f "$STEAMCMD" ]; then
+      echo "HIBA: Globális SteamCMD nem található: $STEAMCMD" >&2
+      echo "Kérjük, telepítsd a SteamCMD-et az agent telepítés során!" >&2
+      exit 1
     fi
     
     # ARK szerver fájlok letöltése
     echo "Installing ARK server files (this may take a while)..."
-    ./steamcmd.sh +force_install_dir ${sharedPath} +login anonymous +app_update ${steamAppId} validate +quit
+    $STEAMCMD +force_install_dir ${sharedPath} +login anonymous +app_update ${steamAppId} validate +quit
     
     # Szükséges könyvtárak létrehozása
     mkdir -p ShooterGame/Saved/Config/LinuxServer

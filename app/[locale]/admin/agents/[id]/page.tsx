@@ -22,6 +22,10 @@ export default async function AgentDetailPage({
           name: true,
           ipAddress: true,
           status: true,
+          sshPort: true,
+          sshUser: true,
+          sshKeyPath: true,
+          sshPassword: true,
         },
       },
       _count: {

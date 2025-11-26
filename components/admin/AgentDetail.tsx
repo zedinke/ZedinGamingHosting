@@ -58,6 +58,9 @@ export function AgentDetail({ agent, servers, recentTasks, locale }: AgentDetail
   const [showApiKey, setShowApiKey] = useState(false);
   const [apiKey, setApiKey] = useState(agent.apiKey);
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [isReinstalling, setIsReinstalling] = useState(false);
+  const [reinstallLogs, setReinstallLogs] = useState<string[]>([]);
+  const [showReinstallDialog, setShowReinstallDialog] = useState(false);
 
   const handleRegenerateApiKey = async () => {
     if (!confirm('Biztosan újragenerálni szeretnéd az API kulcsot? A régi kulcs azonnal érvénytelenné válik.')) {
@@ -91,6 +94,47 @@ export function AgentDetail({ agent, servers, recentTasks, locale }: AgentDetail
     if (apiKey) {
       navigator.clipboard.writeText(apiKey);
       toast.success('API kulcs másolva');
+    }
+  };
+
+  const handleReinstall = async () => {
+    if (!confirm('Biztosan újratelepíted az agentet? Ez néhány percig eltarthat, és az agent szolgáltatás újraindul.')) {
+      return;
+    }
+
+    setIsReinstalling(true);
+    setShowReinstallDialog(true);
+    setReinstallLogs([]);
+    
+    try {
+      const response = await fetch(`/api/admin/agents/${agent.id}/reinstall`, {
+        method: 'POST',
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        toast.error(result.error || 'Hiba történt az agent újratelepítése során');
+        if (result.logs) {
+          setReinstallLogs(result.logs);
+        }
+        return;
+      }
+
+      toast.success('Agent sikeresen újratelepítve');
+      if (result.logs) {
+        setReinstallLogs(result.logs);
+      }
+      
+      // Oldal frissítése néhány másodperc után
+      setTimeout(() => {
+        window.location.reload();
+      }, 3000);
+    } catch (error) {
+      toast.error('Hiba történt');
+      console.error('Reinstall error:', error);
+    } finally {
+      setIsReinstalling(false);
     }
   };
 
@@ -203,6 +247,23 @@ export function AgentDetail({ agent, servers, recentTasks, locale }: AgentDetail
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Agent Műveletek */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Agent Műveletek</h2>
+        <div className="flex gap-2">
+          <button
+            onClick={handleReinstall}
+            disabled={isReinstalling}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+          >
+            {isReinstalling ? 'Újratelepítés...' : 'Agent Újratelepítése'}
+          </button>
+        </div>
+        <p className="text-sm text-gray-600 mt-2">
+          Az újratelepítés során az agent szolgáltatás újraindul, és a SteamCMD is újratelepítésre kerül, ha szükséges.
+        </p>
       </div>
 
       {/* API Kulcs */}
@@ -334,6 +395,74 @@ export function AgentDetail({ agent, servers, recentTasks, locale }: AgentDetail
           </div>
         )}
       </div>
+
+      {/* Újratelepítési dialógus */}
+      {showReinstallDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-3xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold text-gray-900">Agent Újratelepítés</h2>
+                <button
+                  onClick={() => {
+                    if (!isReinstalling) {
+                      setShowReinstallDialog(false);
+                      setReinstallLogs([]);
+                    }
+                  }}
+                  className="text-gray-500 hover:text-gray-700 disabled:opacity-50"
+                  disabled={isReinstalling}
+                >
+                  ✕
+                </button>
+              </div>
+
+              {isReinstalling ? (
+                <div>
+                  <div className="text-center py-4">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+                    <p className="mt-4 text-gray-600">Újratelepítés folyamatban...</p>
+                  </div>
+                  {reinstallLogs.length > 0 && (
+                    <div className="mt-4 bg-gray-900 text-gray-100 p-4 rounded-lg font-mono text-sm max-h-96 overflow-y-auto">
+                      {reinstallLogs.map((log, index) => (
+                        <div key={index} className="mb-1 text-gray-300">
+                          {log}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  {reinstallLogs.length > 0 ? (
+                    <div className="bg-gray-900 text-gray-100 p-4 rounded-lg font-mono text-sm max-h-96 overflow-y-auto">
+                      {reinstallLogs.map((log, index) => (
+                        <div key={index} className="mb-1 text-gray-300">
+                          {log}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-600">Nincs log üzenet</p>
+                  )}
+                  <div className="mt-6 flex justify-end">
+                    <button
+                      onClick={() => {
+                        setShowReinstallDialog(false);
+                        setReinstallLogs([]);
+                      }}
+                      className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
+                    >
+                      Bezárás
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

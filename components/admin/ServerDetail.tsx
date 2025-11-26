@@ -9,6 +9,7 @@ import { ServerBackupManager } from './ServerBackupManager';
 import { ServerResourceMonitor } from './ServerResourceMonitor';
 import { ServerConfigEditor } from './ServerConfigEditor';
 import { ServerLogsViewer } from './ServerLogsViewer';
+import { GameServerStartupLogs } from './GameServerStartupLogs';
 import { ServerMetrics } from './ServerMetrics';
 import { ResourceLimitsEditor } from './ResourceLimitsEditor';
 import { ServerScaling } from './ServerScaling';
@@ -67,8 +68,11 @@ interface ServerDetailProps {
 export function ServerDetail({ server, locale }: ServerDetailProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [serverStatus, setServerStatus] = useState(server.status);
-  const [activeTab, setActiveTab] = useState<'files' | 'console' | 'backup' | 'config' | 'logs' | 'limits'>('files');
+  const [activeTab, setActiveTab] = useState<'files' | 'console' | 'backup' | 'config' | 'logs' | 'startup-logs' | 'limits'>('files');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showVerifyDialog, setShowVerifyDialog] = useState(false);
+  const [verifyResults, setVerifyResults] = useState<any>(null);
+  const [isVerifying, setIsVerifying] = useState(false);
 
   const handleServerAction = async (action: string) => {
     setIsLoading(true);
@@ -302,6 +306,40 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
               >
                 Service Újratelepítése
               </button>
+              <button
+                onClick={async () => {
+                  setIsVerifying(true);
+                  setShowVerifyDialog(true);
+                  try {
+                    const response = await fetch(`/api/admin/servers/${server.id}/verify-installation`, {
+                      method: 'POST',
+                    });
+                    const result = await response.json();
+                    if (response.ok) {
+                      setVerifyResults(result);
+                      if (result.hasErrors) {
+                        toast.error('Telepítési hibák találhatók - nézd meg az ellenőrzési eredményeket');
+                      } else if (result.hasWarnings) {
+                        toast.warning('Telepítési figyelmeztetések találhatók');
+                      } else {
+                        toast.success('Telepítés ellenőrzése sikeres - minden rendben');
+                      }
+                    } else {
+                      toast.error(result.error || 'Hiba történt');
+                      setVerifyResults(null);
+                    }
+                  } catch (error) {
+                    toast.error('Hiba történt');
+                    setVerifyResults(null);
+                  } finally {
+                    setIsVerifying(false);
+                  }
+                }}
+                disabled={isLoading || isVerifying}
+                className="w-full bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isVerifying ? 'Ellenőrzés...' : 'Telepítés Ellenőrzése'}
+              </button>
             </div>
             <div className="pt-4 border-t border-gray-200 mt-4">
               <button
@@ -432,7 +470,17 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
                   : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
-              Logok
+              Játék Logok
+            </button>
+            <button
+              onClick={() => setActiveTab('startup-logs')}
+              className={`px-4 py-2 border-b-2 font-medium transition-colors ${
+                activeTab === 'startup-logs'
+                  ? 'border-primary-600 text-primary-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Indítási Logok
             </button>
             <button
               onClick={() => setActiveTab('limits')}
@@ -458,6 +506,7 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
           />
         )}
         {activeTab === 'logs' && <ServerLogsViewer serverId={server.id} autoRefresh={true} />}
+        {activeTab === 'startup-logs' && <GameServerStartupLogs serverId={server.id} autoRefresh={true} />}
         {activeTab === 'limits' && <ResourceLimitsEditor serverId={server.id} />}
       </div>
 
@@ -492,6 +541,122 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
             window.location.href = `/${locale}/admin/servers`;
           }}
         />
+      )}
+
+      {/* Telepítés ellenőrzési dialógus */}
+      {showVerifyDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold text-gray-900">Telepítés Ellenőrzése</h2>
+                <button
+                  onClick={() => {
+                    setShowVerifyDialog(false);
+                    setVerifyResults(null);
+                  }}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {isVerifying ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+                  <p className="mt-4 text-gray-600">Ellenőrzés folyamatban...</p>
+                </div>
+              ) : verifyResults ? (
+                <div>
+                  <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+                    <div className="grid grid-cols-4 gap-4 text-center">
+                      <div>
+                        <div className="text-2xl font-bold text-gray-900">{verifyResults.summary.total}</div>
+                        <div className="text-sm text-gray-600">Összes</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-green-600">{verifyResults.summary.ok}</div>
+                        <div className="text-sm text-gray-600">Rendben</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-yellow-600">{verifyResults.summary.warnings}</div>
+                        <div className="text-sm text-gray-600">Figyelmeztetés</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-red-600">{verifyResults.summary.errors}</div>
+                        <div className="text-sm text-gray-600">Hiba</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    {verifyResults.results.map((result: any, index: number) => (
+                      <div
+                        key={index}
+                        className={`p-3 rounded-lg border ${
+                          result.status === 'ok'
+                            ? 'bg-green-50 border-green-200'
+                            : result.status === 'warning'
+                            ? 'bg-yellow-50 border-yellow-200'
+                            : 'bg-red-50 border-red-200'
+                        }`}
+                      >
+                        <div className="flex items-start">
+                          <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center mr-3 ${
+                            result.status === 'ok'
+                              ? 'bg-green-500'
+                              : result.status === 'warning'
+                              ? 'bg-yellow-500'
+                              : 'bg-red-500'
+                          }`}>
+                            {result.status === 'ok' ? '✓' : result.status === 'warning' ? '⚠' : '✗'}
+                          </div>
+                          <div className="flex-1">
+                            <div className="font-semibold text-gray-900">{result.check}</div>
+                            <div className={`text-sm mt-1 ${
+                              result.status === 'ok'
+                                ? 'text-green-700'
+                                : result.status === 'warning'
+                                ? 'text-yellow-700'
+                                : 'text-red-700'
+                            }`}>
+                              {result.message}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {verifyResults.hasErrors && (
+                    <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-sm text-red-800">
+                        <strong>Figyelem:</strong> Telepítési hibák találhatók. A szerver valószínűleg nem fog elindulni. 
+                        Ellenőrizd az "Indítási Logok" tab-ot további részletekért.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  Nincs ellenőrzési eredmény
+                </div>
+              )}
+
+              <div className="mt-6 flex justify-end">
+                <button
+                  onClick={() => {
+                    setShowVerifyDialog(false);
+                    setVerifyResults(null);
+                  }}
+                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
+                >
+                  Bezárás
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

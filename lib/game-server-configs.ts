@@ -255,11 +255,50 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
     installScript: `
       #!/bin/bash
       set -e
-      cd /opt/servers/{serverId}
+      SERVER_DIR="/opt/servers/{serverId}"
+      cd "$SERVER_DIR"
+      
+      # SteamCMD letöltése ha nincs
       if [ ! -f steamcmd.sh ]; then
+        echo "Downloading SteamCMD..."
         wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf -
       fi
-      ./steamcmd.sh +force_install_dir /opt/servers/{serverId} +login anonymous +app_update 556450 validate +quit
+      
+      # The Forest szerver telepítése
+      echo "Installing The Forest dedicated server..."
+      ./steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 556450 validate +quit
+      
+      # A The Forest szerver fájlok általában a root könyvtárban vannak, de ellenőrizzük
+      if [ ! -f "$SERVER_DIR/TheForestDedicatedServer.x86_64" ]; then
+        echo "Searching for TheForestDedicatedServer.x86_64..."
+        SERVER_FILE=$(find "$SERVER_DIR" -name "TheForestDedicatedServer.x86_64" -type f 2>/dev/null | head -1)
+        if [ -n "$SERVER_FILE" ]; then
+          echo "Found server file at: $SERVER_FILE"
+          # Ha nem a root könyvtárban van, létrehozunk egy symlink-et
+          if [ "$SERVER_FILE" != "$SERVER_DIR/TheForestDedicatedServer.x86_64" ]; then
+            ln -sf "$SERVER_FILE" "$SERVER_DIR/TheForestDedicatedServer.x86_64"
+            echo "Created symlink to server file"
+          fi
+        else
+          echo "ERROR: TheForestDedicatedServer.x86_64 not found after installation!"
+          echo "Installation directory contents:"
+          ls -la "$SERVER_DIR" || true
+          exit 1
+        fi
+      fi
+      
+      # Végrehajtási jogosultságok beállítása
+      echo "Setting executable permissions..."
+      chmod +x "$SERVER_DIR/TheForestDedicatedServer.x86_64" 2>/dev/null || true
+      find "$SERVER_DIR" -name "TheForestDedicatedServer.x86_64" -exec chmod +x {} \\; 2>/dev/null || true
+      
+      # Ellenőrizzük, hogy a fájl végrehajtható-e
+      if [ -x "$SERVER_DIR/TheForestDedicatedServer.x86_64" ]; then
+        echo "Server file is executable - installation successful"
+      else
+        echo "WARNING: Server file is not executable, attempting to fix..."
+        chmod +x "$SERVER_DIR/TheForestDedicatedServer.x86_64"
+      fi
     `,
     configPath: '/opt/servers/{serverId}/config/config.cfg',
     startCommand: './TheForestDedicatedServer.x86_64 -batchmode -nographics -dedicated',
