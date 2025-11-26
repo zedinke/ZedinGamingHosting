@@ -89,27 +89,42 @@ export async function installAgentViaSSH(
       
       logs.push('Script sikeresen másolva a szerverre');
       
-      // Script futtatása a szerveren
+      // Script végrehajthatóvá tétele és futtatása
+      logs.push('Script végrehajthatóvá tétele...');
+      await executeSSHCommand(config, `chmod +x ${tempRemotePath}`);
+      
       logs.push('Script futtatása a szerveren...');
-      const scriptResult = await executeSSHCommand(config, `bash ${tempRemotePath}`);
+      const scriptResult = await executeSSHCommand(config, `bash ${tempRemotePath} 2>&1`);
       
       // Ideiglenes fájl törlése a szerverről
       await executeSSHCommand(config, `rm -f ${tempRemotePath}`).catch(() => {
         // Ignore cleanup errors
       });
 
+      // A script output tartalmazza mind a stdout-ot, mind a stderr-t (2>&1 miatt)
+      const scriptOutput = scriptResult.stdout || scriptResult.stderr || '';
+      
       if (scriptResult.exitCode !== 0) {
-        logs.push(`Script futtatási hiba: ${scriptResult.stderr}`);
-        logs.push(`Script stdout: ${scriptResult.stdout.substring(0, 1000)}`);
+        logs.push(`Script futtatási hiba (exit code: ${scriptResult.exitCode})`);
+        logs.push(`Script stderr: ${scriptResult.stderr || 'Nincs stderr'}`);
+        logs.push(`Script stdout: ${scriptOutput.substring(0, 2000)}`);
+        
+        // Részletesebb hibaüzenet
+        const errorMessage = scriptResult.stderr 
+          ? `Agent telepítési script sikertelen: ${scriptResult.stderr.substring(0, 500)}`
+          : scriptOutput 
+            ? `Agent telepítési script sikertelen: ${scriptOutput.substring(0, 500)}`
+            : 'Agent telepítési script sikertelen (ismeretlen hiba)';
+        
         return {
           success: false,
-          error: `Agent telepítési script sikertelen: ${scriptResult.stderr || scriptResult.stdout.substring(0, 200)}`,
+          error: errorMessage,
           logs,
         };
       }
 
       logs.push('Agent telepítési script sikeresen lefutott');
-      logs.push(`Script output (első 500 karakter): ${scriptResult.stdout.substring(0, 500)}...`);
+      logs.push(`Script output (első 1000 karakter): ${scriptOutput.substring(0, 1000)}...`);
     } finally {
       // Lokális ideiglenes fájl törlése
       try {
@@ -158,22 +173,26 @@ function generateInstallScript(managerUrl: string): string {
 set -e
 
 echo "Game Server Agent telepítése..."
+echo "Felhasználó: $USER"
+echo "Home könyvtár: $HOME"
 
 # Sudo NOPASSWD ellenőrzése
 echo "Sudo jogosultságok ellenőrzése..."
 if ! sudo -n true 2>/dev/null; then
-    echo "HIBA: A felhasználónak NOPASSWD sudo jogosultságokra van szüksége!"
-    echo "Futtasd ezt a parancsot root-ként a szerveren:"
-    echo "sudo tee /etc/sudoers.d/gameserver > /dev/null <<EOF"
-    echo "gameserver ALL=(ALL) NOPASSWD: /usr/bin/systemctl"
-    echo "gameserver ALL=(ALL) NOPASSWD: /usr/sbin/service"
-    echo "gameserver ALL=(ALL) NOPASSWD: /usr/bin/apt-get"
-    echo "gameserver ALL=(ALL) NOPASSWD: /usr/bin/apt"
-    echo "gameserver ALL=(ALL) NOPASSWD: /bin/mount"
-    echo "gameserver ALL=(ALL) NOPASSWD: /bin/umount"
-    echo "gameserver ALL=(ALL) NOPASSWD: /bin/mkdir"
-    echo "gameserver ALL=(ALL) NOPASSWD: /bin/chown"
-    echo "EOF"
+    echo "HIBA: A felhasználónak NOPASSWD sudo jogosultságokra van szüksége!" >&2
+    echo "Futtasd ezt a parancsot root-ként a szerveren:" >&2
+    echo "sudo tee /etc/sudoers.d/gameserver > /dev/null <<EOF" >&2
+    echo "gameserver ALL=(ALL) NOPASSWD: /usr/bin/systemctl" >&2
+    echo "gameserver ALL=(ALL) NOPASSWD: /usr/sbin/service" >&2
+    echo "gameserver ALL=(ALL) NOPASSWD: /usr/bin/apt-get" >&2
+    echo "gameserver ALL=(ALL) NOPASSWD: /usr/bin/apt" >&2
+    echo "gameserver ALL=(ALL) NOPASSWD: /bin/mount" >&2
+    echo "gameserver ALL=(ALL) NOPASSWD: /bin/umount" >&2
+    echo "gameserver ALL=(ALL) NOPASSWD: /bin/mkdir" >&2
+    echo "gameserver ALL=(ALL) NOPASSWD: /bin/chown" >&2
+    echo "gameserver ALL=(ALL) NOPASSWD: /usr/bin/tee" >&2
+    echo "EOF" >&2
+    echo "sudo chmod 440 /etc/sudoers.d/gameserver" >&2
     exit 1
 fi
 echo "Sudo jogosultságok rendben"
@@ -181,21 +200,41 @@ echo "Sudo jogosultságok rendben"
 # Node.js ellenőrzése
 if ! command -v node &> /dev/null; then
     echo "Node.js telepítése..."
-    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -n -E bash -
-    sudo -n apt-get install -y nodejs
+    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -n -E bash - || {
+        echo "HIBA: Node.js telepítési script sikertelen" >&2
+        exit 1
+    }
+    sudo -n apt-get update || echo "apt-get update figyelmeztetés (nem kritikus)"
+    sudo -n apt-get install -y nodejs || {
+        echo "HIBA: Node.js telepítés sikertelen" >&2
+        exit 1
+    }
+    echo "Node.js telepítve: $(node --version)"
+else
+    echo "Node.js már telepítve: $(node --version)"
 fi
 
 # Agent könyvtár létrehozása
 AGENT_DIR="/opt/game-server-agent"
-sudo -n mkdir -p $AGENT_DIR
-sudo -n chown $USER:$USER $AGENT_DIR
+echo "Agent könyvtár létrehozása: $AGENT_DIR"
+sudo -n mkdir -p $AGENT_DIR || {
+    echo "HIBA: Agent könyvtár létrehozása sikertelen" >&2
+    exit 1
+}
+sudo -n chown $USER:$USER $AGENT_DIR || {
+    echo "HIBA: Agent könyvtár tulajdonjog beállítása sikertelen" >&2
+    exit 1
+}
 
 # Könyvtárak létrehozása game serverekhez
-sudo -n mkdir -p /opt/servers
-sudo -n mkdir -p /opt/ark-shared
-sudo -n mkdir -p /opt/ark-clusters
-sudo -n mkdir -p /opt/backups
-sudo -n chown -R $USER:$USER /opt/servers /opt/ark-shared /opt/ark-clusters /opt/backups
+echo "Game server könyvtárak létrehozása..."
+sudo -n mkdir -p /opt/servers || { echo "Figyelmeztetés: /opt/servers létrehozása sikertelen" >&2; }
+sudo -n mkdir -p /opt/ark-shared || { echo "Figyelmeztetés: /opt/ark-shared létrehozása sikertelen" >&2; }
+sudo -n mkdir -p /opt/ark-clusters || { echo "Figyelmeztetés: /opt/ark-clusters létrehozása sikertelen" >&2; }
+sudo -n mkdir -p /opt/backups || { echo "Figyelmeztetés: /opt/backups létrehozása sikertelen" >&2; }
+sudo -n chown -R $USER:$USER /opt/servers /opt/ark-shared /opt/ark-clusters /opt/backups 2>/dev/null || {
+    echo "Figyelmeztetés: Könyvtárak tulajdonjog beállítása részben sikertelen" >&2
+}
 
 # Agent letöltése és telepítése
 cd $AGENT_DIR
@@ -464,10 +503,15 @@ main().catch((error) => {
 AGENT_EOF
 
 # NPM függőségek telepítése
-npm install
+echo "NPM függőségek telepítése..."
+npm install || {
+    echo "HIBA: NPM függőségek telepítése sikertelen" >&2
+    exit 1
+}
 
 # Fájlok jogosultságok beállítása
 chmod +x index.js
+echo "Agent fájlok létrehozva"
 
 # Konfiguráció létrehozása
 cat > config.json <<EOF
@@ -497,11 +541,31 @@ WantedBy=multi-user.target
 EOF
 
 # Service indítása
-sudo -n systemctl daemon-reload
-sudo -n systemctl enable game-server-agent
-sudo -n systemctl start game-server-agent
+echo "Systemd service beállítása..."
+sudo -n systemctl daemon-reload || {
+    echo "HIBA: systemctl daemon-reload sikertelen" >&2
+    exit 1
+}
+sudo -n systemctl enable game-server-agent || {
+    echo "HIBA: systemctl enable sikertelen" >&2
+    exit 1
+}
+sudo -n systemctl start game-server-agent || {
+    echo "HIBA: systemctl start sikertelen" >&2
+    exit 1
+}
 
-echo "Agent telepítve és elindítva!"
+# Service státusz ellenőrzése
+sleep 2
+if sudo -n systemctl is-active --quiet game-server-agent; then
+    echo "Agent telepítve és elindítva!"
+    echo "Service státusz: $(sudo -n systemctl is-active game-server-agent)"
+else
+    echo "FIGYELMEZTETÉS: Agent service nem aktív" >&2
+    echo "Service státusz: $(sudo -n systemctl is-active game-server-agent || echo 'inactive')" >&2
+    echo "Service logok:" >&2
+    sudo -n journalctl -u game-server-agent -n 20 --no-pager >&2 || true
+fi
 `;
 }
 
