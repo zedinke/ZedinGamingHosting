@@ -4,8 +4,23 @@ import { join } from 'path';
 type TranslationKey = string;
 type Translations = Record<string, any>;
 
+// Érvényes locale-ok listája
+const VALID_LOCALES = ['hu', 'en'];
+
 // Fordítások betöltése
 function loadTranslations(locale: string, namespace: string = 'common'): Translations {
+  // Ellenőrizzük, hogy a locale érvényes-e (pl. favicon.ico ne legyen locale)
+  if (!VALID_LOCALES.includes(locale)) {
+    // Ha nem érvényes locale, próbáljuk meg az angol verziót
+    try {
+      const fallbackPath = join(process.cwd(), 'public', 'locales', 'en', `${namespace}.json`);
+      const fallbackContents = readFileSync(fallbackPath, 'utf-8');
+      return JSON.parse(fallbackContents);
+    } catch {
+      return {};
+    }
+  }
+
   try {
     const filePath = join(process.cwd(), 'public', 'locales', locale, `${namespace}.json`);
     
@@ -19,20 +34,20 @@ function loadTranslations(locale: string, namespace: string = 'common'): Transla
         try {
           const fallbackPath = join(process.cwd(), 'public', 'locales', 'en', `${namespace}.json`);
           const fallbackContents = readFileSync(fallbackPath, 'utf-8');
-          console.warn(`Translation file not found for ${locale}/${namespace}, using English fallback`);
           return JSON.parse(fallbackContents);
         } catch {
           // Ha az angol sem létezik, üres objektum
-          console.error(`Translation file not found for ${locale}/${namespace} or en/${namespace}`);
           return {};
         }
       } else {
-        console.error(`Translation file not found for ${locale}/${namespace}:`, fileError);
         return {};
       }
     }
   } catch (error) {
-    console.error(`Failed to load translations for ${locale}/${namespace}:`, error);
+    // Csak akkor logoljuk, ha valódi hiba van, ne a favicon.ico-t
+    if (VALID_LOCALES.includes(locale)) {
+      console.error(`Failed to load translations for ${locale}/${namespace}:`, error);
+    }
     return {};
   }
 }
