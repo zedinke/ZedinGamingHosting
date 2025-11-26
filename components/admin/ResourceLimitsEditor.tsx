@@ -88,9 +88,9 @@ export function ResourceLimitsEditor({ serverId }: ResourceLimitsEditorProps) {
   }
 
   return (
-    <div className="card">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">Erőforrás Limitok</h2>
+        <h2 className="text-xl font-bold text-gray-900">Erőforrás Limitok</h2>
         <button
           onClick={handleSave}
           disabled={saving}

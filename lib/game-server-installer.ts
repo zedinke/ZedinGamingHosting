@@ -216,7 +216,7 @@ export async function installGameServer(
     }
 
     // Systemd service létrehozása
-    await createSystemdService(serverId, gameType, gameConfig, config, machine, {
+    await createSystemdServiceForServer(serverId, gameType, gameConfig, config, machine, {
       isARK,
       sharedPath,
       serverPath,
@@ -496,9 +496,9 @@ async function installARKSharedFiles(
 }
 
 /**
- * Systemd service létrehozása
+ * Systemd service létrehozása (exportálva újratelepítéshez)
  */
-async function createSystemdService(
+export async function createSystemdServiceForServer(
   serverId: string,
   gameType: GameType,
   gameConfig: any,

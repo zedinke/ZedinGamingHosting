@@ -72,24 +72,24 @@ export function PerformanceDashboard() {
         </div>
       </div>
 
-      <div className="card">
-        <h3 className="text-lg font-bold mb-4">Leglassabb Endpointok</h3>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 className="text-lg font-bold text-gray-900 mb-4">Leglassabb Endpointok</h3>
         {metrics.slowestEndpoints.length === 0 ? (
           <p className="text-gray-500 text-center py-4">Nincs adat</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full text-gray-700">
               <thead>
-                <tr className="border-b">
-                  <th className="text-left py-2 px-4">Endpoint</th>
-                  <th className="text-left py-2 px-4">Method</th>
-                  <th className="text-right py-2 px-4">Átlagos Idő (ms)</th>
+                <tr className="border-b border-gray-200 bg-gray-50">
+                  <th className="text-left py-2 px-4 font-semibold text-gray-900">Endpoint</th>
+                  <th className="text-left py-2 px-4 font-semibold text-gray-900">Method</th>
+                  <th className="text-right py-2 px-4 font-semibold text-gray-900">Átlagos Idő (ms)</th>
                 </tr>
               </thead>
               <tbody>
                 {metrics.slowestEndpoints.map((endpoint, index) => (
-                  <tr key={index} className="border-b hover:bg-gray-50">
-                    <td className="py-2 px-4 font-mono text-sm">{endpoint.endpoint}</td>
+                  <tr key={index} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                    <td className="py-2 px-4 font-mono text-sm text-gray-900">{endpoint.endpoint}</td>
                     <td className="py-2 px-4">
                       <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
                         {endpoint.method}

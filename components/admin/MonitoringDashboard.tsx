@@ -250,33 +250,33 @@ export function MonitoringDashboard({
       </div>
 
       {/* Szerver Gépek Áttekintés */}
-      <div className="card">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">Szerver Gépek Áttekintés</h2>
+          <h2 className="text-xl font-bold text-gray-900">Szerver Gépek Áttekintés</h2>
           <Link
             href={`/${locale}/admin/machines`}
-            className="text-primary-600 hover:underline text-sm"
+            className="text-primary-600 hover:underline text-sm font-medium"
           >
             Összes megtekintése →
           </Link>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full text-gray-700">
             <thead>
-              <tr className="border-b">
-                <th className="text-left p-3">Név</th>
-                <th className="text-left p-3">IP Cím</th>
-                <th className="text-left p-3">Státusz</th>
-                <th className="text-left p-3">Agentek</th>
-                <th className="text-left p-3">Szerverek</th>
-                <th className="text-left p-3">Utolsó Heartbeat</th>
-                <th className="text-left p-3">Műveletek</th>
+              <tr className="border-b border-gray-200 bg-gray-50">
+                <th className="text-left p-3 font-semibold text-gray-900">Név</th>
+                <th className="text-left p-3 font-semibold text-gray-900">IP Cím</th>
+                <th className="text-left p-3 font-semibold text-gray-900">Státusz</th>
+                <th className="text-left p-3 font-semibold text-gray-900">Agentek</th>
+                <th className="text-left p-3 font-semibold text-gray-900">Szerverek</th>
+                <th className="text-left p-3 font-semibold text-gray-900">Utolsó Heartbeat</th>
+                <th className="text-left p-3 font-semibold text-gray-900">Műveletek</th>
               </tr>
             </thead>
             <tbody>
               {machines.map((machine) => (
-                <tr key={machine.id} className="border-b hover:bg-gray-50">
-                  <td className="p-3 font-medium">{machine.name}</td>
+                <tr key={machine.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                  <td className="p-3 font-medium text-gray-800">{machine.name}</td>
                   <td className="p-3">{machine.ipAddress}</td>
                   <td className="p-3">
                     <span
@@ -305,8 +305,8 @@ export function MonitoringDashboard({
                       )}
                     </div>
                   </td>
-                  <td className="p-3">{machine._count.servers}</td>
-                  <td className="p-3 text-sm text-gray-600">
+                  <td className="p-3 text-gray-900">{machine._count.servers}</td>
+                  <td className="p-3 text-sm text-gray-700">
                     {machine.lastHeartbeat
                       ? new Date(machine.lastHeartbeat).toLocaleString('hu-HU')
                       : '-'}
@@ -314,7 +314,7 @@ export function MonitoringDashboard({
                   <td className="p-3">
                     <Link
                       href={`/${locale}/admin/machines/${machine.id}`}
-                      className="text-primary-600 hover:underline text-sm"
+                      className="text-primary-600 hover:underline text-sm font-medium"
                     >
                       Részletek
                     </Link>
@@ -327,31 +327,31 @@ export function MonitoringDashboard({
       </div>
 
       {/* Legutóbbi Feladatok */}
-      <div className="card">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">Legutóbbi Feladatok</h2>
+          <h2 className="text-xl font-bold text-gray-900">Legutóbbi Feladatok</h2>
           <Link
             href={`/${locale}/admin/tasks`}
-            className="text-primary-600 hover:underline text-sm"
+            className="text-primary-600 hover:underline text-sm font-medium"
           >
             Összes megtekintése →
           </Link>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full text-gray-700">
             <thead>
-              <tr className="border-b">
-                <th className="text-left p-3">Típus</th>
-                <th className="text-left p-3">Státusz</th>
-                <th className="text-left p-3">Gép</th>
-                <th className="text-left p-3">Szerver</th>
-                <th className="text-left p-3">Létrehozva</th>
+              <tr className="border-b border-gray-200 bg-gray-50">
+                <th className="text-left p-3 font-semibold text-gray-900">Típus</th>
+                <th className="text-left p-3 font-semibold text-gray-900">Státusz</th>
+                <th className="text-left p-3 font-semibold text-gray-900">Gép</th>
+                <th className="text-left p-3 font-semibold text-gray-900">Szerver</th>
+                <th className="text-left p-3 font-semibold text-gray-900">Létrehozva</th>
               </tr>
             </thead>
             <tbody>
               {recentTasks.map((task) => (
-                <tr key={task.id} className="border-b hover:bg-gray-50">
-                  <td className="p-3 font-medium">{task.type}</td>
+                <tr key={task.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                  <td className="p-3 font-medium text-gray-800">{task.type}</td>
                   <td className="p-3">
                     <span
                       className={`px-2 py-1 rounded text-xs font-semibold ${getTaskStatusColor(
@@ -361,7 +361,7 @@ export function MonitoringDashboard({
                       {task.status}
                     </span>
                   </td>
-                  <td className="p-3 text-sm">
+                  <td className="p-3 text-sm text-gray-900">
                     {task.agent ? (
                       <span>
                         {task.agent.machine.name} ({task.agent.machine.ipAddress})
@@ -374,7 +374,7 @@ export function MonitoringDashboard({
                     {task.server ? (
                       <Link
                         href={`/${locale}/admin/servers/${task.server.id}`}
-                        className="text-primary-600 hover:underline"
+                        className="text-primary-600 hover:underline font-medium text-gray-900"
                       >
                         {task.server.name}
                       </Link>

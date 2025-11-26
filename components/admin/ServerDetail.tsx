@@ -245,7 +245,7 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
             >
               Újraindítás
             </button>
-            <div className="pt-4 border-t border-gray-200 mt-4">
+            <div className="pt-4 border-t border-gray-200 mt-4 space-y-2">
               <button
                 onClick={async () => {
                   setIsLoading(true);
@@ -271,6 +271,36 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
                 className="w-full bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Státusz Szinkronizálása
+              </button>
+              <button
+                onClick={async () => {
+                  if (!confirm('Biztosan újratelepíted a systemd service fájlt? A szerver leáll, majd újrageneráljuk a service fájlt.')) {
+                    return;
+                  }
+
+                  setIsLoading(true);
+                  try {
+                    const response = await fetch(`/api/admin/servers/${server.id}/reinstall-service`, {
+                      method: 'POST',
+                    });
+                    const result = await response.json();
+                    if (response.ok) {
+                      toast.success(result.message || 'Service újratelepítve');
+                      setServerStatus(result.newStatus);
+                      setTimeout(() => window.location.reload(), 2000);
+                    } else {
+                      toast.error(result.error || 'Hiba történt');
+                    }
+                  } catch (error) {
+                    toast.error('Hiba történt');
+                  } finally {
+                    setIsLoading(false);
+                  }
+                }}
+                disabled={isLoading}
+                className="w-full bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Service Újratelepítése
               </button>
             </div>
             <div className="pt-4 border-t border-gray-200 mt-4">

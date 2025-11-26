@@ -91,9 +91,9 @@ export function ServerConfigEditor({
   }
 
   return (
-    <div className="card">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">Szerver Konfiguráció</h2>
+        <h2 className="text-xl font-bold text-gray-900">Szerver Konfiguráció</h2>
         <div className="flex gap-2">
           <button
             onClick={handleReset}

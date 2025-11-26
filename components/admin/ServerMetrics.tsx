@@ -104,9 +104,9 @@ export function ServerMetrics({
   const maxValue = getMaxValue();
 
   return (
-    <div className="card">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">Teljesítmény Metrikák</h2>
+        <h2 className="text-xl font-bold text-gray-900">Teljesítmény Metrikák</h2>
         <button
           onClick={loadMetrics}
           disabled={loading}

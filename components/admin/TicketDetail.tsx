@@ -181,7 +181,7 @@ export function TicketDetail({ ticket, locale, adminId }: TicketDetailProps) {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h2 className="text-xl font-bold mb-2">{ticket.subject}</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">{ticket.subject}</h2>
             <div className="flex gap-2 flex-wrap">
               <span
                 className={`px-2 py-1 rounded text-xs font-semibold ${getStatusBadgeColor(
@@ -202,16 +202,16 @@ export function TicketDetail({ ticket, locale, adminId }: TicketDetailProps) {
               </span>
             </div>
           </div>
-          <div className="text-right text-sm text-gray-600">
-            <div>Felhasználó: {ticket.user.name || ticket.user.email}</div>
-            <div>Létrehozva: {new Date(ticket.createdAt).toLocaleString('hu-HU')}</div>
+          <div className="text-right text-sm text-gray-700">
+            <div className="font-medium text-gray-900">Felhasználó: {ticket.user.name || ticket.user.email}</div>
+            <div className="text-gray-600">Létrehozva: {new Date(ticket.createdAt).toLocaleString('hu-HU')}</div>
           </div>
         </div>
 
         {/* Státusz és prioritás kezelés */}
         <div className="grid md:grid-cols-2 gap-4 mt-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Státusz módosítása</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Státusz módosítása</label>
             <div className="flex gap-2">
               {(['OPEN', 'IN_PROGRESS', 'WAITING_FOR_USER', 'CLOSED'] as TicketStatus[]).map(
                 (status) => (
@@ -232,7 +232,7 @@ export function TicketDetail({ ticket, locale, adminId }: TicketDetailProps) {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Prioritás módosítása</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Prioritás módosítása</label>
             <div className="flex gap-2">
               {(['LOW', 'MEDIUM', 'HIGH', 'URGENT'] as TicketPriority[]).map((priority) => (
                 <button
@@ -255,24 +255,24 @@ export function TicketDetail({ ticket, locale, adminId }: TicketDetailProps) {
 
       {/* Üzenetek */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h2 className="text-xl font-bold mb-4">Üzenetek</h2>
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Üzenetek</h2>
         <div className="space-y-4 mb-6">
           {messages.map((msg) => (
             <div
               key={msg.id}
-              className={`p-4 rounded-lg ${
+              className={`p-4 rounded-lg border border-gray-200 ${
                 msg.isAdmin ? 'bg-primary-50 border-l-4 border-primary-600' : 'bg-gray-50'
               }`}
             >
               <div className="flex justify-between items-start mb-2">
-                <span className="font-semibold">
+                <span className="font-semibold text-gray-900">
                   {msg.isAdmin ? 'Admin' : ticket.user.name || ticket.user.email}
                 </span>
                 <span className="text-sm text-gray-600">
                   {new Date(msg.createdAt).toLocaleString('hu-HU')}
                 </span>
               </div>
-              <p className="text-gray-700 whitespace-pre-wrap">{msg.content}</p>
+              <p className="text-gray-800 whitespace-pre-wrap">{msg.content}</p>
             </div>
           ))}
         </div>
