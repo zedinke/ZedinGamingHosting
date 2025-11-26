@@ -4,6 +4,9 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { UserRole } from '@prisma/client';
 
+// Force dynamic rendering (mert session és headers használata miatt dinamikus)
+export const dynamic = 'force-dynamic';
+
 // GET - Részletes rendszer statisztikák
 export async function GET(request: NextRequest) {
   try {
