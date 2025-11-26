@@ -303,21 +303,42 @@ async function startUpdateProcess() {
 
         try {
           await appendLog('  - Prisma client generálása...');
-          await execAsync('npm run db:generate', { 
-            cwd: PROJECT_ROOT,
-            timeout: 120000,
-          });
-          await appendLog('  ✓ Prisma generate sikeres');
+          try {
+            await execAsync('npm run db:generate', { 
+              cwd: PROJECT_ROOT,
+              timeout: 120000,
+            });
+            await appendLog('  ✓ Prisma generate sikeres');
+          } catch (generateError: any) {
+            await appendLog(`  ⚠️  Prisma generate figyelmeztetés: ${generateError.message}`);
+            // Not critical if DATABASE_URL is missing during build, continue
+            if (!generateError.message.includes('DATABASE_URL')) {
+              throw generateError;
+            }
+          }
 
           await appendLog('  - Adatbázis séma frissítése...');
-          await execAsync('npm run db:push', { 
-            cwd: PROJECT_ROOT,
-            timeout: 120000,
-          });
-          await appendLog('  ✓ DB push sikeres');
+          try {
+            await execAsync('npm run db:push', { 
+              cwd: PROJECT_ROOT,
+              timeout: 120000,
+            });
+            await appendLog('  ✓ DB push sikeres');
+          } catch (pushError: any) {
+            await appendLog(`  ⚠️  DB push figyelmeztetés: ${pushError.message}`);
+            // Not critical if DATABASE_URL is missing, continue
+            if (!pushError.message.includes('DATABASE_URL') && !pushError.message.includes('Environment variable')) {
+              throw pushError;
+            }
+            await appendLog('  ⚠️  DB push kihagyva (DATABASE_URL hiányzik vagy nem elérhető)');
+          }
         } catch (error: any) {
           await appendLog(`  ❌ DB migráció hiba: ${error.message}`);
-          throw error;
+          // Only throw if it's a critical error
+          if (!error.message.includes('DATABASE_URL') && !error.message.includes('Environment variable')) {
+            throw error;
+          }
+          await appendLog('  ⚠️  DB migráció kihagyva, folytatjuk a build-del');
         }
       },
     },
@@ -341,12 +362,30 @@ async function startUpdateProcess() {
           }
 
           await appendLog('  - Next.js build...');
+          // Set NODE_ENV to production for build
+          const buildEnv = { ...process.env, NODE_ENV: 'production' } as Record<string, string | undefined>;
           await execAsync('npm run build', { 
             cwd: PROJECT_ROOT,
             maxBuffer: 1024 * 1024 * 10,
             timeout: 600000, // 10 minutes
+            env: buildEnv as any,
           });
           await appendLog('  ✓ Build sikeres');
+          
+          // Copy public files if needed (for standalone builds)
+          try {
+            await appendLog('  - Public fájlok másolása...');
+            if (existsSync(join(PROJECT_ROOT, 'scripts', 'copy-public-to-standalone.js'))) {
+              await execAsync('node scripts/copy-public-to-standalone.js', {
+                cwd: PROJECT_ROOT,
+                timeout: 60000,
+              });
+              await appendLog('  ✓ Public fájlok másolása sikeres');
+            }
+          } catch (copyError: any) {
+            await appendLog(`  ⚠️  Public fájlok másolása figyelmeztetés: ${copyError.message}`);
+            // Not critical, continue
+          }
         } catch (error: any) {
           await appendLog(`  ❌ Build hiba: ${error.message}`);
           throw error;
@@ -372,30 +411,66 @@ async function startUpdateProcess() {
           try {
             // Find PM2 process name
             let pm2ProcessName = 'zedingaming';
+            let pm2Found = false;
+            
             try {
               const { stdout: pm2List } = await execAsync('pm2 list --no-color', { 
                 cwd: PROJECT_ROOT,
                 timeout: 10000,
               });
+              
+              // Try to find process by name pattern
               const lines = pm2List.split('\n');
               for (const line of lines) {
-                if (line.includes('node') || line.includes('next')) {
-                  const match = line.match(/\│\s+(\w+)\s+│/);
-                  if (match && match[1] && match[1] !== 'name') {
-                    pm2ProcessName = match[1];
+                // Look for process name in PM2 list format
+                if (line.includes('zedingaming') || line.includes('zedin') || line.includes('gaming')) {
+                  const match = line.match(/\│\s+([^\s│]+)\s+│/);
+                  if (match && match[1] && match[1] !== 'name' && match[1] !== 'id') {
+                    pm2ProcessName = match[1].trim();
+                    pm2Found = true;
+                    await appendLog(`  - PM2 process találva: ${pm2ProcessName}`);
+                    break;
+                  }
+                }
+                // Fallback: look for any node/next process
+                if (!pm2Found && (line.includes('node') || line.includes('next'))) {
+                  const match = line.match(/\│\s+([^\s│]+)\s+│/);
+                  if (match && match[1] && match[1] !== 'name' && match[1] !== 'id' && !match[1].match(/^\d+$/)) {
+                    pm2ProcessName = match[1].trim();
+                    pm2Found = true;
+                    await appendLog(`  - PM2 process találva (fallback): ${pm2ProcessName}`);
                     break;
                   }
                 }
               }
-            } catch {
-              // Use default
+              
+              if (!pm2Found) {
+                await appendLog(`  ⚠️  PM2 process nem található, használjuk az alapértelmezett nevet: ${pm2ProcessName}`);
+              }
+            } catch (listError: any) {
+              await appendLog(`  ⚠️  PM2 list hiba: ${listError.message}, használjuk az alapértelmezett nevet: ${pm2ProcessName}`);
             }
 
-            await execAsync(`pm2 restart ${pm2ProcessName}`, { 
-              cwd: PROJECT_ROOT,
-              timeout: 30000,
-            });
-            await appendLog(`  ✓ PM2 restart sikeres (${pm2ProcessName})`);
+            try {
+              await execAsync(`pm2 restart ${pm2ProcessName}`, { 
+                cwd: PROJECT_ROOT,
+                timeout: 30000,
+              });
+              await appendLog(`  ✓ PM2 restart sikeres (${pm2ProcessName})`);
+            } catch (restartError: any) {
+              // Try to reload instead of restart
+              try {
+                await appendLog(`  - PM2 restart sikertelen, próbáljuk a reload-ot...`);
+                await execAsync(`pm2 reload ${pm2ProcessName}`, { 
+                  cwd: PROJECT_ROOT,
+                  timeout: 30000,
+                });
+                await appendLog(`  ✓ PM2 reload sikeres (${pm2ProcessName})`);
+              } catch (reloadError: any) {
+                await appendLog(`  ⚠️  PM2 restart/reload sikertelen: ${restartError.message}`);
+                // Not critical, continue
+              }
+            }
           } catch (pm2Error: any) {
             await appendLog(`  ⚠️  PM2 nem elérhető: ${pm2Error.message}`);
             // Not critical, continue

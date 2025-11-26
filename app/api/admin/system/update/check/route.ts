@@ -11,23 +11,41 @@ const execAsync = promisify(exec);
 
 function getProjectRoot(): string {
   let currentDir = process.cwd();
+  const originalCwd = currentDir;
   
-  // If in standalone, go up to project root
+  // If we're in .next/standalone, go up to project root
   if (currentDir.includes('.next/standalone')) {
-    currentDir = resolve(currentDir, '..', '..');
+    // .next/standalone -> .next -> project root
+    currentDir = resolve(currentDir, '..', '..', '..');
   }
   
-  // Verify by checking for package.json
-  if (existsSync(join(currentDir, 'package.json'))) {
+  // Verify it's the project root
+  const checks = [
+    join(currentDir, 'package.json'),
+    join(currentDir, 'next.config.js'),
+    join(currentDir, 'app'),
+    join(currentDir, 'public'),
+  ];
+  
+  const isValidRoot = checks.some(check => existsSync(check));
+  
+  if (isValidRoot) {
     return currentDir;
   }
   
   // Try parent directory
   const parentDir = resolve(currentDir, '..');
-  if (existsSync(join(parentDir, 'package.json'))) {
+  const parentChecks = [
+    join(parentDir, 'package.json'),
+    join(parentDir, 'next.config.js'),
+  ];
+  
+  if (parentChecks.some(check => existsSync(check))) {
     return parentDir;
   }
   
+  // Last resort: return current directory
+  console.warn('Could not find project root, using:', currentDir);
   return currentDir;
 }
 
