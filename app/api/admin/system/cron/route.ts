@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { UserRole } from '@prisma/client';
 import { processPendingTasks } from '@/lib/task-executor';
 import { checkOfflineAgents } from '@/lib/agent-heartbeat';
+import { syncAllServerStatuses } from '@/lib/server-status-checker';
 
 // POST - Cron job végrehajtása (belső hívás vagy cron)
 export async function POST(request: NextRequest) {
@@ -28,6 +29,9 @@ export async function POST(request: NextRequest) {
 
     // Offline agentek ellenőrzése
     await checkOfflineAgents();
+
+    // Szerver státuszok szinkronizálása
+    await syncAllServerStatuses();
 
     return NextResponse.json({
       success: true,

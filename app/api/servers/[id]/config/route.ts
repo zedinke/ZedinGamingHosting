@@ -217,7 +217,7 @@ function getDefaultConfig(gameType: string, maxPlayers: number): any {
       'online-mode': true,
       pvp: true,
       'spawn-protection': 16,
-      white-list: false,
+      'white-list': false,
       'motd': 'A Minecraft Server',
     },
     ARK_EVOLVED: {

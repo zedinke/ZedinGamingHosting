@@ -247,6 +247,34 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
             </button>
             <div className="pt-4 border-t border-gray-200 mt-4">
               <button
+                onClick={async () => {
+                  setIsLoading(true);
+                  try {
+                    const response = await fetch(`/api/admin/servers/${server.id}/sync-status`, {
+                      method: 'POST',
+                    });
+                    const result = await response.json();
+                    if (response.ok) {
+                      toast.success(result.message || 'Státusz szinkronizálva');
+                      setServerStatus(result.newStatus);
+                      setTimeout(() => window.location.reload(), 1000);
+                    } else {
+                      toast.error(result.error || 'Hiba történt');
+                    }
+                  } catch (error) {
+                    toast.error('Hiba történt');
+                  } finally {
+                    setIsLoading(false);
+                  }
+                }}
+                disabled={isLoading}
+                className="w-full bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Státusz Szinkronizálása
+              </button>
+            </div>
+            <div className="pt-4 border-t border-gray-200 mt-4">
+              <button
                 onClick={() => setShowDeleteDialog(true)}
                 disabled={isLoading}
                 className="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
