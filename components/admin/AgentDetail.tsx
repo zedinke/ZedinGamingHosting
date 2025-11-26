@@ -128,19 +128,19 @@ export function AgentDetail({ agent, servers, recentTasks, locale }: AgentDetail
       {/* Alapinformációk */}
       <div className="grid md:grid-cols-2 gap-6">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-bold mb-4">Alapinformációk</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Alapinformációk</h2>
           <div className="space-y-3">
             <div>
-              <span className="text-sm text-gray-600">Agent ID:</span>
-              <p className="font-mono text-sm">{agent.agentId}</p>
+              <span className="text-sm font-medium text-gray-700">Agent ID:</span>
+              <p className="font-mono text-sm text-gray-900 mt-1">{agent.agentId}</p>
             </div>
             <div>
-              <span className="text-sm text-gray-600">Verzió:</span>
-              <p>{agent.version}</p>
+              <span className="text-sm font-medium text-gray-700">Verzió:</span>
+              <p className="text-gray-900 mt-1">{agent.version}</p>
             </div>
             <div>
-              <span className="text-sm text-gray-600">Státusz:</span>
-              <p>
+              <span className="text-sm font-medium text-gray-700">Státusz:</span>
+              <p className="mt-1">
                 <span
                   className={`px-2 py-1 rounded text-xs font-semibold ${getStatusBadgeColor(
                     agent.status
@@ -151,11 +151,11 @@ export function AgentDetail({ agent, servers, recentTasks, locale }: AgentDetail
               </p>
             </div>
             <div>
-              <span className="text-sm text-gray-600">Gép:</span>
-              <p>
+              <span className="text-sm font-medium text-gray-700">Gép:</span>
+              <p className="mt-1">
                 <Link
                   href={`/${locale}/admin/machines/${agent.machine.id}`}
-                  className="text-primary-600 hover:underline"
+                  className="text-primary-600 hover:underline font-medium text-gray-900"
                 >
                   {agent.machine.name}
                 </Link>
@@ -163,8 +163,8 @@ export function AgentDetail({ agent, servers, recentTasks, locale }: AgentDetail
               </p>
             </div>
             <div>
-              <span className="text-sm text-gray-600">Utolsó Heartbeat:</span>
-              <p>
+              <span className="text-sm font-medium text-gray-700">Utolsó Heartbeat:</span>
+              <p className="text-gray-900 mt-1">
                 {agent.lastHeartbeat
                   ? new Date(agent.lastHeartbeat).toLocaleString('hu-HU')
                   : 'Soha'}
@@ -174,18 +174,18 @@ export function AgentDetail({ agent, servers, recentTasks, locale }: AgentDetail
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-bold mb-4">Statisztikák</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Statisztikák</h2>
           <div className="space-y-3">
             <div>
-              <span className="text-sm text-gray-600">Szerverek:</span>
-              <p className="text-2xl font-bold text-primary-600">{agent._count.servers}</p>
+              <span className="text-sm font-medium text-gray-700">Szerverek:</span>
+              <p className="text-2xl font-bold text-primary-600 mt-1">{agent._count.servers}</p>
             </div>
             <div>
-              <span className="text-sm text-gray-600">Feladatok:</span>
-              <p className="text-2xl font-bold text-primary-600">{agent._count.tasks}</p>
+              <span className="text-sm font-medium text-gray-700">Feladatok:</span>
+              <p className="text-2xl font-bold text-primary-600 mt-1">{agent._count.tasks}</p>
             </div>
             <div>
-              <span className="text-sm text-gray-600">Képességek:</span>
+              <span className="text-sm font-medium text-gray-700">Képességek:</span>
               <div className="mt-1">
                 {agent.capabilities
                   ? Object.entries(agent.capabilities)
@@ -206,9 +206,9 @@ export function AgentDetail({ agent, servers, recentTasks, locale }: AgentDetail
       </div>
 
       {/* API Kulcs */}
-      <div className="card">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">API Kulcs</h2>
+          <h2 className="text-xl font-bold text-gray-900">API Kulcs</h2>
           <div className="flex gap-2">
             <button
               onClick={() => setShowApiKey(!showApiKey)}
@@ -226,9 +226,9 @@ export function AgentDetail({ agent, servers, recentTasks, locale }: AgentDetail
           </div>
         </div>
         {showApiKey && apiKey ? (
-          <div className="bg-gray-50 p-4 rounded-lg">
+          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
             <div className="flex items-center gap-2">
-              <code className="flex-1 font-mono text-sm break-all">{apiKey}</code>
+              <code className="flex-1 font-mono text-sm break-all text-gray-900">{apiKey}</code>
               <button
                 onClick={copyApiKey}
                 className="px-3 py-1 bg-primary-600 text-white rounded hover:bg-primary-700 text-sm"
@@ -246,30 +246,30 @@ export function AgentDetail({ agent, servers, recentTasks, locale }: AgentDetail
       </div>
 
       {/* Szerverek */}
-      <div className="card">
-        <h2 className="text-xl font-bold mb-4">Szerverek ({servers.length})</h2>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Szerverek ({servers.length})</h2>
         {servers.length === 0 ? (
           <p className="text-gray-600">Nincs szerver ehhez az agenthöz.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full text-gray-700">
               <thead>
-                <tr className="border-b">
-                  <th className="text-left p-3">Név</th>
-                  <th className="text-left p-3">Játék</th>
-                  <th className="text-left p-3">Státusz</th>
-                  <th className="text-left p-3">Felhasználó</th>
-                  <th className="text-left p-3">Műveletek</th>
+                <tr className="border-b border-gray-200 bg-gray-50">
+                  <th className="text-left p-3 font-semibold text-gray-900">Név</th>
+                  <th className="text-left p-3 font-semibold text-gray-900">Játék</th>
+                  <th className="text-left p-3 font-semibold text-gray-900">Státusz</th>
+                  <th className="text-left p-3 font-semibold text-gray-900">Felhasználó</th>
+                  <th className="text-left p-3 font-semibold text-gray-900">Műveletek</th>
                 </tr>
               </thead>
               <tbody>
                 {servers.map((server) => (
-                  <tr key={server.id} className="border-b hover:bg-gray-50">
-                    <td className="p-3 font-medium">{server.name}</td>
-                    <td className="p-3">{server.gameType}</td>
+                  <tr key={server.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                    <td className="p-3 font-medium text-gray-800">{server.name}</td>
+                    <td className="p-3 text-gray-900">{server.gameType}</td>
                     <td className="p-3">
                       <span
-                        className={`px-2 py-1 rounded text-xs ${
+                        className={`px-2 py-1 rounded text-xs font-semibold ${
                           server.status === 'ONLINE'
                             ? 'bg-green-100 text-green-800'
                             : 'bg-gray-100 text-gray-800'
@@ -278,11 +278,11 @@ export function AgentDetail({ agent, servers, recentTasks, locale }: AgentDetail
                         {server.status}
                       </span>
                     </td>
-                    <td className="p-3">{server.user.name || server.user.email}</td>
+                    <td className="p-3 text-gray-900">{server.user.name || server.user.email}</td>
                     <td className="p-3">
                       <Link
                         href={`/${locale}/admin/servers/${server.id}`}
-                        className="text-primary-600 hover:underline text-sm"
+                        className="text-primary-600 hover:underline text-sm font-medium"
                       >
                         Részletek →
                       </Link>
@@ -296,8 +296,8 @@ export function AgentDetail({ agent, servers, recentTasks, locale }: AgentDetail
       </div>
 
       {/* Legutóbbi feladatok */}
-      <div className="card">
-        <h2 className="text-xl font-bold mb-4">Legutóbbi Feladatok</h2>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Legutóbbi Feladatok</h2>
         {recentTasks.length === 0 ? (
           <p className="text-gray-600">Nincs feladat ehhez az agenthöz.</p>
         ) : (
@@ -305,17 +305,17 @@ export function AgentDetail({ agent, servers, recentTasks, locale }: AgentDetail
             {recentTasks.map((task) => (
               <div
                 key={task.id}
-                className="flex justify-between items-center p-3 bg-gray-50 rounded"
+                className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-200"
               >
                 <div>
-                  <span className="font-medium">{task.type}</span>
+                  <span className="font-medium text-gray-900">{task.type}</span>
                   {task.server && (
                     <span className="text-gray-600 ml-2">- {task.server.name}</span>
                   )}
                 </div>
                 <div className="flex items-center gap-3">
                   <span
-                    className={`px-2 py-1 rounded text-xs ${
+                    className={`px-2 py-1 rounded text-xs font-semibold ${
                       task.status === 'COMPLETED'
                         ? 'bg-green-100 text-green-800'
                         : task.status === 'FAILED'

@@ -59,11 +59,11 @@ export default async function AdminServerDetailPage({
       <div className="mb-6">
         <Link
           href={`/${locale}/admin/servers`}
-          className="text-primary-600 hover:underline mb-4 inline-block"
+          className="text-primary-600 hover:underline mb-4 inline-block font-medium"
         >
           ← Vissza a szerverekhez
         </Link>
-        <h1 className="text-3xl font-bold mb-2">{server.name}</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">{server.name}</h1>
         <p className="text-gray-600">Szerver részletek és kezelés</p>
       </div>
 

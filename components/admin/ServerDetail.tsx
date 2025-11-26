@@ -142,18 +142,18 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
       {/* Alapinformációk */}
       <div className="grid md:grid-cols-2 gap-6">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-bold mb-4">Alapinformációk</h2>
-          <dl className="space-y-2">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Alapinformációk</h2>
+          <dl className="space-y-3">
             <div>
-              <dt className="text-sm text-gray-600">Név</dt>
-              <dd className="font-medium">{server.name}</dd>
+              <dt className="text-sm font-medium text-gray-700 mb-1">Név</dt>
+              <dd className="font-medium text-gray-900">{server.name}</dd>
             </div>
             <div>
-              <dt className="text-sm text-gray-600">Játék</dt>
-              <dd>{getGameTypeLabel(server.gameType)}</dd>
+              <dt className="text-sm font-medium text-gray-700 mb-1">Játék</dt>
+              <dd className="text-gray-900">{getGameTypeLabel(server.gameType)}</dd>
             </div>
             <div>
-              <dt className="text-sm text-gray-600">Státusz</dt>
+              <dt className="text-sm font-medium text-gray-700 mb-1">Státusz</dt>
               <dd>
                 <span
                   className={`px-2 py-1 rounded text-xs font-semibold ${getStatusBadgeColor(
@@ -165,39 +165,39 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
               </dd>
             </div>
             <div>
-              <dt className="text-sm text-gray-600">IP Cím</dt>
-              <dd>{server.ipAddress || '-'}</dd>
+              <dt className="text-sm font-medium text-gray-700 mb-1">IP Cím</dt>
+              <dd className="text-gray-900">{server.ipAddress || '-'}</dd>
             </div>
             <div>
-              <dt className="text-sm text-gray-600">Port</dt>
-              <dd>{server.port || '-'}</dd>
+              <dt className="text-sm font-medium text-gray-700 mb-1">Port</dt>
+              <dd className="text-gray-900">{server.port || '-'}</dd>
             </div>
             <div>
-              <dt className="text-sm text-gray-600">Max Játékosok</dt>
-              <dd>{server.maxPlayers}</dd>
+              <dt className="text-sm font-medium text-gray-700 mb-1">Max Játékosok</dt>
+              <dd className="text-gray-900">{server.maxPlayers}</dd>
             </div>
             <div>
-              <dt className="text-sm text-gray-600">Tulajdonos</dt>
+              <dt className="text-sm font-medium text-gray-700 mb-1">Tulajdonos</dt>
               <dd>
                 <a
                   href={`/${locale}/admin/users/${server.user.id}`}
-                  className="text-primary-600 hover:underline"
+                  className="text-primary-600 hover:underline font-medium text-gray-900"
                 >
                   {server.user.name || server.user.email}
                 </a>
               </dd>
             </div>
             <div>
-              <dt className="text-sm text-gray-600">Létrehozva</dt>
-              <dd>{new Date(server.createdAt).toLocaleString('hu-HU')}</dd>
+              <dt className="text-sm font-medium text-gray-700 mb-1">Létrehozva</dt>
+              <dd className="text-gray-900">{new Date(server.createdAt).toLocaleString('hu-HU')}</dd>
             </div>
             {server.machine && (
               <div>
-                <dt className="text-sm text-gray-600">Szerver Gép</dt>
+                <dt className="text-sm font-medium text-gray-700 mb-1">Szerver Gép</dt>
                 <dd>
                   <a
                     href={`/${locale}/admin/machines/${server.machine.id}`}
-                    className="text-primary-600 hover:underline"
+                    className="text-primary-600 hover:underline font-medium text-gray-900"
                   >
                     {server.machine.name} ({server.machine.ipAddress})
                   </a>
@@ -206,9 +206,9 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
             )}
             {server.agent && (
               <div>
-                <dt className="text-sm text-gray-600">Agent</dt>
+                <dt className="text-sm font-medium text-gray-700 mb-1">Agent</dt>
                 <dd>
-                  <span className="font-mono text-sm">{server.agent.agentId}</span>
+                  <span className="font-mono text-sm text-gray-900">{server.agent.agentId}</span>
                   {server.agent.lastHeartbeat && (
                     <span className="text-xs text-gray-500 ml-2">
                       (utolsó: {new Date(server.agent.lastHeartbeat).toLocaleString('hu-HU')})
@@ -222,7 +222,7 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
 
         {/* Szerver műveletek */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-bold mb-4">Szerver Műveletek</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Szerver Műveletek</h2>
           <div className="space-y-2">
             <button
               onClick={() => handleServerAction('start')}
@@ -289,10 +289,10 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
       {/* Előfizetés információk */}
       {server.subscription && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-bold mb-4">Előfizetés</h2>
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Státusz:</span>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Előfizetés</h2>
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-700 font-medium">Státusz:</span>
               <span
                 className={`px-2 py-1 rounded text-xs ${
                   server.subscription.status === 'ACTIVE'
@@ -305,14 +305,14 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
             </div>
             {server.subscription.invoices.length > 0 && (
               <div className="mt-4">
-                <h3 className="font-semibold mb-2">Legutóbbi számlák</h3>
+                <h3 className="font-semibold text-gray-900 mb-2">Legutóbbi számlák</h3>
                 <div className="space-y-2">
                   {server.subscription.invoices.map((invoice) => (
                     <div
                       key={invoice.id}
-                      className="flex justify-between items-center p-2 bg-gray-50 rounded"
+                      className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-200"
                     >
-                      <span>
+                      <span className="font-medium text-gray-900">
                         {new Intl.NumberFormat('hu-HU', {
                           style: 'currency',
                           currency: invoice.currency,
@@ -322,7 +322,7 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
                         {new Date(invoice.createdAt).toLocaleDateString('hu-HU')}
                       </span>
                       <span
-                        className={`px-2 py-1 rounded text-xs ${
+                        className={`px-2 py-1 rounded text-xs font-semibold ${
                           invoice.status === 'PAID'
                             ? 'bg-green-100 text-green-800'
                             : 'bg-yellow-100 text-yellow-800'
@@ -342,74 +342,74 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
       {/* Konfiguráció */}
       {server.configuration && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-bold mb-4">Konfiguráció</h2>
-          <pre className="bg-gray-50 p-4 rounded overflow-x-auto text-sm">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Konfiguráció</h2>
+          <pre className="bg-gray-50 p-4 rounded overflow-x-auto text-sm text-gray-900 border border-gray-200">
             {JSON.stringify(server.configuration, null, 2)}
           </pre>
         </div>
       )}
 
       {/* Fájlkezelő és Konzol */}
-      <div className="card">
-        <h2 className="text-xl font-bold mb-4">Szerver Kezelés</h2>
-        <div className="border-b mb-4">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Szerver Kezelés</h2>
+        <div className="border-b border-gray-200 mb-4">
           <div className="flex gap-4">
             <button
               onClick={() => setActiveTab('files')}
-              className={`px-4 py-2 border-b-2 ${
+              className={`px-4 py-2 border-b-2 font-medium transition-colors ${
                 activeTab === 'files'
                   ? 'border-primary-600 text-primary-600'
-                  : 'border-transparent text-gray-600 hover:text-gray-800'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
               Fájlkezelő
             </button>
             <button
               onClick={() => setActiveTab('console')}
-              className={`px-4 py-2 border-b-2 ${
+              className={`px-4 py-2 border-b-2 font-medium transition-colors ${
                 activeTab === 'console'
                   ? 'border-primary-600 text-primary-600'
-                  : 'border-transparent text-gray-600 hover:text-gray-800'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
               Konzol
             </button>
             <button
               onClick={() => setActiveTab('backup')}
-              className={`px-4 py-2 border-b-2 ${
+              className={`px-4 py-2 border-b-2 font-medium transition-colors ${
                 activeTab === 'backup'
                   ? 'border-primary-600 text-primary-600'
-                  : 'border-transparent text-gray-600 hover:text-gray-800'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
               Backup
             </button>
             <button
               onClick={() => setActiveTab('config')}
-              className={`px-4 py-2 border-b-2 ${
+              className={`px-4 py-2 border-b-2 font-medium transition-colors ${
                 activeTab === 'config'
                   ? 'border-primary-600 text-primary-600'
-                  : 'border-transparent text-gray-600 hover:text-gray-800'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
               Konfiguráció
             </button>
             <button
               onClick={() => setActiveTab('logs')}
-              className={`px-4 py-2 border-b-2 ${
+              className={`px-4 py-2 border-b-2 font-medium transition-colors ${
                 activeTab === 'logs'
                   ? 'border-primary-600 text-primary-600'
-                  : 'border-transparent text-gray-600 hover:text-gray-800'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
               Logok
             </button>
             <button
               onClick={() => setActiveTab('limits')}
-              className={`px-4 py-2 border-b-2 ${
+              className={`px-4 py-2 border-b-2 font-medium transition-colors ${
                 activeTab === 'limits'
                   ? 'border-primary-600 text-primary-600'
-                  : 'border-transparent text-gray-600 hover:text-gray-800'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
               Erőforrás Limitok
