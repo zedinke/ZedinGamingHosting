@@ -360,13 +360,19 @@ export function SystemManagement({
                       return;
                     }
                     try {
-                      const response = await fetch('/api/admin/system/update', {
+                      // Először töröljük a state-et, hogy azonnal eltűnjön a UI-ból
+                      setIsUpdating(false);
+                      setUpdateProgress(null);
+                      
+                      // Majd töröljük a fájlt
+                      const response = await fetch(`/api/admin/system/update?t=${Date.now()}`, {
                         method: 'DELETE',
+                        cache: 'no-store',
                       });
+                      
                       if (response.ok) {
-                        // Töröljük a state-et
-                        setIsUpdating(false);
-                        setUpdateProgress(null);
+                        // Várjunk egy kicsit, hogy a fájl biztosan törlődött
+                        await new Promise(resolve => setTimeout(resolve, 500));
                         
                         // Ellenőrizzük, hogy tényleg törlődött-e
                         const statusResponse = await fetch(`/api/admin/system/update/status?t=${Date.now()}`, {
@@ -387,10 +393,40 @@ export function SystemManagement({
                       } else {
                         const errorData = await response.json();
                         toast.error(errorData.error || 'Hiba történt a progress törlése során');
+                        // Ha hiba van, újra betöltjük a progress-t
+                        const statusResponse = await fetch(`/api/admin/system/update/status?t=${Date.now()}`, {
+                          cache: 'no-store',
+                        });
+                        if (statusResponse.ok) {
+                          const statusData = await statusResponse.json();
+                          if (statusData.status !== 'idle') {
+                            setUpdateProgress(statusData);
+                            if (statusData.status === 'in_progress' || statusData.status === 'starting') {
+                              setIsUpdating(true);
+                            }
+                          }
+                        }
                       }
                     } catch (error) {
                       console.error('Progress törlés hiba:', error);
                       toast.error('Hiba történt');
+                      // Ha hiba van, újra betöltjük a progress-t
+                      try {
+                        const statusResponse = await fetch(`/api/admin/system/update/status?t=${Date.now()}`, {
+                          cache: 'no-store',
+                        });
+                        if (statusResponse.ok) {
+                          const statusData = await statusResponse.json();
+                          if (statusData.status !== 'idle') {
+                            setUpdateProgress(statusData);
+                            if (statusData.status === 'in_progress' || statusData.status === 'starting') {
+                              setIsUpdating(true);
+                            }
+                          }
+                        }
+                      } catch {
+                        // Ignore
+                      }
                     }
                   }}
                   className="w-full bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors font-semibold"
@@ -406,13 +442,20 @@ export function SystemManagement({
             <button
               onClick={async () => {
                 try {
-                  const response = await fetch('/api/admin/system/update', {
+                  // Először töröljük a state-et, hogy azonnal eltűnjön a UI-ból
+                  setUpdateProgress(null);
+                  setIsUpdating(false);
+                  
+                  // Majd töröljük a fájlt
+                  const response = await fetch(`/api/admin/system/update?t=${Date.now()}`, {
                     method: 'DELETE',
+                    cache: 'no-store',
                   });
+                  
                   if (response.ok) {
-                    // Töröljük a state-et
-                    setUpdateProgress(null);
-                    setIsUpdating(false);
+                    const result = await response.json();
+                    // Várjunk egy kicsit, hogy a fájl biztosan törlődött
+                    await new Promise(resolve => setTimeout(resolve, 500));
                     
                     // Ellenőrizzük, hogy tényleg törlődött-e
                     const statusResponse = await fetch(`/api/admin/system/update/status?t=${Date.now()}`, {
@@ -433,10 +476,34 @@ export function SystemManagement({
                   } else {
                     const errorData = await response.json();
                     toast.error(errorData.error || 'Hiba történt a progress törlése során');
+                    // Ha hiba van, újra betöltjük a progress-t
+                    const statusResponse = await fetch(`/api/admin/system/update/status?t=${Date.now()}`, {
+                      cache: 'no-store',
+                    });
+                    if (statusResponse.ok) {
+                      const statusData = await statusResponse.json();
+                      if (statusData.status !== 'idle') {
+                        setUpdateProgress(statusData);
+                      }
+                    }
                   }
                 } catch (error) {
                   console.error('Progress törlés hiba:', error);
                   toast.error('Hiba történt');
+                  // Ha hiba van, újra betöltjük a progress-t
+                  try {
+                    const statusResponse = await fetch(`/api/admin/system/update/status?t=${Date.now()}`, {
+                      cache: 'no-store',
+                    });
+                    if (statusResponse.ok) {
+                      const statusData = await statusResponse.json();
+                      if (statusData.status !== 'idle') {
+                        setUpdateProgress(statusData);
+                      }
+                    }
+                  } catch {
+                    // Ignore
+                  }
                 }
               }}
               className="w-full bg-yellow-600 text-white px-6 py-3 rounded-lg hover:bg-yellow-700 transition-colors font-semibold mb-3"
