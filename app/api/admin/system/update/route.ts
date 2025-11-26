@@ -543,6 +543,17 @@ async function startUpdateProcess() {
 
           await appendLog('  - Build környezet inicializálva (privát Next env változók törölve)...');
 
+          // Töröljük a régi build fájlokat, hogy tiszta build legyen
+          await appendLog('  - Régi build fájlok törlése...');
+          try {
+            const { execSync } = require('child_process');
+            execSync('rm -rf .next', { cwd: PROJECT_ROOT, stdio: 'ignore' });
+            await appendLog('  ✓ Régi build fájlok törölve');
+          } catch (cleanError: any) {
+            await appendLog(`  ⚠️  Build törlés figyelmeztetés: ${cleanError.message}`);
+            // Not critical, continue
+          }
+          
           await execAsync('npm run build', { 
             cwd: PROJECT_ROOT,
             maxBuffer: 1024 * 1024 * 10,
@@ -550,6 +561,16 @@ async function startUpdateProcess() {
             env: buildEnv as any,
           });
           await appendLog('  ✓ Build sikeres');
+          
+          // Ellenőrizzük, hogy a build tartalmazza-e a szükséges route fájlokat
+          await appendLog('  - Build ellenőrzése...');
+          const requiredRoute = join(PROJECT_ROOT, '.next', 'server', 'app', 'api', 'admin', 'cms', 'slideshow', 'settings', 'route.js');
+          if (existsSync(requiredRoute)) {
+            await appendLog('  ✓ Szükséges route fájlok megtalálhatók');
+          } else {
+            await appendLog(`  ⚠️  Figyelmeztetés: ${requiredRoute} nem található a build-ben`);
+            // Not critical, continue - lehet, hogy dinamikusan töltődik be
+          }
           
           // Copy public files if needed (for standalone builds)
           try {
