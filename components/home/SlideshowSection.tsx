@@ -167,15 +167,22 @@ export function SlideshowSection({ slides, locale, transitionInterval = 5 }: Sli
               />
             ) : s.image ? (
               <img
-                src={s.image}
+                src={s.image.startsWith('/uploads/') ? `/api${s.image}` : s.image}
                 alt={s.title || 'Slide'}
                 className="w-full h-full object-cover"
                 loading={index === 0 ? 'eager' : 'lazy'}
                 key={s.id}
                 onError={(e) => {
                   console.error('Slideshow image load error:', s.image);
-                  // Fallback to placeholder if image fails to load
-                  (e.target as HTMLImageElement).src = 'https://via.placeholder.com/1920x1080/1a1f2e/5b6fff?text=Gaming+Server';
+                  // Try API route if original failed
+                  if (s.image && !s.image.startsWith('/api/') && !s.image.startsWith('http')) {
+                    const apiUrl = `/api${s.image}`;
+                    console.log('Retrying with API route:', apiUrl);
+                    (e.target as HTMLImageElement).src = apiUrl;
+                  } else {
+                    // Fallback to placeholder if image fails to load
+                    (e.target as HTMLImageElement).src = 'https://via.placeholder.com/1920x1080/1a1f2e/5b6fff?text=Gaming+Server';
+                  }
                 }}
                 onLoad={() => {
                   console.log('Slideshow image loaded successfully:', s.image);

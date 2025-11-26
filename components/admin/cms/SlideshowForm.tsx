@@ -183,8 +183,8 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
         return null;
       }
 
-      // A feltöltött kép URL-je - használjuk a publicUrl-t ha van, különben az url-t
-      const uploadedUrl = result.publicUrl || result.url;
+      // A feltöltött kép URL-je - használjuk az API route URL-t (fileUrl), mert az biztosan működik
+      const uploadedUrl = result.fileUrl || result.url || result.publicUrl;
       
       if (!uploadedUrl) {
         console.error('No URL in response:', result);
