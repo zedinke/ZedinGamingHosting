@@ -135,20 +135,38 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
 
     setUploading(true);
     try {
-      console.log('Starting image upload:', {
+      console.log('Starting image upload (base64 method):', {
         fileName: file.name,
         fileSize: file.size,
         fileType: file.type,
       });
 
-      const formData = new FormData();
-      formData.append('file', file);
+      // Convert file to base64
+      const reader = new FileReader();
+      const base64Promise = new Promise<string>((resolve, reject) => {
+        reader.onload = () => {
+          const result = reader.result as string;
+          resolve(result);
+        };
+        reader.onerror = (error) => {
+          reject(error);
+        };
+        reader.readAsDataURL(file);
+      });
 
-      console.log('Sending request to /api/admin/upload/image');
+      const base64Data = await base64Promise;
+      console.log('File converted to base64, size:', base64Data.length);
 
-      const response = await fetch('/api/admin/upload/image', {
+      // Send base64 data to API
+      const response = await fetch('/api/admin/upload/image-base64', {
         method: 'POST',
-        body: formData,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          imageData: base64Data,
+          fileName: file.name,
+        }),
       });
 
       console.log('Response status:', response.status);
