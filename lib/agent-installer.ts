@@ -30,27 +30,37 @@ export async function installAgentViaSSH(
   const logs: string[] = [];
   
   try {
-    logs.push(`Kapcsolódás a szerverhez: ${config.user}@${config.host}:${config.port}`);
+      logs.push(`Kapcsolódás a szerverhez: ${config.user}@${config.host}:${config.port}`);
+      
+      // Ellenőrizzük, hogy root-tal vagy gameserver felhasználóval csatlakozunk-e
+      const isRoot = config.user === 'root';
+      const agentUser = isRoot ? 'root' : 'gameserver';
+      
+      if (isRoot) {
+        logs.push('Root felhasználóval történik a telepítés - nincs szükség sudo jogosultságokra');
+      } else {
+        logs.push('Gameserver felhasználóval történik a telepítés - sudo jogosultságok szükségesek');
+      }
 
-    // SSH kapcsolat ellenőrzése
-    const sshTestCommand = config.keyPath
-      ? `ssh -i ${config.keyPath} -p ${config.port} -o StrictHostKeyChecking=no ${config.user}@${config.host} "echo 'SSH connection successful'"`
-      : `sshpass -p '${config.password}' ssh -p ${config.port} -o StrictHostKeyChecking=no ${config.user}@${config.host} "echo 'SSH connection successful'"`;
+      // SSH kapcsolat ellenőrzése
+      const sshTestCommand = config.keyPath
+        ? `ssh -i ${config.keyPath} -p ${config.port} -o StrictHostKeyChecking=no ${config.user}@${config.host} "echo 'SSH connection successful'"`
+        : `sshpass -p '${config.password}' ssh -p ${config.port} -o StrictHostKeyChecking=no ${config.user}@${config.host} "echo 'SSH connection successful'"`;
 
-    try {
-      await execAsync(sshTestCommand);
-      logs.push('SSH kapcsolat sikeres');
-    } catch (error: any) {
-      logs.push(`SSH kapcsolat hiba: ${error.message}`);
-      return {
-        success: false,
-        error: `SSH kapcsolat sikertelen: ${error.message}`,
-        logs,
-      };
-    }
+      try {
+        await execAsync(sshTestCommand);
+        logs.push('SSH kapcsolat sikeres');
+      } catch (error: any) {
+        logs.push(`SSH kapcsolat hiba: ${error.message}`);
+        return {
+          success: false,
+          error: `SSH kapcsolat sikertelen: ${error.message}`,
+          logs,
+        };
+      }
 
-    // Agent telepítési script generálása
-    const installScript = generateInstallScript(managerUrl);
+      // Agent telepítési script generálása
+      const installScript = generateInstallScript(managerUrl);
     
     logs.push('Agent telepítési script előkészítve');
 
@@ -203,36 +213,46 @@ echo "Game Server Agent telepítése..."
 echo "Felhasználó: $USER"
 echo "Home könyvtár: $HOME"
 
-# Sudo NOPASSWD ellenőrzése
-echo "Sudo jogosultságok ellenőrzése..."
-if ! sudo -n true 2>/dev/null; then
-    echo "HIBA: A felhasználónak NOPASSWD sudo jogosultságokra van szüksége!" >&2
-    echo "Futtasd ezt a parancsot root-ként a szerveren:" >&2
-    echo "sudo tee /etc/sudoers.d/gameserver > /dev/null <<EOF" >&2
-    echo "gameserver ALL=(ALL) NOPASSWD: /usr/bin/systemctl" >&2
-    echo "gameserver ALL=(ALL) NOPASSWD: /usr/sbin/service" >&2
-    echo "gameserver ALL=(ALL) NOPASSWD: /usr/bin/apt-get" >&2
-    echo "gameserver ALL=(ALL) NOPASSWD: /usr/bin/apt" >&2
-    echo "gameserver ALL=(ALL) NOPASSWD: /bin/mount" >&2
-    echo "gameserver ALL=(ALL) NOPASSWD: /bin/umount" >&2
-    echo "gameserver ALL=(ALL) NOPASSWD: /bin/mkdir" >&2
-    echo "gameserver ALL=(ALL) NOPASSWD: /bin/chown" >&2
-    echo "gameserver ALL=(ALL) NOPASSWD: /usr/bin/tee" >&2
-    echo "EOF" >&2
-    echo "sudo chmod 440 /etc/sudoers.d/gameserver" >&2
-    exit 1
+# Root ellenőrzése
+if [ "$EUID" -eq 0 ]; then
+    echo "Root felhasználóval futtatva - sudo nélkül"
+    SUDO_CMD=""
+    AGENT_USER="gameserver"  # Agent service gameserver felhasználóval fut (biztonság)
+else
+    echo "Nem root felhasználó - sudo jogosultságok ellenőrzése..."
+    # Sudo NOPASSWD ellenőrzése
+    if ! sudo -n true 2>/dev/null; then
+        echo "HIBA: A felhasználónak NOPASSWD sudo jogosultságokra van szüksége!" >&2
+        echo "Vagy használj root felhasználót az SSH kapcsolathoz (ajánlott)!" >&2
+        echo "Futtasd ezt a parancsot root-ként a szerveren:" >&2
+        echo "sudo tee /etc/sudoers.d/gameserver > /dev/null <<EOF" >&2
+        echo "gameserver ALL=(ALL) NOPASSWD: /usr/bin/systemctl" >&2
+        echo "gameserver ALL=(ALL) NOPASSWD: /usr/sbin/service" >&2
+        echo "gameserver ALL=(ALL) NOPASSWD: /usr/bin/apt-get" >&2
+        echo "gameserver ALL=(ALL) NOPASSWD: /usr/bin/apt" >&2
+        echo "gameserver ALL=(ALL) NOPASSWD: /bin/mount" >&2
+        echo "gameserver ALL=(ALL) NOPASSWD: /bin/umount" >&2
+        echo "gameserver ALL=(ALL) NOPASSWD: /bin/mkdir" >&2
+        echo "gameserver ALL=(ALL) NOPASSWD: /bin/chown" >&2
+        echo "gameserver ALL=(ALL) NOPASSWD: /usr/bin/tee" >&2
+        echo "EOF" >&2
+        echo "sudo chmod 440 /etc/sudoers.d/gameserver" >&2
+        exit 1
+    fi
+    SUDO_CMD="sudo -n"
+    AGENT_USER="$USER"
+    echo "Sudo jogosultságok rendben"
 fi
-echo "Sudo jogosultságok rendben"
 
 # Node.js ellenőrzése
 if ! command -v node &> /dev/null; then
     echo "Node.js telepítése..."
-    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -n -E bash - || {
+    curl -fsSL https://deb.nodesource.com/setup_20.x | $SUDO_CMD -E bash - || {
         echo "HIBA: Node.js telepítési script sikertelen" >&2
         exit 1
     }
-    sudo -n apt-get update || echo "apt-get update figyelmeztetés (nem kritikus)"
-    sudo -n apt-get install -y nodejs || {
+    $SUDO_CMD apt-get update || echo "apt-get update figyelmeztetés (nem kritikus)"
+    $SUDO_CMD apt-get install -y nodejs || {
         echo "HIBA: Node.js telepítés sikertelen" >&2
         exit 1
     }
@@ -244,22 +264,22 @@ fi
 # Agent könyvtár létrehozása
 AGENT_DIR="/opt/game-server-agent"
 echo "Agent könyvtár létrehozása: $AGENT_DIR"
-sudo -n mkdir -p $AGENT_DIR || {
+$SUDO_CMD mkdir -p $AGENT_DIR || {
     echo "HIBA: Agent könyvtár létrehozása sikertelen" >&2
     exit 1
 }
-sudo -n chown $USER:$USER $AGENT_DIR || {
+$SUDO_CMD chown $AGENT_USER:$AGENT_USER $AGENT_DIR || {
     echo "HIBA: Agent könyvtár tulajdonjog beállítása sikertelen" >&2
     exit 1
 }
 
 # Könyvtárak létrehozása game serverekhez
 echo "Game server könyvtárak létrehozása..."
-sudo -n mkdir -p /opt/servers || { echo "Figyelmeztetés: /opt/servers létrehozása sikertelen" >&2; }
-sudo -n mkdir -p /opt/ark-shared || { echo "Figyelmeztetés: /opt/ark-shared létrehozása sikertelen" >&2; }
-sudo -n mkdir -p /opt/ark-clusters || { echo "Figyelmeztetés: /opt/ark-clusters létrehozása sikertelen" >&2; }
-sudo -n mkdir -p /opt/backups || { echo "Figyelmeztetés: /opt/backups létrehozása sikertelen" >&2; }
-sudo -n chown -R $USER:$USER /opt/servers /opt/ark-shared /opt/ark-clusters /opt/backups 2>/dev/null || {
+$SUDO_CMD mkdir -p /opt/servers || { echo "Figyelmeztetés: /opt/servers létrehozása sikertelen" >&2; }
+$SUDO_CMD mkdir -p /opt/ark-shared || { echo "Figyelmeztetés: /opt/ark-shared létrehozása sikertelen" >&2; }
+$SUDO_CMD mkdir -p /opt/ark-clusters || { echo "Figyelmeztetés: /opt/ark-clusters létrehozása sikertelen" >&2; }
+$SUDO_CMD mkdir -p /opt/backups || { echo "Figyelmeztetés: /opt/backups létrehozása sikertelen" >&2; }
+$SUDO_CMD chown -R $AGENT_USER:$AGENT_USER /opt/servers /opt/ark-shared /opt/ark-clusters /opt/backups 2>/dev/null || {
     echo "Figyelmeztetés: Könyvtárak tulajdonjog beállítása részben sikertelen" >&2
 }
 
@@ -550,14 +570,14 @@ cat > config.json <<EOF
 EOF
 
 # Systemd service létrehozása
-sudo -n tee /etc/systemd/system/game-server-agent.service > /dev/null <<EOF
+$SUDO_CMD tee /etc/systemd/system/game-server-agent.service > /dev/null <<EOF
 [Unit]
 Description=Game Server Agent
 After=network.target
 
 [Service]
 Type=simple
-User=$USER
+User=$AGENT_USER
 WorkingDirectory=$AGENT_DIR
 ExecStart=/usr/bin/node index.js
 Restart=always
@@ -569,29 +589,30 @@ EOF
 
 # Service indítása
 echo "Systemd service beállítása..."
-sudo -n systemctl daemon-reload || {
+$SUDO_CMD systemctl daemon-reload || {
     echo "HIBA: systemctl daemon-reload sikertelen" >&2
     exit 1
 }
-sudo -n systemctl enable game-server-agent || {
+$SUDO_CMD systemctl enable game-server-agent || {
     echo "HIBA: systemctl enable sikertelen" >&2
     exit 1
 }
-sudo -n systemctl start game-server-agent || {
+$SUDO_CMD systemctl start game-server-agent || {
     echo "HIBA: systemctl start sikertelen" >&2
     exit 1
 }
 
 # Service státusz ellenőrzése
 sleep 2
-if sudo -n systemctl is-active --quiet game-server-agent; then
+if $SUDO_CMD systemctl is-active --quiet game-server-agent; then
     echo "Agent telepítve és elindítva!"
-    echo "Service státusz: $(sudo -n systemctl is-active game-server-agent)"
+    echo "Service státusz: $($SUDO_CMD systemctl is-active game-server-agent)"
+    echo "Service fut a következő felhasználóval: $AGENT_USER"
 else
     echo "FIGYELMEZTETÉS: Agent service nem aktív" >&2
-    echo "Service státusz: $(sudo -n systemctl is-active game-server-agent || echo 'inactive')" >&2
+    echo "Service státusz: $($SUDO_CMD systemctl is-active game-server-agent || echo 'inactive')" >&2
     echo "Service logok:" >&2
-    sudo -n journalctl -u game-server-agent -n 20 --no-pager >&2 || true
+    $SUDO_CMD journalctl -u game-server-agent -n 20 --no-pager >&2 || true
 fi
 `;
 }

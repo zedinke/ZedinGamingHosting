@@ -46,7 +46,7 @@ export function MachineManagement({
     name: '',
     ipAddress: '',
     sshPort: '22',
-    sshUser: '',
+    sshUser: 'root', // Alapértelmezett root
     sshKeyPath: '',
     notes: '',
   });
@@ -78,7 +78,7 @@ export function MachineManagement({
         name: '',
         ipAddress: '',
         sshPort: '22',
-        sshUser: '',
+        sshUser: 'root', // Alapértelmezett root
         sshKeyPath: '',
         notes: '',
       });
