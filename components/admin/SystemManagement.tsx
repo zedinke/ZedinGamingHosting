@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { UpdateProgress } from './UpdateProgress';
 
@@ -23,6 +23,29 @@ export function SystemManagement({
     checking: boolean;
     commitInfo: any;
   } | null>(null);
+
+  // Load initial progress on mount
+  useEffect(() => {
+    const loadInitialProgress = async () => {
+      try {
+        const response = await fetch(`/api/admin/system/update/status?t=${Date.now()}`, {
+          cache: 'no-store',
+        });
+        if (response.ok) {
+          const progress = await response.json();
+          if (progress.status !== 'idle') {
+            setUpdateProgress(progress);
+            if (progress.status === 'in_progress' || progress.status === 'starting') {
+              setIsUpdating(true);
+            }
+          }
+        }
+      } catch (error) {
+        // Ignore
+      }
+    };
+    loadInitialProgress();
+  }, []);
 
   const handleMaintenanceToggle = async () => {
     try {
@@ -359,6 +382,30 @@ export function SystemManagement({
             </div>
           )}
           
+          {/* Progress törlés gomb - ha van progress fájl, de nincs aktív frissítés */}
+          {updateProgress && (updateProgress.status === 'error' || updateProgress.status === 'completed') && !isUpdating && (
+            <button
+              onClick={async () => {
+                try {
+                  const response = await fetch('/api/admin/system/update', {
+                    method: 'DELETE',
+                  });
+                  if (response.ok) {
+                    setUpdateProgress(null);
+                    toast.success('Progress törölve');
+                  } else {
+                    toast.error('Hiba történt a progress törlése során');
+                  }
+                } catch (error) {
+                  toast.error('Hiba történt');
+                }
+              }}
+              className="w-full bg-yellow-600 text-white px-6 py-3 rounded-lg hover:bg-yellow-700 transition-colors font-semibold mb-3"
+            >
+              Régi Progress Törlése
+            </button>
+          )}
+
           {!isUpdating && !updateProgress && (
             <>
               <button

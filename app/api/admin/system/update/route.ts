@@ -162,14 +162,71 @@ export async function POST(request: NextRequest) {
     if (existsSync(PROGRESS_FILE)) {
       try {
         const currentProgress = JSON.parse(await readFile(PROGRESS_FILE, 'utf-8'));
-        if (currentProgress.status === 'in_progress' || currentProgress.status === 'starting') {
-          return NextResponse.json(
-            { error: 'Már van egy frissítés folyamatban' },
-            { status: 400 }
-          );
+        const status = currentProgress.status;
+        const timestamp = currentProgress.timestamp ? new Date(currentProgress.timestamp) : null;
+        
+        // If status is in_progress or starting, check if it's recent (within last 30 minutes)
+        if (status === 'in_progress' || status === 'starting') {
+          if (timestamp) {
+            const ageInMinutes = (Date.now() - timestamp.getTime()) / (1000 * 60);
+            // If older than 30 minutes, consider it stuck and allow restart
+            if (ageInMinutes > 30) {
+              console.log(`Progress file is ${ageInMinutes.toFixed(1)} minutes old, considering it stuck. Allowing restart.`);
+              // Delete the old progress file
+              try {
+                await unlink(PROGRESS_FILE);
+                if (existsSync(LOG_FILE)) await unlink(LOG_FILE);
+              } catch {
+                // Ignore
+              }
+            } else {
+              return NextResponse.json(
+                { error: 'Már van egy frissítés folyamatban' },
+                { status: 400 }
+              );
+            }
+          } else {
+            // No timestamp, assume it's old and allow restart
+            console.log('Progress file has no timestamp, allowing restart.');
+            try {
+              await unlink(PROGRESS_FILE);
+              if (existsSync(LOG_FILE)) await unlink(LOG_FILE);
+            } catch {
+              // Ignore
+            }
+          }
+        } else if (status === 'error' || status === 'completed') {
+          // If error or completed, delete old progress file (older than 5 minutes)
+          if (timestamp) {
+            const ageInMinutes = (Date.now() - timestamp.getTime()) / (1000 * 60);
+            if (ageInMinutes > 5) {
+              console.log(`Progress file is ${ageInMinutes.toFixed(1)} minutes old (${status}), deleting.`);
+              try {
+                await unlink(PROGRESS_FILE);
+                if (existsSync(LOG_FILE)) await unlink(LOG_FILE);
+              } catch {
+                // Ignore
+              }
+            }
+          } else {
+            // No timestamp, delete it
+            try {
+              await unlink(PROGRESS_FILE);
+              if (existsSync(LOG_FILE)) await unlink(LOG_FILE);
+            } catch {
+              // Ignore
+            }
+          }
         }
-      } catch {
-        // If we can't read it, assume it's safe to start
+      } catch (error: any) {
+        // If we can't read it, delete it and allow start
+        console.log('Error reading progress file, deleting it:', error.message);
+        try {
+          await unlink(PROGRESS_FILE);
+          if (existsSync(LOG_FILE)) await unlink(LOG_FILE);
+        } catch {
+          // Ignore
+        }
       }
     }
 
