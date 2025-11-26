@@ -364,13 +364,32 @@ export function SystemManagement({
                         method: 'DELETE',
                       });
                       if (response.ok) {
+                        // Töröljük a state-et
                         setIsUpdating(false);
                         setUpdateProgress(null);
-                        toast.success('Progress törölve, újra próbálhatod a frissítést');
+                        
+                        // Ellenőrizzük, hogy tényleg törlődött-e
+                        const statusResponse = await fetch(`/api/admin/system/update/status?t=${Date.now()}`, {
+                          cache: 'no-store',
+                        });
+                        if (statusResponse.ok) {
+                          const statusData = await statusResponse.json();
+                          if (statusData.status === 'idle') {
+                            toast.success('Progress törölve, újra próbálhatod a frissítést');
+                          } else {
+                            // Ha még mindig van progress, akkor nem sikerült törölni
+                            setUpdateProgress(statusData);
+                            toast.error('A progress fájl nem törölhető');
+                          }
+                        } else {
+                          toast.success('Progress törölve, újra próbálhatod a frissítést');
+                        }
                       } else {
-                        toast.error('Hiba történt a progress törlése során');
+                        const errorData = await response.json();
+                        toast.error(errorData.error || 'Hiba történt a progress törlése során');
                       }
                     } catch (error) {
+                      console.error('Progress törlés hiba:', error);
                       toast.error('Hiba történt');
                     }
                   }}
@@ -391,12 +410,32 @@ export function SystemManagement({
                     method: 'DELETE',
                   });
                   if (response.ok) {
+                    // Töröljük a state-et
                     setUpdateProgress(null);
-                    toast.success('Progress törölve');
+                    setIsUpdating(false);
+                    
+                    // Ellenőrizzük, hogy tényleg törlődött-e
+                    const statusResponse = await fetch(`/api/admin/system/update/status?t=${Date.now()}`, {
+                      cache: 'no-store',
+                    });
+                    if (statusResponse.ok) {
+                      const statusData = await statusResponse.json();
+                      if (statusData.status === 'idle') {
+                        toast.success('Progress törölve');
+                      } else {
+                        // Ha még mindig van progress, akkor nem sikerült törölni
+                        setUpdateProgress(statusData);
+                        toast.error('A progress fájl nem törölhető');
+                      }
+                    } else {
+                      toast.success('Progress törölve');
+                    }
                   } else {
-                    toast.error('Hiba történt a progress törlése során');
+                    const errorData = await response.json();
+                    toast.error(errorData.error || 'Hiba történt a progress törlése során');
                   }
                 } catch (error) {
+                  console.error('Progress törlés hiba:', error);
                   toast.error('Hiba történt');
                 }
               }}

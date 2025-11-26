@@ -289,17 +289,63 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 403 });
     }
 
+    // Újra számoljuk a PROJECT_ROOT-ot, hogy biztosan jó legyen
+    const projectRoot = getProjectRoot();
+    const progressFile = join(projectRoot, '.update-progress.json');
+    const logFile = join(projectRoot, '.update-log.txt');
+
+    console.log('DELETE: Törlés kezdése');
+    console.log('DELETE: PROJECT_ROOT:', projectRoot);
+    console.log('DELETE: PROGRESS_FILE:', progressFile);
+    console.log('DELETE: PROGRESS_FILE exists:', existsSync(progressFile));
+    console.log('DELETE: LOG_FILE:', logFile);
+    console.log('DELETE: LOG_FILE exists:', existsSync(logFile));
+
+    let deletedFiles = [];
+    let errors = [];
+
     try {
-      if (existsSync(PROGRESS_FILE)) await unlink(PROGRESS_FILE);
-      if (existsSync(LOG_FILE)) await unlink(LOG_FILE);
+      if (existsSync(progressFile)) {
+        await unlink(progressFile);
+        deletedFiles.push('progress');
+        console.log('DELETE: Progress fájl törölve');
+      } else {
+        console.log('DELETE: Progress fájl nem létezik');
+      }
     } catch (error: any) {
+      console.error('DELETE: Progress törlés hiba:', error);
+      errors.push(`Progress: ${error.message}`);
+    }
+
+    try {
+      if (existsSync(logFile)) {
+        await unlink(logFile);
+        deletedFiles.push('log');
+        console.log('DELETE: Log fájl törölve');
+      } else {
+        console.log('DELETE: Log fájl nem létezik');
+      }
+    } catch (error: any) {
+      console.error('DELETE: Log törlés hiba:', error);
+      errors.push(`Log: ${error.message}`);
+    }
+
+    if (errors.length > 0) {
       return NextResponse.json(
-        { error: 'Hiba történt a progress törlése során: ' + error.message },
+        { 
+          error: 'Hiba történt a progress törlése során: ' + errors.join(', '),
+          deletedFiles,
+        },
         { status: 500 }
       );
     }
 
-    return NextResponse.json({ success: true, message: 'Progress törölve' });
+    console.log('DELETE: Törlés sikeres, törölt fájlok:', deletedFiles);
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Progress törölve',
+      deletedFiles,
+    });
   } catch (error: any) {
     console.error('Reset error:', error);
     return NextResponse.json(
