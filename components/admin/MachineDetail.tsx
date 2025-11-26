@@ -245,25 +245,25 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
           ) : (
             <dl className="space-y-3">
               <div>
-                <dt className="text-sm font-medium text-gray-600 mb-1">Név</dt>
+                <dt className="text-sm font-medium text-gray-700 mb-1">Név</dt>
                 <dd className="font-semibold text-gray-900">{machine.name}</dd>
               </div>
               <div>
-                <dt className="text-sm font-medium text-gray-600 mb-1">IP Cím</dt>
+                <dt className="text-sm font-medium text-gray-700 mb-1">IP Cím</dt>
                 <dd className="text-gray-900">{machine.ipAddress}</dd>
               </div>
               <div>
-                <dt className="text-sm font-medium text-gray-600 mb-1">SSH Kapcsolat</dt>
+                <dt className="text-sm font-medium text-gray-700 mb-1">SSH Kapcsolat</dt>
                 <dd className="text-gray-900 font-mono text-sm">{machine.sshUser}@{machine.ipAddress}:{machine.sshPort}</dd>
               </div>
               {machine.sshKeyPath && (
                 <div>
-                  <dt className="text-sm font-medium text-gray-600 mb-1">SSH Kulcs</dt>
+                  <dt className="text-sm font-medium text-gray-700 mb-1">SSH Kulcs</dt>
                   <dd className="font-mono text-sm text-gray-900 break-all">{machine.sshKeyPath}</dd>
                 </div>
               )}
               <div>
-                <dt className="text-sm font-medium text-gray-600 mb-1">Státusz</dt>
+                <dt className="text-sm font-medium text-gray-700 mb-1">Státusz</dt>
                 <dd className="space-y-1">
                   <span
                     className={`px-2 py-1 rounded text-xs font-semibold ${getStatusBadgeColor(
@@ -273,7 +273,7 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
                     {machine.status}
                   </span>
                   {machine.status === 'OFFLINE' && machine.agents.length === 0 && (
-                    <div className="text-xs text-blue-600 mt-1">
+                    <div className="text-xs text-blue-700 font-medium mt-1">
                       ℹ️ SSH kapcsolat rendben, agent telepítés szükséges
                     </div>
                   )}
@@ -281,12 +281,12 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
               </div>
               {machine.agentVersion && (
                 <div>
-                  <dt className="text-sm font-medium text-gray-600 mb-1">Agent Verzió</dt>
+                  <dt className="text-sm font-medium text-gray-700 mb-1">Agent Verzió</dt>
                   <dd className="text-gray-900">{machine.agentVersion}</dd>
                 </div>
               )}
               <div>
-                <dt className="text-sm font-medium text-gray-600 mb-1">Utolsó Heartbeat</dt>
+                <dt className="text-sm font-medium text-gray-700 mb-1">Utolsó Heartbeat</dt>
                 <dd className="text-gray-900">
                   {machine.lastHeartbeat
                     ? new Date(machine.lastHeartbeat).toLocaleString('hu-HU')
@@ -295,8 +295,8 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
               </div>
               {machine.notes && (
                 <div>
-                  <dt className="text-sm font-medium text-gray-600 mb-1">Megjegyzések</dt>
-                  <dd className="text-sm text-gray-700">{machine.notes}</dd>
+                  <dt className="text-sm font-medium text-gray-700 mb-1">Megjegyzések</dt>
+                  <dd className="text-sm text-gray-800">{machine.notes}</dd>
                 </div>
               )}
             </dl>
@@ -332,8 +332,8 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
               {machine.resources.cpu && (
                 <div>
                   <div className="flex justify-between mb-1">
-                    <span className="text-sm font-medium">CPU</span>
-                    <span className="text-sm text-gray-600">
+                    <span className="text-sm font-medium text-gray-700">CPU</span>
+                    <span className="text-sm text-gray-700">
                       {machine.resources.cpu.usage}% / {machine.resources.cpu.cores} core
                     </span>
                   </div>
@@ -348,8 +348,8 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
               {machine.resources.ram && (
                 <div>
                   <div className="flex justify-between mb-1">
-                    <span className="text-sm font-medium">RAM</span>
-                    <span className="text-sm text-gray-600">
+                    <span className="text-sm font-medium text-gray-700">RAM</span>
+                    <span className="text-sm text-gray-700">
                       {Math.round(machine.resources.ram.used / 1024 / 1024 / 1024)} GB /{' '}
                       {Math.round(machine.resources.ram.total / 1024 / 1024 / 1024)} GB
                     </span>
@@ -367,8 +367,8 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
               {machine.resources.disk && (
                 <div>
                   <div className="flex justify-between mb-1">
-                    <span className="text-sm font-medium">Disk</span>
-                    <span className="text-sm text-gray-600">
+                    <span className="text-sm font-medium text-gray-700">Disk</span>
+                    <span className="text-sm text-gray-700">
                       {Math.round(machine.resources.disk.used / 1024 / 1024 / 1024)} GB /{' '}
                       {Math.round(machine.resources.disk.total / 1024 / 1024 / 1024)} GB
                     </span>
@@ -385,7 +385,7 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
               )}
             </div>
           ) : (
-            <p className="text-gray-500 text-sm">Nincs elérhető erőforrás információ</p>
+            <p className="text-gray-600 text-sm">Nincs elérhető erőforrás információ</p>
           )}
         </div>
       </div>
@@ -410,7 +410,7 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
                 <div className="flex justify-between items-start mb-2">
                   <div>
                     <div className="font-medium text-gray-900">{agent.agentId}</div>
-                    <div className="text-sm text-gray-600">Verzió: {agent.version}</div>
+                    <div className="text-sm text-gray-700">Verzió: {agent.version}</div>
                   </div>
                   <span
                     className={`px-2 py-1 rounded text-xs font-semibold ${getAgentStatusColor(
@@ -422,16 +422,16 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
                 </div>
                 <div className="grid grid-cols-2 gap-4 mt-2 text-sm">
                   <div>
-                    <span className="text-gray-600">Szerverek:</span>{' '}
-                    <span className="font-medium text-gray-900">{agent._count.servers}</span>
+                    <span className="text-gray-700 font-medium">Szerverek:</span>{' '}
+                    <span className="font-semibold text-gray-900">{agent._count.servers}</span>
                   </div>
                   <div>
-                    <span className="text-gray-600">Feladatok:</span>{' '}
-                    <span className="font-medium text-gray-900">{agent._count.tasks}</span>
+                    <span className="text-gray-700 font-medium">Feladatok:</span>{' '}
+                    <span className="font-semibold text-gray-900">{agent._count.tasks}</span>
                   </div>
                   <div className="col-span-2">
-                    <span className="text-gray-600">Utolsó Heartbeat:</span>{' '}
-                    <span className="font-medium text-gray-900">
+                    <span className="text-gray-700 font-medium">Utolsó Heartbeat:</span>{' '}
+                    <span className="font-semibold text-gray-900">
                       {agent.lastHeartbeat
                         ? new Date(agent.lastHeartbeat).toLocaleString('hu-HU')
                         : 'Soha'}
@@ -440,8 +440,8 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
                 </div>
                 {agent.capabilities && (
                   <div className="mt-2 text-sm">
-                    <span className="text-gray-600">Képességek:</span>{' '}
-                    <span className="font-medium text-gray-900">
+                    <span className="text-gray-700 font-medium">Képességek:</span>{' '}
+                    <span className="font-semibold text-gray-900">
                       {Object.entries(agent.capabilities)
                         .filter(([_, v]) => v)
                         .map(([k]) => k)
@@ -453,7 +453,7 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
             ))}
           </div>
         ) : (
-          <p className="text-gray-500 text-sm">Nincs telepített agent</p>
+          <p className="text-gray-600 text-sm">Nincs telepített agent</p>
         )}
       </div>
 
@@ -462,7 +462,7 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
         <h2 className="text-xl font-bold text-gray-900 mb-4">Szerverek ({machine.servers.length})</h2>
         {machine.servers.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="w-full text-gray-700">
+            <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-200 bg-gray-50">
                   <th className="text-left p-3 font-semibold text-gray-900">Név</th>
@@ -475,8 +475,8 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
               <tbody>
                 {machine.servers.map((server) => (
                   <tr key={server.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                    <td className="p-3 font-medium text-gray-800">{server.name}</td>
-                    <td className="p-3 text-sm">{server.gameType}</td>
+                    <td className="p-3 font-medium text-gray-900">{server.name}</td>
+                    <td className="p-3 text-sm text-gray-800">{server.gameType}</td>
                     <td className="p-3">
                       <span
                         className={`px-2 py-1 rounded text-xs font-semibold ${
@@ -488,7 +488,7 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
                         {server.status}
                       </span>
                     </td>
-                    <td className="p-3 text-sm text-gray-700">
+                    <td className="p-3 text-sm text-gray-800">
                       {server.user.name || server.user.email}
                     </td>
                     <td className="p-3">
@@ -505,7 +505,7 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
             </table>
           </div>
         ) : (
-          <p className="text-gray-500 text-sm">Nincs hozzárendelt szerver</p>
+          <p className="text-gray-600 text-sm">Nincs hozzárendelt szerver</p>
         )}
       </div>
     </div>
