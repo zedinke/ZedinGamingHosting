@@ -96,9 +96,36 @@ const defaultGameImages = [
   },
 ];
 
-export function SlideshowSection({ slides, locale, transitionInterval = 5 }: SlideshowSectionProps) {
+export function SlideshowSection({ slides, locale, transitionInterval: initialTransitionInterval = 5 }: SlideshowSectionProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [transitionInterval, setTransitionInterval] = useState(initialTransitionInterval);
+
+  // Fetch transition interval from API on mount and periodically
+  useEffect(() => {
+    const fetchInterval = async () => {
+      try {
+        const response = await fetch('/api/admin/cms/slideshow/settings');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.transitionInterval) {
+            const interval = parseInt(data.transitionInterval.toString(), 10);
+            if (!isNaN(interval) && interval >= 1 && interval <= 60) {
+              console.log('Slideshow: updating transition interval to', interval, 'seconds');
+              setTransitionInterval(interval);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch slideshow interval:', error);
+      }
+    };
+
+    fetchInterval();
+    // Refresh interval every 10 seconds to pick up changes quickly
+    const interval = setInterval(fetchInterval, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Use slides from database if available, otherwise use default images
   // Memoize to prevent unnecessary recalculations
@@ -113,8 +140,8 @@ export function SlideshowSection({ slides, locale, transitionInterval = 5 }: Sli
     return activeSlides.length > 0 ? activeSlides : defaultGameImages;
   }, [activeSlides]);
 
-  // Convert seconds to milliseconds
-  const intervalMs = transitionInterval * 1000;
+  // Convert seconds to milliseconds - memoize to ensure useEffect updates when it changes
+  const intervalMs = useMemo(() => transitionInterval * 1000, [transitionInterval]);
 
   // Reset current slide when slides change
   useEffect(() => {
@@ -124,12 +151,18 @@ export function SlideshowSection({ slides, locale, transitionInterval = 5 }: Sli
   // Auto-play slideshow
   useEffect(() => {
     if (!isAutoPlaying || displaySlides.length <= 1) {
-      console.log('Slideshow: auto-play disabled or only one slide', { isAutoPlaying, slideCount: displaySlides.length });
+      console.log('Slideshow: auto-play disabled or only one slide', { 
+        isAutoPlaying, 
+        slideCount: displaySlides.length,
+        transitionInterval,
+        intervalMs 
+      });
       return;
     }
 
     console.log('Slideshow: starting auto-play', { 
       slideCount: displaySlides.length, 
+      transitionInterval,
       intervalMs, 
       currentSlide 
     });
@@ -146,7 +179,7 @@ export function SlideshowSection({ slides, locale, transitionInterval = 5 }: Sli
       console.log('Slideshow: clearing interval');
       clearInterval(interval);
     };
-  }, [isAutoPlaying, displaySlides.length, intervalMs]);
+  }, [isAutoPlaying, displaySlides.length, intervalMs, transitionInterval]);
 
   if (displaySlides.length === 0) {
     return null;

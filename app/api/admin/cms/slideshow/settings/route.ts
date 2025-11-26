@@ -4,6 +4,29 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { UserRole } from '@prisma/client';
 
+// GET: Retrieve slideshow settings (public endpoint)
+export async function GET() {
+  try {
+    const setting = await prisma.setting.findUnique({
+      where: { key: 'slideshow_transition_interval' },
+    });
+
+    const transitionInterval = setting 
+      ? parseInt(setting.value, 10) || 5 
+      : 5;
+
+    return NextResponse.json({
+      transitionInterval,
+    });
+  } catch (error) {
+    console.error('Slideshow settings GET error:', error);
+    return NextResponse.json(
+      { transitionInterval: 5 }, // Default fallback
+      { status: 200 }
+    );
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
