@@ -223,10 +223,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Return URL - use API route for serving files (more reliable)
-    const fileUrl = `/api/uploads/slideshow/${fileName}`;
+    // Use absolute URL if we have a base URL, otherwise relative
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || '';
+    const fileUrl = baseUrl ? `${baseUrl}/api/uploads/slideshow/${fileName}` : `/api/uploads/slideshow/${fileName}`;
     
     // Also return the public URL for direct access
-    const publicUrl = `/uploads/slideshow/${fileName}`;
+    const publicUrl = baseUrl ? `${baseUrl}/uploads/slideshow/${fileName}` : `/uploads/slideshow/${fileName}`;
     
     // Final verification
     if (!existsSync(filePath)) {
