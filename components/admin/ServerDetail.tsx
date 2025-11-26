@@ -278,6 +278,36 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
               </button>
               <button
                 onClick={async () => {
+                  if (!confirm('Biztosan újratelepíted a szervert? Ez újra letölti a játék fájlokat és újragenerálja a konfigurációt. Ez néhány percig eltarthat.')) {
+                    return;
+                  }
+
+                  setIsLoading(true);
+                  try {
+                    const response = await fetch(`/api/admin/servers/${server.id}/reinstall`, {
+                      method: 'POST',
+                    });
+                    const result = await response.json();
+                    if (response.ok) {
+                      toast.success(result.message || 'Szerver újratelepítve');
+                      setServerStatus('OFFLINE');
+                      setTimeout(() => window.location.reload(), 2000);
+                    } else {
+                      toast.error(result.error || 'Hiba történt');
+                    }
+                  } catch (error) {
+                    toast.error('Hiba történt');
+                  } finally {
+                    setIsLoading(false);
+                  }
+                }}
+                disabled={isLoading}
+                className="w-full bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Szerver Újratelepítése
+              </button>
+              <button
+                onClick={async () => {
                   if (!confirm('Biztosan újratelepíted a systemd service fájlt? A szerver leáll, majd újrageneráljuk a service fájlt.')) {
                     return;
                   }
