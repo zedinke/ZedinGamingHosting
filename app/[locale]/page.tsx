@@ -18,30 +18,41 @@ export default async function HomePage({
 }: {
   params: { locale: string };
 }) {
-  const t = getTranslations(locale, 'common');
+  // Ellenőrizzük, hogy a locale érvényes-e (pl. favicon.ico ne legyen locale)
+  const VALID_LOCALES = ['hu', 'en'];
+  const staticFileExtensions = ['.ico', '.txt', '.xml', '.json', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.css', '.js'];
+  const isStaticFile = staticFileExtensions.some(ext => locale.toLowerCase().endsWith(ext));
+  
+  // Ha nem érvényes locale vagy statikus fájl, használjuk az angolt
+  const validLocale = (VALID_LOCALES.includes(locale) && !isStaticFile) ? locale : 'en';
+  
+  const t = getTranslations(validLocale, 'common');
   
   // Load translations server-side
   let translations = {};
   try {
-    const filePath = join(process.cwd(), 'public', 'locales', locale, 'common.json');
+    const filePath = join(process.cwd(), 'public', 'locales', validLocale, 'common.json');
     const fileContents = readFileSync(filePath, 'utf8');
     translations = JSON.parse(fileContents);
   } catch (error) {
-    console.error('Failed to load translations:', error);
+    // Csak akkor logoljuk, ha valódi locale, ne a favicon.ico-t
+    if (VALID_LOCALES.includes(locale) && !isStaticFile) {
+      console.error('Failed to load translations:', error);
+    }
   }
 
   // Load homepage sections from database
   const [homepageSections, slideshowSlides, slideshowInterval] = await Promise.all([
     prisma.homepageSection.findMany({
       where: {
-        locale,
+        locale: validLocale,
         isActive: true,
       },
       orderBy: { order: 'asc' },
     }),
     prisma.slideshowSlide.findMany({
       where: {
-        locale,
+        locale: validLocale,
         isActive: true,
       },
       orderBy: { order: 'asc' },
