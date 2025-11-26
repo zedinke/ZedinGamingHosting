@@ -137,7 +137,7 @@ export async function syncServerStatus(serverId: string): Promise<{
     if (!server) {
       return {
         success: false,
-        oldStatus: server?.status || 'OFFLINE',
+        oldStatus: 'OFFLINE',
         newStatus: 'OFFLINE',
         details: 'Szerver nem található',
       };
