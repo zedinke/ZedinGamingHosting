@@ -270,6 +270,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: 'Frissítés elindítva',
+      redirectUrl: '/update-status.html',
     });
   } catch (error: any) {
     console.error('Update start error:', error);

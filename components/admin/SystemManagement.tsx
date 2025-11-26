@@ -109,7 +109,7 @@ export function SystemManagement({
   const handleSystemUpdate = async () => {
     if (
       !confirm(
-        'Biztosan frissíteni szeretnéd a rendszert? Ez néhány percig eltarthat.'
+        'Biztosan frissíteni szeretnéd a rendszert? Ez néhány percig eltarthat.\n\nA frissítés követése egy külön oldalon történik, hogy még a Next.js újraindulása alatt is működjön.'
       )
     ) {
       return;
@@ -137,6 +137,14 @@ export function SystemManagement({
         throw new Error(result.error || 'Frissítési hiba');
       }
 
+      toast.success('Frissítés elindítva');
+      
+      // Redirect to static update status page
+      if (result.redirectUrl) {
+        window.location.href = result.redirectUrl;
+        return; // Don't start polling, we're redirecting
+      }
+      
       toast.success('Frissítés elindítva, követés...');
 
       // Polling a progress követéséhez

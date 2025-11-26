@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rendszer Frissítés - ZedinGamingHosting</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+        }
+        
+        h1 {
+            color: #1a202c;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            color: #718096;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .progress-container {
+            margin-bottom: 30px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: #e2e8f0;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+            border-radius: 6px;
+        }
+        
+        .progress-fill.completed {
+            background: linear-gradient(90deg, #48bb78 0%, #38a169 100%);
+        }
+        
+        .progress-fill.error {
+            background: linear-gradient(90deg, #f56565 0%, #e53e3e 100%);
+        }
+        
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #4a5568;
+            margin-bottom: 20px;
+        }
+        
+        .steps {
+            list-style: none;
+            margin-bottom: 30px;
+        }
+        
+        .step {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .step:last-child {
+            border-bottom: none;
+        }
+        
+        .step-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .step-icon.pending {
+            background: #e2e8f0;
+            color: #a0aec0;
+        }
+        
+        .step-icon.active {
+            background: #667eea;
+            color: white;
+            animation: pulse 2s infinite;
+        }
+        
+        .step-icon.completed {
+            background: #48bb78;
+            color: white;
+        }
+        
+        .step-icon.error {
+            background: #f56565;
+            color: white;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .step-label {
+            flex: 1;
+            color: #2d3748;
+            font-size: 15px;
+        }
+        
+        .log-container {
+            background: #1a202c;
+            border-radius: 8px;
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+        
+        .log-line {
+            color: #a0aec0;
+            margin-bottom: 4px;
+        }
+        
+        .log-line.success {
+            color: #48bb78;
+        }
+        
+        .log-line.error {
+            color: #f56565;
+        }
+        
+        .log-line.warning {
+            color: #ed8936;
+        }
+        
+        .status-message {
+            text-align: center;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        .status-message.idle {
+            background: #edf2f7;
+            color: #4a5568;
+        }
+        
+        .status-message.in-progress {
+            background: #ebf8ff;
+            color: #2c5282;
+        }
+        
+        .status-message.completed {
+            background: #f0fff4;
+            color: #22543d;
+        }
+        
+        .status-message.error {
+            background: #fff5f5;
+            color: #c53030;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-danger {
+            background: #f56565;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #718096;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Rendszer Frissítés</h1>
+        <p class="subtitle">A frissítés folyamatban van. Kérjük, ne zárja be ezt az oldalt.</p>
+        
+        <div id="status-message" class="status-message idle">
+            Frissítés ellenőrzése...
+        </div>
+        
+        <div id="progress-container" class="progress-container" style="display: none;">
+            <div class="progress-bar">
+                <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
+            </div>
+            <div class="progress-text">
+                <span id="progress-message">Várakozás...</span>
+                <span id="progress-percent">0%</span>
+            </div>
+        </div>
+        
+        <ul id="steps" class="steps" style="display: none;">
+            <li class="step">
+                <div class="step-icon pending">1</div>
+                <div class="step-label">Git változások letöltése</div>
+            </li>
+            <li class="step">
+                <div class="step-icon pending">2</div>
+                <div class="step-label">Függőségek telepítése</div>
+            </li>
+            <li class="step">
+                <div class="step-icon pending">3</div>
+                <div class="step-label">Adatbázis migrációk</div>
+            </li>
+            <li class="step">
+                <div class="step-icon pending">4</div>
+                <div class="step-label">Production build</div>
+            </li>
+            <li class="step">
+                <div class="step-icon pending">5</div>
+                <div class="step-label">Szolgáltatás újraindítás</div>
+            </li>
+            <li class="step">
+                <div class="step-icon pending">6</div>
+                <div class="step-label">Frissítés befejezve</div>
+            </li>
+        </ul>
+        
+        <div id="log-container" class="log-container" style="display: none;">
+            <div class="log-line">Várakozás a logokra...</div>
+        </div>
+        
+        <div class="actions" id="actions" style="display: none;">
+            <button class="btn-secondary" onclick="window.location.reload()">Frissítés</button>
+            <button class="btn-primary" onclick="window.location.href='/hu/admin/system'">Vissza az Admin Panelhez</button>
+        </div>
+    </div>
+    
+    <script>
+        const stepMap = {
+            'git_pull': 0,
+            'npm_install': 1,
+            'db_migrate': 2,
+            'build': 3,
+            'restart': 4,
+            'completed': 5
+        };
+        
+        const stepLabels = [
+            'Git változások letöltése',
+            'Függőségek telepítése',
+            'Adatbázis migrációk',
+            'Production build',
+            'Szolgáltatás újraindítás',
+            'Frissítés befejezve'
+        ];
+        
+        let pollInterval;
+        
+        function updateUI(data) {
+            const statusMessage = document.getElementById('status-message');
+            const progressContainer = document.getElementById('progress-container');
+            const progressFill = document.getElementById('progress-fill');
+            const progressMessage = document.getElementById('progress-message');
+            const progressPercent = document.getElementById('progress-percent');
+            const steps = document.getElementById('steps');
+            const logContainer = document.getElementById('log-container');
+            const actions = document.getElementById('actions');
+            
+            if (data.status === 'idle') {
+                statusMessage.className = 'status-message idle';
+                statusMessage.textContent = 'Nincs aktív frissítés';
+                progressContainer.style.display = 'none';
+                steps.style.display = 'none';
+                logContainer.style.display = 'none';
+                actions.style.display = 'flex';
+                return;
+            }
+            
+            progressContainer.style.display = 'block';
+            steps.style.display = 'block';
+            logContainer.style.display = 'block';
+            
+            // Status message
+            if (data.status === 'completed') {
+                statusMessage.className = 'status-message completed';
+                statusMessage.textContent = '✅ Frissítés sikeresen befejezve!';
+                progressFill.classList.add('completed');
+                actions.style.display = 'flex';
+            } else if (data.status === 'error') {
+                statusMessage.className = 'status-message error';
+                statusMessage.textContent = '❌ Frissítési hiba: ' + (data.error || 'Ismeretlen hiba');
+                progressFill.classList.add('error');
+                actions.style.display = 'flex';
+            } else {
+                statusMessage.className = 'status-message in-progress';
+                statusMessage.textContent = '🔄 Frissítés folyamatban...';
+                progressFill.classList.remove('completed', 'error');
+            }
+            
+            // Progress
+            const progress = data.progress || 0;
+            progressFill.style.width = progress + '%';
+            progressMessage.textContent = data.message || 'Frissítés folyamatban...';
+            progressPercent.textContent = Math.round(progress) + '%';
+            
+            // Steps
+            const currentStep = data.currentStep || null;
+            const stepElements = document.querySelectorAll('.step');
+            stepElements.forEach((step, index) => {
+                const icon = step.querySelector('.step-icon');
+                icon.className = 'step-icon';
+                
+                if (currentStep && stepMap[currentStep] === index) {
+                    if (data.status === 'completed' && index === 5) {
+                        icon.classList.add('completed');
+                        icon.textContent = '✓';
+                    } else if (data.status === 'error') {
+                        icon.classList.add('error');
+                        icon.textContent = '✗';
+                    } else {
+                        icon.classList.add('active');
+                        icon.textContent = index + 1;
+                    }
+                } else if (currentStep && stepMap[currentStep] > index) {
+                    icon.classList.add('completed');
+                    icon.textContent = '✓';
+                } else if (data.status === 'completed' && index <= 5) {
+                    icon.classList.add('completed');
+                    icon.textContent = '✓';
+                } else {
+                    icon.classList.add('pending');
+                    icon.textContent = index + 1;
+                }
+            });
+            
+            // Log
+            if (data.log) {
+                const logLines = data.log.split('\n').filter(line => line.trim());
+                logContainer.innerHTML = logLines.map(line => {
+                    let className = 'log-line';
+                    if (line.includes('✓') || line.includes('✔') || line.includes('sikeres')) {
+                        className += ' success';
+                    } else if (line.includes('❌') || line.includes('✗') || line.includes('hiba') || line.includes('error')) {
+                        className += ' error';
+                    } else if (line.includes('⚠️') || line.includes('warning')) {
+                        className += ' warning';
+                    }
+                    return `<div class="${className}">${escapeHtml(line)}</div>`;
+                }).join('');
+                logContainer.scrollTop = logContainer.scrollHeight;
+            }
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        async function fetchStatus() {
+            try {
+                const response = await fetch(`/api/admin/system/update/status?t=${Date.now()}`, {
+                    cache: 'no-store',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    updateUI(data);
+                    
+                    // Ha completed vagy error, állítsuk le a polling-ot
+                    if (data.status === 'completed' || data.status === 'error') {
+                        clearInterval(pollInterval);
+                    }
+                } else {
+                    // Ha 404 vagy más hiba, lehet hogy nincs progress
+                    updateUI({ status: 'idle' });
+                }
+            } catch (error) {
+                console.error('Status fetch error:', error);
+                // Ha hálózati hiba, próbáljuk meg újra
+            }
+        }
+        
+        // Polling indítása
+        fetchStatus();
+        pollInterval = setInterval(fetchStatus, 2000); // 2 másodpercenként
+        
+        // Oldal bezárása előtt leállítjuk a polling-ot
+        window.addEventListener('beforeunload', () => {
+            clearInterval(pollInterval);
+        });
+    </script>
+</body>
+</html>
+
