@@ -54,6 +54,9 @@ export async function installAgentViaSSH(
     
     logs.push('Agent telepítési script előkészítve');
 
+    // SSH client importálása (a teljes függvényben használjuk)
+    const { copyFileViaSSH, executeSSHCommand } = await import('./ssh-client');
+
     // Script feltöltése SCP-vel ideiglenes fájlként, majd futtatása
     // Ez a legbiztonságosabb módszer, mert nincs szükség escaping-re
     const { writeFile, unlink } = await import('fs/promises');
@@ -71,7 +74,6 @@ export async function installAgentViaSSH(
       logs.push('Lokális ideiglenes fájl létrehozva');
 
       // Script másolása a szerverre SCP-vel
-      const { copyFileViaSSH, executeSSHCommand } = await import('./ssh-client');
       logs.push('Script másolása a szerverre SCP-vel...');
       
       const copyResult = await copyFileViaSSH(config, tempLocalPath, tempRemotePath);
