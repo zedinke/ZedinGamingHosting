@@ -46,19 +46,20 @@ export async function GET(
           invoiceId: params.id,
         });
         return NextResponse.json(
-          { error: 'Hiba történt a PDF generálása során. Kérjük, ellenőrizze a számla beállításokat.' },
+          { 
+            error: 'Hiba történt a PDF generálása során. Kérjük, ellenőrizze a számla beállításokat az admin felületen.',
+            hint: 'Menj az Admin Panel → Beállítások → Számla beállítások menüpontra és állítsd be a kötelező adatokat.'
+          },
           { status: 500 }
         );
       }
 
-      // Mivel jelenleg HTML-t generálunk (PDF generálás még nincs implementálva),
-      // HTML-ként adjuk vissza, hogy a böngésző megjelenítse
-      // TODO: Valódi PDF generálás implementálása (puppeteer vagy más library)
-      const htmlString = pdfBuffer.toString('utf-8');
+      // Ellenőrizzük, hogy HTML-t vagy PDF-t kaptunk
+      const bufferString = pdfBuffer.toString('utf-8');
       
-      // Ha HTML-t kaptunk (ami jelenleg a helyzet), HTML-ként adjuk vissza
-      if (htmlString.trim().startsWith('<!DOCTYPE html>') || htmlString.trim().startsWith('<html')) {
-        return new NextResponse(htmlString, {
+      // Ha HTML-t kaptunk (fallback esetén), HTML-ként adjuk vissza
+      if (bufferString.trim().startsWith('<!DOCTYPE html>') || bufferString.trim().startsWith('<html')) {
+        return new NextResponse(bufferString, {
           headers: {
             'Content-Type': 'text/html; charset=utf-8',
             'Content-Disposition': `inline; filename="szamla-${invoice.invoiceNumber}.html"`,
@@ -78,10 +79,12 @@ export async function GET(
       logger.error('PDF generation error', pdfError as Error, {
         invoiceId: params.id,
       });
+      
       return NextResponse.json(
         { 
           error: 'Hiba történt a PDF generálása során',
-          details: pdfError instanceof Error ? pdfError.message : 'Ismeretlen hiba'
+          details: pdfError instanceof Error ? pdfError.message : 'Ismeretlen hiba',
+          hint: 'Kérjük, ellenőrizze a számla beállításokat az admin felületen (Admin Panel → Beállítások → Számla beállítások).'
         },
         { status: 500 }
       );
