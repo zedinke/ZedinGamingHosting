@@ -46,8 +46,15 @@ export async function POST(
       );
     }
 
-    // Ellenőrizzük, hogy van-e fizetett számla
-    const hasPaidInvoice = server.subscription?.invoices && server.subscription.invoices.length > 0;
+    // Ellenőrizzük, hogy van-e előfizetés és fizetett számla
+    if (!server.subscription) {
+      return NextResponse.json(
+        { error: 'Nincs előfizetés a szerverhez' },
+        { status: 400 }
+      );
+    }
+
+    const hasPaidInvoice = server.subscription.invoices && server.subscription.invoices.length > 0;
     
     if (!hasPaidInvoice) {
       return NextResponse.json(

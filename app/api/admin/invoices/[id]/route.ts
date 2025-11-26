@@ -81,10 +81,13 @@ export async function PATCH(
     // Ha a státusz PAID-re változott és van szerver, triggereljük az automatikus telepítést
     if (status === 'PAID' && oldInvoice.status !== 'PAID' && invoice.subscription?.server?.id) {
       // Háttérben triggereljük az automatikus telepítést
-      triggerAutoInstallOnPayment(invoice.subscription.server.id, invoice.id).catch((error) => {
-        console.error('Auto-install trigger error:', error);
-        // Nem dobunk hibát, mert a számla frissítése sikeres volt
-      });
+      const serverId = invoice.subscription.server.id;
+      if (serverId) {
+        triggerAutoInstallOnPayment(serverId, invoice.id).catch((error) => {
+          console.error('Auto-install trigger error:', error);
+          // Nem dobunk hibát, mert a számla frissítése sikeres volt
+        });
+      }
     }
 
     return NextResponse.json(invoice);
