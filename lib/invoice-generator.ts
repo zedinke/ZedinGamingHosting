@@ -180,7 +180,12 @@ export async function generateInvoicePDF(invoiceId: string): Promise<Buffer | nu
 
     const settings = await getInvoiceSettings();
     if (!settings) {
-      throw new Error('Számla beállítások hiányoznak');
+      throw new Error('Számla beállítások hiányoznak. Kérjük, állítsa be a számlázási beállításokat az admin felületen.');
+    }
+
+    // Ellenőrizzük, hogy a szükséges beállítások megvannak-e
+    if (!settings.companyName || !settings.companyTaxNumber) {
+      throw new Error('Hiányoznak a kötelező számlázási beállítások (cég név, adószám).');
     }
 
     // HTML számla generálása
@@ -191,6 +196,7 @@ export async function generateInvoicePDF(invoiceId: string): Promise<Buffer | nu
     // Most csak HTML-t adunk vissza, a PDF generálás később implementálható
     
     // Ideiglenesen HTML-t adunk vissza Buffer-ként
+    // A böngésző automatikusan megjeleníti HTML-ként, ha PDF helyett
     return Buffer.from(html, 'utf-8');
   } catch (error) {
     logger.error('Failed to generate invoice PDF', error as Error, { invoiceId });

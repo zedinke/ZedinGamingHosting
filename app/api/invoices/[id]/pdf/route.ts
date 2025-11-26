@@ -38,24 +38,54 @@ export async function GET(
     }
 
     // PDF generálása
-    const pdfBuffer = await generateInvoicePDF(params.id);
+    try {
+      const pdfBuffer = await generateInvoicePDF(params.id);
 
-    if (!pdfBuffer) {
+      if (!pdfBuffer) {
+        logger.error('PDF generation returned null', new Error('PDF generation failed'), {
+          invoiceId: params.id,
+        });
+        return NextResponse.json(
+          { error: 'Hiba történt a PDF generálása során. Kérjük, ellenőrizze a számla beállításokat.' },
+          { status: 500 }
+        );
+      }
+
+      // Mivel jelenleg HTML-t generálunk (PDF generálás még nincs implementálva),
+      // HTML-ként adjuk vissza, hogy a böngésző megjelenítse
+      // TODO: Valódi PDF generálás implementálása (puppeteer vagy más library)
+      const htmlString = pdfBuffer.toString('utf-8');
+      
+      // Ha HTML-t kaptunk (ami jelenleg a helyzet), HTML-ként adjuk vissza
+      if (htmlString.trim().startsWith('<!DOCTYPE html>') || htmlString.trim().startsWith('<html')) {
+        return new NextResponse(htmlString, {
+          headers: {
+            'Content-Type': 'text/html; charset=utf-8',
+            'Content-Disposition': `inline; filename="szamla-${invoice.invoiceNumber}.html"`,
+          },
+        });
+      }
+      
+      // Ha valódi PDF buffer-t kaptunk, PDF-ként adjuk vissza
+      const pdfArray = new Uint8Array(pdfBuffer);
+      return new NextResponse(pdfArray, {
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `attachment; filename="szamla-${invoice.invoiceNumber}.pdf"`,
+        },
+      });
+    } catch (pdfError) {
+      logger.error('PDF generation error', pdfError as Error, {
+        invoiceId: params.id,
+      });
       return NextResponse.json(
-        { error: 'Hiba történt a PDF generálása során' },
+        { 
+          error: 'Hiba történt a PDF generálása során',
+          details: pdfError instanceof Error ? pdfError.message : 'Ismeretlen hiba'
+        },
         { status: 500 }
       );
     }
-
-    // PDF válasz küldése
-    // Buffer konvertálása Uint8Array-re a NextResponse kompatibilitáshoz
-    const pdfArray = new Uint8Array(pdfBuffer);
-    return new NextResponse(pdfArray, {
-      headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="szamla-${invoice.invoiceNumber}.pdf"`,
-      },
-    });
   } catch (error) {
     logger.error('Get invoice PDF error', error as Error, {
       invoiceId: params.id,
