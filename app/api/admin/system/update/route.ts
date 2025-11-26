@@ -424,8 +424,19 @@ async function startUpdateProcess() {
           }
 
           await appendLog('  - Next.js build...');
-          // Set NODE_ENV to production for build
+          // Set NODE_ENV to production for build és takarítsuk ki a Next.js privát env változóit,
+          // mert ezek bizonyos környezetekben a "generate is not a function" hibához vezethetnek
           const buildEnv = { ...process.env, NODE_ENV: 'production' } as Record<string, string | undefined>;
+
+          // Tisztítás a jól ismert problémás változókról
+          delete buildEnv.__NEXT_PRIVATE_STANDALONE_CONFIG;
+          delete buildEnv.__NEXT_PRIVATE_ORIGIN;
+          delete buildEnv.NEXT_DEPLOYMENT_ID;
+          delete buildEnv.__NEXT_PRIVATE_RUNTIME_TYPE;
+          delete buildEnv.NEXT_OTEL_FETCH_DISABLED;
+
+          await appendLog('  - Build környezet inicializálva (privát Next env változók törölve)...');
+
           await execAsync('npm run build', { 
             cwd: PROJECT_ROOT,
             maxBuffer: 1024 * 1024 * 10,
