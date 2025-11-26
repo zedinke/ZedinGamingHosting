@@ -34,18 +34,18 @@ export default async function ServerDetailPage({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-100">
       <Navigation locale={locale} />
       <main className="container mx-auto px-4 py-8">
         <div className="mb-6">
           <a
             href={`/${locale}/dashboard`}
-            className="text-primary-600 hover:underline mb-4 inline-block"
+            className="text-primary-600 hover:text-primary-700 mb-4 inline-block font-medium"
           >
             ← Vissza a dashboard-hoz
           </a>
-          <h1 className="text-3xl font-bold mb-2">{server.name}</h1>
-          <p className="text-gray-600">Szerver kezelése és monitorozása</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">{server.name}</h1>
+          <p className="text-gray-700">Szerver kezelése és monitorozása</p>
         </div>
 
         <UserServerDetail server={server} locale={locale} />

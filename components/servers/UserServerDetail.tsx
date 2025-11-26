@@ -111,19 +111,19 @@ export function UserServerDetail({ server, locale }: UserServerDetailProps) {
     <div className="space-y-6">
       {/* Szerver információk */}
       <div className="grid md:grid-cols-2 gap-6">
-        <div className="card">
-          <h2 className="text-xl font-bold mb-4">Szerver Információk</h2>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Szerver Információk</h2>
           <dl className="space-y-3">
             <div className="flex justify-between">
-              <dt className="text-gray-600">Név:</dt>
-              <dd className="font-medium">{server.name}</dd>
+              <dt className="text-gray-700">Név:</dt>
+              <dd className="font-medium text-gray-900">{server.name}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-gray-600">Játék:</dt>
-              <dd>{getGameTypeLabel(server.gameType)}</dd>
+              <dt className="text-gray-700">Játék:</dt>
+              <dd className="text-gray-900">{getGameTypeLabel(server.gameType)}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-gray-600">Státusz:</dt>
+              <dt className="text-gray-700">Státusz:</dt>
               <dd>
                 <span
                   className={`px-2 py-1 rounded text-xs font-semibold ${getStatusBadgeColor(
@@ -135,27 +135,27 @@ export function UserServerDetail({ server, locale }: UserServerDetailProps) {
               </dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-gray-600">IP Cím:</dt>
-              <dd>{server.ipAddress || 'Nincs hozzárendelve'}</dd>
+              <dt className="text-gray-700">IP Cím:</dt>
+              <dd className="text-gray-900">{server.ipAddress || 'Nincs hozzárendelve'}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-gray-600">Port:</dt>
-              <dd>{server.port || '-'}</dd>
+              <dt className="text-gray-700">Port:</dt>
+              <dd className="text-gray-900">{server.port || '-'}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-gray-600">Max Játékosok:</dt>
-              <dd>{server.maxPlayers}</dd>
+              <dt className="text-gray-700">Max Játékosok:</dt>
+              <dd className="text-gray-900">{server.maxPlayers}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-gray-600">Létrehozva:</dt>
-              <dd>{new Date(server.createdAt).toLocaleDateString('hu-HU')}</dd>
+              <dt className="text-gray-700">Létrehozva:</dt>
+              <dd className="text-gray-900">{new Date(server.createdAt).toLocaleDateString('hu-HU')}</dd>
             </div>
           </dl>
         </div>
 
         {/* Szerver műveletek */}
-        <div className="card">
-          <h2 className="text-xl font-bold mb-4">Szerver Műveletek</h2>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Szerver Műveletek</h2>
           <div className="space-y-2">
             <button
               onClick={() => handleServerAction('start')}
@@ -184,11 +184,11 @@ export function UserServerDetail({ server, locale }: UserServerDetailProps) {
 
       {/* Előfizetés információk */}
       {server.subscription && (
-        <div className="card">
-          <h2 className="text-xl font-bold mb-4">Előfizetés</h2>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Előfizetés</h2>
           <div className="space-y-3">
             <div className="flex justify-between">
-              <span className="text-gray-600">Státusz:</span>
+              <span className="text-gray-700">Státusz:</span>
               <span
                 className={`px-2 py-1 rounded text-xs ${
                   server.subscription.status === 'ACTIVE'
@@ -201,8 +201,8 @@ export function UserServerDetail({ server, locale }: UserServerDetailProps) {
             </div>
             {server.subscription.currentPeriodEnd && (
               <div className="flex justify-between">
-                <span className="text-gray-600">Következő számlázás:</span>
-                <span>
+                <span className="text-gray-700">Következő számlázás:</span>
+                <span className="text-gray-900">
                   {new Date(server.subscription.currentPeriodEnd).toLocaleDateString('hu-HU')}
                 </span>
               </div>
@@ -214,7 +214,7 @@ export function UserServerDetail({ server, locale }: UserServerDetailProps) {
                   {server.subscription.invoices.map((invoice) => (
                     <div
                       key={invoice.id}
-                      className="flex justify-between items-center p-2 bg-gray-50 rounded"
+                      className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-200"
                     >
                       <div>
                         <span className="font-medium">{invoice.invoiceNumber}</span>
@@ -256,8 +256,8 @@ export function UserServerDetail({ server, locale }: UserServerDetailProps) {
 
       {/* Erőforrás használat */}
       {server.resourceUsage && (
-        <div className="card">
-          <h2 className="text-xl font-bold mb-4">Erőforrás Használat</h2>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Erőforrás Használat</h2>
           <div className="grid md:grid-cols-3 gap-4">
             {server.resourceUsage.cpu && (
               <div>
