@@ -538,8 +538,10 @@ async function createSystemdService(
   const workingDir = paths?.serverPath || `/opt/servers/${serverId}`;
   const execDir = paths?.isARK && paths.sharedPath ? paths.sharedPath : workingDir;
 
-  const serviceContent = `
-[Unit]
+  // Escape speciális karakterek a startCommand-ban
+  const escapedStartCommand = startCommand.replace(/\$/g, '\\$').replace(/"/g, '\\"');
+  
+  const serviceContent = `[Unit]
 Description=Game Server ${serverId} (${gameType})
 After=network.target
 
@@ -547,15 +549,14 @@ After=network.target
 Type=simple
 User=root
 WorkingDirectory=${execDir}
-ExecStart=/bin/bash -c "cd ${execDir} && ${startCommand}"
+ExecStart=/bin/bash -c "cd ${execDir} && ${escapedStartCommand}"
 Restart=always
 RestartSec=10
 StandardOutput=journal
 StandardError=journal
 
 [Install]
-WantedBy=multi-user.target
-  `.trim();
+WantedBy=multi-user.target`;
 
   await executeSSHCommand(
     {
