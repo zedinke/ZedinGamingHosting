@@ -23,8 +23,8 @@ interface MachineResources {
 export async function findBestMachine(
   options: ProvisioningOptions
 ): Promise<{ machineId: string; agentId: string } | null> {
-  // Összes online gépet és agenteket lekérdezzük
-  const machines = await prisma.serverMachine.findMany({
+  // Először próbáljuk ONLINE gépeket
+  let machines = await prisma.serverMachine.findMany({
     where: {
       status: 'ONLINE',
     },
@@ -49,7 +49,62 @@ export async function findBestMachine(
     },
   });
 
+  // Ha nincs ONLINE gép, de van ONLINE agent, akkor keressünk gépeket ONLINE agentekkel
+  if (machines.length === 0 || machines.every(m => m.agents.length === 0)) {
+    console.log('No ONLINE machines found or no ONLINE agents on ONLINE machines, searching for machines with ONLINE agents...');
+    
+    // Keresünk gépeket, amelyeken van ONLINE agent (függetlenül a gép státuszától)
+    const machinesWithAgents = await prisma.serverMachine.findMany({
+      include: {
+        agents: {
+          where: {
+            status: 'ONLINE',
+          },
+          include: {
+            _count: {
+              select: {
+                servers: true,
+              },
+            },
+          },
+        },
+        _count: {
+          select: {
+            servers: true,
+          },
+        },
+      },
+    });
+
+    // Szűrjük azokat, amelyeken van ONLINE agent
+    const validMachines = machinesWithAgents.filter(m => m.agents.length > 0);
+    
+    if (validMachines.length > 0) {
+      console.log(`Found ${validMachines.length} machine(s) with ONLINE agents, updating their status to ONLINE`);
+      
+      // Frissítsük a gépek státuszát ONLINE-ra, ha van rajtuk ONLINE agent
+      for (const machine of validMachines) {
+        if (machine.status !== 'ONLINE') {
+          await prisma.serverMachine.update({
+            where: { id: machine.id },
+            data: { status: 'ONLINE' },
+          });
+          console.log(`Updated machine ${machine.name} (${machine.id}) status to ONLINE`);
+        }
+      }
+      
+      machines = validMachines;
+    }
+  }
+
   if (machines.length === 0) {
+    console.error('No machines with ONLINE agents found');
+    return null;
+  }
+
+  const machinesWithAgents = machines.filter(m => m.agents.length > 0);
+  if (machinesWithAgents.length === 0) {
+    console.error('No machines with ONLINE agents found after filtering');
     return null;
   }
 
@@ -59,20 +114,39 @@ export async function findBestMachine(
   // Gépek rangsorolása terhelés alapján
   const machineScores: MachineResources[] = [];
 
-  for (const machine of machines) {
-    if (machine.agents.length === 0) continue;
+  console.log(`Evaluating ${machinesWithAgents.length} machine(s) with ONLINE agents for provisioning`);
+
+  for (const machine of machinesWithAgents) {
 
     const resources = machine.resources as any;
-    if (!resources) continue;
+    
+    // Ha nincs resources információ, használjunk alapértelmezett értékeket
+    // Ez lehetővé teszi, hogy a gépek használhatóak legyenek, még ha nincs is beállítva az erőforrás
+    let totalCpu = 0;
+    let totalRam = 0;
+    let totalDisk = 0;
+    let usedCpu = 0;
+    let usedRam = 0;
+    let usedDisk = 0;
 
-    // Elérhető erőforrások számítása
-    const totalCpu = resources.cpu?.cores || 0;
-    const totalRam = resources.ram?.total || 0;
-    const totalDisk = resources.disk?.total || 0;
-
-    const usedCpu = resources.cpu?.usage || 0;
-    const usedRam = resources.ram?.used || 0;
-    const usedDisk = resources.disk?.used || 0;
+    if (resources) {
+      totalCpu = resources.cpu?.cores || 0;
+      totalRam = resources.ram?.total || 0;
+      totalDisk = resources.disk?.total || 0;
+      usedCpu = resources.cpu?.usage || 0;
+      usedRam = resources.ram?.used || 0;
+      usedDisk = resources.disk?.used || 0;
+    } else {
+      // Alapértelmezett értékek ha nincs resources információ
+      // Elegendő nagy értékek, hogy minden szerver elférjen
+      console.warn(`Machine ${machine.name} (${machine.id}) has no resources information, using default values`);
+      totalCpu = 16; // 16 CPU mag
+      totalRam = 64 * 1024 * 1024 * 1024; // 64 GB RAM
+      totalDisk = 500 * 1024 * 1024 * 1024; // 500 GB Disk
+      usedCpu = 0;
+      usedRam = 0;
+      usedDisk = 0;
+    }
 
     const availableCpu = totalCpu * (1 - usedCpu / 100);
     const availableRam = totalRam - usedRam;
@@ -84,16 +158,21 @@ export async function findBestMachine(
       availableRam < requirements.ram ||
       availableDisk < requirements.disk
     ) {
+      console.log(`Machine ${machine.name} (${machine.id}) does not have enough resources. Required: CPU=${requirements.cpu}, RAM=${Math.round(requirements.ram / 1024 / 1024 / 1024)}GB, Disk=${Math.round(requirements.disk / 1024 / 1024 / 1024)}GB. Available: CPU=${availableCpu.toFixed(2)}, RAM=${Math.round(availableRam / 1024 / 1024 / 1024)}GB, Disk=${Math.round(availableDisk / 1024 / 1024 / 1024)}GB`);
       continue;
     }
 
+    console.log(`Machine ${machine.name} (${machine.id}) has sufficient resources. Available: CPU=${availableCpu.toFixed(2)}, RAM=${Math.round(availableRam / 1024 / 1024 / 1024)}GB, Disk=${Math.round(availableDisk / 1024 / 1024 / 1024)}GB`);
+
     // Terhelés számítása (alacsonyabb = jobb)
-    const cpuLoad = (usedCpu / 100) * 100;
-    const ramLoad = (usedRam / totalRam) * 100;
-    const diskLoad = (usedDisk / totalDisk) * 100;
+    const cpuLoad = totalCpu > 0 ? (usedCpu / 100) * 100 : 0;
+    const ramLoad = totalRam > 0 ? (usedRam / totalRam) * 100 : 0;
+    const diskLoad = totalDisk > 0 ? (usedDisk / totalDisk) * 100 : 0;
     const serverLoad = (machine._count.servers / 10) * 100; // Max 10 szerver/gép
 
-    const totalLoad = (cpuLoad + ramLoad + diskLoad + serverLoad) / 4;
+    const totalLoad = totalCpu > 0 || totalRam > 0 || totalDisk > 0 
+      ? (cpuLoad + ramLoad + diskLoad + serverLoad) / 4 
+      : serverLoad; // Ha nincs resources info, csak a szerver számot vesszük figyelembe
 
     // Válasszuk az agentet, ami a legkevesebb szervert kezeli
     const bestAgent = machine.agents.reduce((prev, curr) =>
@@ -111,8 +190,11 @@ export async function findBestMachine(
   }
 
   if (machineScores.length === 0) {
+    console.error(`No machines found with sufficient resources for game type ${options.gameType} with ${options.maxPlayers} max players`);
     return null;
   }
+
+  console.log(`Found ${machineScores.length} suitable machine(s)`);
 
   // Rendezés terhelés szerint (alacsonyabb = jobb)
   machineScores.sort((a, b) => a.load - b.load);
@@ -124,6 +206,8 @@ export async function findBestMachine(
   const bestAgent = machine.agents.reduce((prev, curr) =>
     curr._count.servers < prev._count.servers ? curr : prev
   );
+
+  console.log(`Selected machine: ${machine.name} (${machine.id}), agent: ${bestAgent.agentId || bestAgent.id}`);
 
   return {
     machineId: machine.id,
