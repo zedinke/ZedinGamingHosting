@@ -159,24 +159,43 @@ set -e
 
 echo "Game Server Agent telepítése..."
 
+# Sudo NOPASSWD ellenőrzése
+echo "Sudo jogosultságok ellenőrzése..."
+if ! sudo -n true 2>/dev/null; then
+    echo "HIBA: A felhasználónak NOPASSWD sudo jogosultságokra van szüksége!"
+    echo "Futtasd ezt a parancsot root-ként a szerveren:"
+    echo "sudo tee /etc/sudoers.d/gameserver > /dev/null <<EOF"
+    echo "gameserver ALL=(ALL) NOPASSWD: /usr/bin/systemctl"
+    echo "gameserver ALL=(ALL) NOPASSWD: /usr/sbin/service"
+    echo "gameserver ALL=(ALL) NOPASSWD: /usr/bin/apt-get"
+    echo "gameserver ALL=(ALL) NOPASSWD: /usr/bin/apt"
+    echo "gameserver ALL=(ALL) NOPASSWD: /bin/mount"
+    echo "gameserver ALL=(ALL) NOPASSWD: /bin/umount"
+    echo "gameserver ALL=(ALL) NOPASSWD: /bin/mkdir"
+    echo "gameserver ALL=(ALL) NOPASSWD: /bin/chown"
+    echo "EOF"
+    exit 1
+fi
+echo "Sudo jogosultságok rendben"
+
 # Node.js ellenőrzése
 if ! command -v node &> /dev/null; then
     echo "Node.js telepítése..."
-    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-    sudo apt-get install -y nodejs
+    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -n -E bash -
+    sudo -n apt-get install -y nodejs
 fi
 
 # Agent könyvtár létrehozása
 AGENT_DIR="/opt/game-server-agent"
-sudo mkdir -p $AGENT_DIR
-sudo chown $USER:$USER $AGENT_DIR
+sudo -n mkdir -p $AGENT_DIR
+sudo -n chown $USER:$USER $AGENT_DIR
 
 # Könyvtárak létrehozása game serverekhez
-sudo mkdir -p /opt/servers
-sudo mkdir -p /opt/ark-shared
-sudo mkdir -p /opt/ark-clusters
-sudo mkdir -p /opt/backups
-sudo chown -R $USER:$USER /opt/servers /opt/ark-shared /opt/ark-clusters /opt/backups
+sudo -n mkdir -p /opt/servers
+sudo -n mkdir -p /opt/ark-shared
+sudo -n mkdir -p /opt/ark-clusters
+sudo -n mkdir -p /opt/backups
+sudo -n chown -R $USER:$USER /opt/servers /opt/ark-shared /opt/ark-clusters /opt/backups
 
 # Agent letöltése és telepítése
 cd $AGENT_DIR
@@ -460,7 +479,7 @@ cat > config.json <<EOF
 EOF
 
 # Systemd service létrehozása
-sudo tee /etc/systemd/system/game-server-agent.service > /dev/null <<EOF
+sudo -n tee /etc/systemd/system/game-server-agent.service > /dev/null <<EOF
 [Unit]
 Description=Game Server Agent
 After=network.target
@@ -478,9 +497,9 @@ WantedBy=multi-user.target
 EOF
 
 # Service indítása
-sudo systemctl daemon-reload
-sudo systemctl enable game-server-agent
-sudo systemctl start game-server-agent
+sudo -n systemctl daemon-reload
+sudo -n systemctl enable game-server-agent
+sudo -n systemctl start game-server-agent
 
 echo "Agent telepítve és elindítva!"
 `;

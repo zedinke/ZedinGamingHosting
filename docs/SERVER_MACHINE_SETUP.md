@@ -52,6 +52,9 @@ gameserver ALL=(ALL) NOPASSWD: /usr/bin/apt-get
 gameserver ALL=(ALL) NOPASSWD: /usr/bin/apt
 gameserver ALL=(ALL) NOPASSWD: /bin/mount
 gameserver ALL=(ALL) NOPASSWD: /bin/umount
+gameserver ALL=(ALL) NOPASSWD: /bin/mkdir
+gameserver ALL=(ALL) NOPASSWD: /bin/chown
+gameserver ALL=(ALL) NOPASSWD: /usr/bin/tee
 gameserver ALL=(ALL) NOPASSWD: /usr/bin/docker
 gameserver ALL=(ALL) NOPASSWD: /usr/bin/docker-compose
 EOF
