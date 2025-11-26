@@ -12,6 +12,7 @@ import { ServerLogsViewer } from './ServerLogsViewer';
 import { ServerMetrics } from './ServerMetrics';
 import { ResourceLimitsEditor } from './ResourceLimitsEditor';
 import { ServerScaling } from './ServerScaling';
+import { ServerMigration } from './ServerMigration';
 
 interface Server {
   id: string;
@@ -402,6 +403,13 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
 
       {/* Automatikus skálázás */}
       <ServerScaling serverId={server.id} locale={locale} />
+
+      {/* Szerver Migráció */}
+      <ServerMigration
+        serverId={server.id}
+        currentMachineId={server.machineId}
+        locale={locale}
+      />
     </div>
   );
 }

@@ -165,13 +165,20 @@ export async function findBestMachine(
     console.log(`Machine ${machine.name} (${machine.id}) has sufficient resources. Available: CPU=${availableCpu.toFixed(2)}, RAM=${Math.round(availableRam / 1024 / 1024 / 1024)}GB, Disk=${Math.round(availableDisk / 1024 / 1024 / 1024)}GB`);
 
     // Terhelés számítása (alacsonyabb = jobb)
-    const cpuLoad = totalCpu > 0 ? (usedCpu / 100) * 100 : 0;
-    const ramLoad = totalRam > 0 ? (usedRam / totalRam) * 100 : 0;
-    const diskLoad = totalDisk > 0 ? (usedDisk / totalDisk) * 100 : 0;
+    const cpuLoadPercent = totalCpu > 0 ? usedCpu : 0;
+    const ramLoadPercent = totalRam > 0 ? (usedRam / totalRam) * 100 : 0;
+    const diskLoadPercent = totalDisk > 0 ? (usedDisk / totalDisk) * 100 : 0;
+    
+    // Ha bármelyik erőforrás elérte a 100%-ot, ne használjuk ezt a gépet
+    if (cpuLoadPercent >= 100 || ramLoadPercent >= 100 || diskLoadPercent >= 100) {
+      console.log(`Machine ${machine.name} (${machine.id}) has reached 100% capacity. CPU: ${cpuLoadPercent.toFixed(1)}%, RAM: ${ramLoadPercent.toFixed(1)}%, Disk: ${diskLoadPercent.toFixed(1)}%`);
+      continue;
+    }
+    
+    // Számítsuk ki a teljes terhelést (átlag)
     const serverLoad = (machine._count.servers / 10) * 100; // Max 10 szerver/gép
-
     const totalLoad = totalCpu > 0 || totalRam > 0 || totalDisk > 0 
-      ? (cpuLoad + ramLoad + diskLoad + serverLoad) / 4 
+      ? (cpuLoadPercent + ramLoadPercent + diskLoadPercent + serverLoad) / 4 
       : serverLoad; // Ha nincs resources info, csak a szerver számot vesszük figyelembe
 
     // Válasszuk az agentet, ami a legkevesebb szervert kezeli
