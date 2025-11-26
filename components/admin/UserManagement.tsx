@@ -3,7 +3,9 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { UserRole } from '@prisma/client';
-import { Search, Edit, CheckCircle2, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Edit, CheckCircle2, XCircle, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import toast from 'react-hot-toast';
 
 interface User {
   id: string;
@@ -32,6 +34,9 @@ export function UserManagement({
   locale,
 }: UserManagementProps) {
   const [search, setSearch] = useState('');
+  const [updatingRoles, setUpdatingRoles] = useState<Set<string>>(new Set());
+  const { data: session } = useSession();
+  const currentUserId = (session?.user as any)?.id;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,14 +45,61 @@ export function UserManagement({
     window.location.href = `/${locale}/admin/users?${params.toString()}`;
   };
 
+  const getRoleLabel = (role: UserRole): string => {
+    const labels: Record<UserRole, string> = {
+      USER: 'Felhasználó',
+      MODERATOR: 'Moderátor',
+      ADMIN: 'Adminisztrátor',
+      PROBA: 'Próba',
+    };
+    return labels[role] || role;
+  };
+
   const getRoleBadgeColor = (role: UserRole) => {
     switch (role) {
       case 'ADMIN':
         return 'bg-red-100 text-red-800 border-red-200';
       case 'MODERATOR':
         return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'PROBA':
+        return 'bg-purple-100 text-purple-800 border-purple-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const handleRoleChange = async (userId: string, newRole: UserRole) => {
+    setUpdatingRoles((prev) => new Set(prev).add(userId));
+
+    try {
+      const response = await fetch(`/api/admin/users/${userId}/role`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ role: newRole }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        toast.error(result.error || 'Hiba történt a szerepkör frissítése során');
+        return;
+      }
+
+      toast.success(`Szerepkör sikeresen frissítve: ${getRoleLabel(newRole)}`);
+      
+      // Refresh the page to show updated data
+      window.location.reload();
+    } catch (error) {
+      console.error('Role change error:', error);
+      toast.error('Hiba történt a szerepkör frissítése során');
+    } finally {
+      setUpdatingRoles((prev) => {
+        const next = new Set(prev);
+        next.delete(userId);
+        return next;
+      });
     }
   };
 
@@ -119,13 +171,33 @@ export function UserManagement({
                     <div className="text-sm text-gray-900">{user.email}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${getRoleBadgeColor(
-                        user.role
-                      )}`}
-                    >
-                      {user.role}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${getRoleBadgeColor(
+                          user.role
+                        )}`}
+                      >
+                        {getRoleLabel(user.role)}
+                      </span>
+                      {updatingRoles.has(user.id) ? (
+                        <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                      ) : user.id === currentUserId ? (
+                        <span className="text-xs text-gray-500 italic">(Saját szerepkör)</span>
+                      ) : (
+                        <select
+                          value={user.role}
+                          onChange={(e) => handleRoleChange(user.id, e.target.value as UserRole)}
+                          className="text-xs border border-gray-300 rounded px-2 py-1 bg-white hover:bg-gray-50 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                          disabled={updatingRoles.has(user.id)}
+                        >
+                          {Object.values(UserRole).map((role) => (
+                            <option key={role} value={role}>
+                              {getRoleLabel(role)}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {user.emailVerified ? (
