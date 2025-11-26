@@ -7,6 +7,7 @@ export type NotificationType =
   | 'SERVER_STATUS_CHANGE'
   | 'SERVER_CREATED'
   | 'SERVER_DELETED'
+  | 'SERVER_MIGRATED'
   | 'BACKUP_CREATED'
   | 'BACKUP_FAILED'
   | 'TASK_COMPLETED'
