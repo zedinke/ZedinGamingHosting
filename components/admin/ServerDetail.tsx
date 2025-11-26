@@ -320,7 +320,10 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
                       if (result.hasErrors) {
                         toast.error('Telepítési hibák találhatók - nézd meg az ellenőrzési eredményeket');
                       } else if (result.hasWarnings) {
-                        toast.warning('Telepítési figyelmeztetések találhatók');
+                        toast('Telepítési figyelmeztetések találhatók', {
+                          icon: '⚠️',
+                          duration: 4000,
+                        });
                       } else {
                         toast.success('Telepítés ellenőrzése sikeres - minden rendben');
                       }
