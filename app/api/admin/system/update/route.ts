@@ -655,6 +655,30 @@ async function startUpdateProcess() {
               } catch (statusError: any) {
                 await appendLog(`  ⚠️  PM2 státusz ellenőrzés hiba: ${statusError.message}`);
               }
+              
+              // Frissítjük a progress-t "completed" státuszra MÉG A RESTART UTÁN, de mielőtt a folyamat véget ér
+              await appendLog('  ✓ Szolgáltatás újraindítás befejezve');
+              await writeProgress({
+                status: 'completed',
+                message: 'Frissítés sikeresen befejezve!',
+                progress: 100,
+                currentStep: 'completed',
+              });
+              
+              // Save last update time
+              try {
+                await prisma.setting.upsert({
+                  where: { key: 'last_update' },
+                  update: { value: new Date().toISOString() },
+                  create: { key: 'last_update', value: new Date().toISOString() },
+                });
+                await appendLog('  ✓ Utolsó frissítés időpontja mentve');
+              } catch (dbError: any) {
+                await appendLog(`  ⚠️  DB mentés hiba: ${dbError.message}`);
+                // Not critical, continue
+              }
+              
+              await appendLog('=== Frissítés sikeresen befejezve! ===');
             } catch (restartError: any) {
               // Try to reload instead of restart
               try {
@@ -694,12 +718,17 @@ async function startUpdateProcess() {
       try {
         await step.action();
         await appendLog(`✓ ${step.label} befejezve`);
-        await writeProgress({
-          status: 'in_progress',
-          message: `${step.label} befejezve`,
-          progress: step.progress,
-          currentStep: step.key,
-        });
+        
+        // Ha ez a restart lépés, akkor már a restart action-ben beállítottuk a completed státuszt
+        // Ne írjuk felül, csak ha nem restart lépés
+        if (step.key !== 'restart') {
+          await writeProgress({
+            status: 'in_progress',
+            message: `${step.label} befejezve`,
+            progress: step.progress,
+            currentStep: step.key,
+          });
+        }
       } catch (error: any) {
         await appendLog(`❌ ${step.label} hiba: ${error.message}`);
         await writeProgress({
@@ -713,21 +742,43 @@ async function startUpdateProcess() {
       }
     }
 
-    // Update completed
-    await appendLog('=== Frissítés sikeresen befejezve! ===');
-    await writeProgress({
-      status: 'completed',
-      message: 'Frissítés sikeresen befejezve!',
-      progress: 100,
-      currentStep: 'completed',
-    });
+    // Ha a restart lépés nem állította be a completed státuszt (pl. hiba esetén), akkor itt állítjuk be
+    // De általában a restart lépés már beállította
+    try {
+      const currentProgress = JSON.parse(await readFile(PROGRESS_FILE, 'utf-8'));
+      if (currentProgress.status !== 'completed') {
+        await appendLog('=== Frissítés sikeresen befejezve! ===');
+        await writeProgress({
+          status: 'completed',
+          message: 'Frissítés sikeresen befejezve!',
+          progress: 100,
+          currentStep: 'completed',
+        });
 
-    // Save last update time
-    await prisma.setting.upsert({
-      where: { key: 'last_update' },
-      update: { value: new Date().toISOString() },
-      create: { key: 'last_update', value: new Date().toISOString() },
-    });
+        // Save last update time
+        await prisma.setting.upsert({
+          where: { key: 'last_update' },
+          update: { value: new Date().toISOString() },
+          create: { key: 'last_update', value: new Date().toISOString() },
+        });
+      }
+    } catch (readError: any) {
+      // Ha nem tudjuk beolvasni, akkor beállítjuk
+      await appendLog('=== Frissítés sikeresen befejezve! ===');
+      await writeProgress({
+        status: 'completed',
+        message: 'Frissítés sikeresen befejezve!',
+        progress: 100,
+        currentStep: 'completed',
+      });
+
+      // Save last update time
+      await prisma.setting.upsert({
+        where: { key: 'last_update' },
+        update: { value: new Date().toISOString() },
+        create: { key: 'last_update', value: new Date().toISOString() },
+      });
+    }
 
     console.log('=== Update process completed successfully ===');
   } catch (error: any) {
