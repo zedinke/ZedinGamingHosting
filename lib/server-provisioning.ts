@@ -229,6 +229,17 @@ export async function provisionServer(
       },
     });
 
+    // Port generálása (ellenőrzi a Docker konténereket és egyéb folyamatokat is)
+    const generatedPort = await generateServerPort(options.gameType, bestLocation.machineId);
+    
+    // Ha a szervernek még nincs portja, beállítjuk
+    if (!server.port) {
+      await prisma.server.update({
+        where: { id: serverId },
+        data: { port: generatedPort },
+      });
+    }
+
     // Game szerver automatikus telepítése
     const plan = await prisma.pricingPlan.findUnique({
       where: { id: options.planId },
@@ -238,7 +249,7 @@ export async function provisionServer(
     const installResult = await installGameServer(serverId, options.gameType, {
       maxPlayers: options.maxPlayers,
       ram: (plan?.features as any)?.ram || 2048,
-      port: server.port || 25565,
+      port: server.port || generatedPort,
       name: server.name,
     });
 
@@ -289,8 +300,12 @@ export async function provisionServer(
 
 /**
  * Port szám generálása egy szerverhez
+ * Ellenőrzi az adatbázisban tárolt szervereket ÉS a ténylegesen foglalt portokat a gépen
  */
-export async function generateServerPort(gameType: GameType): Promise<number> {
+export async function generateServerPort(
+  gameType: GameType,
+  machineId?: string
+): Promise<number> {
   // Alapértelmezett portok játék típusonként
   const defaultPorts: Partial<Record<GameType, number>> = {
     MINECRAFT: 25565,
@@ -314,7 +329,7 @@ export async function generateServerPort(gameType: GameType): Promise<number> {
 
   const basePort = defaultPorts[gameType] || 25565;
 
-  // Ellenőrizzük, hogy a port szabad-e
+  // Ellenőrizzük, hogy a port szabad-e az adatbázisban
   const existingServer = await prisma.server.findFirst({
     where: {
       port: basePort,
@@ -324,13 +339,21 @@ export async function generateServerPort(gameType: GameType): Promise<number> {
     },
   });
 
-  if (!existingServer) {
+  // Ha nincs az adatbázisban és van machineId, ellenőrizzük a ténylegesen foglalt portokat is
+  if (!existingServer && machineId) {
+    const isPortAvailable = await checkPortAvailableOnMachine(machineId, basePort);
+    if (isPortAvailable) {
+      return basePort;
+    }
+  } else if (!existingServer) {
     return basePort;
   }
 
   // Ha foglalt, keresünk egy szabad portot
   for (let offset = 1; offset < 100; offset++) {
     const port = basePort + offset;
+    
+    // Adatbázis ellenőrzés
     const exists = await prisma.server.findFirst({
       where: {
         port,
@@ -341,11 +364,65 @@ export async function generateServerPort(gameType: GameType): Promise<number> {
     });
 
     if (!exists) {
-      return port;
+      // Ha van machineId, ellenőrizzük a ténylegesen foglalt portokat is
+      if (machineId) {
+        const isPortAvailable = await checkPortAvailableOnMachine(machineId, port);
+        if (isPortAvailable) {
+          return port;
+        }
+      } else {
+        return port;
+      }
     }
   }
 
   // Ha nincs szabad port, visszaadjuk az alapértelmezettet
   return basePort;
+}
+
+/**
+ * Ellenőrzi, hogy a port elérhető-e a gépen (Docker konténerek és egyéb folyamatok figyelembevételével)
+ */
+async function checkPortAvailableOnMachine(machineId: string, port: number): Promise<boolean> {
+  try {
+    const machine = await prisma.serverMachine.findUnique({
+      where: { id: machineId },
+      include: {
+        agents: {
+          where: { status: 'ONLINE' },
+          take: 1,
+        },
+      },
+    });
+
+    if (!machine || machine.agents.length === 0) {
+      // Ha nincs agent, nem tudjuk ellenőrizni, de feltételezzük hogy szabad
+      return true;
+    }
+
+    const { executeSSHCommand } = await import('./ssh-client');
+
+    // Ellenőrizzük a portot SSH-n keresztül
+    // Használjuk a `ss` vagy `netstat` parancsot (ss előnyben, mert gyorsabb)
+    const checkCommand = `ss -tuln | grep -q ":${port} " || netstat -tuln 2>/dev/null | grep -q ":${port} " || echo "available"`;
+
+    const result = await executeSSHCommand(
+      {
+        host: machine.ipAddress,
+        port: machine.sshPort,
+        user: machine.sshUser,
+        keyPath: machine.sshKeyPath || undefined,
+      },
+      checkCommand
+    );
+
+    // Ha a parancs "available"-t ad vissza, akkor a port szabad
+    // Ha nem, akkor foglalt (vagy hiba történt, ebben az esetben biztonságosabb feltételezni hogy foglalt)
+    return result.stdout?.trim().includes('available') || result.exitCode !== 0;
+  } catch (error) {
+    // Hiba esetén biztonságosabb feltételezni, hogy a port foglalt
+    console.error(`Port ellenőrzési hiba a ${machineId} gépen a ${port} porthoz:`, error);
+    return false;
+  }
 }
 

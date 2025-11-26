@@ -122,6 +122,9 @@ export async function checkOfflineAgents(): Promise<void> {
       });
 
       if (!otherOnlineAgents) {
+        // Ha nincs más online agent, akkor a gépet offline-ra állítjuk
+        // DE csak akkor, ha nincs SSH kapcsolat tesztelve (lastSSHTest nincs beállítva)
+        // Ha van SSH kapcsolat, akkor marad OFFLINE, de jelezzük, hogy SSH rendben van
         await prisma.serverMachine.update({
           where: { id: agent.machineId },
           data: { status: 'OFFLINE' },

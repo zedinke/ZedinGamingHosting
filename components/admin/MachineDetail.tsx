@@ -166,10 +166,10 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
       <div className="grid md:grid-cols-2 gap-6">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold">Alapinformációk</h2>
+            <h2 className="text-xl font-bold text-gray-900">Alapinformációk</h2>
             <button
               onClick={() => setIsEditing(!isEditing)}
-              className="text-primary-600 hover:underline text-sm"
+              className="text-primary-600 hover:text-primary-700 hover:underline text-sm font-medium"
             >
               {isEditing ? 'Mégse' : 'Szerkesztés'}
             </button>
@@ -178,47 +178,47 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
           {isEditing ? (
             <form onSubmit={handleUpdate} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Név</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Név</label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">SSH Port</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">SSH Port</label>
                 <input
                   type="number"
                   value={formData.sshPort}
                   onChange={(e) => setFormData({ ...formData, sshPort: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">SSH Felhasználó</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">SSH Felhasználó</label>
                 <input
                   type="text"
                   value={formData.sshUser}
                   onChange={(e) => setFormData({ ...formData, sshUser: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">SSH Kulcs Elérési Út</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">SSH Kulcs Elérési Út</label>
                 <input
                   type="text"
                   value={formData.sshKeyPath}
                   onChange={(e) => setFormData({ ...formData, sshKeyPath: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 font-mono text-sm"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Státusz</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Státusz</label>
                 <select
                   value={formData.status}
                   onChange={(e) => setFormData({ ...formData, status: e.target.value as MachineStatus })}
-                  className="w-full px-4 py-2 border rounded-lg"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 >
                   <option value="ONLINE">ONLINE</option>
                   <option value="OFFLINE">OFFLINE</option>
@@ -227,44 +227,44 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Megjegyzések</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Megjegyzések</label>
                 <textarea
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   rows={3}
                 />
               </div>
               <button
                 type="submit"
-                className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700"
+                className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 font-medium transition-colors"
               >
                 Mentés
               </button>
             </form>
           ) : (
-            <dl className="space-y-2">
+            <dl className="space-y-3">
               <div>
-                <dt className="text-sm text-gray-600">Név</dt>
-                <dd className="font-medium">{machine.name}</dd>
+                <dt className="text-sm font-medium text-gray-600 mb-1">Név</dt>
+                <dd className="font-semibold text-gray-900">{machine.name}</dd>
               </div>
               <div>
-                <dt className="text-sm text-gray-600">IP Cím</dt>
-                <dd>{machine.ipAddress}</dd>
+                <dt className="text-sm font-medium text-gray-600 mb-1">IP Cím</dt>
+                <dd className="text-gray-900">{machine.ipAddress}</dd>
               </div>
               <div>
-                <dt className="text-sm text-gray-600">SSH Kapcsolat</dt>
-                <dd>{machine.sshUser}@{machine.ipAddress}:{machine.sshPort}</dd>
+                <dt className="text-sm font-medium text-gray-600 mb-1">SSH Kapcsolat</dt>
+                <dd className="text-gray-900 font-mono text-sm">{machine.sshUser}@{machine.ipAddress}:{machine.sshPort}</dd>
               </div>
               {machine.sshKeyPath && (
                 <div>
-                  <dt className="text-sm text-gray-600">SSH Kulcs</dt>
-                  <dd className="font-mono text-sm">{machine.sshKeyPath}</dd>
+                  <dt className="text-sm font-medium text-gray-600 mb-1">SSH Kulcs</dt>
+                  <dd className="font-mono text-sm text-gray-900 break-all">{machine.sshKeyPath}</dd>
                 </div>
               )}
               <div>
-                <dt className="text-sm text-gray-600">Státusz</dt>
-                <dd>
+                <dt className="text-sm font-medium text-gray-600 mb-1">Státusz</dt>
+                <dd className="space-y-1">
                   <span
                     className={`px-2 py-1 rounded text-xs font-semibold ${getStatusBadgeColor(
                       machine.status
@@ -272,17 +272,22 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
                   >
                     {machine.status}
                   </span>
+                  {machine.status === 'OFFLINE' && machine.agents.length === 0 && (
+                    <div className="text-xs text-blue-600 mt-1">
+                      ℹ️ SSH kapcsolat rendben, agent telepítés szükséges
+                    </div>
+                  )}
                 </dd>
               </div>
               {machine.agentVersion && (
                 <div>
-                  <dt className="text-sm text-gray-600">Agent Verzió</dt>
-                  <dd>{machine.agentVersion}</dd>
+                  <dt className="text-sm font-medium text-gray-600 mb-1">Agent Verzió</dt>
+                  <dd className="text-gray-900">{machine.agentVersion}</dd>
                 </div>
               )}
               <div>
-                <dt className="text-sm text-gray-600">Utolsó Heartbeat</dt>
-                <dd>
+                <dt className="text-sm font-medium text-gray-600 mb-1">Utolsó Heartbeat</dt>
+                <dd className="text-gray-900">
                   {machine.lastHeartbeat
                     ? new Date(machine.lastHeartbeat).toLocaleString('hu-HU')
                     : 'Soha'}
@@ -290,8 +295,8 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
               </div>
               {machine.notes && (
                 <div>
-                  <dt className="text-sm text-gray-600">Megjegyzések</dt>
-                  <dd className="text-sm">{machine.notes}</dd>
+                  <dt className="text-sm font-medium text-gray-600 mb-1">Megjegyzések</dt>
+                  <dd className="text-sm text-gray-700">{machine.notes}</dd>
                 </div>
               )}
             </dl>
@@ -300,18 +305,18 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
 
         {/* Műveletek */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-bold mb-4">Műveletek</h2>
-          <div className="space-y-2">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Műveletek</h2>
+          <div className="space-y-3">
             <button
               onClick={handleTestSSH}
-              className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+              className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors"
             >
               SSH Kapcsolat Tesztelése
             </button>
             {machine.agents.length === 0 && (
               <button
                 onClick={handleInstallAgent}
-                className="w-full bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700"
+                className="w-full bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 font-medium transition-colors"
               >
                 Agent Telepítés
               </button>
@@ -320,8 +325,8 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
         </div>
 
         {/* Erőforrások */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-bold mb-4">Erőforrások</h2>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:col-span-2">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Erőforrások</h2>
           {machine.resources ? (
             <div className="space-y-4">
               {machine.resources.cpu && (
@@ -386,13 +391,13 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
       </div>
 
       {/* Agentek */}
-      <div className="card">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">Agentek ({machine.agents.length})</h2>
+          <h2 className="text-xl font-bold text-gray-900">Agentek ({machine.agents.length})</h2>
           {machine.agents.length === 0 && (
             <button
               onClick={handleInstallAgent}
-              className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 text-sm"
+              className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 text-sm font-medium"
             >
               Agent Telepítés
             </button>
@@ -401,10 +406,10 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
         {machine.agents.length > 0 ? (
           <div className="space-y-4">
             {machine.agents.map((agent) => (
-              <div key={agent.id} className="border rounded-lg p-4">
+              <div key={agent.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
                 <div className="flex justify-between items-start mb-2">
                   <div>
-                    <div className="font-medium">{agent.agentId}</div>
+                    <div className="font-medium text-gray-900">{agent.agentId}</div>
                     <div className="text-sm text-gray-600">Verzió: {agent.version}</div>
                   </div>
                   <span
@@ -418,15 +423,15 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
                 <div className="grid grid-cols-2 gap-4 mt-2 text-sm">
                   <div>
                     <span className="text-gray-600">Szerverek:</span>{' '}
-                    <span className="font-medium">{agent._count.servers}</span>
+                    <span className="font-medium text-gray-900">{agent._count.servers}</span>
                   </div>
                   <div>
                     <span className="text-gray-600">Feladatok:</span>{' '}
-                    <span className="font-medium">{agent._count.tasks}</span>
+                    <span className="font-medium text-gray-900">{agent._count.tasks}</span>
                   </div>
-                  <div>
+                  <div className="col-span-2">
                     <span className="text-gray-600">Utolsó Heartbeat:</span>{' '}
-                    <span className="font-medium">
+                    <span className="font-medium text-gray-900">
                       {agent.lastHeartbeat
                         ? new Date(agent.lastHeartbeat).toLocaleString('hu-HU')
                         : 'Soha'}
@@ -436,7 +441,7 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
                 {agent.capabilities && (
                   <div className="mt-2 text-sm">
                     <span className="text-gray-600">Képességek:</span>{' '}
-                    <span className="font-medium">
+                    <span className="font-medium text-gray-900">
                       {Object.entries(agent.capabilities)
                         .filter(([_, v]) => v)
                         .map(([k]) => k)
@@ -453,28 +458,28 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
       </div>
 
       {/* Szerverek */}
-      <div className="card">
-        <h2 className="text-xl font-bold mb-4">Szerverek ({machine.servers.length})</h2>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Szerverek ({machine.servers.length})</h2>
         {machine.servers.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full text-gray-700">
               <thead>
-                <tr className="border-b">
-                  <th className="text-left p-2">Név</th>
-                  <th className="text-left p-2">Játék</th>
-                  <th className="text-left p-2">Státusz</th>
-                  <th className="text-left p-2">Tulajdonos</th>
-                  <th className="text-left p-2">Műveletek</th>
+                <tr className="border-b border-gray-200 bg-gray-50">
+                  <th className="text-left p-3 font-semibold text-gray-900">Név</th>
+                  <th className="text-left p-3 font-semibold text-gray-900">Játék</th>
+                  <th className="text-left p-3 font-semibold text-gray-900">Státusz</th>
+                  <th className="text-left p-3 font-semibold text-gray-900">Tulajdonos</th>
+                  <th className="text-left p-3 font-semibold text-gray-900">Műveletek</th>
                 </tr>
               </thead>
               <tbody>
                 {machine.servers.map((server) => (
-                  <tr key={server.id} className="border-b hover:bg-gray-50">
-                    <td className="p-2 font-medium">{server.name}</td>
-                    <td className="p-2 text-sm">{server.gameType}</td>
-                    <td className="p-2">
+                  <tr key={server.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                    <td className="p-3 font-medium text-gray-800">{server.name}</td>
+                    <td className="p-3 text-sm">{server.gameType}</td>
+                    <td className="p-3">
                       <span
-                        className={`px-2 py-1 rounded text-xs ${
+                        className={`px-2 py-1 rounded text-xs font-semibold ${
                           server.status === 'ONLINE'
                             ? 'bg-green-100 text-green-800'
                             : 'bg-gray-100 text-gray-800'
@@ -483,13 +488,13 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
                         {server.status}
                       </span>
                     </td>
-                    <td className="p-2 text-sm">
+                    <td className="p-3 text-sm text-gray-700">
                       {server.user.name || server.user.email}
                     </td>
-                    <td className="p-2">
+                    <td className="p-3">
                       <a
                         href={`/${locale}/admin/servers/${server.id}`}
-                        className="text-primary-600 hover:underline text-sm"
+                        className="text-primary-600 hover:underline text-sm font-medium"
                       >
                         Részletek
                       </a>

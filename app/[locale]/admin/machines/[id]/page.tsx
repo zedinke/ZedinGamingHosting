@@ -49,15 +49,18 @@ export default async function AdminMachineDetailPage({
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div>
       <div className="mb-6">
         <Link
           href={`/${locale}/admin/machines`}
-          className="text-primary-600 hover:underline mb-2 inline-block"
+          className="text-primary-600 hover:text-primary-700 hover:underline mb-2 inline-block font-medium"
         >
           ← Vissza a gépek listájához
         </Link>
-        <h1 className="text-3xl font-bold">Szerver Gép Részletei</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Szerver Gép Részletei</h1>
+        <p className="text-gray-700">
+          {machine.name} • {machine.ipAddress}
+        </p>
       </div>
 
       <MachineDetail machine={machine as any} locale={locale} />

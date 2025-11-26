@@ -144,15 +144,15 @@ export function MachineManagement({
   };
 
   return (
-    <div className="space-y-4">
-      {/* Hozzáadás gomb */}
-      <div className="flex justify-between items-center">
-        <div className="flex gap-2">
+    <div className="space-y-6">
+      {/* Hozzáadás gomb és szűrők */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex gap-2 flex-wrap">
           <Link
             href={`/${locale}/admin/machines`}
-            className={`px-4 py-2 rounded-lg text-sm ${
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               !statusFilter
-                ? 'bg-primary-600 text-white'
+                ? 'bg-primary-600 text-white hover:bg-primary-700'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
@@ -162,9 +162,9 @@ export function MachineManagement({
             <Link
               key={status}
               href={`/${locale}/admin/machines?status=${status}`}
-              className={`px-4 py-2 rounded-lg text-sm ${
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 statusFilter === status
-                  ? 'bg-primary-600 text-white'
+                  ? 'bg-primary-600 text-white hover:bg-primary-700'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
@@ -174,7 +174,7 @@ export function MachineManagement({
         </div>
         <button
           onClick={() => setShowAddForm(!showAddForm)}
-          className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700"
+          className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 font-medium transition-colors"
         >
           {showAddForm ? 'Mégse' : '+ Új Szerver Gép'}
         </button>
@@ -183,66 +183,67 @@ export function MachineManagement({
       {/* Hozzáadás form */}
       {showAddForm && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-bold mb-4">Új Szerver Gép Hozzáadása</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Új Szerver Gép Hozzáadása</h2>
           <form onSubmit={handleAddMachine} className="space-y-4">
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Név *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Név *</label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">IP Cím *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">IP Cím *</label>
                 <input
                   type="text"
                   value={formData.ipAddress}
                   onChange={(e) => setFormData({ ...formData, ipAddress: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">SSH Port</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">SSH Port</label>
                 <input
                   type="number"
                   value={formData.sshPort}
                   onChange={(e) => setFormData({ ...formData, sshPort: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   placeholder="22"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">SSH Felhasználó *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">SSH Felhasználó *</label>
                 <input
                   type="text"
                   value={formData.sshUser}
                   onChange={(e) => setFormData({ ...formData, sshUser: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   required
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">SSH Kulcs Elérési Út</label>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">SSH Kulcs Elérési Út</label>
                 <input
                   type="text"
                   value={formData.sshKeyPath}
                   onChange={(e) => setFormData({ ...formData, sshKeyPath: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg"
-                  placeholder="/path/to/ssh/key"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 font-mono text-sm"
+                  placeholder="/root/.ssh/gameserver_key"
                 />
+                <p className="text-xs text-gray-500 mt-1">A webszerveren lévő SSH privát kulcs elérési útja</p>
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Megjegyzések</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Megjegyzések</label>
               <textarea
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                className="w-full px-4 py-2 border rounded-lg"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 rows={3}
               />
             </div>
@@ -250,14 +251,14 @@ export function MachineManagement({
               <button
                 type="submit"
                 disabled={isAdding}
-                className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 disabled:opacity-50"
+                className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 disabled:opacity-50 font-medium transition-colors"
               >
                 {isAdding ? 'Hozzáadás...' : 'Hozzáadás'}
               </button>
               <button
                 type="button"
                 onClick={() => setShowAddForm(false)}
-                className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300"
+                className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 font-medium transition-colors"
               >
                 Mégse
               </button>
@@ -268,104 +269,119 @@ export function MachineManagement({
 
       {/* Gépek táblázata */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
-        <table className="w-full">
+        <table className="w-full text-gray-700">
           <thead>
-            <tr className="border-b">
-              <th className="text-left p-3">Név</th>
-              <th className="text-left p-3">IP Cím</th>
-              <th className="text-left p-3">SSH</th>
-              <th className="text-left p-3">Státusz</th>
-              <th className="text-left p-3">Agentek</th>
-              <th className="text-left p-3">Szerverek</th>
-              <th className="text-left p-3">Utolsó Heartbeat</th>
-              <th className="text-left p-3">Műveletek</th>
+            <tr className="border-b border-gray-200 bg-gray-50">
+              <th className="text-left p-3 font-semibold text-gray-900">Név</th>
+              <th className="text-left p-3 font-semibold text-gray-900">IP Cím</th>
+              <th className="text-left p-3 font-semibold text-gray-900">SSH</th>
+              <th className="text-left p-3 font-semibold text-gray-900">Státusz</th>
+              <th className="text-left p-3 font-semibold text-gray-900">Agentek</th>
+              <th className="text-left p-3 font-semibold text-gray-900">Szerverek</th>
+              <th className="text-left p-3 font-semibold text-gray-900">Utolsó Heartbeat</th>
+              <th className="text-left p-3 font-semibold text-gray-900">Műveletek</th>
             </tr>
           </thead>
           <tbody>
-            {machines.map((machine) => (
-              <tr key={machine.id} className="border-b hover:bg-gray-50">
-                <td className="p-3 font-medium">{machine.name}</td>
-                <td className="p-3">{machine.ipAddress}</td>
-                <td className="p-3 text-sm">
-                  {machine.sshUser}@{machine.ipAddress}:{machine.sshPort}
-                </td>
+            {machines.length > 0 ? (
+              machines.map((machine) => (
+                <tr key={machine.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                  <td className="p-3 font-medium text-gray-800">{machine.name}</td>
+                  <td className="p-3 text-gray-900">{machine.ipAddress}</td>
+                  <td className="p-3 text-sm text-gray-700 font-mono">
+                    {machine.sshUser}@{machine.ipAddress}:{machine.sshPort}
+                  </td>
                 <td className="p-3">
-                  <span
-                    className={`px-2 py-1 rounded text-xs font-semibold ${getStatusBadgeColor(
-                      machine.status
-                    )}`}
-                  >
-                    {machine.status}
-                  </span>
-                </td>
-                <td className="p-3">
-                  <div className="space-y-1">
-                    {machine.agents.length > 0 ? (
-                      machine.agents.map((agent) => (
-                        <div key={agent.id} className="flex items-center gap-2">
-                          <span
-                            className={`px-2 py-1 rounded text-xs ${getAgentStatusColor(
-                              agent.status
-                            )}`}
-                          >
-                            {agent.agentId}
-                          </span>
-                          <span className="text-xs text-gray-500">{agent.status}</span>
-                        </div>
-                      ))
-                    ) : (
-                      <span className="text-gray-400 text-sm">Nincs agent</span>
-                    )}
-                  </div>
-                </td>
-                <td className="p-3">{machine._count.servers}</td>
-                <td className="p-3 text-sm text-gray-600">
-                  {machine.lastHeartbeat
-                    ? new Date(machine.lastHeartbeat).toLocaleString('hu-HU')
-                    : '-'}
-                </td>
-                <td className="p-3">
-                  <div className="flex gap-2">
-                    <Link
-                      href={`/${locale}/admin/machines/${machine.id}`}
-                      className="text-primary-600 hover:underline text-sm"
+                  <div className="flex flex-col gap-1">
+                    <span
+                      className={`px-2 py-1 rounded text-xs font-semibold ${getStatusBadgeColor(
+                        machine.status
+                      )}`}
                     >
-                      Részletek
-                    </Link>
-                    {machine._count.agents === 0 && (
-                      <button
-                        onClick={() => handleInstallAgent(machine.id)}
-                        className="text-blue-600 hover:underline text-sm"
-                      >
-                        Agent telepítés
-                      </button>
+                      {machine.status}
+                    </span>
+                    {machine.status === 'OFFLINE' && machine._count.agents === 0 && (
+                      <span className="text-xs text-blue-600">
+                        SSH rendben, agent hiányzik
+                      </span>
                     )}
                   </div>
+                </td>
+                  <td className="p-3">
+                    <div className="space-y-1">
+                      {machine.agents.length > 0 ? (
+                        machine.agents.map((agent) => (
+                          <div key={agent.id} className="flex items-center gap-2">
+                            <span
+                              className={`px-2 py-1 rounded text-xs font-semibold ${getAgentStatusColor(
+                                agent.status
+                              )}`}
+                            >
+                              {agent.agentId.substring(0, 20)}...
+                            </span>
+                            <span className="text-xs text-gray-500">{agent.status}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <span className="text-gray-400 text-sm">Nincs agent</span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="p-3 text-gray-900 font-medium">{machine._count.servers}</td>
+                  <td className="p-3 text-sm text-gray-600">
+                    {machine.lastHeartbeat
+                      ? new Date(machine.lastHeartbeat).toLocaleString('hu-HU')
+                      : '-'}
+                  </td>
+                  <td className="p-3">
+                    <div className="flex gap-2">
+                      <Link
+                        href={`/${locale}/admin/machines/${machine.id}`}
+                        className="text-primary-600 hover:text-primary-700 hover:underline text-sm font-medium"
+                      >
+                        Részletek
+                      </Link>
+                      {machine._count.agents === 0 && (
+                        <button
+                          onClick={() => handleInstallAgent(machine.id)}
+                          className="text-blue-600 hover:text-blue-700 hover:underline text-sm font-medium"
+                        >
+                          Agent telepítés
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={8} className="p-8 text-center text-gray-500">
+                  Nincs szerver gép hozzáadva
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
 
       {/* Pagináció */}
       {totalPages > 1 && (
-        <div className="flex justify-center gap-2">
+        <div className="flex justify-center items-center gap-2">
           {currentPage > 1 && (
             <Link
               href={`/${locale}/admin/machines?page=${currentPage - 1}${statusFilter ? `&status=${statusFilter}` : ''}`}
-              className="px-4 py-2 border rounded-lg hover:bg-gray-50"
+              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 font-medium transition-colors"
             >
               Előző
             </Link>
           )}
-          <span className="px-4 py-2">
-            Oldal {currentPage} / {totalPages}
+          <span className="px-4 py-2 text-gray-700">
+            Oldal <span className="font-semibold">{currentPage}</span> / <span className="font-semibold">{totalPages}</span>
           </span>
           {currentPage < totalPages && (
             <Link
               href={`/${locale}/admin/machines?page=${currentPage + 1}${statusFilter ? `&status=${statusFilter}` : ''}`}
-              className="px-4 py-2 border rounded-lg hover:bg-gray-50"
+              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 font-medium transition-colors"
             >
               Következő
             </Link>

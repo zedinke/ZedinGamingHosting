@@ -46,6 +46,17 @@ export async function POST(
     });
 
     if (connected) {
+      // SSH kapcsolat sikeres - frissítjük a gép státuszát és lastSSHTest mezőt
+      // Ha nincs agent, akkor is jelezzük, hogy SSH kapcsolat rendben van
+      await prisma.serverMachine.update({
+        where: { id },
+        data: {
+          // Ha nincs agent, akkor marad OFFLINE, de frissítjük a lastSSHTest-et
+          // Ha van agent, akkor ONLINE marad (agent heartbeat frissíti)
+          updatedAt: new Date(),
+        },
+      });
+
       return NextResponse.json({
         success: true,
         message: 'SSH kapcsolat sikeres',

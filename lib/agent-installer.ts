@@ -134,6 +134,13 @@ AGENT_DIR="/opt/game-server-agent"
 sudo mkdir -p $AGENT_DIR
 sudo chown $USER:$USER $AGENT_DIR
 
+# Könyvtárak létrehozása game serverekhez
+sudo mkdir -p /opt/servers
+sudo mkdir -p /opt/ark-shared
+sudo mkdir -p /opt/ark-clusters
+sudo mkdir -p /opt/backups
+sudo chown -R $USER:$USER /opt/servers /opt/ark-shared /opt/ark-clusters /opt/backups
+
 # Agent letöltése és telepítése
 cd $AGENT_DIR
 

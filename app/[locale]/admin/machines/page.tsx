@@ -54,11 +54,11 @@ export default async function AdminMachinesPage({
   ]);
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div>
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">Szerver Gépek Kezelése</h1>
-        <p className="text-gray-600 mt-2">
-          Kezeld a game szerver gépeket és agenteket
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Szerver Gépek Kezelése</h1>
+        <p className="text-gray-700">
+          Összes szerver gép: <span className="font-semibold text-gray-900">{total}</span>
         </p>
       </div>
 
