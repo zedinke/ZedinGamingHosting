@@ -555,13 +555,79 @@ async function startUpdateProcess() {
             // Not critical, continue
           }
           
-          await execAsync('npm run build', { 
-            cwd: PROJECT_ROOT,
-            maxBuffer: 1024 * 1024 * 10,
-            timeout: 600000, // 10 minutes
-            env: buildEnv as any,
+          // Build futtatása output logolással és progress frissítéssel
+          await appendLog('  - Build futtatása...');
+          await writeProgress({
+            status: 'in_progress',
+            message: 'Production build folyamatban...',
+            progress: 75,
+            currentStep: 'build',
           });
-          await appendLog('  ✓ Build sikeres');
+          
+          try {
+            const buildProcess = exec('npm run build', {
+              cwd: PROJECT_ROOT,
+              maxBuffer: 1024 * 1024 * 10,
+              timeout: 600000, // 10 minutes
+              env: buildEnv as any,
+            });
+            
+            let lastProgressUpdate = Date.now();
+            
+            // Logoljuk a build outputot és frissítsük a progress-t
+            if (buildProcess.stdout) {
+              buildProcess.stdout.on('data', async (data: Buffer) => {
+                const output = data.toString().trim();
+                if (output) {
+                  await appendLog(`  [BUILD] ${output}`).catch(() => {});
+                  
+                  // Frissítsük a progress-t minden 5 másodpercben
+                  const now = Date.now();
+                  if (now - lastProgressUpdate > 5000) {
+                    lastProgressUpdate = now;
+                    await writeProgress({
+                      status: 'in_progress',
+                      message: 'Production build folyamatban...',
+                      progress: 75,
+                      currentStep: 'build',
+                    }).catch(() => {});
+                  }
+                }
+              });
+            }
+            
+            if (buildProcess.stderr) {
+              buildProcess.stderr.on('data', async (data: Buffer) => {
+                const output = data.toString().trim();
+                if (output && !output.includes('warning')) { // Csak a fontos hibákat logoljuk
+                  await appendLog(`  [BUILD ERR] ${output}`).catch(() => {});
+                }
+              });
+            }
+            
+            // Várjuk meg a build befejeződését
+            await new Promise((resolve, reject) => {
+              buildProcess.on('close', (code) => {
+                if (code === 0) {
+                  resolve(undefined);
+                } else {
+                  reject(new Error(`Build failed with code ${code}`));
+                }
+              });
+              buildProcess.on('error', reject);
+            });
+            
+            await appendLog('  ✓ Build sikeres');
+            await writeProgress({
+              status: 'in_progress',
+              message: 'Production build befejezve',
+              progress: 80,
+              currentStep: 'build',
+            });
+          } catch (buildError: any) {
+            await appendLog(`  ❌ Build hiba: ${buildError.message}`);
+            throw buildError;
+          }
           
           // Ellenőrizzük, hogy a build tartalmazza-e a szükséges route fájlokat
           await appendLog('  - Build ellenőrzése...');

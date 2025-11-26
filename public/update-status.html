@@ -417,6 +417,9 @@
             return div.innerHTML;
         }
         
+        let consecutiveErrors = 0;
+        const maxConsecutiveErrors = 5;
+        
         async function fetchStatus() {
             try {
                 const response = await fetch(`/api/admin/system/update/status?t=${Date.now()}`, {
@@ -429,18 +432,32 @@
                 if (response.ok) {
                     const data = await response.json();
                     updateUI(data);
+                    consecutiveErrors = 0; // Reset error counter
                     
                     // Ha completed vagy error, állítsuk le a polling-ot
                     if (data.status === 'completed' || data.status === 'error') {
                         clearInterval(pollInterval);
                     }
-                } else {
-                    // Ha 404 vagy más hiba, lehet hogy nincs progress
+                } else if (response.status === 404) {
+                    // Ha 404, lehet hogy nincs progress
                     updateUI({ status: 'idle' });
+                    consecutiveErrors = 0;
+                } else {
+                    consecutiveErrors++;
+                    if (consecutiveErrors >= maxConsecutiveErrors) {
+                        console.error('Too many consecutive errors, stopping polling');
+                        clearInterval(pollInterval);
+                        document.getElementById('status-message').textContent = '❌ Hiba történt a frissítés követése során';
+                    }
                 }
             } catch (error) {
                 console.error('Status fetch error:', error);
-                // Ha hálózati hiba, próbáljuk meg újra
+                consecutiveErrors++;
+                if (consecutiveErrors >= maxConsecutiveErrors) {
+                    console.error('Too many consecutive errors, stopping polling');
+                    clearInterval(pollInterval);
+                    document.getElementById('status-message').textContent = '❌ Hálózati hiba történt';
+                }
             }
         }
         
