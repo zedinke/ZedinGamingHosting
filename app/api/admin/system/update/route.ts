@@ -587,6 +587,25 @@ async function startUpdateProcess() {
                 timeout: 30000,
               });
               await appendLog(`  ✓ PM2 restart sikeres (${pm2ProcessName})`);
+              
+              // Várjunk egy kicsit, hogy a PM2 biztosan újrainduljon
+              await appendLog('  - Várakozás a szolgáltatás újraindulására...');
+              await new Promise(resolve => setTimeout(resolve, 3000)); // 3 másodperc várakozás
+              
+              // Ellenőrizzük, hogy a PM2 process fut-e
+              try {
+                const { stdout: pm2Status } = await execAsync(`pm2 show ${pm2ProcessName} --no-color`, {
+                  cwd: PROJECT_ROOT,
+                  timeout: 10000,
+                });
+                if (pm2Status.includes('online')) {
+                  await appendLog(`  ✓ PM2 process online (${pm2ProcessName})`);
+                } else {
+                  await appendLog(`  ⚠️  PM2 process státusz: ${pm2Status}`);
+                }
+              } catch (statusError: any) {
+                await appendLog(`  ⚠️  PM2 státusz ellenőrzés hiba: ${statusError.message}`);
+              }
             } catch (restartError: any) {
               // Try to reload instead of restart
               try {
@@ -596,6 +615,10 @@ async function startUpdateProcess() {
                   timeout: 30000,
                 });
                 await appendLog(`  ✓ PM2 reload sikeres (${pm2ProcessName})`);
+                
+                // Várjunk egy kicsit, hogy a PM2 biztosan újrainduljon
+                await appendLog('  - Várakozás a szolgáltatás újraindulására...');
+                await new Promise(resolve => setTimeout(resolve, 3000)); // 3 másodperc várakozás
               } catch (reloadError: any) {
                 await appendLog(`  ⚠️  PM2 restart/reload sikertelen: ${restartError.message}`);
                 // Not critical, continue
