@@ -32,8 +32,8 @@ export function SystemHealth({ locale }: SystemHealthProps) {
 
   if (!health) {
     return (
-      <div className="card">
-        <div className="text-center py-8 text-gray-500">Betöltés...</div>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="text-center py-8 text-gray-600">Betöltés...</div>
       </div>
     );
   }
@@ -64,9 +64,9 @@ export function SystemHealth({ locale }: SystemHealthProps) {
   return (
     <div className="space-y-6">
       {/* Rendszer egészség */}
-      <div className="card">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">Rendszer Egészség</h2>
+          <h2 className="text-xl font-bold text-gray-900">Rendszer Egészség</h2>
           <div className="flex items-center gap-2">
             <div
               className={`w-3 h-3 rounded-full ${
@@ -88,7 +88,7 @@ export function SystemHealth({ locale }: SystemHealthProps) {
 
       {/* Gyors statisztikák */}
       <div className="grid md:grid-cols-3 gap-6">
-        <div className="card">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h3 className="text-sm font-medium text-gray-700 mb-2">Szerver Gépek</h3>
           <div className="space-y-2">
             <div className="flex justify-between">
@@ -114,7 +114,7 @@ export function SystemHealth({ locale }: SystemHealthProps) {
           </div>
         </div>
 
-        <div className="card">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h3 className="text-sm font-medium text-gray-700 mb-2">Agentek</h3>
           <div className="space-y-2">
             <div className="flex justify-between">
@@ -140,7 +140,7 @@ export function SystemHealth({ locale }: SystemHealthProps) {
           </div>
         </div>
 
-        <div className="card">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h3 className="text-sm font-medium text-gray-700 mb-2">Szerverek</h3>
           <div className="space-y-2">
             <div className="flex justify-between">
@@ -171,32 +171,32 @@ export function SystemHealth({ locale }: SystemHealthProps) {
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Link
           href={`/${locale}/admin/machines`}
-          className="card hover:shadow-lg transition-shadow p-4"
+          className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow"
         >
-          <div className="font-semibold mb-1">Szerver Gépek</div>
+          <div className="font-semibold text-gray-900 mb-1">Szerver Gépek</div>
           <div className="text-sm text-gray-600">Kezelés →</div>
         </Link>
         <Link
           href={`/${locale}/admin/agents`}
-          className="card hover:shadow-lg transition-shadow p-4"
+          className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow"
         >
-          <div className="font-semibold mb-1">Agentek</div>
+          <div className="font-semibold text-gray-900 mb-1">Agentek</div>
           <div className="text-sm text-gray-600">Kezelés →</div>
         </Link>
         <Link
           href={`/${locale}/admin/tasks`}
-          className="card hover:shadow-lg transition-shadow p-4"
+          className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow"
         >
-          <div className="font-semibold mb-1">Feladatok</div>
+          <div className="font-semibold text-gray-900 mb-1">Feladatok</div>
           <div className="text-sm text-gray-600">
             {health.tasks?.pending || 0} várakozó
           </div>
         </Link>
         <Link
           href={`/${locale}/admin/monitoring`}
-          className="card hover:shadow-lg transition-shadow p-4"
+          className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow"
         >
-          <div className="font-semibold mb-1">Monitoring</div>
+          <div className="font-semibold text-gray-900 mb-1">Monitoring</div>
           <div className="text-sm text-gray-600">Részletek →</div>
         </Link>
       </div>

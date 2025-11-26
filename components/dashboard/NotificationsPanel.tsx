@@ -94,9 +94,9 @@ export function NotificationsPanel({ locale }: NotificationsPanelProps) {
   };
 
   return (
-    <div className="card">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">
+        <h2 className="text-xl font-bold text-gray-900">
           Értesítések
           {unreadCount > 0 && (
             <span className="ml-2 px-2 py-1 bg-red-500 text-white text-sm rounded-full">
@@ -108,14 +108,14 @@ export function NotificationsPanel({ locale }: NotificationsPanelProps) {
           {unreadCount > 0 && (
             <button
               onClick={markAllAsRead}
-              className="px-3 py-1 text-sm bg-gray-200 rounded hover:bg-gray-300"
+              className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
             >
               Összes olvasottnak jelöl
             </button>
           )}
           <button
             onClick={() => setShowAll(!showAll)}
-            className="px-3 py-1 text-sm bg-gray-200 rounded hover:bg-gray-300"
+            className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
           >
             {showAll ? 'Csak olvasatlanok' : 'Összes'}
           </button>
@@ -123,28 +123,28 @@ export function NotificationsPanel({ locale }: NotificationsPanelProps) {
       </div>
 
       {loading ? (
-        <div className="text-center py-8 text-gray-500">Betöltés...</div>
+        <div className="text-center py-8 text-gray-600">Betöltés...</div>
       ) : notifications.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">Nincs értesítés</div>
+        <div className="text-center py-8 text-gray-600">Nincs értesítés</div>
       ) : (
         <div className="space-y-2">
           {notifications.map((notification) => (
             <div
               key={notification.id}
-              className={`p-4 border rounded-lg cursor-pointer hover:bg-gray-50 ${
-                !notification.read ? 'bg-blue-50 border-blue-200' : ''
-              } ${getPriorityColor(notification.priority)}`}
+              className={`p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${
+                !notification.read ? 'bg-blue-50 border-blue-200' : 'border-gray-200'
+              }`}
               onClick={() => !notification.read && markAsRead(notification.id)}
             >
               <div className="flex justify-between items-start">
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-semibold">{notification.title}</h3>
+                    <h3 className="font-semibold text-gray-900">{notification.title}</h3>
                     {!notification.read && (
                       <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
                     )}
                   </div>
-                  <p className="text-sm mt-1">{notification.message}</p>
+                  <p className="text-sm mt-1 text-gray-700">{notification.message}</p>
                   <p className="text-xs text-gray-500 mt-2">
                     {new Date(notification.createdAt).toLocaleString('hu-HU')}
                   </p>

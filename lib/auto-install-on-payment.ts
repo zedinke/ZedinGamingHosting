@@ -135,10 +135,27 @@ export async function triggerAutoInstallOnPayment(
       };
     }
 
+    // Plan információk lekérdezése RAM számításhoz
+    let ram = 2048; // Alapértelmezett
+    if (server.subscription?.id) {
+      const plan = await prisma.pricingPlan.findUnique({
+        where: { id: server.subscription.id },
+      });
+      if (plan?.features) {
+        const features = plan.features as any;
+        // RAM lehet GB-ban vagy MB-ban
+        if (features.ram) {
+          ram = typeof features.ram === 'number' 
+            ? (features.ram > 1000 ? features.ram : features.ram * 1024) // Ha < 1000, akkor GB, egyébként MB
+            : 2048;
+        }
+      }
+    }
+
     // Játékszerver telepítése
     const installResult = await installGameServer(serverId, server.gameType, {
       maxPlayers: server.maxPlayers,
-      ram: 2048, // TODO: Get from plan
+      ram: ram,
       port: server.port || 25565,
       name: server.name,
       adminPassword: `admin_${serverId.substring(0, 8)}`, // Generált admin jelszó

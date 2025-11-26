@@ -91,7 +91,76 @@ export async function PUT(
       },
     });
 
-    // TODO: Valós implementációban itt kellene a konfiguráció alkalmazása az agenten keresztül
+    // Konfiguráció alkalmazása SSH-n keresztül
+    if (server.agentId) {
+      const serverWithAgent = await prisma.server.findUnique({
+        where: { id },
+        include: {
+          agent: {
+            include: {
+              machine: true,
+            },
+          },
+        },
+      });
+
+      if (serverWithAgent?.agent?.machine) {
+        const { executeSSHCommand } = await import('@/lib/ssh-client');
+        const machine = serverWithAgent.agent.machine;
+        
+        // Konfigurációs fájl elérési út meghatározása
+        const serverPath = (server.configuration as any)?.instancePath || 
+                          (server.configuration as any)?.sharedPath || 
+                          `/opt/servers/${id}`;
+        
+        let configPath = '';
+        switch (server.gameType) {
+          case 'MINECRAFT':
+            configPath = `${serverPath}/server.properties`;
+            break;
+          case 'ARK_EVOLVED':
+          case 'ARK_ASCENDED':
+            configPath = `${serverPath}/ShooterGame/Saved/Config/LinuxServer/GameUserSettings.ini`;
+            break;
+          case 'RUST':
+            configPath = `${serverPath}/server.cfg`;
+            break;
+          case 'VALHEIM':
+            configPath = `${serverPath}/start_server.sh`;
+            break;
+          default:
+            configPath = `${serverPath}/server.cfg`;
+        }
+
+        // Konfiguráció fájlba írása (JSON-ból játék specifikus formátumba konvertálva)
+        const configContent = convertConfigToGameFormat(server.gameType, configuration);
+        
+        if (configContent) {
+          await executeSSHCommand(
+            {
+              host: machine.ipAddress,
+              port: machine.sshPort,
+              user: machine.sshUser,
+              keyPath: machine.sshKeyPath || undefined,
+            },
+            `mkdir -p $(dirname ${configPath}) && cat > ${configPath} << 'CONFIG_EOF'\n${configContent}\nCONFIG_EOF`
+          );
+
+          // Szerver újraindítása, hogy a változások érvénybe lépjenek
+          if (server.status === 'ONLINE') {
+            await executeSSHCommand(
+              {
+                host: machine.ipAddress,
+                port: machine.sshPort,
+                user: machine.sshUser,
+                keyPath: machine.sshKeyPath || undefined,
+              },
+              `systemctl restart server-${id}`
+            );
+          }
+        }
+      }
+    }
 
     return NextResponse.json({
       success: true,
@@ -172,5 +241,36 @@ function getDefaultConfig(gameType: string, maxPlayers: number): any {
   };
 
   return defaults[gameType] || {};
+}
+
+/**
+ * Konfiguráció konvertálása játék specifikus formátumba
+ */
+function convertConfigToGameFormat(gameType: string, config: any): string {
+  switch (gameType) {
+    case 'MINECRAFT':
+      return Object.entries(config)
+        .map(([key, value]) => `${key}=${value}`)
+        .join('\n');
+    
+    case 'ARK_EVOLVED':
+    case 'ARK_ASCENDED':
+      return `[ServerSettings]\n${Object.entries(config)
+        .map(([key, value]) => `${key}=${value}`)
+        .join('\n')}`;
+    
+    case 'RUST':
+    case 'CSGO':
+    case 'CS2':
+      return Object.entries(config)
+        .map(([key, value]) => `${key} "${value}"`)
+        .join('\n');
+    
+    case 'VALHEIM':
+      return `#!/bin/bash\n./valheim_server.x86_64 -name "${config.name}" -port 2456 -world "${config.world}" -password "${config.password}" -public ${config.public}`;
+    
+    default:
+      return JSON.stringify(config, null, 2);
+  }
 }
 

@@ -32,7 +32,7 @@ export function PricingManagement({ plans, locale }: PricingManagementProps) {
       {plans.map((plan) => (
         <div
           key={plan.id}
-          className={`card ${!plan.isActive ? 'opacity-60' : ''}`}
+          className={`bg-white rounded-xl shadow-sm border border-gray-200 p-6 ${!plan.isActive ? 'opacity-60' : ''}`}
         >
           <div className="flex justify-between items-start mb-4">
             <div>
@@ -76,7 +76,7 @@ export function PricingManagement({ plans, locale }: PricingManagementProps) {
       ))}
 
       {plans.length === 0 && (
-        <div className="col-span-full card text-center py-12">
+        <div className="col-span-full bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center py-12">
           <p className="text-gray-600">Még nincs árazási csomag</p>
         </div>
       )}

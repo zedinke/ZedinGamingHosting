@@ -128,7 +128,7 @@ export function MonitoringDashboard({
   return (
     <div className="space-y-6">
       {/* Auto-refresh beállítások */}
-      <div className="card p-4">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <label className="flex items-center gap-2">
@@ -163,7 +163,7 @@ export function MonitoringDashboard({
       {/* Statisztikák */}
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Szerver Gépek */}
-        <div className="card">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h3 className="text-sm font-medium text-gray-700 mb-2">Szerver Gépek</h3>
           <div className="space-y-2">
             <div className="flex justify-between">
@@ -184,7 +184,7 @@ export function MonitoringDashboard({
         </div>
 
         {/* Agentek */}
-        <div className="card">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h3 className="text-sm font-medium text-gray-700 mb-2">Agentek</h3>
           <div className="space-y-2">
             <div className="flex justify-between">
@@ -205,7 +205,7 @@ export function MonitoringDashboard({
         </div>
 
         {/* Szerverek */}
-        <div className="card">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h3 className="text-sm font-medium text-gray-700 mb-2">Szerverek</h3>
           <div className="space-y-2">
             <div className="flex justify-between">
@@ -226,7 +226,7 @@ export function MonitoringDashboard({
         </div>
 
         {/* Feladatok */}
-        <div className="card">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h3 className="text-sm font-medium text-gray-700 mb-2">Feladatok</h3>
           <div className="space-y-2">
             <div className="flex justify-between">

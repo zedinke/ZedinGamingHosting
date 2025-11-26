@@ -112,7 +112,7 @@ export function ServerConsole({ serverId, locale }: ServerConsoleProps) {
       </div>
 
       {/* Konzol logok */}
-      <div className="card">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h3 className="text-lg font-bold mb-4">Konzol Logok</h3>
         <div className="bg-gray-900 text-green-400 font-mono text-sm p-4 rounded h-96 overflow-y-auto">
           {logs.length === 0 ? (
@@ -133,7 +133,7 @@ export function ServerConsole({ serverId, locale }: ServerConsoleProps) {
       </div>
 
       {/* Parancs küldése */}
-      <div className="card">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h3 className="text-lg font-bold mb-4">Parancs Küldése</h3>
         <form onSubmit={handleSendCommand} className="flex gap-2">
           <input

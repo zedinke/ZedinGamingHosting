@@ -140,20 +140,15 @@ export default async function DashboardPage({
   const validLocale = locale === 'hu' || locale === 'en' ? locale : 'hu';
 
   return (
-    <div className="min-h-screen bg-dark-900">
+    <div className="min-h-screen bg-gray-100">
       <Navigation locale={validLocale} />
       <main className="container mx-auto px-4 py-8">
         {/* Welcome Section */}
-        <div className="mb-10 relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-primary-600/20 via-secondary-600/20 to-accent-500/20 blur-3xl rounded-3xl"></div>
-          <div className="relative glass-effect rounded-2xl p-8 border border-primary-500/30">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black mb-4 text-glow">
-              <span className="bg-clip-text text-transparent gamer-gradient">
-                {dashboardTitle}
-              </span>
-            </h1>
-            <p className="text-xl text-gray-300">
-              Üdvözöljük, <span className="font-bold text-primary-400">{userName || userEmail || 'Felhasználó'}</span>! 👋
+        <div className="mb-8">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 lg:p-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">{dashboardTitle}</h1>
+            <p className="text-gray-700">
+              Üdvözöljük, <span className="font-semibold text-gray-900">{userName || userEmail || 'Felhasználó'}</span>!
             </p>
           </div>
         </div>
@@ -224,16 +219,23 @@ export default async function DashboardPage({
   } catch (error: any) {
     console.error('Dashboard page error:', error);
     // Ha hiba van, próbáljuk meg egy egyszerűbb verziót renderelni
+    const resolvedParams = params instanceof Promise ? await params : params;
+    const errorLocale = resolvedParams.locale || 'hu';
+    const validErrorLocale = errorLocale === 'hu' || errorLocale === 'en' ? errorLocale : 'hu';
+    
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-100">
+        <Navigation locale={validErrorLocale} />
         <div className="container mx-auto px-4 py-8">
-          <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
-          <p className="text-red-600">
-            Hiba történt a dashboard betöltése során. Kérjük, próbáld újra később.
-          </p>
-          <p className="text-sm text-gray-500 mt-2">
-            {error?.message || 'Ismeretlen hiba'}
-          </p>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h1 className="text-2xl font-bold mb-4 text-gray-900">Dashboard</h1>
+            <p className="text-red-600">
+              Hiba történt a dashboard betöltése során. Kérjük, próbáld újra később.
+            </p>
+            <p className="text-sm text-gray-500 mt-2">
+              {error?.message || 'Ismeretlen hiba'}
+            </p>
+          </div>
         </div>
       </div>
     );

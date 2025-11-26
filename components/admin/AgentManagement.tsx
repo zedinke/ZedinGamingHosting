@@ -114,7 +114,7 @@ export function AgentManagement({
       </div>
 
       {/* Agentek táblázata */}
-      <div className="card overflow-x-auto">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
         <table className="w-full">
           <thead>
             <tr className="border-b">

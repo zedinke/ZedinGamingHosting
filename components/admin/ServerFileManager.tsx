@@ -158,7 +158,7 @@ export function ServerFileManager({ serverId, locale }: ServerFileManagerProps) 
 
       {/* Fájlok listája */}
       {isEditing && selectedFile ? (
-        <div className="card">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-bold">Fájl szerkesztése: {selectedFile.name}</h3>
             <div className="flex gap-2">
@@ -187,7 +187,7 @@ export function ServerFileManager({ serverId, locale }: ServerFileManagerProps) 
           />
         </div>
       ) : (
-        <div className="card">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h3 className="text-lg font-bold mb-4">Fájlok</h3>
           {loading ? (
             <div className="text-center py-8 text-gray-500">Betöltés...</div>

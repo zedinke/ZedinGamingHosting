@@ -138,7 +138,7 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
     <div className="space-y-6">
       {/* Alapinformációk */}
       <div className="grid md:grid-cols-2 gap-6">
-        <div className="card">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h2 className="text-xl font-bold mb-4">Alapinformációk</h2>
           <dl className="space-y-2">
             <div>
@@ -218,7 +218,7 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
         </div>
 
         {/* Szerver műveletek */}
-        <div className="card">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h2 className="text-xl font-bold mb-4">Szerver Műveletek</h2>
           <div className="space-y-2">
             <button
@@ -248,7 +248,7 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
 
       {/* Előfizetés információk */}
       {server.subscription && (
-        <div className="card">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h2 className="text-xl font-bold mb-4">Előfizetés</h2>
           <div className="space-y-2">
             <div className="flex justify-between">
@@ -301,7 +301,7 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
 
       {/* Konfiguráció */}
       {server.configuration && (
-        <div className="card">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h2 className="text-xl font-bold mb-4">Konfiguráció</h2>
           <pre className="bg-gray-50 p-4 rounded overflow-x-auto text-sm">
             {JSON.stringify(server.configuration, null, 2)}

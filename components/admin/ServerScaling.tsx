@@ -65,7 +65,7 @@ export function ServerScaling({ serverId, locale }: ServerScalingProps) {
   };
 
   return (
-    <div className="card">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <h3 className="text-lg font-bold mb-4">Automatikus Skálázás</h3>
 
       <div className="space-y-4">

@@ -68,7 +68,8 @@ export async function installGameServer(
     // ARK játékoknál közös fájlokat használunk felhasználó + szervergép kombinációként
     // Minden szervergépen külön shared mappa van felhasználónként
     const isARK = gameType === 'ARK_EVOLVED' || gameType === 'ARK_ASCENDED';
-    const sharedPath = isARK ? `/opt/ark-shared/${server.userId}-${machine.id}` : null;
+    const { getARKSharedPath } = await import('./ark-cluster');
+    const sharedPath = isARK ? getARKSharedPath(server.userId, machine.id) : null;
     const serverPath = isARK ? `${sharedPath}/instances/${serverId}` : `/opt/servers/${serverId}`;
 
     // Szerver könyvtár létrehozása
@@ -108,7 +109,7 @@ export async function installGameServer(
     }
 
     // Telepítési script generálása (csak ha nem ARK, vagy ha még nincs telepítve)
-    if (!isARK || !(await checkARKSharedInstallation(sharedPath!, gameType, machine))) {
+    if (!isARK || !(await checkARKSharedInstallation(server.userId, machine.id, gameType, machine))) {
       let installScript = gameConfig.installScript;
       
       // ARK-nál a közös path-ot használjuk
@@ -383,10 +384,13 @@ OptionSettings=(
  * ARK közös telepítés ellenőrzése
  */
 async function checkARKSharedInstallation(
-  sharedPath: string,
+  userId: string,
+  machineId: string,
   gameType: GameType,
   machine: any
 ): Promise<boolean> {
+  const { getARKSharedPath } = await import('./ark-cluster');
+  const sharedPath = getARKSharedPath(userId, machineId);
   try {
     const checkCommand = gameType === 'ARK_EVOLVED'
       ? `test -f ${sharedPath}/ShooterGame/Binaries/Linux/ShooterGameServer && echo "installed" || echo "not_installed"`

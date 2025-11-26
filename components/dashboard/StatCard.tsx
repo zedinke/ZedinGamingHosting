@@ -30,45 +30,40 @@ export function StatCard({ title, value, iconName, icon: Icon, color = 'primary'
     Icon = LucideIcons.BarChart3;
   }
   const colorClasses = {
-    primary: 'bg-gradient-to-br from-primary-500/20 to-primary-600/20 text-primary-400 border border-primary-500/30',
-    success: 'bg-gradient-to-br from-green-500/20 to-green-600/20 text-green-400 border border-green-500/30',
-    warning: 'bg-gradient-to-br from-yellow-500/20 to-yellow-600/20 text-yellow-400 border border-yellow-500/30',
-    danger: 'bg-gradient-to-br from-red-500/20 to-red-600/20 text-red-400 border border-red-500/30',
-    info: 'bg-gradient-to-br from-blue-500/20 to-blue-600/20 text-blue-400 border border-blue-500/30',
+    primary: 'bg-primary-100 text-primary-600',
+    success: 'bg-green-100 text-green-600',
+    warning: 'bg-yellow-100 text-yellow-600',
+    danger: 'bg-red-100 text-red-600',
+    info: 'bg-blue-100 text-blue-600',
   };
 
   const valueColorClasses = {
-    primary: 'text-primary-400',
-    success: 'text-green-400',
-    warning: 'text-yellow-400',
-    danger: 'text-red-400',
-    info: 'text-blue-400',
+    primary: 'text-primary-600',
+    success: 'text-green-600',
+    warning: 'text-yellow-600',
+    danger: 'text-red-600',
+    info: 'text-blue-600',
   };
 
   return (
-    <div className="group relative">
-      <div className="absolute inset-0 bg-gradient-to-br from-primary-600/20 to-secondary-600/20 rounded-xl blur-xl group-hover:blur-2xl transition-all duration-300 opacity-0 group-hover:opacity-100"></div>
-      <Card hover className="relative card-glow overflow-hidden border-dark-700">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary-500/10 to-transparent rounded-full blur-2xl"></div>
-        <div className="relative flex items-center justify-between">
-          <div className="flex-1">
-            <p className="text-sm font-medium text-gray-400 mb-2 uppercase tracking-wider">{title}</p>
-            <p className={`text-4xl font-black ${valueColorClasses[color]} text-glow`}>
-              {value}
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+      <div className="flex items-center justify-between">
+        <div className="flex-1">
+          <h3 className="text-sm font-medium text-gray-700 mb-2">{title}</h3>
+          <p className={`text-3xl font-bold ${valueColorClasses[color]}`}>
+            {value}
+          </p>
+          {trend && (
+            <p className={`text-xs mt-2 font-semibold ${trend.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+              <span className="inline-block mr-1">{trend.isPositive ? '↑' : '↓'}</span>
+              {Math.abs(trend.value)}%
             </p>
-            {trend && (
-              <p className={`text-xs mt-3 font-semibold ${trend.isPositive ? 'text-green-400' : 'text-red-400'}`}>
-                <span className="inline-block mr-1">{trend.isPositive ? '↑' : '↓'}</span>
-                {Math.abs(trend.value)}%
-              </p>
-            )}
-          </div>
-          <div className={`p-4 rounded-xl ${colorClasses[color]} group-hover:scale-110 transition-transform duration-300 shadow-glow`}>
-            <Icon className="w-8 h-8" />
-          </div>
+          )}
         </div>
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-500 to-secondary-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
-      </Card>
+        <div className={`p-3 rounded-lg ${colorClasses[color]}`}>
+          <Icon className="w-6 h-6" />
+        </div>
+      </div>
     </div>
   );
 }

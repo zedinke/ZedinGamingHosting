@@ -178,7 +178,7 @@ export function TicketDetail({ ticket, locale, adminId }: TicketDetailProps) {
   return (
     <div className="space-y-6">
       {/* Ticket információk */}
-      <div className="card">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex justify-between items-start mb-4">
           <div>
             <h2 className="text-xl font-bold mb-2">{ticket.subject}</h2>
@@ -254,7 +254,7 @@ export function TicketDetail({ ticket, locale, adminId }: TicketDetailProps) {
       </div>
 
       {/* Üzenetek */}
-      <div className="card">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h2 className="text-xl font-bold mb-4">Üzenetek</h2>
         <div className="space-y-4 mb-6">
           {messages.map((msg) => (

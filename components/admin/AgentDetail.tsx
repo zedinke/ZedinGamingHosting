@@ -127,7 +127,7 @@ export function AgentDetail({ agent, servers, recentTasks, locale }: AgentDetail
 
       {/* Alapinformációk */}
       <div className="grid md:grid-cols-2 gap-6">
-        <div className="card">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h2 className="text-xl font-bold mb-4">Alapinformációk</h2>
           <div className="space-y-3">
             <div>
@@ -173,7 +173,7 @@ export function AgentDetail({ agent, servers, recentTasks, locale }: AgentDetail
           </div>
         </div>
 
-        <div className="card">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h2 className="text-xl font-bold mb-4">Statisztikák</h2>
           <div className="space-y-3">
             <div>

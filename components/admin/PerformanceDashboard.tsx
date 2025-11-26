@@ -50,21 +50,21 @@ export function PerformanceDashboard() {
   return (
     <div className="space-y-6">
       <div className="grid md:grid-cols-3 gap-6">
-        <div className="card">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h3 className="text-sm font-medium text-gray-600 mb-2">Átlagos Válaszidő</h3>
           <p className="text-3xl font-bold text-primary-600">
             {metrics.averageResponseTime.toFixed(2)}ms
           </p>
         </div>
 
-        <div className="card">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h3 className="text-sm font-medium text-gray-600 mb-2">Hibaarány</h3>
           <p className="text-3xl font-bold text-red-600">
             {(metrics.errorRate * 100).toFixed(2)}%
           </p>
         </div>
 
-        <div className="card">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h3 className="text-sm font-medium text-gray-600 mb-2">Lassú Endpointok</h3>
           <p className="text-3xl font-bold text-orange-600">
             {metrics.slowestEndpoints.length}

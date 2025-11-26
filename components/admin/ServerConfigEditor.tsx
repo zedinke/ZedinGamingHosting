@@ -84,7 +84,7 @@ export function ServerConfigEditor({
 
   if (loading) {
     return (
-      <div className="card">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="text-center py-8 text-gray-500">Betöltés...</div>
       </div>
     );

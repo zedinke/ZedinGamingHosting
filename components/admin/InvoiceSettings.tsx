@@ -103,7 +103,7 @@ export function InvoiceSettings() {
 
   return (
     <div className="space-y-6">
-      <div className="card">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h2 className="text-xl font-bold mb-4">Céginformációk</h2>
         <div className="grid md:grid-cols-2 gap-4">
           <div>
@@ -206,7 +206,7 @@ export function InvoiceSettings() {
         </div>
       </div>
 
-      <div className="card">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h2 className="text-xl font-bold mb-4">Bank információk</h2>
         <div className="grid md:grid-cols-2 gap-4">
           <div>
@@ -241,7 +241,7 @@ export function InvoiceSettings() {
         </div>
       </div>
 
-      <div className="card">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h2 className="text-xl font-bold mb-4">Számlázási beállítások</h2>
         <div className="grid md:grid-cols-2 gap-4">
           <div>
@@ -293,7 +293,7 @@ export function InvoiceSettings() {
         </div>
       </div>
 
-      <div className="card">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h2 className="text-xl font-bold mb-4">Egyéb beállítások</h2>
         <div className="space-y-4">
           <div>

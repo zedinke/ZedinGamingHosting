@@ -182,7 +182,7 @@ export function MachineManagement({
 
       {/* Hozzáadás form */}
       {showAddForm && (
-        <div className="card p-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h2 className="text-xl font-bold mb-4">Új Szerver Gép Hozzáadása</h2>
           <form onSubmit={handleAddMachine} className="space-y-4">
             <div className="grid md:grid-cols-2 gap-4">
@@ -267,7 +267,7 @@ export function MachineManagement({
       )}
 
       {/* Gépek táblázata */}
-      <div className="card overflow-x-auto">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
         <table className="w-full">
           <thead>
             <tr className="border-b">

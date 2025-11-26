@@ -138,7 +138,7 @@ export function ServerBackupManager({ serverId, locale }: ServerBackupManagerPro
   return (
     <div className="space-y-4">
       {/* Backup létrehozása */}
-      <div className="card">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h3 className="text-lg font-bold mb-4">Új Backup Létrehozása</h3>
         <form onSubmit={handleCreateBackup} className="flex gap-2">
           <input
@@ -160,7 +160,7 @@ export function ServerBackupManager({ serverId, locale }: ServerBackupManagerPro
       </div>
 
       {/* Backupok listája */}
-      <div className="card">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-bold">Backupok</h3>
           <button

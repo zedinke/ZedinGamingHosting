@@ -43,9 +43,81 @@ export async function GET(
       );
     }
 
-    // TODO: Valós implementációban itt kellene SSH-n keresztül lekérdezni a log fájlokat
-    // Jelenleg mock adatokat adunk vissza
-    const mockLogs = generateMockLogs(lines, type);
+    // Log fájlok lekérdezése SSH-n keresztül
+    let logs: string[] = [];
+    
+    if (server.agent && server.agent.machine) {
+      const { executeSSHCommand } = await import('@/lib/ssh-client');
+      const machine = server.agent.machine;
+      
+      // Log fájl elérési út meghatározása játék típus alapján
+      const serverPath = (server.configuration as any)?.instancePath || 
+                        (server.configuration as any)?.sharedPath || 
+                        `/opt/servers/${id}`;
+      
+      let logPath = '';
+      switch (server.gameType) {
+        case 'MINECRAFT':
+          logPath = `${serverPath}/logs/latest.log`;
+          break;
+        case 'ARK_EVOLVED':
+        case 'ARK_ASCENDED':
+          logPath = `${serverPath}/ShooterGame/Saved/Logs/ShooterGame.log`;
+          break;
+        case 'RUST':
+          logPath = `${serverPath}/RustDedicated_Data/output_log.txt`;
+          break;
+        case 'VALHEIM':
+          logPath = `${serverPath}/valheim_server.log`;
+          break;
+        default:
+          logPath = `${serverPath}/server.log`;
+      }
+
+      // Log fájl utolsó N sorának lekérdezése
+      const logCommand = `tail -n ${lines} ${logPath} 2>/dev/null || echo "Log file not found"`;
+      const logResult = await executeSSHCommand(
+        {
+          host: machine.ipAddress,
+          port: machine.sshPort,
+          user: machine.sshUser,
+          keyPath: machine.sshKeyPath || undefined,
+        },
+        logCommand
+      );
+
+      if (logResult.stdout && !logResult.stdout.includes('Log file not found')) {
+        logs = logResult.stdout.split('\n').filter(line => line.trim());
+        
+        // Szűrés típus szerint
+        if (type !== 'all') {
+          const typeUpper = type.toUpperCase();
+          logs = logs.filter(line => line.includes(`[${typeUpper}]`) || line.includes(typeUpper));
+        }
+      } else {
+        // Ha nincs log fájl, systemd journal logokat használunk
+        const journalCommand = `journalctl -u server-${id} -n ${lines} --no-pager 2>/dev/null || echo "No logs"`;
+        const journalResult = await executeSSHCommand(
+          {
+            host: machine.ipAddress,
+            port: machine.sshPort,
+            user: machine.sshUser,
+            keyPath: machine.sshKeyPath || undefined,
+          },
+          journalCommand
+        );
+        
+        if (journalResult.stdout && !journalResult.stdout.includes('No logs')) {
+          logs = journalResult.stdout.split('\n').filter(line => line.trim());
+        } else {
+          // Fallback: mock logok
+          logs = generateMockLogs(lines, type);
+        }
+      }
+    } else {
+      // Ha nincs agent, mock logokat adunk vissza
+      logs = generateMockLogs(lines, type);
+    }
 
     return NextResponse.json({
       success: true,

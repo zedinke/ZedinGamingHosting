@@ -93,7 +93,7 @@ export function BlogManagement({
         {posts.map((post) => (
           <div
             key={post.id}
-            className={`card ${!post.isPublished ? 'opacity-60' : ''}`}
+            className={`bg-white rounded-xl shadow-sm border border-gray-200 p-6 ${!post.isPublished ? 'opacity-60' : ''}`}
           >
             {post.coverImage && (
               <div className="mb-4 aspect-video relative rounded-lg overflow-hidden bg-gray-200">
@@ -140,7 +140,7 @@ export function BlogManagement({
       </div>
 
       {posts.length === 0 && (
-        <div className="card text-center py-12">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center py-12">
           <p className="text-gray-600">Még nincs blog bejegyzés</p>
         </div>
       )}

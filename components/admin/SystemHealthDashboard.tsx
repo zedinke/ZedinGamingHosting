@@ -65,7 +65,7 @@ export function SystemHealthDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="card">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold">Rendszer Egészség</h3>
           <span
@@ -86,7 +86,7 @@ export function SystemHealthDashboard() {
       </div>
 
       <div className="grid md:grid-cols-3 gap-6">
-        <div className={`card border-2 ${getStatusColor(health.checks.database.status)}`}>
+        <div className={`bg-white rounded-xl shadow-sm border-2 p-6 ${getStatusColor(health.checks.database.status)}`}>
           <h4 className="font-semibold mb-2">Adatbázis</h4>
           <p className="text-2xl font-bold">
             {health.checks.database.status === 'ok' ? '✅ OK' : '❌ Hiba'}
@@ -98,7 +98,7 @@ export function SystemHealthDashboard() {
           )}
         </div>
 
-        <div className={`card border-2 ${getStatusColor(health.checks.cache.status)}`}>
+        <div className={`bg-white rounded-xl shadow-sm border-2 p-6 ${getStatusColor(health.checks.cache.status)}`}>
           <h4 className="font-semibold mb-2">Cache</h4>
           <p className="text-2xl font-bold">
             {health.checks.cache.status === 'ok' ? '✅ OK' : '❌ Hiba'}
@@ -108,7 +108,7 @@ export function SystemHealthDashboard() {
           </p>
         </div>
 
-        <div className={`card border-2 ${getStatusColor(health.checks.performance.status)}`}>
+        <div className={`bg-white rounded-xl shadow-sm border-2 p-6 ${getStatusColor(health.checks.performance.status)}`}>
           <h4 className="font-semibold mb-2">Teljesítmény</h4>
           <p className="text-2xl font-bold">
             {health.checks.performance.status === 'ok'

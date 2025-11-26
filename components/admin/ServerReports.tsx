@@ -48,7 +48,7 @@ export function ServerReports({
 
   if (loading && !data) {
     return (
-      <div className="card">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="text-center py-8 text-gray-500">Betöltés...</div>
       </div>
     );
@@ -61,7 +61,7 @@ export function ServerReports({
   return (
     <div className="space-y-6">
       {/* Szűrők */}
-      <div className="card">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex gap-4 items-end">
           <div className="flex-1">
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -108,26 +108,26 @@ export function ServerReports({
 
       {/* Összefoglaló */}
       <div className="grid md:grid-cols-4 gap-6">
-        <div className="card">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h3 className="text-sm font-medium text-gray-700 mb-2">Összes Szerver</h3>
           <p className="text-3xl font-bold text-primary-600">{data.summary.total}</p>
         </div>
-        <div className="card">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h3 className="text-sm font-medium text-gray-700 mb-2">Online</h3>
           <p className="text-3xl font-bold text-green-600">{data.summary.online}</p>
         </div>
-        <div className="card">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h3 className="text-sm font-medium text-gray-700 mb-2">Offline</h3>
           <p className="text-3xl font-bold text-gray-600">{data.summary.offline}</p>
         </div>
-        <div className="card">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h3 className="text-sm font-medium text-gray-700 mb-2">Új ({period} nap)</h3>
           <p className="text-3xl font-bold text-blue-600">{data.summary.new}</p>
         </div>
       </div>
 
       {/* Játék típus szerint */}
-      <div className="card">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h2 className="text-xl font-bold mb-4">Játék Típus Szerint</h2>
         <div className="grid md:grid-cols-3 gap-4">
           {data.byGame.map((item: any) => (
@@ -142,7 +142,7 @@ export function ServerReports({
       </div>
 
       {/* Státusz szerint */}
-      <div className="card">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h2 className="text-xl font-bold mb-4">Státusz Szerint</h2>
         <div className="grid md:grid-cols-3 gap-4">
           {data.byStatus.map((item: any) => (
@@ -158,7 +158,7 @@ export function ServerReports({
 
       {/* Top felhasználók */}
       {data.topUsers && data.topUsers.length > 0 && (
-        <div className="card">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h2 className="text-xl font-bold mb-4">Top 10 Felhasználó (Szerverek Száma)</h2>
           <div className="space-y-2">
             {data.topUsers.map((user: any, index: number) => (
@@ -179,7 +179,7 @@ export function ServerReports({
 
       {/* Napi létrehozások grafikon */}
       {data.dailyCreations && data.dailyCreations.length > 0 && (
-        <div className="card">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h2 className="text-xl font-bold mb-4">Napi Szerver Létrehozások</h2>
           <div className="space-y-2">
             {data.dailyCreations.map((day: any, index: number) => {

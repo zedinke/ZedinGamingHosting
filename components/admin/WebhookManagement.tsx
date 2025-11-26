@@ -99,7 +99,7 @@ export function WebhookManagement({ locale }: WebhookManagementProps) {
 
   if (loading && webhooks.length === 0) {
     return (
-      <div className="card">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="text-center py-8 text-gray-500">Betöltés...</div>
       </div>
     );
@@ -119,7 +119,7 @@ export function WebhookManagement({ locale }: WebhookManagementProps) {
 
       {/* Létrehozás form */}
       {showCreateForm && (
-        <div className="card">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h2 className="text-xl font-bold mb-4">Új Webhook Létrehozása</h2>
           <form onSubmit={handleCreate} className="space-y-4">
             <div>
@@ -188,7 +188,7 @@ export function WebhookManagement({ locale }: WebhookManagementProps) {
       )}
 
       {/* Webhookok listája */}
-      <div className="card">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h2 className="text-xl font-bold mb-4">Webhookok</h2>
         {webhooks.length === 0 ? (
           <div className="text-center py-8 text-gray-500">Nincs webhook</div>

@@ -164,7 +164,7 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
     <div className="space-y-6">
       {/* Alapinformációk */}
       <div className="grid md:grid-cols-2 gap-6">
-        <div className="card">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold">Alapinformációk</h2>
             <button
@@ -299,7 +299,7 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
         </div>
 
         {/* Műveletek */}
-        <div className="card">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h2 className="text-xl font-bold mb-4">Műveletek</h2>
           <div className="space-y-2">
             <button
@@ -320,7 +320,7 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
         </div>
 
         {/* Erőforrások */}
-        <div className="card">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h2 className="text-xl font-bold mb-4">Erőforrások</h2>
           {machine.resources ? (
             <div className="space-y-4">

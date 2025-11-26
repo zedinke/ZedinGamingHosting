@@ -86,7 +86,7 @@ export function AuditLogsViewer({
   return (
     <div className="space-y-6">
       {/* Szűrők */}
-      <div className="card">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h2 className="text-xl font-bold mb-4">Szűrők</h2>
         <div className="grid md:grid-cols-4 gap-4">
           <div>

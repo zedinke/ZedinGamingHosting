@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Server, Play, Square, RefreshCw, Settings } from 'lucide-react';
@@ -38,16 +37,16 @@ export function ServerListCard({ servers, locale }: ServerListCardProps) {
   };
 
   return (
-    <Card padding="lg">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Szervereim</h2>
-          <p className="text-gray-600 text-sm mt-1">
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Szervereim</h2>
+          <p className="text-gray-600 text-sm">
             {servers.length} {servers.length === 1 ? 'szerver' : 'szerver'}
           </p>
         </div>
         <Link href={`/${locale}/servers/new`}>
-          <Button size="sm">
+          <Button size="sm" className="bg-primary-600 text-white hover:bg-primary-700">
             <Server className="w-4 h-4 mr-2" />
             Új szerver
           </Button>
@@ -59,7 +58,9 @@ export function ServerListCard({ servers, locale }: ServerListCardProps) {
           <Server className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <p className="text-gray-600 mb-4">Még nincs szervered</p>
           <Link href={`/${locale}/pricing`}>
-            <Button variant="outline">Tekintsd meg az árazást</Button>
+            <Button variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50">
+              Tekintsd meg az árazást
+            </Button>
           </Link>
         </div>
       ) : (
@@ -67,7 +68,7 @@ export function ServerListCard({ servers, locale }: ServerListCardProps) {
           {servers.map((server) => (
             <div
               key={server.id}
-              className="border border-gray-200 rounded-lg p-4 hover:border-primary-300 hover:shadow-md transition-all"
+              className="border border-gray-200 rounded-lg p-4 hover:border-gray-300 hover:shadow-sm transition-all bg-gray-50"
             >
               <div className="flex justify-between items-start mb-3">
                 <div className="flex-1">

@@ -283,19 +283,35 @@ async function executeStartTask(task: any): Promise<any> {
     data: { status: 'STARTING' },
   });
 
-  // TODO: Valós implementációban itt kellene:
-  // 1. SSH kapcsolat az agent géppel
-  // 2. Docker container indítása vagy systemd service start
-  // 3. Szerver állapot ellenőrzése
+  // SSH kapcsolat az agent géppel és systemd service indítása
+  if (task.agent && task.agent.machine) {
+    const { executeSSHCommand } = await import('./ssh-client');
+    const machine = task.agent.machine;
+    
+    // Systemd service indítása
+    const serviceName = `server-${task.serverId}`;
+    const startResult = await executeSSHCommand(
+      {
+        host: machine.ipAddress,
+        port: machine.sshPort,
+        user: machine.sshUser,
+        keyPath: machine.sshKeyPath || undefined,
+      },
+      `systemctl start ${serviceName} && systemctl is-active ${serviceName} || echo "failed"`
+    );
 
-  // Szimuláció
-  await new Promise((resolve) => setTimeout(resolve, 3000));
-
-  // Szerver státusz frissítése ONLINE-ra
-  await prisma.server.update({
-    where: { id: task.serverId },
-    data: { status: 'ONLINE' },
-  });
+    if (startResult.stdout.trim() === 'active') {
+      // Szerver státusz frissítése ONLINE-ra
+      await prisma.server.update({
+        where: { id: task.serverId },
+        data: { status: 'ONLINE' },
+      });
+    } else {
+      throw new Error(`Szerver indítás sikertelen: ${startResult.stderr}`);
+    }
+  } else {
+    throw new Error('Agent vagy machine nem található');
+  }
 
   return {
     message: 'Szerver sikeresen elindítva',
@@ -319,19 +335,35 @@ async function executeStopTask(task: any): Promise<any> {
     data: { status: 'STOPPING' },
   });
 
-  // TODO: Valós implementációban itt kellene:
-  // 1. SSH kapcsolat az agent géppel
-  // 2. Docker container leállítása vagy systemd service stop
-  // 3. Szerver állapot ellenőrzése
+  // SSH kapcsolat az agent géppel és systemd service leállítása
+  if (task.agent && task.agent.machine) {
+    const { executeSSHCommand } = await import('./ssh-client');
+    const machine = task.agent.machine;
+    
+    // Systemd service leállítása
+    const serviceName = `server-${task.serverId}`;
+    const stopResult = await executeSSHCommand(
+      {
+        host: machine.ipAddress,
+        port: machine.sshPort,
+        user: machine.sshUser,
+        keyPath: machine.sshKeyPath || undefined,
+      },
+      `systemctl stop ${serviceName} && systemctl is-active ${serviceName} || echo "inactive"`
+    );
 
-  // Szimuláció
-  await new Promise((resolve) => setTimeout(resolve, 2000));
-
-  // Szerver státusz frissítése OFFLINE-ra
-  await prisma.server.update({
-    where: { id: task.serverId },
-    data: { status: 'OFFLINE' },
-  });
+    if (stopResult.stdout.trim() === 'inactive' || stopResult.stdout.trim() === '') {
+      // Szerver státusz frissítése OFFLINE-ra
+      await prisma.server.update({
+        where: { id: task.serverId },
+        data: { status: 'OFFLINE' },
+      });
+    } else {
+      throw new Error(`Szerver leállítás sikertelen: ${stopResult.stderr}`);
+    }
+  } else {
+    throw new Error('Agent vagy machine nem található');
+  }
 
   return {
     message: 'Szerver sikeresen leállítva',
@@ -370,13 +402,49 @@ async function executeUpdateTask(task: any): Promise<any> {
     throw new Error('Szerver és agent ID szükséges a frissítéshez');
   }
 
-  // TODO: Valós implementációban itt kellene:
-  // 1. Szerver leállítása
-  // 2. Frissítés letöltése
-  // 3. Szerver frissítése
-  // 4. Szerver indítása
+  // Szerver leállítása
+  await executeStopTask(task);
+  
+  // Frissítés letöltése és telepítése SSH-n keresztül
+  if (task.agent && task.agent.machine) {
+    const { executeSSHCommand } = await import('./ssh-client');
+    const machine = task.agent.machine;
+    const server = task.server;
+    
+    if (!server) {
+      throw new Error('Szerver nem található');
+    }
 
-  await new Promise((resolve) => setTimeout(resolve, 5000));
+    // Game szerver típus alapján frissítés
+    const gameType = server.gameType;
+    const serverPath = (server.configuration as any)?.instancePath || 
+                      (server.configuration as any)?.sharedPath || 
+                      `/opt/servers/${task.serverId}`;
+
+    // SteamCMD frissítés (ha Steam játék)
+    if (['ARK_EVOLVED', 'ARK_ASCENDED', 'RUST', 'VALHEIM', 'SEVEN_DAYS_TO_DIE', 'CONAN_EXILES', 'DAYZ', 'PALWORLD'].includes(gameType)) {
+      const { ALL_GAME_SERVER_CONFIGS } = await import('./game-server-configs');
+      const gameConfig = ALL_GAME_SERVER_CONFIGS[gameType];
+      
+      if (gameConfig && gameConfig.steamAppId) {
+        // SteamCMD frissítés
+        await executeSSHCommand(
+          {
+            host: machine.ipAddress,
+            port: machine.sshPort,
+            user: machine.sshUser,
+            keyPath: machine.sshKeyPath || undefined,
+          },
+          `cd ${serverPath} && ./steamcmd.sh +force_install_dir ${serverPath} +login anonymous +app_update ${gameConfig.steamAppId} validate +quit`
+        );
+      }
+    }
+
+    // Szerver indítása
+    await executeStartTask(task);
+  } else {
+    throw new Error('Agent vagy machine nem található');
+  }
 
   return {
     message: 'Szerver sikeresen frissítve',
@@ -415,14 +483,66 @@ async function executeDeleteTask(task: any): Promise<any> {
   }
 
   // Szerver leállítása először
-  await executeStopTask(task);
+  try {
+    await executeStopTask(task);
+  } catch (error) {
+    // Ha már le van állítva, folytatjuk
+    logger.warn('Server already stopped or stop failed', { serverId: task.serverId, error });
+  }
 
-  // TODO: Valós implementációban itt kellene:
-  // 1. Docker container törlése
-  // 2. Fájlok törlése
-  // 3. Portok felszabadítása
+  // Fájlok törlése SSH-n keresztül
+  if (task.agent && task.agent.machine) {
+    const { executeSSHCommand } = await import('./ssh-client');
+    const machine = task.agent.machine;
+    const server = task.server;
+    
+    if (!server) {
+      throw new Error('Szerver nem található');
+    }
 
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+    // Systemd service törlése
+    const serviceName = `server-${task.serverId}`;
+    await executeSSHCommand(
+      {
+        host: machine.ipAddress,
+        port: machine.sshPort,
+        user: machine.sshUser,
+        keyPath: machine.sshKeyPath || undefined,
+      },
+      `systemctl stop ${serviceName} 2>/dev/null || true && systemctl disable ${serviceName} 2>/dev/null || true && rm -f /etc/systemd/system/${serviceName}.service && systemctl daemon-reload`
+    );
+
+    // Szerver fájlok törlése
+    const serverPath = (server.configuration as any)?.instancePath || 
+                      (server.configuration as any)?.sharedPath || 
+                      `/opt/servers/${task.serverId}`;
+    
+    // Csak az instance mappát töröljük, ne a shared-et (ARK esetén)
+    if (serverPath.includes('/instances/')) {
+      await executeSSHCommand(
+        {
+          host: machine.ipAddress,
+          port: machine.sshPort,
+          user: machine.sshUser,
+          keyPath: machine.sshKeyPath || undefined,
+        },
+        `rm -rf ${serverPath}`
+      );
+    } else {
+      // Nem ARK, teljes mappa törlése
+      await executeSSHCommand(
+        {
+          host: machine.ipAddress,
+          port: machine.sshPort,
+          user: machine.sshUser,
+          keyPath: machine.sshKeyPath || undefined,
+        },
+        `rm -rf ${serverPath}`
+      );
+    }
+  } else {
+    throw new Error('Agent vagy machine nem található');
+  }
 
   // Szerver törlése az adatbázisból (cascade miatt automatikusan törlődnek a kapcsolatok)
   // Ezt a route-ban kell kezelni, mert itt már nincs task.server

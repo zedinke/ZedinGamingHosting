@@ -6,10 +6,47 @@
 import { prisma } from './prisma';
 import { executeSSHCommand } from './ssh-client';
 import { logger } from './logger';
+import { GameType } from '@prisma/client';
 
 // Cluster mappa elérési út a weboldal szerverén
-const CLUSTER_BASE_PATH = process.env.ARK_CLUSTER_PATH || '/opt/ark-cluster';
+const BASE_ARK_SHARED_PATH = '/opt/ark-shared';
+const BASE_ARK_CLUSTER_PATH = process.env.ARK_CLUSTER_PATH || '/opt/ark-cluster';
 const CLUSTER_NFS_PATH = process.env.ARK_CLUSTER_NFS_PATH || '/mnt/ark-cluster';
+
+/**
+ * Generálja az ARK shared mappa elérési útját felhasználó és gép alapján.
+ * Ez a mappa tartalmazza a játékfájlokat.
+ */
+export function getARKSharedPath(userId: string, machineId: string): string {
+  return `${BASE_ARK_SHARED_PATH}/${userId}-${machineId}`;
+}
+
+/**
+ * Generálja az ARK cluster mappa elérési útját.
+ * Ez a mappa tartalmazza a cluster mentéseket.
+ */
+export function getARKClusterPath(clusterId: string): string {
+  return `${BASE_ARK_CLUSTER_PATH}/${clusterId}`;
+}
+
+/**
+ * Létrehozza a shared ARK játékfájl mappát egy adott gépen.
+ */
+export async function createARKSharedFolder(
+  userId: string,
+  machineId: string,
+  machine: any
+): Promise<{ success: boolean; error?: string }> {
+  const sharedPath = getARKSharedPath(userId, machineId);
+  logger.info(`Creating ARK shared folder: ${sharedPath} on machine ${machine.ipAddress}`);
+  try {
+    await executeSSHCommand(machine, `mkdir -p ${sharedPath}`);
+    return { success: true };
+  } catch (error: any) {
+    logger.error('Failed to create ARK shared folder', error as Error, { userId, machineId, sharedPath });
+    return { success: false, error: error.message };
+  }
+}
 
 /**
  * ARK Cluster mappa létrehozása
@@ -18,10 +55,9 @@ export async function createClusterFolder(clusterId: string): Promise<{ success:
   try {
     // A weboldal szerverén létrehozzuk a cluster mappát
     // Ez általában a webszerver gépen van
-    const clusterPath = `${CLUSTER_BASE_PATH}/${clusterId}`;
+    const clusterPath = getARKClusterPath(clusterId);
     
-    // TODO: SSH kapcsolat a webszerverhez (vagy lokális ha ugyanaz a gép)
-    // Most feltételezzük, hogy lokális
+    // Lokális vagy SSH-n keresztül (ha külön szerver)
     const { exec } = await import('child_process');
     const { promisify } = await import('util');
     const execAsync = promisify(exec);
@@ -47,7 +83,8 @@ export async function createClusterFolder(clusterId: string): Promise<{ success:
 export async function addServerToCluster(
   serverId: string,
   clusterId: string,
-  machine: any
+  machine: any,
+  serverConfig?: any
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const server = await prisma.server.findUnique({
@@ -77,25 +114,29 @@ export async function addServerToCluster(
 
     if (!checkMount.stdout?.includes('mounted')) {
       // Mount-olás (ha NFS-t használunk)
-      // TODO: NFS server IP cím a környezeti változókból
-      const nfsServer = process.env.ARK_CLUSTER_NFS_SERVER || 'localhost';
+      const nfsServer = process.env.ARK_CLUSTER_NFS_SERVER;
       
-      await executeSSHCommand(
-        {
-          host: machine.ipAddress,
-          port: machine.sshPort,
-          user: machine.sshUser,
-          keyPath: machine.sshKeyPath || undefined,
-        },
-        `mkdir -p ${mountPoint} && mount -t nfs ${nfsServer}:${CLUSTER_BASE_PATH}/${clusterId} ${mountPoint} || echo "Mount failed, using local path"`
-      );
+      if (nfsServer) {
+        const clusterPath = getARKClusterPath(clusterId);
+        await executeSSHCommand(
+          {
+            host: machine.ipAddress,
+            port: machine.sshPort,
+            user: machine.sshUser,
+            keyPath: machine.sshKeyPath || undefined,
+          },
+          `mkdir -p ${mountPoint} && mount -t nfs ${nfsServer}:${clusterPath} ${mountPoint} || echo "Mount failed, using local path"`
+        );
+      } else {
+        // Ha nincs NFS, lokális path-ot használunk (ugyanaz a gép)
+        logger.warn('NFS server not configured, using local path', { clusterId });
+      }
     }
 
     // GameUserSettings.ini frissítése cluster beállításokkal
-    // ARK-nál az instance path-ot használjuk (felhasználó + szervergép kombináció)
-    const serverConfig = (server.configuration as any) || {};
-    const machineId = serverConfig.machineId || machine.id;
-    const instancePath = serverConfig.instancePath || `/opt/ark-shared/${server.userId}-${machineId}/instances/${serverId}`;
+    const currentConfig = (server.configuration as any) || {};
+    const machineId = currentConfig.machineId || machine.id;
+    const instancePath = currentConfig.instancePath || getARKSharedPath(server.userId, machineId) + `/instances/${serverId}`;
     const configPath = `${instancePath}/ShooterGame/Saved/Config/LinuxServer/GameUserSettings.ini`;
     
     const clusterConfig = `
@@ -112,14 +153,14 @@ ClusterId=${clusterId}
         user: machine.sshUser,
         keyPath: machine.sshKeyPath || undefined,
       },
-      `echo "${clusterConfig}" >> ${configPath}`
+      `mkdir -p $(dirname ${configPath}) && echo "${clusterConfig}" >> ${configPath}`
     );
 
     // Szerver konfiguráció frissítése az adatbázisban
-    const currentConfig = (server.configuration as any) || {};
     await prisma.server.update({
       where: { id: serverId },
       data: {
+        arkClusterId: clusterId,
         configuration: {
           ...currentConfig,
           clusterId,
@@ -187,6 +228,7 @@ export async function removeServerFromCluster(
     await prisma.server.update({
       where: { id: serverId },
       data: {
+        arkClusterId: null,
         configuration: restConfig,
       },
     });
@@ -214,10 +256,7 @@ export async function getClusterServers(clusterId: string) {
       gameType: {
         in: ['ARK_EVOLVED', 'ARK_ASCENDED'],
       },
-      configuration: {
-        path: 'clusterId',
-        equals: clusterId,
-      },
+      arkClusterId: clusterId,
     },
     include: {
       user: {
@@ -238,3 +277,37 @@ export async function getClusterServers(clusterId: string) {
   });
 }
 
+/**
+ * Ellenőrzi, hogy az ARK shared fájlok telepítve vannak-e egy adott gépen egy adott felhasználóhoz.
+ */
+export async function checkARKSharedInstallation(
+  userId: string,
+  machineId: string,
+  gameType: GameType,
+  machine: any
+): Promise<boolean> {
+  const sharedPath = getARKSharedPath(userId, machineId);
+  
+  const checkCommand = gameType === 'ARK_EVOLVED'
+    ? `test -f ${sharedPath}/ShooterGame/Binaries/Linux/ShooterGameServer && echo "installed" || echo "not_installed"`
+    : gameType === 'ARK_ASCENDED'
+    ? `test -f ${sharedPath}/ShooterGame/Binaries/Linux/ShooterGameServer && echo "installed" || echo "not_installed"`
+    : `test -d ${sharedPath} && echo "installed" || echo "not_installed"`;
+  
+  logger.debug(`Checking ARK shared installation: ${checkCommand} on machine ${machine.ipAddress}`);
+  try {
+    const result = await executeSSHCommand(
+      {
+        host: machine.ipAddress,
+        port: machine.sshPort,
+        user: machine.sshUser,
+        keyPath: machine.sshKeyPath || undefined,
+      },
+      checkCommand
+    );
+    return result.stdout.trim() === 'installed';
+  } catch (error: any) {
+    logger.error('Error checking ARK shared installation', error as Error, { userId, machineId, sharedPath });
+    return false;
+  }
+}

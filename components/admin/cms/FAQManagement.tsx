@@ -55,7 +55,7 @@ export function FAQManagement({ faqs, locale, localeFilter }: FAQManagementProps
         {faqs.map((faq) => (
           <div
             key={faq.id}
-            className={`card ${!faq.isActive ? 'opacity-60' : ''}`}
+            className={`bg-white rounded-xl shadow-sm border border-gray-200 p-6 ${!faq.isActive ? 'opacity-60' : ''}`}
           >
             <div className="flex justify-between items-start">
               <div className="flex-1">
@@ -106,7 +106,7 @@ export function FAQManagement({ faqs, locale, localeFilter }: FAQManagementProps
         ))}
 
         {faqs.length === 0 && (
-          <div className="card text-center py-12">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center py-12">
             <p className="text-gray-600">Még nincs FAQ bejegyzés</p>
           </div>
         )}

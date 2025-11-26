@@ -54,7 +54,7 @@ export function ServerTemplates({ locale }: ServerTemplatesProps) {
 
   if (loading && templates.length === 0) {
     return (
-      <div className="card">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="text-center py-8 text-gray-500">Betöltés...</div>
       </div>
     );
@@ -68,7 +68,7 @@ export function ServerTemplates({ locale }: ServerTemplatesProps) {
         {templates.map((template) => (
           <div
             key={template.id}
-            className={`card cursor-pointer transition-all ${
+            className={`bg-white rounded-xl shadow-sm border border-gray-200 p-6 cursor-pointer transition-all ${
               selectedTemplate?.id === template.id
                 ? 'ring-2 ring-primary-600'
                 : 'hover:shadow-lg'
@@ -104,7 +104,7 @@ export function ServerTemplates({ locale }: ServerTemplatesProps) {
 
       {/* Kiválasztott sablon részletei */}
       {selectedTemplate && (
-        <div className="card">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h2 className="text-xl font-bold mb-4">Sablon Részletek</h2>
           <div className="space-y-4">
             <div>
