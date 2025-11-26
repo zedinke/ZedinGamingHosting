@@ -124,8 +124,11 @@ async function writeProgress(progress: any) {
       timestamp: new Date().toISOString(),
     };
     await writeFile(PROGRESS_FILE, JSON.stringify(progressWithTimestamp, null, 2), 'utf-8');
+    // Ellenőrizzük, hogy a fájl tényleg le lett-e írva
+    console.log('Progress frissítve:', JSON.stringify(progressWithTimestamp, null, 2));
   } catch (error: any) {
     console.error('Error writing progress:', error.message);
+    throw error; // Dobjuk tovább a hibát, hogy lássuk, ha probléma van
   }
 }
 
