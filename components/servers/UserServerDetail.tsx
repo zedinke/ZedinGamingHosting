@@ -336,6 +336,8 @@ export function UserServerDetail({ server, locale }: UserServerDetailProps) {
           </div>
         </div>
       )}
+        </>
+      )}
 
       {activeTab === 'config' && (
         <UserServerConfigEditor
