@@ -630,6 +630,32 @@ async function startUpdateProcess() {
               await appendLog(`  ⚠️  PM2 list hiba: ${listError.message}, használjuk az alapértelmezett nevet: ${pm2ProcessName}`);
             }
 
+            // BEÁLLÍTJUK A COMPLETED STÁTUSZT A PM2 RESTART ELŐTT!
+            // Ez fontos, mert a PM2 restart után a Node.js újraindul, és a folyamat megszakad
+            await appendLog('  - Frissítés befejezése jelzése...');
+            await writeProgress({
+              status: 'completed',
+              message: 'Frissítés sikeresen befejezve!',
+              progress: 100,
+              currentStep: 'completed',
+            });
+            
+            // Save last update time
+            try {
+              await prisma.setting.upsert({
+                where: { key: 'last_update' },
+                update: { value: new Date().toISOString() },
+                create: { key: 'last_update', value: new Date().toISOString() },
+              });
+              await appendLog('  ✓ Utolsó frissítés időpontja mentve');
+            } catch (dbError: any) {
+              await appendLog(`  ⚠️  DB mentés hiba: ${dbError.message}`);
+              // Not critical, continue
+            }
+            
+            await appendLog('=== Frissítés sikeresen befejezve! ===');
+            
+            // Most már biztonságosan újraindíthatjuk a PM2-t
             try {
               await execAsync(`pm2 restart ${pm2ProcessName}`, { 
                 cwd: PROJECT_ROOT,
@@ -639,7 +665,7 @@ async function startUpdateProcess() {
               
               // Várjunk egy kicsit, hogy a PM2 biztosan újrainduljon
               await appendLog('  - Várakozás a szolgáltatás újraindulására...');
-              await new Promise(resolve => setTimeout(resolve, 3000)); // 3 másodperc várakozás
+              await new Promise(resolve => setTimeout(resolve, 2000)); // 2 másodperc várakozás
               
               // Ellenőrizzük, hogy a PM2 process fut-e
               try {
@@ -655,30 +681,6 @@ async function startUpdateProcess() {
               } catch (statusError: any) {
                 await appendLog(`  ⚠️  PM2 státusz ellenőrzés hiba: ${statusError.message}`);
               }
-              
-              // Frissítjük a progress-t "completed" státuszra MÉG A RESTART UTÁN, de mielőtt a folyamat véget ér
-              await appendLog('  ✓ Szolgáltatás újraindítás befejezve');
-              await writeProgress({
-                status: 'completed',
-                message: 'Frissítés sikeresen befejezve!',
-                progress: 100,
-                currentStep: 'completed',
-              });
-              
-              // Save last update time
-              try {
-                await prisma.setting.upsert({
-                  where: { key: 'last_update' },
-                  update: { value: new Date().toISOString() },
-                  create: { key: 'last_update', value: new Date().toISOString() },
-                });
-                await appendLog('  ✓ Utolsó frissítés időpontja mentve');
-              } catch (dbError: any) {
-                await appendLog(`  ⚠️  DB mentés hiba: ${dbError.message}`);
-                // Not critical, continue
-              }
-              
-              await appendLog('=== Frissítés sikeresen befejezve! ===');
             } catch (restartError: any) {
               // Try to reload instead of restart
               try {
