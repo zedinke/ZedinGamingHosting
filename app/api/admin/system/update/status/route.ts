@@ -9,8 +9,23 @@ function getProjectRoot(): string {
   
   // If we're in .next/standalone, go up to project root
   if (currentDir.includes('.next/standalone')) {
-    // .next/standalone -> .next -> project root
-    currentDir = resolve(currentDir, '..', '..', '..');
+    // .next/standalone -> .next -> public_html -> project root
+    // Try to find the actual project root with .git folder
+    let searchDir = resolve(currentDir, '..', '..', '..');
+    
+    // Check if this is the project root (has .git and package.json)
+    if (existsSync(join(searchDir, '.git')) && existsSync(join(searchDir, 'package.json'))) {
+      return searchDir;
+    }
+    
+    // If not, try public_html directory (common Hestia CP structure)
+    const publicHtmlDir = join(searchDir, 'public_html');
+    if (existsSync(join(publicHtmlDir, '.git')) && existsSync(join(publicHtmlDir, 'package.json'))) {
+      return publicHtmlDir;
+    }
+    
+    // Fallback: use the directory we found
+    currentDir = searchDir;
   }
   
   // Verify it's the project root
@@ -24,6 +39,13 @@ function getProjectRoot(): string {
   const isValidRoot = checks.some(check => existsSync(check));
   
   if (isValidRoot) {
+    // Check if .git exists, if not, try public_html
+    if (!existsSync(join(currentDir, '.git'))) {
+      const publicHtmlDir = join(currentDir, 'public_html');
+      if (existsSync(join(publicHtmlDir, '.git')) && existsSync(join(publicHtmlDir, 'package.json'))) {
+        return publicHtmlDir;
+      }
+    }
     return currentDir;
   }
   
@@ -35,11 +57,26 @@ function getProjectRoot(): string {
   ];
   
   if (parentChecks.some(check => existsSync(check))) {
+    // Check if .git exists in parent
+    if (existsSync(join(parentDir, '.git'))) {
+      return parentDir;
+    }
+    // Try public_html in parent
+    const publicHtmlDir = join(parentDir, 'public_html');
+    if (existsSync(join(publicHtmlDir, '.git')) && existsSync(join(publicHtmlDir, 'package.json'))) {
+      return publicHtmlDir;
+    }
     return parentDir;
   }
   
+  // Try to find public_html directory
+  const possiblePublicHtml = join(originalCwd, '..', '..', '..', 'public_html');
+  if (existsSync(join(possiblePublicHtml, '.git')) && existsSync(join(possiblePublicHtml, 'package.json'))) {
+    return possiblePublicHtml;
+  }
+  
   // Last resort: return current directory
-  console.warn('Could not find project root, using:', currentDir);
+  console.warn('Could not find project root with .git, using:', currentDir);
   return currentDir;
 }
 

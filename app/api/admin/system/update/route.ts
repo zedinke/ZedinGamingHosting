@@ -15,10 +15,34 @@ function getProjectRoot(): string {
   let currentDir = process.cwd();
   const originalCwd = currentDir;
   
+  console.log('getProjectRoot: Starting from cwd:', currentDir);
+  
   // If we're in .next/standalone, go up to project root
   if (currentDir.includes('.next/standalone')) {
-    // .next/standalone -> .next -> project root
-    currentDir = resolve(currentDir, '..', '..', '..');
+    // .next/standalone -> .next -> public_html (project root)
+    // Go up 2 levels to get to public_html
+    let searchDir = resolve(currentDir, '..', '..');
+    console.log('getProjectRoot: In standalone, going up 2 levels to:', searchDir);
+    
+    // Check if this is the project root (has .git and package.json)
+    if (existsSync(join(searchDir, '.git')) && existsSync(join(searchDir, 'package.json'))) {
+      console.log('getProjectRoot: Found project root with .git at:', searchDir);
+      return searchDir;
+    }
+    
+    // If not found, try going up one more level and then into public_html
+    const parentDir = resolve(searchDir, '..');
+    const publicHtmlDir = join(parentDir, 'public_html');
+    console.log('getProjectRoot: Trying public_html at:', publicHtmlDir);
+    
+    if (existsSync(join(publicHtmlDir, '.git')) && existsSync(join(publicHtmlDir, 'package.json'))) {
+      console.log('getProjectRoot: Found project root in public_html at:', publicHtmlDir);
+      return publicHtmlDir;
+    }
+    
+    // Fallback: use the directory we found (public_html)
+    console.log('getProjectRoot: Using fallback directory:', searchDir);
+    currentDir = searchDir;
   }
   
   // Verify it's the project root
@@ -30,8 +54,26 @@ function getProjectRoot(): string {
   ];
   
   const isValidRoot = checks.some(check => existsSync(check));
+  console.log('getProjectRoot: isValidRoot:', isValidRoot, 'for:', currentDir);
   
   if (isValidRoot) {
+    // Check if .git exists, if not, try public_html
+    if (!existsSync(join(currentDir, '.git'))) {
+      console.log('getProjectRoot: No .git in currentDir, trying public_html');
+      const publicHtmlDir = join(currentDir, 'public_html');
+      if (existsSync(join(publicHtmlDir, '.git')) && existsSync(join(publicHtmlDir, 'package.json'))) {
+        console.log('getProjectRoot: Found .git in public_html:', publicHtmlDir);
+        return publicHtmlDir;
+      }
+      // Also try parent/public_html
+      const parentPublicHtml = join(resolve(currentDir, '..'), 'public_html');
+      if (existsSync(join(parentPublicHtml, '.git')) && existsSync(join(parentPublicHtml, 'package.json'))) {
+        console.log('getProjectRoot: Found .git in parent/public_html:', parentPublicHtml);
+        return parentPublicHtml;
+      }
+    } else {
+      console.log('getProjectRoot: Found .git in currentDir:', currentDir);
+    }
     return currentDir;
   }
   
@@ -43,11 +85,31 @@ function getProjectRoot(): string {
   ];
   
   if (parentChecks.some(check => existsSync(check))) {
+    console.log('getProjectRoot: Trying parent directory:', parentDir);
+    // Check if .git exists in parent
+    if (existsSync(join(parentDir, '.git'))) {
+      console.log('getProjectRoot: Found .git in parent:', parentDir);
+      return parentDir;
+    }
+    // Try public_html in parent
+    const publicHtmlDir = join(parentDir, 'public_html');
+    if (existsSync(join(publicHtmlDir, '.git')) && existsSync(join(publicHtmlDir, 'package.json'))) {
+      console.log('getProjectRoot: Found .git in parent/public_html:', publicHtmlDir);
+      return publicHtmlDir;
+    }
     return parentDir;
   }
   
+  // Try to find public_html directory from original cwd
+  const possiblePublicHtml = resolve(originalCwd, '..', '..', 'public_html');
+  console.log('getProjectRoot: Trying possiblePublicHtml:', possiblePublicHtml);
+  if (existsSync(join(possiblePublicHtml, '.git')) && existsSync(join(possiblePublicHtml, 'package.json'))) {
+    console.log('getProjectRoot: Found .git in possiblePublicHtml:', possiblePublicHtml);
+    return possiblePublicHtml;
+  }
+  
   // Last resort: return current directory
-  console.warn('Could not find project root, using:', currentDir);
+  console.warn('getProjectRoot: Could not find project root with .git, using:', currentDir);
   return currentDir;
 }
 

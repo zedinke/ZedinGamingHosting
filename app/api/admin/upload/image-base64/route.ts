@@ -8,6 +8,37 @@ import { existsSync } from 'fs';
 
 // Helper function to find project root reliably
 function findProjectRoot(): string {
+  // First, check if there's an environment variable for the project root
+  if (process.env.PROJECT_ROOT && existsSync(process.env.PROJECT_ROOT)) {
+    const envRoot = process.env.PROJECT_ROOT;
+    if (existsSync(join(envRoot, 'package.json')) || existsSync(join(envRoot, 'public'))) {
+      console.log('Using PROJECT_ROOT from environment:', envRoot);
+      return envRoot;
+    }
+  }
+  
+  // Try common Hestia CP paths
+  const commonPaths = [
+    '/home/ZedGamingHosting_zedin/public_html',
+    '/home/ZedGamingHosting/web/zedgaminghosting.hu/public_html',
+    '/home/ZedGamingHosting/web/zedgaminghosting.hu',
+  ];
+  
+  for (const testPath of commonPaths) {
+    if (existsSync(testPath)) {
+      const checks = [
+        join(testPath, 'package.json'),
+        join(testPath, 'next.config.js'),
+        join(testPath, 'public'),
+      ];
+      
+      if (checks.some(check => existsSync(check))) {
+        console.log('Found project root in common path:', testPath);
+        return testPath;
+      }
+    }
+  }
+  
   let currentDir = process.cwd();
   
   // If we're in .next/standalone, go up to project root
@@ -40,6 +71,7 @@ function findProjectRoot(): string {
     return parentDir;
   }
   
+  console.warn('Could not find project root, using:', currentDir);
   return currentDir;
 }
 
