@@ -113,10 +113,10 @@ export function TicketView({ ticket, locale }: TicketViewProps) {
   return (
     <div className="space-y-6">
       {/* Ticket információk */}
-      <div className="card">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h1 className="text-2xl font-bold mb-2">{ticket.subject}</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">{ticket.subject}</h1>
             <div className="flex gap-2 flex-wrap">
               <span
                 className={`px-2 py-1 rounded text-xs font-semibold ${getStatusBadgeColor(
@@ -144,8 +144,8 @@ export function TicketView({ ticket, locale }: TicketViewProps) {
       </div>
 
       {/* Üzenetek */}
-      <div className="card">
-        <h2 className="text-xl font-bold mb-4">Üzenetek</h2>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Üzenetek</h2>
         <div className="space-y-4 mb-6">
           {messages.map((msg) => (
             <div

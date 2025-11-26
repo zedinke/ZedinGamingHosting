@@ -122,8 +122,8 @@ export function UserSettings({ user, locale }: UserSettingsProps) {
   return (
     <div className="space-y-6">
       {/* Profil beállítások */}
-      <div className="card">
-        <h2 className="text-xl font-bold mb-4">Profil Információk</h2>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Profil Információk</h2>
         <form onSubmit={handleSubmitProfile(handleProfileUpdate)} className="space-y-4">
           <div>
             <label htmlFor="name" className="block text-sm font-medium mb-1">
@@ -166,8 +166,8 @@ export function UserSettings({ user, locale }: UserSettingsProps) {
       </div>
 
       {/* Jelszó változtatás */}
-      <div className="card">
-        <h2 className="text-xl font-bold mb-4">Jelszó Változtatása</h2>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Jelszó Változtatása</h2>
         <form onSubmit={handleSubmitPassword(handlePasswordUpdate)} className="space-y-4">
           <div>
             <label htmlFor="currentPassword" className="block text-sm font-medium mb-1">

@@ -30,11 +30,14 @@ export default async function SettingsPage({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-100">
       <Navigation locale={locale} />
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto">
-          <h1 className="text-3xl font-bold mb-8">Beállítások</h1>
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Beállítások</h1>
+            <p className="text-gray-700">Fiók beállítások kezelése</p>
+          </div>
           <UserSettings user={user} locale={locale} />
         </div>
       </main>

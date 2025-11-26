@@ -28,17 +28,17 @@ export default async function SupportPage({
   });
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-100">
       <Navigation locale={locale} />
       <main className="container mx-auto px-4 py-8">
-        <div className="mb-8 flex justify-between items-center">
+        <div className="mb-6 flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold mb-2">Támogatás</h1>
-            <p className="text-gray-600">Ticketek kezelése</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Támogatás</h1>
+            <p className="text-gray-700">Ticketek kezelése</p>
           </div>
           <a
             href={`/${locale}/dashboard/support/new`}
-            className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700"
+            className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition-colors font-medium"
           >
             Új ticket
           </a>

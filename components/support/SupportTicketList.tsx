@@ -64,32 +64,32 @@ export function SupportTicketList({ tickets, locale }: SupportTicketListProps) {
   return (
     <div className="space-y-4">
       {tickets.length === 0 ? (
-        <div className="card text-center py-12">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center py-12">
           <p className="text-gray-600 mb-4">Még nincs ticket</p>
           <Link
             href={`/${locale}/dashboard/support/new`}
-            className="text-primary-600 hover:underline"
+            className="text-primary-600 hover:text-primary-700 font-medium"
           >
             Hozz létre egy újat
           </Link>
         </div>
       ) : (
-        <div className="card overflow-x-auto">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b">
-                <th className="text-left p-3">Tárgy</th>
-                <th className="text-left p-3">Kategória</th>
-                <th className="text-left p-3">Státusz</th>
-                <th className="text-left p-3">Prioritás</th>
-                <th className="text-left p-3">Üzenetek</th>
-                <th className="text-left p-3">Létrehozva</th>
-                <th className="text-left p-3">Műveletek</th>
+              <tr className="border-b border-gray-200">
+                <th className="text-left p-3 text-gray-700 font-semibold">Tárgy</th>
+                <th className="text-left p-3 text-gray-700 font-semibold">Kategória</th>
+                <th className="text-left p-3 text-gray-700 font-semibold">Státusz</th>
+                <th className="text-left p-3 text-gray-700 font-semibold">Prioritás</th>
+                <th className="text-left p-3 text-gray-700 font-semibold">Üzenetek</th>
+                <th className="text-left p-3 text-gray-700 font-semibold">Létrehozva</th>
+                <th className="text-left p-3 text-gray-700 font-semibold">Műveletek</th>
               </tr>
             </thead>
             <tbody>
               {tickets.map((ticket) => (
-                <tr key={ticket.id} className="border-b hover:bg-gray-50">
+                <tr key={ticket.id} className="border-b border-gray-200 hover:bg-gray-50">
                   <td className="p-3">
                     <div className="font-medium">{ticket.subject}</div>
                     <div className="text-sm text-gray-500">#{ticket.id.slice(0, 8)}</div>

@@ -77,20 +77,20 @@ export function BillingOverview({
     <div className="space-y-6">
       {/* Statisztikák */}
       <div className="grid md:grid-cols-3 gap-6">
-        <div className="card">
-          <h3 className="text-sm font-medium text-gray-600 mb-1">Összes Fizetve</h3>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h3 className="text-sm font-medium text-gray-700 mb-2">Összes Fizetve</h3>
           <p className="text-3xl font-bold text-green-600">
             {formatCurrency(totalPaid, invoices[0]?.currency || 'HUF')}
           </p>
         </div>
-        <div className="card">
-          <h3 className="text-sm font-medium text-gray-600 mb-1">Függőben</h3>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h3 className="text-sm font-medium text-gray-700 mb-2">Függőben</h3>
           <p className="text-3xl font-bold text-yellow-600">
             {formatCurrency(pendingAmount, invoices[0]?.currency || 'HUF')}
           </p>
         </div>
-        <div className="card">
-          <h3 className="text-sm font-medium text-gray-600 mb-1">Aktív Előfizetések</h3>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h3 className="text-sm font-medium text-gray-700 mb-2">Aktív Előfizetések</h3>
           <p className="text-3xl font-bold text-primary-600">
             {subscriptions.filter((s) => s.status === 'ACTIVE').length}
           </p>
@@ -98,8 +98,8 @@ export function BillingOverview({
       </div>
 
       {/* Aktív előfizetések */}
-      <div className="card">
-        <h2 className="text-xl font-bold mb-4">Aktív Előfizetések</h2>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Aktív Előfizetések</h2>
         {subscriptions.length === 0 ? (
           <p className="text-gray-600">Nincs aktív előfizetés</p>
         ) : (
@@ -107,7 +107,7 @@ export function BillingOverview({
             {subscriptions.map((subscription) => (
               <div
                 key={subscription.id}
-                className="flex justify-between items-center p-4 border rounded-lg"
+                className="flex justify-between items-center p-4 border border-gray-200 rounded-lg bg-gray-50"
               >
                 <div>
                   <div className="font-semibold">
@@ -137,26 +137,26 @@ export function BillingOverview({
       </div>
 
       {/* Számlák */}
-      <div className="card">
-        <h2 className="text-xl font-bold mb-4">Számlák</h2>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Számlák</h2>
         {invoices.length === 0 ? (
           <p className="text-gray-600">Nincs számla</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b">
-                  <th className="text-left p-3">Számlaszám</th>
-                  <th className="text-left p-3">Szerver</th>
-                  <th className="text-left p-3">Összeg</th>
-                  <th className="text-left p-3">Státusz</th>
-                  <th className="text-left p-3">Dátum</th>
-                  <th className="text-left p-3">Műveletek</th>
+                <tr className="border-b border-gray-200">
+                  <th className="text-left p-3 text-gray-700 font-semibold">Számlaszám</th>
+                  <th className="text-left p-3 text-gray-700 font-semibold">Szerver</th>
+                  <th className="text-left p-3 text-gray-700 font-semibold">Összeg</th>
+                  <th className="text-left p-3 text-gray-700 font-semibold">Státusz</th>
+                  <th className="text-left p-3 text-gray-700 font-semibold">Dátum</th>
+                  <th className="text-left p-3 text-gray-700 font-semibold">Műveletek</th>
                 </tr>
               </thead>
               <tbody>
                 {invoices.map((invoice) => (
-                  <tr key={invoice.id} className="border-b hover:bg-gray-50">
+                  <tr key={invoice.id} className="border-b border-gray-200 hover:bg-gray-50">
                     <td className="p-3 font-medium">{invoice.invoiceNumber}</td>
                     <td className="p-3 text-sm text-gray-600">
                       {invoice.subscription?.server?.name || '-'}

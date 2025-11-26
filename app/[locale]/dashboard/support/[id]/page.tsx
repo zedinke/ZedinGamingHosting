@@ -29,13 +29,13 @@ export default async function TicketDetailPage({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-100">
       <Navigation locale={locale} />
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <a
             href={`/${locale}/dashboard/support`}
-            className="text-primary-600 hover:underline mb-4 inline-block"
+            className="text-primary-600 hover:text-primary-700 mb-4 inline-block font-medium"
           >
             ← Vissza a ticketekhez
           </a>
