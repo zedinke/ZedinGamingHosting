@@ -51,33 +51,37 @@ interface GamePackageFormProps {
   package?: GamePackage;
 }
 
-// Játék típusok listája
-const GAME_TYPES: { value: GameType; label: string }[] = [
-  { value: 'MINECRAFT', label: 'Minecraft' },
-  { value: 'RUST', label: 'Rust' },
-  { value: 'ARK_EVOLVED', label: 'ARK: Survival Evolved' },
-  { value: 'ARK_ASCENDED', label: 'ARK: Survival Ascended' },
-  { value: 'VALHEIM', label: 'Valheim' },
-  { value: 'PALWORLD', label: 'Palworld' },
-  { value: 'THE_FOREST', label: 'The Forest' },
-  { value: 'SONS_OF_THE_FOREST', label: 'Sons of the Forest' },
-  { value: 'CS2', label: 'Counter-Strike 2' },
-  { value: 'CSGO', label: 'Counter-Strike: Global Offensive' },
-  { value: 'SEVEN_DAYS_TO_DIE', label: '7 Days to Die' },
-  { value: 'CONAN_EXILES', label: 'Conan Exiles' },
-  { value: 'DAYZ', label: 'DayZ' },
-  { value: 'PROJECT_ZOMBOID', label: 'Project Zomboid' },
-  { value: 'ENSHROUDED', label: 'Enshrouded' },
-  { value: 'GROUNDED', label: 'Grounded' },
-  { value: 'V_RISING', label: 'V Rising' },
-  { value: 'DONT_STARVE_TOGETHER', label: "Don't Starve Together" },
-];
-
 export function GamePackageForm({ locale, package: packageData }: GamePackageFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(packageData?.image || null);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [gameTypes, setGameTypes] = useState<Array<{ value: GameType; label: string }>>([]);
+  const [loadingGameTypes, setLoadingGameTypes] = useState(true);
+
+  // Elérhető játékok betöltése
+  useEffect(() => {
+    const fetchGameTypes = async () => {
+      try {
+        const response = await fetch('/api/games/available');
+        if (response.ok) {
+          const data = await response.json();
+          setGameTypes(data.gameTypes || []);
+        } else {
+          console.error('Hiba az elérhető játékok lekérése során');
+          // Fallback: üres lista
+          setGameTypes([]);
+        }
+      } catch (error) {
+        console.error('Hiba az elérhető játékok lekérése során:', error);
+        setGameTypes([]);
+      } finally {
+        setLoadingGameTypes(false);
+      }
+    };
+
+    fetchGameTypes();
+  }, []);
 
   const {
     register,
@@ -219,13 +223,20 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
               <select
                 {...register('gameType')}
                 id="gameType"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white"
+                disabled={loadingGameTypes}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {GAME_TYPES.map((game) => (
-                  <option key={game.value} value={game.value}>
-                    {game.label}
-                  </option>
-                ))}
+                {loadingGameTypes ? (
+                  <option>Játékok betöltése...</option>
+                ) : gameTypes.length === 0 ? (
+                  <option>Nincs elérhető játék</option>
+                ) : (
+                  gameTypes.map((game) => (
+                    <option key={game.value} value={game.value}>
+                      {game.label}
+                    </option>
+                  ))
+                )}
               </select>
               {errors.gameType && (
                 <p className="text-red-500 text-sm mt-1">{errors.gameType.message}</p>

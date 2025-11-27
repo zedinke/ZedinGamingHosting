@@ -33,6 +33,28 @@ export function GamePackageManagement({ packages: initialPackages, locale }: Gam
   const [packages, setPackages] = useState<GamePackage[]>(initialPackages);
   const [search, setSearch] = useState('');
   const [gameTypeFilter, setGameTypeFilter] = useState<string>('');
+  const [gameTypeLabels, setGameTypeLabels] = useState<Record<GameType, string>>({} as Record<GameType, string>);
+
+  // Játék típusok címkéinek betöltése
+  useEffect(() => {
+    const fetchGameTypeLabels = async () => {
+      try {
+        const response = await fetch('/api/games/available');
+        if (response.ok) {
+          const data = await response.json();
+          const labels: Record<GameType, string> = {} as Record<GameType, string>;
+          data.gameTypes?.forEach((game: { value: GameType; label: string }) => {
+            labels[game.value] = game.label;
+          });
+          setGameTypeLabels(labels);
+        }
+      } catch (error) {
+        console.error('Hiba a játék típusok címkéinek lekérése során:', error);
+      }
+    };
+
+    fetchGameTypeLabels();
+  }, []);
 
   const formatPrice = (price: number, currency: string) => {
     return new Intl.NumberFormat('hu-HU', {
@@ -42,20 +64,7 @@ export function GamePackageManagement({ packages: initialPackages, locale }: Gam
   };
 
   const getGameTypeLabel = (gameType: GameType): string => {
-    // Játék típusok címkéi
-    const labels: Record<string, string> = {
-      MINECRAFT: 'Minecraft',
-      RUST: 'Rust',
-      ARK_EVOLVED: 'ARK: Survival Evolved',
-      ARK_ASCENDED: 'ARK: Survival Ascended',
-      VALHEIM: 'Valheim',
-      PALWORLD: 'Palworld',
-      THE_FOREST: 'The Forest',
-      SONS_OF_THE_FOREST: 'Sons of the Forest',
-      CS2: 'Counter-Strike 2',
-      CSGO: 'Counter-Strike: Global Offensive',
-    };
-    return labels[gameType] || gameType;
+    return gameTypeLabels[gameType] || gameType.replace(/_/g, ' ');
   };
 
   const handleToggleActive = async (packageId: string, currentStatus: boolean) => {
