@@ -234,7 +234,7 @@ function getGameRequirements(gameType: GameType, maxPlayers: number) {
     ARK_EVOLVED: arkRequirements,
     ARK_ASCENDED: arkRequirements,
     RUST: { cpu: 2, ram: 4 * 1024 * 1024 * 1024, disk: 15 * 1024 * 1024 * 1024 }, // 4GB RAM, 15GB Disk
-    VALHEIM: { cpu: 1, ram: 2 * 1024 * 1024 * 1024, disk: 5 * 1024 * 1024 * 1024 }, // 2GB RAM, 5GB Disk
+    VALHEIM: { cpu: 1, ram: 4 * 1024 * 1024 * 1024, disk: 5 * 1024 * 1024 * 1024 }, // 4GB RAM, 5GB Disk (növelve OOM elkerülésére)
     SEVEN_DAYS_TO_DIE: { cpu: 2, ram: 4 * 1024 * 1024 * 1024, disk: 10 * 1024 * 1024 * 1024 }, // 4GB RAM, 10GB Disk
     CONAN_EXILES: { cpu: 2, ram: 4 * 1024 * 1024 * 1024, disk: 15 * 1024 * 1024 * 1024 },
     DAYZ: { cpu: 2, ram: 4 * 1024 * 1024 * 1024, disk: 15 * 1024 * 1024 * 1024 },
