@@ -27,14 +27,46 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
     requiresSteamCMD: true,
     installScript: `
       #!/bin/bash
-      set -e
-      cd /opt/servers/{serverId}
-      if [ ! -f steamcmd.sh ]; then
-        wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf -
+      set +e
+      SERVER_DIR="/opt/servers/{serverId}"
+      
+      # Minden könyvtárat root tulajdonba teszünk, mivel root-ként futunk mindent
+      mkdir -p /opt/servers
+      chmod 755 /opt/servers
+      chown root:root /opt/servers
+      
+      # Szerver könyvtár létrehozása root tulajdonban
+      mkdir -p "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
+      chown -R root:root "$SERVER_DIR"
+      
+      cd "$SERVER_DIR"
+      
+      # SteamCMD home könyvtár létrehozása és jogosultságok beállítása
+      STEAM_HOME="/tmp/steamcmd-home-$$"
+      mkdir -p "$STEAM_HOME"
+      chown -R root:root "$STEAM_HOME"
+      chmod -R 755 "$STEAM_HOME"
+      
+      # Ellenőrizzük, hogy a globális SteamCMD létezik-e
+      if [ ! -f /opt/steamcmd/steamcmd.sh ]; then
+        echo "HIBA: SteamCMD nem található: /opt/steamcmd/steamcmd.sh" >&2
+        exit 1
       fi
-      ./steamcmd.sh +force_install_dir /opt/servers/{serverId} +login anonymous +app_update 376030 validate +quit
+      
+      # ARK Evolved szerver telepítése globális SteamCMD-vel
+      echo "Installing ARK: Survival Evolved dedicated server..."
+      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 376030 validate +quit
+      EXIT_CODE=$?
+      
+      # Ideiglenes Steam home könyvtár törlése
+      rm -rf "$STEAM_HOME" 2>/dev/null || true
+      
+      # Könyvtárak létrehozása
       mkdir -p ShooterGame/Saved/Config/LinuxServer
       mkdir -p ShooterGame/Saved/SavedArks
+      chown -R root:root "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
     `,
     configPath: '/opt/servers/{serverId}/ShooterGame/Saved/Config/LinuxServer/GameUserSettings.ini',
     startCommand: './ShooterGame/Binaries/Linux/ShooterGameServer TheIsland?listen?Port={port}?QueryPort={queryPort}?ServerAdminPassword={adminPassword}',
@@ -48,14 +80,46 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
     requiresSteamCMD: true,
     installScript: `
       #!/bin/bash
-      set -e
-      cd /opt/servers/{serverId}
-      if [ ! -f steamcmd.sh ]; then
-        wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf -
+      set +e
+      SERVER_DIR="/opt/servers/{serverId}"
+      
+      # Minden könyvtárat root tulajdonba teszünk, mivel root-ként futunk mindent
+      mkdir -p /opt/servers
+      chmod 755 /opt/servers
+      chown root:root /opt/servers
+      
+      # Szerver könyvtár létrehozása root tulajdonban
+      mkdir -p "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
+      chown -R root:root "$SERVER_DIR"
+      
+      cd "$SERVER_DIR"
+      
+      # SteamCMD home könyvtár létrehozása és jogosultságok beállítása
+      STEAM_HOME="/tmp/steamcmd-home-$$"
+      mkdir -p "$STEAM_HOME"
+      chown -R root:root "$STEAM_HOME"
+      chmod -R 755 "$STEAM_HOME"
+      
+      # Ellenőrizzük, hogy a globális SteamCMD létezik-e
+      if [ ! -f /opt/steamcmd/steamcmd.sh ]; then
+        echo "HIBA: SteamCMD nem található: /opt/steamcmd/steamcmd.sh" >&2
+        exit 1
       fi
-      ./steamcmd.sh +force_install_dir /opt/servers/{serverId} +login anonymous +app_update 2430930 validate +quit
+      
+      # ARK Ascended szerver telepítése globális SteamCMD-vel
+      echo "Installing ARK: Survival Ascended dedicated server..."
+      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 2430930 validate +quit
+      EXIT_CODE=$?
+      
+      # Ideiglenes Steam home könyvtár törlése
+      rm -rf "$STEAM_HOME" 2>/dev/null || true
+      
+      # Könyvtárak létrehozása
       mkdir -p ShooterGame/Saved/Config/LinuxServer
       mkdir -p ShooterGame/Saved/SavedArks
+      chown -R root:root "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
     `,
     configPath: '/opt/servers/{serverId}/ShooterGame/Saved/Config/LinuxServer/GameUserSettings.ini',
     startCommand: './ShooterGame/Binaries/Linux/ShooterGameServer TheIsland_WP?listen?Port={port}?QueryPort={queryPort}?ServerAdminPassword={adminPassword}',
@@ -230,12 +294,35 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
     requiresSteamCMD: true,
     installScript: `
       #!/bin/bash
-      set -e
-      cd /opt/servers/{serverId}
-      if [ ! -f steamcmd.sh ]; then
-        wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf -
+      set +e
+      SERVER_DIR="/opt/servers/{serverId}"
+      
+      mkdir -p /opt/servers
+      chmod 755 /opt/servers
+      chown root:root /opt/servers
+      
+      mkdir -p "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
+      chown -R root:root "$SERVER_DIR"
+      
+      cd "$SERVER_DIR"
+      
+      STEAM_HOME="/tmp/steamcmd-home-$$"
+      mkdir -p "$STEAM_HOME"
+      chown -R root:root "$STEAM_HOME"
+      chmod -R 755 "$STEAM_HOME"
+      
+      if [ ! -f /opt/steamcmd/steamcmd.sh ]; then
+        echo "HIBA: SteamCMD nem található: /opt/steamcmd/steamcmd.sh" >&2
+        exit 1
       fi
-      ./steamcmd.sh +force_install_dir /opt/servers/{serverId} +login anonymous +app_update 896660 validate +quit
+      
+      echo "Installing Valheim dedicated server..."
+      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 896660 validate +quit
+      
+      rm -rf "$STEAM_HOME" 2>/dev/null || true
+      chown -R root:root "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
     `,
     configPath: '/opt/servers/{serverId}/start_server.sh',
     startCommand: './valheim_server.x86_64 -name "{name}" -port {port} -world "{world}" -password "{password}" -public 1',
@@ -248,12 +335,35 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
     requiresSteamCMD: true,
     installScript: `
       #!/bin/bash
-      set -e
-      cd /opt/servers/{serverId}
-      if [ ! -f steamcmd.sh ]; then
-        wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf -
+      set +e
+      SERVER_DIR="/opt/servers/{serverId}"
+      
+      mkdir -p /opt/servers
+      chmod 755 /opt/servers
+      chown root:root /opt/servers
+      
+      mkdir -p "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
+      chown -R root:root "$SERVER_DIR"
+      
+      cd "$SERVER_DIR"
+      
+      STEAM_HOME="/tmp/steamcmd-home-$$"
+      mkdir -p "$STEAM_HOME"
+      chown -R root:root "$STEAM_HOME"
+      chmod -R 755 "$STEAM_HOME"
+      
+      if [ ! -f /opt/steamcmd/steamcmd.sh ]; then
+        echo "HIBA: SteamCMD nem található: /opt/steamcmd/steamcmd.sh" >&2
+        exit 1
       fi
-      ./steamcmd.sh +force_install_dir /opt/servers/{serverId} +login anonymous +app_update 294420 validate +quit
+      
+      echo "Installing 7 Days to Die dedicated server..."
+      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 294420 validate +quit
+      
+      rm -rf "$STEAM_HOME" 2>/dev/null || true
+      chown -R root:root "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
     `,
     configPath: '/opt/servers/{serverId}/serverconfig.xml',
     startCommand: './7DaysToDieServer.x86_64 -configfile=serverconfig.xml -port {port} -maxplayers {maxPlayers}',
@@ -266,12 +376,35 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
     requiresSteamCMD: true,
     installScript: `
       #!/bin/bash
-      set -e
-      cd /opt/servers/{serverId}
-      if [ ! -f steamcmd.sh ]; then
-        wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf -
+      set +e
+      SERVER_DIR="/opt/servers/{serverId}"
+      
+      mkdir -p /opt/servers
+      chmod 755 /opt/servers
+      chown root:root /opt/servers
+      
+      mkdir -p "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
+      chown -R root:root "$SERVER_DIR"
+      
+      cd "$SERVER_DIR"
+      
+      STEAM_HOME="/tmp/steamcmd-home-$$"
+      mkdir -p "$STEAM_HOME"
+      chown -R root:root "$STEAM_HOME"
+      chmod -R 755 "$STEAM_HOME"
+      
+      if [ ! -f /opt/steamcmd/steamcmd.sh ]; then
+        echo "HIBA: SteamCMD nem található: /opt/steamcmd/steamcmd.sh" >&2
+        exit 1
       fi
-      ./steamcmd.sh +force_install_dir /opt/servers/{serverId} +login anonymous +app_update 443030 validate +quit
+      
+      echo "Installing Conan Exiles dedicated server..."
+      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 443030 validate +quit
+      
+      rm -rf "$STEAM_HOME" 2>/dev/null || true
+      chown -R root:root "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
     `,
     configPath: '/opt/servers/{serverId}/ConanSandbox/Saved/Config/LinuxServer/ServerSettings.ini',
     startCommand: './ConanSandboxServer.sh -queryport {queryPort} -game -server -log',
@@ -285,12 +418,35 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
     requiresSteamCMD: true,
     installScript: `
       #!/bin/bash
-      set -e
-      cd /opt/servers/{serverId}
-      if [ ! -f steamcmd.sh ]; then
-        wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf -
+      set +e
+      SERVER_DIR="/opt/servers/{serverId}"
+      
+      mkdir -p /opt/servers
+      chmod 755 /opt/servers
+      chown root:root /opt/servers
+      
+      mkdir -p "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
+      chown -R root:root "$SERVER_DIR"
+      
+      cd "$SERVER_DIR"
+      
+      STEAM_HOME="/tmp/steamcmd-home-$$"
+      mkdir -p "$STEAM_HOME"
+      chown -R root:root "$STEAM_HOME"
+      chmod -R 755 "$STEAM_HOME"
+      
+      if [ ! -f /opt/steamcmd/steamcmd.sh ]; then
+        echo "HIBA: SteamCMD nem található: /opt/steamcmd/steamcmd.sh" >&2
+        exit 1
       fi
-      ./steamcmd.sh +force_install_dir /opt/servers/{serverId} +login anonymous +app_update 223350 validate +quit
+      
+      echo "Installing DayZ dedicated server..."
+      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 223350 validate +quit
+      
+      rm -rf "$STEAM_HOME" 2>/dev/null || true
+      chown -R root:root "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
     `,
     configPath: '/opt/servers/{serverId}/serverDZ.cfg',
     startCommand: './DayZServer -config=serverDZ.cfg -port={port} -profiles=ServerProfile',
@@ -303,12 +459,35 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
     requiresSteamCMD: true,
     installScript: `
       #!/bin/bash
-      set -e
-      cd /opt/servers/{serverId}
-      if [ ! -f steamcmd.sh ]; then
-        wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf -
+      set +e
+      SERVER_DIR="/opt/servers/{serverId}"
+      
+      mkdir -p /opt/servers
+      chmod 755 /opt/servers
+      chown root:root /opt/servers
+      
+      mkdir -p "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
+      chown -R root:root "$SERVER_DIR"
+      
+      cd "$SERVER_DIR"
+      
+      STEAM_HOME="/tmp/steamcmd-home-$$"
+      mkdir -p "$STEAM_HOME"
+      chown -R root:root "$STEAM_HOME"
+      chmod -R 755 "$STEAM_HOME"
+      
+      if [ ! -f /opt/steamcmd/steamcmd.sh ]; then
+        echo "HIBA: SteamCMD nem található: /opt/steamcmd/steamcmd.sh" >&2
+        exit 1
       fi
-      ./steamcmd.sh +force_install_dir /opt/servers/{serverId} +login anonymous +app_update 108600 validate +quit
+      
+      echo "Installing Project Zomboid dedicated server..."
+      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 108600 validate +quit
+      
+      rm -rf "$STEAM_HOME" 2>/dev/null || true
+      chown -R root:root "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
     `,
     configPath: '/opt/servers/{serverId}/Server/servertest.ini',
     startCommand: './start-server.sh -servername "{name}" -adminpassword "{password}"',
@@ -321,12 +500,35 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
     requiresSteamCMD: true,
     installScript: `
       #!/bin/bash
-      set -e
-      cd /opt/servers/{serverId}
-      if [ ! -f steamcmd.sh ]; then
-        wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf -
+      set +e
+      SERVER_DIR="/opt/servers/{serverId}"
+      
+      mkdir -p /opt/servers
+      chmod 755 /opt/servers
+      chown root:root /opt/servers
+      
+      mkdir -p "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
+      chown -R root:root "$SERVER_DIR"
+      
+      cd "$SERVER_DIR"
+      
+      STEAM_HOME="/tmp/steamcmd-home-$$"
+      mkdir -p "$STEAM_HOME"
+      chown -R root:root "$STEAM_HOME"
+      chmod -R 755 "$STEAM_HOME"
+      
+      if [ ! -f /opt/steamcmd/steamcmd.sh ]; then
+        echo "HIBA: SteamCMD nem található: /opt/steamcmd/steamcmd.sh" >&2
+        exit 1
       fi
-      ./steamcmd.sh +force_install_dir /opt/servers/{serverId} +login anonymous +app_update 2394010 validate +quit
+      
+      echo "Installing Palworld dedicated server..."
+      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 2394010 validate +quit
+      
+      rm -rf "$STEAM_HOME" 2>/dev/null || true
+      chown -R root:root "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
     `,
     configPath: '/opt/servers/{serverId}/DefaultPalWorldSettings.ini',
     startCommand: './PalServer.sh -port={port} -players={maxPlayers}',
@@ -339,12 +541,35 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
     requiresSteamCMD: true,
     installScript: `
       #!/bin/bash
-      set -e
-      cd /opt/servers/{serverId}
-      if [ ! -f steamcmd.sh ]; then
-        wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf -
+      set +e
+      SERVER_DIR="/opt/servers/{serverId}"
+      
+      mkdir -p /opt/servers
+      chmod 755 /opt/servers
+      chown root:root /opt/servers
+      
+      mkdir -p "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
+      chown -R root:root "$SERVER_DIR"
+      
+      cd "$SERVER_DIR"
+      
+      STEAM_HOME="/tmp/steamcmd-home-$$"
+      mkdir -p "$STEAM_HOME"
+      chown -R root:root "$STEAM_HOME"
+      chmod -R 755 "$STEAM_HOME"
+      
+      if [ ! -f /opt/steamcmd/steamcmd.sh ]; then
+        echo "HIBA: SteamCMD nem található: /opt/steamcmd/steamcmd.sh" >&2
+        exit 1
       fi
-      ./steamcmd.sh +force_install_dir /opt/servers/{serverId} +login anonymous +app_update 2278520 validate +quit
+      
+      echo "Installing Enshrouded dedicated server..."
+      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 2278520 validate +quit
+      
+      rm -rf "$STEAM_HOME" 2>/dev/null || true
+      chown -R root:root "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
     `,
     configPath: '/opt/servers/{serverId}/enshrouded_server.json',
     startCommand: './enshrouded_server',
@@ -357,12 +582,35 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
     requiresSteamCMD: true,
     installScript: `
       #!/bin/bash
-      set -e
-      cd /opt/servers/{serverId}
-      if [ ! -f steamcmd.sh ]; then
-        wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf -
+      set +e
+      SERVER_DIR="/opt/servers/{serverId}"
+      
+      mkdir -p /opt/servers
+      chmod 755 /opt/servers
+      chown root:root /opt/servers
+      
+      mkdir -p "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
+      chown -R root:root "$SERVER_DIR"
+      
+      cd "$SERVER_DIR"
+      
+      STEAM_HOME="/tmp/steamcmd-home-$$"
+      mkdir -p "$STEAM_HOME"
+      chown -R root:root "$STEAM_HOME"
+      chmod -R 755 "$STEAM_HOME"
+      
+      if [ ! -f /opt/steamcmd/steamcmd.sh ]; then
+        echo "HIBA: SteamCMD nem található: /opt/steamcmd/steamcmd.sh" >&2
+        exit 1
       fi
-      ./steamcmd.sh +force_install_dir /opt/servers/{serverId} +login anonymous +app_update 1326470 validate +quit
+      
+      echo "Installing Sons of the Forest dedicated server..."
+      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 1326470 validate +quit
+      
+      rm -rf "$STEAM_HOME" 2>/dev/null || true
+      chown -R root:root "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
     `,
     configPath: '/opt/servers/{serverId}/config.json',
     startCommand: './SonsOfTheForestServer -batchmode -nographics',
@@ -455,12 +703,35 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
     requiresSteamCMD: true,
     installScript: `
       #!/bin/bash
-      set -e
-      cd /opt/servers/{serverId}
-      if [ ! -f steamcmd.sh ]; then
-        wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf -
+      set +e
+      SERVER_DIR="/opt/servers/{serverId}"
+      
+      mkdir -p /opt/servers
+      chmod 755 /opt/servers
+      chown root:root /opt/servers
+      
+      mkdir -p "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
+      chown -R root:root "$SERVER_DIR"
+      
+      cd "$SERVER_DIR"
+      
+      STEAM_HOME="/tmp/steamcmd-home-$$"
+      mkdir -p "$STEAM_HOME"
+      chown -R root:root "$STEAM_HOME"
+      chmod -R 755 "$STEAM_HOME"
+      
+      if [ ! -f /opt/steamcmd/steamcmd.sh ]; then
+        echo "HIBA: SteamCMD nem található: /opt/steamcmd/steamcmd.sh" >&2
+        exit 1
       fi
-      ./steamcmd.sh +force_install_dir /opt/servers/{serverId} +login anonymous +app_update 962130 validate +quit
+      
+      echo "Installing Grounded dedicated server..."
+      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 962130 validate +quit
+      
+      rm -rf "$STEAM_HOME" 2>/dev/null || true
+      chown -R root:root "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
     `,
     configPath: '/opt/servers/{serverId}/GroundedServer.exe',
     startCommand: 'wine GroundedServer.exe -log',
@@ -474,12 +745,35 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
     requiresSteamCMD: true,
     installScript: `
       #!/bin/bash
-      set -e
-      cd /opt/servers/{serverId}
-      if [ ! -f steamcmd.sh ]; then
-        wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf -
+      set +e
+      SERVER_DIR="/opt/servers/{serverId}"
+      
+      mkdir -p /opt/servers
+      chmod 755 /opt/servers
+      chown root:root /opt/servers
+      
+      mkdir -p "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
+      chown -R root:root "$SERVER_DIR"
+      
+      cd "$SERVER_DIR"
+      
+      STEAM_HOME="/tmp/steamcmd-home-$$"
+      mkdir -p "$STEAM_HOME"
+      chown -R root:root "$STEAM_HOME"
+      chmod -R 755 "$STEAM_HOME"
+      
+      if [ ! -f /opt/steamcmd/steamcmd.sh ]; then
+        echo "HIBA: SteamCMD nem található: /opt/steamcmd/steamcmd.sh" >&2
+        exit 1
       fi
-      ./steamcmd.sh +force_install_dir /opt/servers/{serverId} +login anonymous +app_update 1604030 validate +quit
+      
+      echo "Installing V Rising dedicated server..."
+      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 1604030 validate +quit
+      
+      rm -rf "$STEAM_HOME" 2>/dev/null || true
+      chown -R root:root "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
     `,
     configPath: '/opt/servers/{serverId}/ServerGameSettings.json',
     startCommand: './VRisingServer -persistentDataPath ./save-data -serverName "{name}"',
@@ -492,12 +786,35 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
     requiresSteamCMD: true,
     installScript: `
       #!/bin/bash
-      set -e
-      cd /opt/servers/{serverId}
-      if [ ! -f steamcmd.sh ]; then
-        wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf -
+      set +e
+      SERVER_DIR="/opt/servers/{serverId}"
+      
+      mkdir -p /opt/servers
+      chmod 755 /opt/servers
+      chown root:root /opt/servers
+      
+      mkdir -p "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
+      chown -R root:root "$SERVER_DIR"
+      
+      cd "$SERVER_DIR"
+      
+      STEAM_HOME="/tmp/steamcmd-home-$$"
+      mkdir -p "$STEAM_HOME"
+      chown -R root:root "$STEAM_HOME"
+      chmod -R 755 "$STEAM_HOME"
+      
+      if [ ! -f /opt/steamcmd/steamcmd.sh ]; then
+        echo "HIBA: SteamCMD nem található: /opt/steamcmd/steamcmd.sh" >&2
+        exit 1
       fi
-      ./steamcmd.sh +force_install_dir /opt/servers/{serverId} +login anonymous +app_update 343050 validate +quit
+      
+      echo "Installing Don't Starve Together dedicated server..."
+      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 343050 validate +quit
+      
+      rm -rf "$STEAM_HOME" 2>/dev/null || true
+      chown -R root:root "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
     `,
     configPath: '/opt/servers/{serverId}/cluster.ini',
     startCommand: './dontstarve_dedicated_server_nullrenderer -cluster Cluster_1 -shard Master',
@@ -511,12 +828,35 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
     requiresSteamCMD: true,
     installScript: `
       #!/bin/bash
-      set -e
-      cd /opt/servers/{serverId}
-      if [ ! -f steamcmd.sh ]; then
-        wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf -
+      set +e
+      SERVER_DIR="/opt/servers/{serverId}"
+      
+      mkdir -p /opt/servers
+      chmod 755 /opt/servers
+      chown root:root /opt/servers
+      
+      mkdir -p "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
+      chown -R root:root "$SERVER_DIR"
+      
+      cd "$SERVER_DIR"
+      
+      STEAM_HOME="/tmp/steamcmd-home-$$"
+      mkdir -p "$STEAM_HOME"
+      chown -R root:root "$STEAM_HOME"
+      chmod -R 755 "$STEAM_HOME"
+      
+      if [ ! -f /opt/steamcmd/steamcmd.sh ]; then
+        echo "HIBA: SteamCMD nem található: /opt/steamcmd/steamcmd.sh" >&2
+        exit 1
       fi
-      ./steamcmd.sh +force_install_dir /opt/servers/{serverId} +login anonymous +app_update 730 validate +quit
+      
+      echo "Installing Counter-Strike 2 dedicated server..."
+      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 730 validate +quit
+      
+      rm -rf "$STEAM_HOME" 2>/dev/null || true
+      chown -R root:root "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
     `,
     configPath: '/opt/servers/{serverId}/game/csgo/cfg/server.cfg',
     startCommand: './game/bin/linuxsteamrt64/cs2 -dedicated -console -usercon +port {port} +maxplayers {maxPlayers} +map de_dust2',
@@ -529,12 +869,35 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
     requiresSteamCMD: true,
     installScript: `
       #!/bin/bash
-      set -e
-      cd /opt/servers/{serverId}
-      if [ ! -f steamcmd.sh ]; then
-        wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf -
+      set +e
+      SERVER_DIR="/opt/servers/{serverId}"
+      
+      mkdir -p /opt/servers
+      chmod 755 /opt/servers
+      chown root:root /opt/servers
+      
+      mkdir -p "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
+      chown -R root:root "$SERVER_DIR"
+      
+      cd "$SERVER_DIR"
+      
+      STEAM_HOME="/tmp/steamcmd-home-$$"
+      mkdir -p "$STEAM_HOME"
+      chown -R root:root "$STEAM_HOME"
+      chmod -R 755 "$STEAM_HOME"
+      
+      if [ ! -f /opt/steamcmd/steamcmd.sh ]; then
+        echo "HIBA: SteamCMD nem található: /opt/steamcmd/steamcmd.sh" >&2
+        exit 1
       fi
-      ./steamcmd.sh +force_install_dir /opt/servers/{serverId} +login anonymous +app_update 740 validate +quit
+      
+      echo "Installing Counter-Strike: Global Offensive dedicated server..."
+      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 740 validate +quit
+      
+      rm -rf "$STEAM_HOME" 2>/dev/null || true
+      chown -R root:root "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
     `,
     configPath: '/opt/servers/{serverId}/csgo/cfg/server.cfg',
     startCommand: './srcds_run -game csgo -console -usercon +port {port} +maxplayers {maxPlayers}',
@@ -547,12 +910,35 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
     requiresSteamCMD: true,
     installScript: `
       #!/bin/bash
-      set -e
-      cd /opt/servers/{serverId}
-      if [ ! -f steamcmd.sh ]; then
-        wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf -
+      set +e
+      SERVER_DIR="/opt/servers/{serverId}"
+      
+      mkdir -p /opt/servers
+      chmod 755 /opt/servers
+      chown root:root /opt/servers
+      
+      mkdir -p "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
+      chown -R root:root "$SERVER_DIR"
+      
+      cd "$SERVER_DIR"
+      
+      STEAM_HOME="/tmp/steamcmd-home-$$"
+      mkdir -p "$STEAM_HOME"
+      chown -R root:root "$STEAM_HOME"
+      chmod -R 755 "$STEAM_HOME"
+      
+      if [ ! -f /opt/steamcmd/steamcmd.sh ]; then
+        echo "HIBA: SteamCMD nem található: /opt/steamcmd/steamcmd.sh" >&2
+        exit 1
       fi
-      ./steamcmd.sh +force_install_dir /opt/servers/{serverId} +login anonymous +app_update 222860 validate +quit
+      
+      echo "Installing Left 4 Dead 2 dedicated server..."
+      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 222860 validate +quit
+      
+      rm -rf "$STEAM_HOME" 2>/dev/null || true
+      chown -R root:root "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
     `,
     configPath: '/opt/servers/{serverId}/left4dead2/cfg/server.cfg',
     startCommand: './srcds_run -game left4dead2 -console -port {port} +maxplayers {maxPlayers}',
@@ -565,12 +951,35 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
     requiresSteamCMD: true,
     installScript: `
       #!/bin/bash
-      set -e
-      cd /opt/servers/{serverId}
-      if [ ! -f steamcmd.sh ]; then
-        wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf -
+      set +e
+      SERVER_DIR="/opt/servers/{serverId}"
+      
+      mkdir -p /opt/servers
+      chmod 755 /opt/servers
+      chown root:root /opt/servers
+      
+      mkdir -p "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
+      chown -R root:root "$SERVER_DIR"
+      
+      cd "$SERVER_DIR"
+      
+      STEAM_HOME="/tmp/steamcmd-home-$$"
+      mkdir -p "$STEAM_HOME"
+      chown -R root:root "$STEAM_HOME"
+      chmod -R 755 "$STEAM_HOME"
+      
+      if [ ! -f /opt/steamcmd/steamcmd.sh ]; then
+        echo "HIBA: SteamCMD nem található: /opt/steamcmd/steamcmd.sh" >&2
+        exit 1
       fi
-      ./steamcmd.sh +force_install_dir /opt/servers/{serverId} +login anonymous +app_update 232130 validate +quit
+      
+      echo "Installing Killing Floor 2 dedicated server..."
+      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 232130 validate +quit
+      
+      rm -rf "$STEAM_HOME" 2>/dev/null || true
+      chown -R root:root "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
     `,
     configPath: '/opt/servers/{serverId}/KFGame/Config/LinuxServer-KFGame.ini',
     startCommand: './Binaries/Win64/KFServer.exe',
@@ -584,12 +993,35 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
     requiresSteamCMD: true,
     installScript: `
       #!/bin/bash
-      set -e
-      cd /opt/servers/{serverId}
-      if [ ! -f steamcmd.sh ]; then
-        wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf -
+      set +e
+      SERVER_DIR="/opt/servers/{serverId}"
+      
+      mkdir -p /opt/servers
+      chmod 755 /opt/servers
+      chown root:root /opt/servers
+      
+      mkdir -p "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
+      chown -R root:root "$SERVER_DIR"
+      
+      cd "$SERVER_DIR"
+      
+      STEAM_HOME="/tmp/steamcmd-home-$$"
+      mkdir -p "$STEAM_HOME"
+      chown -R root:root "$STEAM_HOME"
+      chmod -R 755 "$STEAM_HOME"
+      
+      if [ ! -f /opt/steamcmd/steamcmd.sh ]; then
+        echo "HIBA: SteamCMD nem található: /opt/steamcmd/steamcmd.sh" >&2
+        exit 1
       fi
-      ./steamcmd.sh +force_install_dir /opt/servers/{serverId} +login anonymous +app_update 581330 validate +quit
+      
+      echo "Installing Insurgency: Sandstorm dedicated server..."
+      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 581330 validate +quit
+      
+      rm -rf "$STEAM_HOME" 2>/dev/null || true
+      chown -R root:root "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
     `,
     configPath: '/opt/servers/{serverId}/Insurgency/Config/Server/ServerGame.ini',
     startCommand: './Insurgency/Binaries/Linux/InsurgencyServer-Linux-Shipping',
@@ -602,12 +1034,35 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
     requiresSteamCMD: true,
     installScript: `
       #!/bin/bash
-      set -e
-      cd /opt/servers/{serverId}
-      if [ ! -f steamcmd.sh ]; then
-        wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf -
+      set +e
+      SERVER_DIR="/opt/servers/{serverId}"
+      
+      mkdir -p /opt/servers
+      chmod 755 /opt/servers
+      chown root:root /opt/servers
+      
+      mkdir -p "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
+      chown -R root:root "$SERVER_DIR"
+      
+      cd "$SERVER_DIR"
+      
+      STEAM_HOME="/tmp/steamcmd-home-$$"
+      mkdir -p "$STEAM_HOME"
+      chown -R root:root "$STEAM_HOME"
+      chmod -R 755 "$STEAM_HOME"
+      
+      if [ ! -f /opt/steamcmd/steamcmd.sh ]; then
+        echo "HIBA: SteamCMD nem található: /opt/steamcmd/steamcmd.sh" >&2
+        exit 1
       fi
-      ./steamcmd.sh +force_install_dir /opt/servers/{serverId} +login anonymous +app_update 393380 validate +quit
+      
+      echo "Installing Squad dedicated server..."
+      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 393380 validate +quit
+      
+      rm -rf "$STEAM_HOME" 2>/dev/null || true
+      chown -R root:root "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
     `,
     configPath: '/opt/servers/{serverId}/SquadGame/ServerConfig/Server.cfg',
     startCommand: './SquadGameServer.sh -Port={port} -QueryPort={queryPort}',
@@ -621,12 +1076,35 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
     requiresSteamCMD: true,
     installScript: `
       #!/bin/bash
-      set -e
-      cd /opt/servers/{serverId}
-      if [ ! -f steamcmd.sh ]; then
-        wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf -
+      set +e
+      SERVER_DIR="/opt/servers/{serverId}"
+      
+      mkdir -p /opt/servers
+      chmod 755 /opt/servers
+      chown root:root /opt/servers
+      
+      mkdir -p "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
+      chown -R root:root "$SERVER_DIR"
+      
+      cd "$SERVER_DIR"
+      
+      STEAM_HOME="/tmp/steamcmd-home-$$"
+      mkdir -p "$STEAM_HOME"
+      chown -R root:root "$STEAM_HOME"
+      chmod -R 755 "$STEAM_HOME"
+      
+      if [ ! -f /opt/steamcmd/steamcmd.sh ]; then
+        echo "HIBA: SteamCMD nem található: /opt/steamcmd/steamcmd.sh" >&2
+        exit 1
       fi
-      ./steamcmd.sh +force_install_dir /opt/servers/{serverId} +login anonymous +app_update 686810 validate +quit
+      
+      echo "Installing Hell Let Loose dedicated server..."
+      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 686810 validate +quit
+      
+      rm -rf "$STEAM_HOME" 2>/dev/null || true
+      chown -R root:root "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
     `,
     configPath: '/opt/servers/{serverId}/HLLServer.exe',
     startCommand: 'wine HLLServer.exe',
@@ -640,12 +1118,35 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
     requiresSteamCMD: true,
     installScript: `
       #!/bin/bash
-      set -e
-      cd /opt/servers/{serverId}
-      if [ ! -f steamcmd.sh ]; then
-        wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf -
+      set +e
+      SERVER_DIR="/opt/servers/{serverId}"
+      
+      mkdir -p /opt/servers
+      chmod 755 /opt/servers
+      chown root:root /opt/servers
+      
+      mkdir -p "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
+      chown -R root:root "$SERVER_DIR"
+      
+      cd "$SERVER_DIR"
+      
+      STEAM_HOME="/tmp/steamcmd-home-$$"
+      mkdir -p "$STEAM_HOME"
+      chown -R root:root "$STEAM_HOME"
+      chmod -R 755 "$STEAM_HOME"
+      
+      if [ ! -f /opt/steamcmd/steamcmd.sh ]; then
+        echo "HIBA: SteamCMD nem található: /opt/steamcmd/steamcmd.sh" >&2
+        exit 1
       fi
-      ./steamcmd.sh +force_install_dir /opt/servers/{serverId} +login anonymous +app_update 736220 validate +quit
+      
+      echo "Installing Post Scriptum dedicated server..."
+      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 736220 validate +quit
+      
+      rm -rf "$STEAM_HOME" 2>/dev/null || true
+      chown -R root:root "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
     `,
     configPath: '/opt/servers/{serverId}/PostScriptum/ServerConfig/Server.cfg',
     startCommand: './PostScriptumServer.sh -Port={port}',
@@ -658,12 +1159,35 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
     requiresSteamCMD: true,
     installScript: `
       #!/bin/bash
-      set -e
-      cd /opt/servers/{serverId}
-      if [ ! -f steamcmd.sh ]; then
-        wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf -
+      set +e
+      SERVER_DIR="/opt/servers/{serverId}"
+      
+      mkdir -p /opt/servers
+      chmod 755 /opt/servers
+      chown root:root /opt/servers
+      
+      mkdir -p "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
+      chown -R root:root "$SERVER_DIR"
+      
+      cd "$SERVER_DIR"
+      
+      STEAM_HOME="/tmp/steamcmd-home-$$"
+      mkdir -p "$STEAM_HOME"
+      chown -R root:root "$STEAM_HOME"
+      chmod -R 755 "$STEAM_HOME"
+      
+      if [ ! -f /opt/steamcmd/steamcmd.sh ]; then
+        echo "HIBA: SteamCMD nem található: /opt/steamcmd/steamcmd.sh" >&2
+        exit 1
       fi
-      ./steamcmd.sh +force_install_dir /opt/servers/{serverId} +login anonymous +app_update 107410 validate +quit
+      
+      echo "Installing Arma 3 dedicated server..."
+      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 107410 validate +quit
+      
+      rm -rf "$STEAM_HOME" 2>/dev/null || true
+      chown -R root:root "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
     `,
     configPath: '/opt/servers/{serverId}/server.cfg',
     startCommand: './arma3server -port={port} -config=server.cfg',
@@ -677,12 +1201,35 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
     requiresSteamCMD: true,
     installScript: `
       #!/bin/bash
-      set -e
-      cd /opt/servers/{serverId}
-      if [ ! -f steamcmd.sh ]; then
-        wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf -
+      set +e
+      SERVER_DIR="/opt/servers/{serverId}"
+      
+      mkdir -p /opt/servers
+      chmod 755 /opt/servers
+      chown root:root /opt/servers
+      
+      mkdir -p "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
+      chown -R root:root "$SERVER_DIR"
+      
+      cd "$SERVER_DIR"
+      
+      STEAM_HOME="/tmp/steamcmd-home-$$"
+      mkdir -p "$STEAM_HOME"
+      chown -R root:root "$STEAM_HOME"
+      chmod -R 755 "$STEAM_HOME"
+      
+      if [ ! -f /opt/steamcmd/steamcmd.sh ]; then
+        echo "HIBA: SteamCMD nem található: /opt/steamcmd/steamcmd.sh" >&2
+        exit 1
       fi
-      ./steamcmd.sh +force_install_dir /opt/servers/{serverId} +login anonymous +app_update 105600 validate +quit
+      
+      echo "Installing Terraria dedicated server..."
+      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 105600 validate +quit
+      
+      rm -rf "$STEAM_HOME" 2>/dev/null || true
+      chown -R root:root "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
     `,
     configPath: '/opt/servers/{serverId}/serverconfig.txt',
     startCommand: './TerrariaServer.bin.x86_64 -config serverconfig.txt',
@@ -695,12 +1242,35 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
     requiresSteamCMD: true,
     installScript: `
       #!/bin/bash
-      set -e
-      cd /opt/servers/{serverId}
-      if [ ! -f steamcmd.sh ]; then
-        wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf -
+      set +e
+      SERVER_DIR="/opt/servers/{serverId}"
+      
+      mkdir -p /opt/servers
+      chmod 755 /opt/servers
+      chown root:root /opt/servers
+      
+      mkdir -p "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
+      chown -R root:root "$SERVER_DIR"
+      
+      cd "$SERVER_DIR"
+      
+      STEAM_HOME="/tmp/steamcmd-home-$$"
+      mkdir -p "$STEAM_HOME"
+      chown -R root:root "$STEAM_HOME"
+      chmod -R 755 "$STEAM_HOME"
+      
+      if [ ! -f /opt/steamcmd/steamcmd.sh ]; then
+        echo "HIBA: SteamCMD nem található: /opt/steamcmd/steamcmd.sh" >&2
+        exit 1
       fi
-      ./steamcmd.sh +force_install_dir /opt/servers/{serverId} +login anonymous +app_update 211820 validate +quit
+      
+      echo "Installing Starbound dedicated server..."
+      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 211820 validate +quit
+      
+      rm -rf "$STEAM_HOME" 2>/dev/null || true
+      chown -R root:root "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
     `,
     configPath: '/opt/servers/{serverId}/storage/starbound_server.config',
     startCommand: './linux/starbound_server',
@@ -713,12 +1283,35 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
     requiresSteamCMD: true,
     installScript: `
       #!/bin/bash
-      set -e
-      cd /opt/servers/{serverId}
-      if [ ! -f steamcmd.sh ]; then
-        wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf -
+      set +e
+      SERVER_DIR="/opt/servers/{serverId}"
+      
+      mkdir -p /opt/servers
+      chmod 755 /opt/servers
+      chown root:root /opt/servers
+      
+      mkdir -p "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
+      chown -R root:root "$SERVER_DIR"
+      
+      cd "$SERVER_DIR"
+      
+      STEAM_HOME="/tmp/steamcmd-home-$$"
+      mkdir -p "$STEAM_HOME"
+      chown -R root:root "$STEAM_HOME"
+      chmod -R 755 "$STEAM_HOME"
+      
+      if [ ! -f /opt/steamcmd/steamcmd.sh ]; then
+        echo "HIBA: SteamCMD nem található: /opt/steamcmd/steamcmd.sh" >&2
+        exit 1
       fi
-      ./steamcmd.sh +force_install_dir /opt/servers/{serverId} +login anonymous +app_update 427520 validate +quit
+      
+      echo "Installing Factorio dedicated server..."
+      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 427520 validate +quit
+      
+      rm -rf "$STEAM_HOME" 2>/dev/null || true
+      chown -R root:root "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
     `,
     configPath: '/opt/servers/{serverId}/config/server-settings.json',
     startCommand: './bin/x64/factorio --start-server-load-latest --server-settings config/server-settings.json',
@@ -731,12 +1324,35 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
     requiresSteamCMD: true,
     installScript: `
       #!/bin/bash
-      set -e
-      cd /opt/servers/{serverId}
-      if [ ! -f steamcmd.sh ]; then
-        wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf -
+      set +e
+      SERVER_DIR="/opt/servers/{serverId}"
+      
+      mkdir -p /opt/servers
+      chmod 755 /opt/servers
+      chown root:root /opt/servers
+      
+      mkdir -p "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
+      chown -R root:root "$SERVER_DIR"
+      
+      cd "$SERVER_DIR"
+      
+      STEAM_HOME="/tmp/steamcmd-home-$$"
+      mkdir -p "$STEAM_HOME"
+      chown -R root:root "$STEAM_HOME"
+      chmod -R 755 "$STEAM_HOME"
+      
+      if [ ! -f /opt/steamcmd/steamcmd.sh ]; then
+        echo "HIBA: SteamCMD nem található: /opt/steamcmd/steamcmd.sh" >&2
+        exit 1
       fi
-      ./steamcmd.sh +force_install_dir /opt/servers/{serverId} +login anonymous +app_update 1690800 validate +quit
+      
+      echo "Installing Satisfactory dedicated server..."
+      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 1690800 validate +quit
+      
+      rm -rf "$STEAM_HOME" 2>/dev/null || true
+      chown -R root:root "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
     `,
     configPath: '/opt/servers/{serverId}/FactoryGame/Saved/Config/LinuxServer/ServerSettings.ini',
     startCommand: './FactoryServer.sh',
@@ -749,12 +1365,35 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
     requiresSteamCMD: true,
     installScript: `
       #!/bin/bash
-      set -e
-      cd /opt/servers/{serverId}
-      if [ ! -f steamcmd.sh ]; then
-        wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf -
+      set +e
+      SERVER_DIR="/opt/servers/{serverId}"
+      
+      mkdir -p /opt/servers
+      chmod 755 /opt/servers
+      chown root:root /opt/servers
+      
+      mkdir -p "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
+      chown -R root:root "$SERVER_DIR"
+      
+      cd "$SERVER_DIR"
+      
+      STEAM_HOME="/tmp/steamcmd-home-$$"
+      mkdir -p "$STEAM_HOME"
+      chown -R root:root "$STEAM_HOME"
+      chmod -R 755 "$STEAM_HOME"
+      
+      if [ ! -f /opt/steamcmd/steamcmd.sh ]; then
+        echo "HIBA: SteamCMD nem található: /opt/steamcmd/steamcmd.sh" >&2
+        exit 1
       fi
-      ./steamcmd.sh +force_install_dir /opt/servers/{serverId} +login anonymous +app_update 298420 validate +quit
+      
+      echo "Installing Space Engineers dedicated server..."
+      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 298420 validate +quit
+      
+      rm -rf "$STEAM_HOME" 2>/dev/null || true
+      chown -R root:root "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
     `,
     configPath: '/opt/servers/{serverId}/SpaceEngineersDedicated/DedicatedServer64/SpaceEngineers-Dedicated.cfg',
     startCommand: './SpaceEngineersDedicated/DedicatedServer64/SpaceEngineersDedicated',
@@ -767,12 +1406,35 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
     requiresSteamCMD: true,
     installScript: `
       #!/bin/bash
-      set -e
-      cd /opt/servers/{serverId}
-      if [ ! -f steamcmd.sh ]; then
-        wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf -
+      set +e
+      SERVER_DIR="/opt/servers/{serverId}"
+      
+      mkdir -p /opt/servers
+      chmod 755 /opt/servers
+      chown root:root /opt/servers
+      
+      mkdir -p "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
+      chown -R root:root "$SERVER_DIR"
+      
+      cd "$SERVER_DIR"
+      
+      STEAM_HOME="/tmp/steamcmd-home-$$"
+      mkdir -p "$STEAM_HOME"
+      chown -R root:root "$STEAM_HOME"
+      chmod -R 755 "$STEAM_HOME"
+      
+      if [ ! -f /opt/steamcmd/steamcmd.sh ]; then
+        echo "HIBA: SteamCMD nem található: /opt/steamcmd/steamcmd.sh" >&2
+        exit 1
       fi
-      ./steamcmd.sh +force_install_dir /opt/servers/{serverId} +login anonymous +app_update 4020 validate +quit
+      
+      echo "Installing Garry's Mod dedicated server..."
+      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 4020 validate +quit
+      
+      rm -rf "$STEAM_HOME" 2>/dev/null || true
+      chown -R root:root "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
     `,
     configPath: '/opt/servers/{serverId}/garrysmod/cfg/server.cfg',
     startCommand: './srcds_run -game garrysmod -console -port {port} +maxplayers {maxPlayers}',
@@ -785,12 +1447,35 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
     requiresSteamCMD: true,
     installScript: `
       #!/bin/bash
-      set -e
-      cd /opt/servers/{serverId}
-      if [ ! -f steamcmd.sh ]; then
-        wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf -
+      set +e
+      SERVER_DIR="/opt/servers/{serverId}"
+      
+      mkdir -p /opt/servers
+      chmod 755 /opt/servers
+      chown root:root /opt/servers
+      
+      mkdir -p "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
+      chown -R root:root "$SERVER_DIR"
+      
+      cd "$SERVER_DIR"
+      
+      STEAM_HOME="/tmp/steamcmd-home-$$"
+      mkdir -p "$STEAM_HOME"
+      chown -R root:root "$STEAM_HOME"
+      chmod -R 755 "$STEAM_HOME"
+      
+      if [ ! -f /opt/steamcmd/steamcmd.sh ]; then
+        echo "HIBA: SteamCMD nem található: /opt/steamcmd/steamcmd.sh" >&2
+        exit 1
       fi
-      ./steamcmd.sh +force_install_dir /opt/servers/{serverId} +login anonymous +app_update 304930 validate +quit
+      
+      echo "Installing Unturned dedicated server..."
+      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 304930 validate +quit
+      
+      rm -rf "$STEAM_HOME" 2>/dev/null || true
+      chown -R root:root "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
     `,
     configPath: '/opt/servers/{serverId}/Servers/{serverId}/Server.dat',
     startCommand: './Unturned_Headless.x86_64 -batchmode -nographics -silent-crashes',
@@ -804,12 +1489,35 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
     requiresSteamCMD: true,
     installScript: `
       #!/bin/bash
-      set -e
-      cd /opt/servers/{serverId}
-      if [ ! -f steamcmd.sh ]; then
-        wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf -
+      set +e
+      SERVER_DIR="/opt/servers/{serverId}"
+      
+      mkdir -p /opt/servers
+      chmod 755 /opt/servers
+      chown root:root /opt/servers
+      
+      mkdir -p "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
+      chown -R root:root "$SERVER_DIR"
+      
+      cd "$SERVER_DIR"
+      
+      STEAM_HOME="/tmp/steamcmd-home-$$"
+      mkdir -p "$STEAM_HOME"
+      chown -R root:root "$STEAM_HOME"
+      chmod -R 755 "$STEAM_HOME"
+      
+      if [ ! -f /opt/steamcmd/steamcmd.sh ]; then
+        echo "HIBA: SteamCMD nem található: /opt/steamcmd/steamcmd.sh" >&2
+        exit 1
       fi
-      ./steamcmd.sh +force_install_dir /opt/servers/{serverId} +login anonymous +app_update 570 validate +quit
+      
+      echo "Installing Dota 2 dedicated server..."
+      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 570 validate +quit
+      
+      rm -rf "$STEAM_HOME" 2>/dev/null || true
+      chown -R root:root "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
     `,
     configPath: '/opt/servers/{serverId}/game/dota/cfg/server.cfg',
     startCommand: './game/bin/linuxsteamrt64/dota2 -dedicated -console -port {port}',
