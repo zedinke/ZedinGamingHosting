@@ -69,6 +69,7 @@ export async function PUT(
       cpuCores,
       ram,
       discountPrice,
+      pricePerSlot,
       isActive,
       order,
     } = body;
@@ -88,6 +89,9 @@ export async function PUT(
     if (ram !== undefined) updateData.ram = parseInt(ram);
     if (discountPrice !== undefined) {
       updateData.discountPrice = discountPrice ? parseFloat(discountPrice) : null;
+    }
+    if (pricePerSlot !== undefined) {
+      updateData.pricePerSlot = pricePerSlot ? parseFloat(pricePerSlot) : null;
     }
     if (isActive !== undefined) updateData.isActive = isActive;
     if (order !== undefined) updateData.order = parseInt(order) || 0;

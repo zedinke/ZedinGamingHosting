@@ -37,6 +37,7 @@ interface GamePackage {
   cpuCores: number;
   ram: number;
   discountPrice: number | null;
+  pricePerSlot: number | null;
   image: string | null;
   description: string | null;
   videoUrl: string | null;
@@ -75,7 +76,13 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
   const [billingFormData, setBillingFormData] = useState<BillingInfoFormData | null>(null);
   const [additionalVCpu, setAdditionalVCpu] = useState(0);
   const [additionalRamGB, setAdditionalRamGB] = useState(0);
+  const [additionalSlots, setAdditionalSlots] = useState(0);
   const [upgradePrices, setUpgradePrices] = useState<{ pricePerVCpu: number; pricePerRamGB: number; currency: string } | null>(null);
+  
+  // Maximum értékek
+  const MAX_RAM_GB = 30;
+  const MAX_VCPU = 20;
+  const MAX_SLOTS = 50;
 
   const {
     register,
@@ -205,6 +212,7 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
         billingInfo: billingFormData,
         additionalVCpu: additionalVCpu || 0,
         additionalRamGB: additionalRamGB || 0,
+        additionalSlots: additionalSlots || 0,
       };
       
       const response = await fetch(`/api/servers/order`, {
@@ -335,7 +343,8 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                 <p className="text-xs font-bold text-gray-900 mb-1 uppercase">Slot</p>
-                <p className="text-3xl font-bold text-primary-600">{selectedGamePackage.slot}</p>
+                <p className="text-3xl font-bold text-primary-600">{selectedGamePackage.slot + additionalSlots}</p>
+                <p className="text-xs text-gray-800 font-medium mt-1">{additionalSlots > 0 && <span className="text-green-600">(+{additionalSlots})</span>}</p>
               </div>
               <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                 <p className="text-xs font-bold text-gray-900 mb-1 uppercase">CPU</p>
@@ -352,7 +361,8 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
                 <p className="text-2xl font-bold text-emerald-700">
                   {formatPrice(
                     (selectedGamePackage.discountPrice || selectedGamePackage.price) + 
-                    (upgradePrices ? (additionalVCpu * upgradePrices.pricePerVCpu + additionalRamGB * upgradePrices.pricePerRamGB) : 0),
+                    (upgradePrices ? (additionalVCpu * upgradePrices.pricePerVCpu + additionalRamGB * upgradePrices.pricePerRamGB) : 0) +
+                    (selectedGamePackage.pricePerSlot && additionalSlots > 0 ? additionalSlots * selectedGamePackage.pricePerSlot : 0),
                     selectedGamePackage.currency
                   )}
                 </p>
@@ -362,14 +372,15 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
                     {formatPrice(selectedGamePackage.price, selectedGamePackage.currency)}
                   </p>
                 )}
-                {(additionalVCpu > 0 || additionalRamGB > 0) && upgradePrices && (
+                {((additionalVCpu > 0 || additionalRamGB > 0) && upgradePrices) || (additionalSlots > 0 && selectedGamePackage.pricePerSlot) ? (
                   <p className="text-xs text-green-700 font-semibold mt-1">
                     +{formatPrice(
-                      additionalVCpu * upgradePrices.pricePerVCpu + additionalRamGB * upgradePrices.pricePerRamGB,
-                      upgradePrices.currency
+                      (upgradePrices ? (additionalVCpu * upgradePrices.pricePerVCpu + additionalRamGB * upgradePrices.pricePerRamGB) : 0) +
+                      (selectedGamePackage.pricePerSlot && additionalSlots > 0 ? additionalSlots * selectedGamePackage.pricePerSlot : 0),
+                      selectedGamePackage.currency
                     )} bővítés
                   </p>
-                )}
+                ) : null}
               </div>
             </div>
           </div>
@@ -412,25 +423,30 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
               )}
             </div>
 
-            {/* Erőforrás bővítés - csak akkor jelenik meg, ha vannak bővítési árak beállítva */}
-            {upgradePrices && (upgradePrices.pricePerVCpu > 0 || upgradePrices.pricePerRamGB > 0) && (
+            {/* Erőforrás bővítés */}
+            {(upgradePrices && (upgradePrices.pricePerVCpu > 0 || upgradePrices.pricePerRamGB > 0)) || selectedGamePackage.pricePerSlot ? (
             <div className="border-t pt-5 mt-5">
               <h3 className="text-lg font-bold text-gray-900 mb-4">Erőforrás Bővítés (Opcionális)</h3>
               <p className="text-sm text-gray-600 mb-4">
                 Bővítsd a szervered erőforrásait a GamePackage alapértelmezett értékei felett.
               </p>
               
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid md:grid-cols-3 gap-4">
+                {upgradePrices && upgradePrices.pricePerVCpu > 0 && (
                 <div>
                   <label htmlFor="additionalVCpu" className="block text-sm font-medium text-gray-900 mb-2">
-                    További vCPU (jelenleg: {selectedGamePackage.cpuCores} vCPU)
+                    További vCPU (jelenleg: {selectedGamePackage.cpuCores} vCPU, max: {MAX_VCPU})
                   </label>
                   <input
                     type="number"
                     id="additionalVCpu"
                     min="0"
+                    max={MAX_VCPU - selectedGamePackage.cpuCores}
                     value={additionalVCpu}
-                    onChange={(e) => setAdditionalVCpu(Math.max(0, parseInt(e.target.value) || 0))}
+                    onChange={(e) => {
+                      const value = Math.max(0, Math.min(MAX_VCPU - selectedGamePackage.cpuCores, parseInt(e.target.value) || 0));
+                      setAdditionalVCpu(value);
+                    }}
                     className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white text-base font-medium"
                     placeholder="0"
                   />
@@ -440,17 +456,23 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
                     </p>
                   )}
                 </div>
+                )}
 
+                {upgradePrices && upgradePrices.pricePerRamGB > 0 && (
                 <div>
                   <label htmlFor="additionalRamGB" className="block text-sm font-medium text-gray-900 mb-2">
-                    További RAM GB (jelenleg: {selectedGamePackage.ram} GB)
+                    További RAM GB (jelenleg: {selectedGamePackage.ram} GB, max: {MAX_RAM_GB} GB)
                   </label>
                   <input
                     type="number"
                     id="additionalRamGB"
                     min="0"
+                    max={MAX_RAM_GB - selectedGamePackage.ram}
                     value={additionalRamGB}
-                    onChange={(e) => setAdditionalRamGB(Math.max(0, parseInt(e.target.value) || 0))}
+                    onChange={(e) => {
+                      const value = Math.max(0, Math.min(MAX_RAM_GB - selectedGamePackage.ram, parseInt(e.target.value) || 0));
+                      setAdditionalRamGB(value);
+                    }}
                     className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white text-base font-medium"
                     placeholder="0"
                   />
@@ -460,15 +482,43 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
                     </p>
                   )}
                 </div>
+                )}
+
+                {selectedGamePackage.pricePerSlot && (
+                <div>
+                  <label htmlFor="additionalSlots" className="block text-sm font-medium text-gray-900 mb-2">
+                    További Slot (jelenleg: {selectedGamePackage.slot}, max: {MAX_SLOTS})
+                  </label>
+                  <input
+                    type="number"
+                    id="additionalSlots"
+                    min="0"
+                    max={MAX_SLOTS - selectedGamePackage.slot}
+                    value={additionalSlots}
+                    onChange={(e) => {
+                      const value = Math.max(0, Math.min(MAX_SLOTS - selectedGamePackage.slot, parseInt(e.target.value) || 0));
+                      setAdditionalSlots(value);
+                    }}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white text-base font-medium"
+                    placeholder="0"
+                  />
+                  {selectedGamePackage.pricePerSlot && additionalSlots > 0 && (
+                    <p className="text-xs text-gray-600 mt-1">
+                      +{formatPrice(additionalSlots * selectedGamePackage.pricePerSlot, selectedGamePackage.currency)}/hó
+                    </p>
+                  )}
+                </div>
+                )}
               </div>
 
-              {(additionalVCpu > 0 || additionalRamGB > 0) && upgradePrices && (
+              {((additionalVCpu > 0 || additionalRamGB > 0) && upgradePrices) || (additionalSlots > 0 && selectedGamePackage.pricePerSlot) ? (
                 <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                   <p className="text-sm font-semibold text-blue-900 mb-1">Bővítési költség:</p>
                   <p className="text-lg font-bold text-blue-700">
                     {formatPrice(
-                      additionalVCpu * upgradePrices.pricePerVCpu + additionalRamGB * upgradePrices.pricePerRamGB,
-                      upgradePrices.currency
+                      (upgradePrices ? (additionalVCpu * upgradePrices.pricePerVCpu + additionalRamGB * upgradePrices.pricePerRamGB) : 0) +
+                      (selectedGamePackage.pricePerSlot && additionalSlots > 0 ? additionalSlots * selectedGamePackage.pricePerSlot : 0),
+                      selectedGamePackage.currency
                     )}/hó
                   </p>
                 </div>

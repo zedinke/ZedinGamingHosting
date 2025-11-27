@@ -22,6 +22,7 @@ const gamePackageSchema = z.object({
   cpuCores: z.number().int().min(1, 'CPU vCore szám megadása kötelező'),
   ram: z.number().int().min(1, 'RAM mennyiség megadása kötelező'),
   discountPrice: z.number().min(0).optional().nullable(),
+  pricePerSlot: z.number().min(0).optional().nullable(),
   isActive: z.boolean(),
   order: z.number().int().min(0),
 });
@@ -42,6 +43,7 @@ interface GamePackage {
   cpuCores: number;
   ram: number;
   discountPrice: number | null;
+  pricePerSlot: number | null;
   isActive: boolean;
   order: number;
 }
@@ -105,6 +107,7 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
           cpuCores: packageData.cpuCores,
           ram: packageData.ram,
           discountPrice: packageData.discountPrice,
+          pricePerSlot: packageData.pricePerSlot,
           isActive: packageData.isActive,
           order: packageData.order,
         }
@@ -121,6 +124,7 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
           cpuCores: 2,
           ram: 4,
           discountPrice: null,
+          pricePerSlot: null,
           isActive: true,
           order: 0,
         },
@@ -458,6 +462,31 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
                 step="0.01"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white"
               />
+            </div>
+          </div>
+        </div>
+
+        {/* Bővítési árak */}
+        <div>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Bővítési Árak</h2>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="pricePerSlot" className="block text-sm font-semibold text-gray-900 mb-1">
+                Slot bővítés ára (havonta, opcionális)
+              </label>
+              <input
+                {...register('pricePerSlot', { valueAsNumber: true })}
+                type="number"
+                id="pricePerSlot"
+                min="0"
+                step="0.01"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white"
+                placeholder="0"
+              />
+              <p className="text-xs text-gray-600 mt-1 font-medium">
+                Ha be van állítva, a felhasználók rendeléskor bővíthetik a slot számot (max 50 slot-ig). 
+                Az ár havonta vonatkozik a bővített slotokra.
+              </p>
             </div>
           </div>
         </div>

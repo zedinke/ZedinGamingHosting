@@ -66,6 +66,7 @@ export async function POST(request: NextRequest) {
       cpuCores,
       ram,
       discountPrice,
+      pricePerSlot,
       isActive = true,
       order = 0,
     } = body;
@@ -92,6 +93,7 @@ export async function POST(request: NextRequest) {
         cpuCores: parseInt(cpuCores),
         ram: parseInt(ram),
         discountPrice: discountPrice ? parseFloat(discountPrice) : null,
+        pricePerSlot: pricePerSlot ? parseFloat(pricePerSlot) : null,
         isActive,
         order: parseInt(order) || 0,
       },

@@ -17,7 +17,7 @@ export const POST = withPerformanceMonitoring(
       }
 
       const body = await request.json();
-      const { name, gameType, gamePackageId, billingInfo, additionalVCpu, additionalRamGB } = body;
+      const { name, gameType, gamePackageId, billingInfo, additionalVCpu, additionalRamGB, additionalSlots } = body;
 
       // Validáció
       if (!name || !gameType) {
@@ -45,14 +45,32 @@ export const POST = withPerformanceMonitoring(
         );
       }
 
-      const finalMaxPlayers = gamePackage.slot;
+      const additionalVCpuValue = additionalVCpu || 0;
+      const additionalRamGBValue = additionalRamGB || 0;
+      const additionalSlotsValue = additionalSlots || 0;
+      
+      // Maximum értékek validálása
+      const MAX_RAM_GB = 30;
+      const MAX_VCPU = 20;
+      const MAX_SLOTS = 50;
+      
+      if (gamePackage.ram + additionalRamGBValue > MAX_RAM_GB) {
+        throw createValidationError('form', `A RAM nem lehet nagyobb ${MAX_RAM_GB} GB-nál`);
+      }
+      if (gamePackage.cpuCores + additionalVCpuValue > MAX_VCPU) {
+        throw createValidationError('form', `A vCPU nem lehet nagyobb ${MAX_VCPU}-nál`);
+      }
+      if (gamePackage.slot + additionalSlotsValue > MAX_SLOTS) {
+        throw createValidationError('form', `A slot szám nem lehet nagyobb ${MAX_SLOTS}-nál`);
+      }
+
+      const finalMaxPlayers = gamePackage.slot + additionalSlotsValue;
       const basePrice = gamePackage.discountPrice || gamePackage.price;
       const finalCurrency = gamePackage.currency;
 
       // Bővítési árak lekérése és költség számítása
       let upgradeCost = 0;
-      const additionalVCpuValue = additionalVCpu || 0;
-      const additionalRamGBValue = additionalRamGB || 0;
+      let slotUpgradeCost = 0;
 
       if (additionalVCpuValue > 0 || additionalRamGBValue > 0) {
         const [pricePerVCpuSetting, pricePerRamGBSetting] = await Promise.all([
@@ -66,7 +84,12 @@ export const POST = withPerformanceMonitoring(
         upgradeCost = (additionalVCpuValue * pricePerVCpu) + (additionalRamGBValue * pricePerRamGB);
       }
 
-      const finalPrice = basePrice + upgradeCost;
+      // Slot bővítési költség számítása
+      if (additionalSlotsValue > 0 && gamePackage.pricePerSlot) {
+        slotUpgradeCost = additionalSlotsValue * gamePackage.pricePerSlot;
+      }
+
+      const finalPrice = basePrice + upgradeCost + slotUpgradeCost;
 
       logger.info('Server order request', {
         userId: (session.user as any).id,
@@ -90,15 +113,18 @@ export const POST = withPerformanceMonitoring(
         port,
         // Game package specifikációk mentése a konfigurációba (bővített értékekkel)
         configuration: {
-          slot: gamePackage.slot,
-          cpuCores: gamePackage.cpuCores + (additionalVCpuValue || 0),
-          ram: gamePackage.ram + (additionalRamGBValue || 0),
+          slot: gamePackage.slot + additionalSlotsValue,
+          cpuCores: gamePackage.cpuCores + additionalVCpuValue,
+          ram: gamePackage.ram + additionalRamGBValue,
           gamePackageId: gamePackage.id,
+          baseSlot: gamePackage.slot,
           baseCpuCores: gamePackage.cpuCores,
           baseRam: gamePackage.ram,
-          additionalVCpu: additionalVCpuValue || 0,
-          additionalRamGB: additionalRamGBValue || 0,
+          additionalSlots: additionalSlotsValue,
+          additionalVCpu: additionalVCpuValue,
+          additionalRamGB: additionalRamGBValue,
           upgradeCost: upgradeCost,
+          slotUpgradeCost: slotUpgradeCost,
         },
       },
     });
@@ -173,6 +199,16 @@ export const POST = withPerformanceMonitoring(
           total: additionalRamGBValue * pricePerRamGB,
         });
       }
+    }
+
+    // Slot bővítési tétel hozzáadása
+    if (slotUpgradeCost > 0 && gamePackage.pricePerSlot) {
+      invoiceItems.push({
+        description: `Slot bővítés: +${additionalSlotsValue} slot`,
+        quantity: additionalSlotsValue,
+        unitPrice: gamePackage.pricePerSlot,
+        total: slotUpgradeCost,
+      });
     }
 
     const invoice = await prisma.invoice.create({

@@ -487,6 +487,7 @@ model GamePackage {
   cpuCores      Int // Fix CPU vCore szám
   ram           Int // Fix RAM mennyiség GB-ban
   discountPrice Float? // Akciós ár (opcionális)
+  pricePerSlot  Float? // Slot bővítés ára (játékonként külön beállítható)
   isActive      Boolean  @default(true) // Ha aktív, akkor megjelenik és rendelhető
   order         Int      @default(0) // Rendezési sorrend
   createdAt     DateTime @default(now())

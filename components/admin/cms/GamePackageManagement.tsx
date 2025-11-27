@@ -18,6 +18,7 @@ interface GamePackage {
   cpuCores: number;
   ram: number;
   discountPrice: number | null;
+  pricePerSlot: number | null;
   isActive: boolean;
   order: number;
   createdAt: Date;
