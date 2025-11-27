@@ -143,11 +143,8 @@ export function UserServerConfigEditor({
       // difficulty már definiálva van (Minecraft résznél)
       inittype: 'Init Típus',
       enableVAC: 'VAC Engedélyezve',
-      // Satisfactory
-      ServerName: 'Szerver Név',
-      ServerPassword: 'Szerver Jelszó',
-      AdminPassword: 'Admin Jelszó',
-      MaxPlayers: 'Max Játékosok',
+      // Satisfactory (megjegyzés: ServerName, ServerPassword, MaxPlayers már definiálva van ARK-nál)
+      // AdminPassword már definiálva van Palworld-nál
       GamePort: 'Játék Port',
       BeaconPort: 'Beacon Port',
       QueryPort: 'Query Port',
