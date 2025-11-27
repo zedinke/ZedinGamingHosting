@@ -1029,6 +1029,7 @@ export async function createSystemdServiceForServer(
   const port = (config.port && typeof config.port === 'number') ? config.port : 25565;
   const maxPlayers = (config.maxPlayers && typeof config.maxPlayers === 'number') ? config.maxPlayers : 10;
   const ram = (config.ram && typeof config.ram === 'number') ? config.ram : 2048;
+  const cpuCores = (config.cpuCores && typeof config.cpuCores === 'number') ? config.cpuCores : 1;
   // The Forest esetén a szerver nevet a konfigurációból vesszük (servername), ha nincs, akkor a config.name-t használjuk
   let name: string;
   if (gameType === 'THE_FOREST' && config.servername) {
@@ -1036,6 +1037,12 @@ export async function createSystemdServiceForServer(
   } else {
     name = (config.name && typeof config.name === 'string') ? config.name : `Server-${serverId}`;
   }
+  
+  // CPU és RAM limitációk számítása systemd-hez
+  // CPUQuota: 100% = 1 CPU core, 200% = 2 CPU core, stb.
+  const cpuQuota = `${cpuCores * 100}%`;
+  // MemoryLimit: RAM limitáció GB-ban (pl. "2G" = 2 GB)
+  const memoryLimit = `${ram}G`;
   
   // Ellenőrizzük, hogy a gameConfig létezik-e
   if (!gameConfig || typeof gameConfig !== 'object') {
@@ -1339,6 +1346,7 @@ bash -c "${escapedStartCommand}"
   
   // Systemd service fájl tartalom
   // Fontos: minden kulcs=érték pár egy sorban kell legyen, nincs sortörés
+  // CPU és RAM limitációk hozzáadása a GamePackage specifikációk alapján
   const serviceContent = `[Unit]
 Description=Game Server ${serverId} (${gameType})
 After=network.target
@@ -1352,6 +1360,13 @@ Restart=always
 RestartSec=10
 StandardOutput=journal
 StandardError=journal
+# CPU limitáció (100% = 1 CPU core, 200% = 2 CPU core, stb.)
+CPUQuota=${cpuQuota}
+# RAM limitáció (pl. "2G" = 2 GB RAM)
+MemoryLimit=${memoryLimit}
+MemoryMax=${memoryLimit}
+# További erőforrás limitációk
+TasksMax=1000
 
 [Install]
 WantedBy=multi-user.target`;

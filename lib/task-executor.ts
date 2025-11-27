@@ -316,17 +316,32 @@ async function executeStartTask(task: any): Promise<any> {
         }
       }
       
+      // GamePackage adatok lekérése, ha van gamePackageId a config-ban
+      let gamePackage = null;
+      if (config.gamePackageId) {
+        try {
+          gamePackage = await prisma.gamePackage.findUnique({
+            where: { id: config.gamePackageId },
+          });
+        } catch (error) {
+          console.warn('GamePackage lekérési hiba:', error);
+        }
+      }
+      
       // Biztosítjuk, hogy a szükséges mezők létezzenek - a szerver adatbázisból származó adatokat használjuk
+      // Ha van GamePackage, akkor az adatait használjuk (ezek a fizikai limitációk)
       const finalConfig = {
         port: config.port || server.port || 25565,
         maxPlayers: config.maxPlayers || server.maxPlayers || 10,
         name: config.name || server.name || `Server-${server.id}`,
-        ram: config.ram || 2048,
+        ram: gamePackage ? gamePackage.ram : (config.ram || 2048), // GamePackage RAM-ja vagy config RAM-ja
+        cpuCores: gamePackage ? gamePackage.cpuCores : (config.cpuCores || 1), // GamePackage CPU-ja vagy config CPU-ja
         world: config.world || 'Dedicated',
         password: config.password || '',
         adminPassword: config.adminPassword || 'changeme',
         map: config.map || 'TheIsland',
         clusterId: config.clusterId || '',
+        gamePackageId: config.gamePackageId || undefined,
         ...config, // Meglévő config mezők megtartása (felülírja az alapértelmezetteket, ha vannak)
       };
       

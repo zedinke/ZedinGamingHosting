@@ -60,18 +60,34 @@ export function GamePackageCard({ package: pkg, locale, onSelect }: GamePackageC
     >
       {/* Kép - 2/3 rész */}
       <div className="relative h-64 bg-gradient-to-br from-gray-100 to-gray-200">
-        {pkg.image ? (
-          <Image
+        {/* Placeholder - alapértelmezetten látható, ha nincs kép */}
+        <div className="image-placeholder absolute inset-0 w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-100 to-primary-200">
+          <span className="text-4xl font-bold text-primary-600">{getGameTypeLabel(pkg.gameType).charAt(0)}</span>
+        </div>
+        {/* Kép - ha van, akkor ezt mutatjuk */}
+        {pkg.image && (
+          <img
             src={pkg.image}
             alt={pkg.name}
-            fill
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="absolute inset-0 w-full h-full object-cover"
+            onError={(e) => {
+              // Ha a kép nem töltődik be, mutassunk placeholder-t
+              const target = e.target as HTMLImageElement;
+              target.style.display = 'none';
+              const placeholder = target.parentElement?.querySelector('.image-placeholder') as HTMLElement;
+              if (placeholder) {
+                placeholder.style.display = 'flex';
+              }
+            }}
+            onLoad={(e) => {
+              // Ha a kép sikeresen betöltődött, rejtsük el a placeholder-t
+              const target = e.target as HTMLImageElement;
+              const placeholder = target.parentElement?.querySelector('.image-placeholder') as HTMLElement;
+              if (placeholder) {
+                placeholder.style.display = 'none';
+              }
+            }}
           />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-100 to-primary-200">
-            <span className="text-4xl font-bold text-primary-600">{getGameTypeLabel(pkg.gameType).charAt(0)}</span>
-          </div>
         )}
         
         {/* Akció badge */}

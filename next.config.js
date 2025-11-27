@@ -21,8 +21,21 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'zedgaminghosting.hu',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'http',
+        hostname: 'zedgaminghosting.hu',
+        port: '',
+        pathname: '/**',
+      },
     ],
-    domains: ['localhost'],
+    domains: ['localhost', 'zedgaminghosting.hu'],
+    unoptimized: false,
   },
   // Server Actions are available by default in Next.js 14+
   // output: 'standalone', // Ideiglenesen kikapcsolva - standalone build hiányos route fájlokat tartalmaz
