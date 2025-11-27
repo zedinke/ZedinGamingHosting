@@ -94,15 +94,27 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
       set +e
       SERVER_DIR="/opt/servers/{serverId}"
       
+      # Először biztosítjuk, hogy az /opt/servers/ könyvtár létezik és megfelelő jogosultságokkal
+      mkdir -p /opt/servers
+      chmod 755 /opt/servers || true
+      chown root:root /opt/servers 2>/dev/null || true
+      
       # Könyvtár létrehozása megfelelő jogosultságokkal
       mkdir -p "$SERVER_DIR"
+      # Előre létrehozzuk a server/ alkönyvtárat is, mert a SteamCMD nem tudja létrehozni
+      mkdir -p "$SERVER_DIR/server"
       # Biztosítjuk, hogy a root írni tudjon (SteamCMD root-ként fut)
       chmod 755 "$SERVER_DIR" || true
-      # Ha van gameserver user, akkor neki is adjunk jogot
-      if id "gameserver" &>/dev/null; then
-        chown -R gameserver:gameserver "$SERVER_DIR" 2>/dev/null || true
-        chmod -R 755 "$SERVER_DIR" || true
-      fi
+      chmod 755 "$SERVER_DIR/server" || true
+      chown -R root:root "$SERVER_DIR" 2>/dev/null || true
+      
+      # Ellenőrizzük a jogosultságokat
+      echo "Szülőkönyvtár (/opt/servers) jogosultságok:"
+      ls -ld /opt/servers || true
+      echo "Szerver könyvtár jogosultságok:"
+      ls -ld "$SERVER_DIR" || true
+      echo "Server alkönyvtár jogosultságok:"
+      ls -ld "$SERVER_DIR/server" || true
       
       cd "$SERVER_DIR"
       
