@@ -275,101 +275,101 @@ function protectConfigFields(
   port: number | null,
   maxPlayers: number
 ): string {
-  let protected = content;
+  let protectedContent = content;
 
   // Játék specifikus védelem
   switch (gameType) {
     case 'MINECRAFT':
       // server-ip és server-port védelem
       if (ipAddress) {
-        protected = protected.replace(/^server-ip=.*$/m, `server-ip=${ipAddress}`);
+        protectedContent = protectedContent.replace(/^server-ip=.*$/m, `server-ip=${ipAddress}`);
       }
       if (port) {
-        protected = protected.replace(/^server-port=.*$/m, `server-port=${port}`);
+        protectedContent = protectedContent.replace(/^server-port=.*$/m, `server-port=${port}`);
       }
-      protected = protected.replace(/^max-players=.*$/m, `max-players=${maxPlayers}`);
+      protectedContent = protectedContent.replace(/^max-players=.*$/m, `max-players=${maxPlayers}`);
       break;
 
     case 'ARK_EVOLVED':
     case 'ARK_ASCENDED':
       // ServerIP és ServerPort védelem
       if (ipAddress) {
-        protected = protected.replace(/^ServerIP=.*$/m, `ServerIP=${ipAddress}`);
+        protectedContent = protectedContent.replace(/^ServerIP=.*$/m, `ServerIP=${ipAddress}`);
       }
       if (port) {
-        protected = protected.replace(/^ServerPort=.*$/m, `ServerPort=${port}`);
+        protectedContent = protectedContent.replace(/^ServerPort=.*$/m, `ServerPort=${port}`);
       }
-      protected = protected.replace(/^MaxPlayers=.*$/m, `MaxPlayers=${maxPlayers}`);
+      protectedContent = protectedContent.replace(/^MaxPlayers=.*$/m, `MaxPlayers=${maxPlayers}`);
       break;
 
     case 'RUST':
       // server.ip és server.port védelem
       if (ipAddress) {
-        protected = protected.replace(/^server\.ip\s+".*"$/m, `server.ip "${ipAddress}"`);
+        protectedContent = protectedContent.replace(/^server\.ip\s+".*"$/m, `server.ip "${ipAddress}"`);
       }
       if (port) {
-        protected = protected.replace(/^server\.port\s+\d+$/m, `server.port ${port}`);
+        protectedContent = protectedContent.replace(/^server\.port\s+\d+$/m, `server.port ${port}`);
       }
-      protected = protected.replace(/^server\.maxplayers\s+\d+$/m, `server.maxplayers ${maxPlayers}`);
+      protectedContent = protectedContent.replace(/^server\.maxplayers\s+\d+$/m, `server.maxplayers ${maxPlayers}`);
       break;
 
     case 'PALWORLD':
       // PublicIP és PublicPort védelem
       if (ipAddress) {
-        protected = protected.replace(/^PublicIP=.*$/m, `PublicIP=${ipAddress}`);
+        protectedContent = protectedContent.replace(/^PublicIP=.*$/m, `PublicIP=${ipAddress}`);
       }
       if (port) {
-        protected = protected.replace(/^PublicPort=.*$/m, `PublicPort=${port}`);
+        protectedContent = protectedContent.replace(/^PublicPort=.*$/m, `PublicPort=${port}`);
       }
-      protected = protected.replace(/^MaxPlayers=.*$/m, `MaxPlayers=${maxPlayers}`);
+      protectedContent = protectedContent.replace(/^MaxPlayers=.*$/m, `MaxPlayers=${maxPlayers}`);
       break;
 
     case 'CSGO':
     case 'CS2':
       // ip és port védelem
       if (ipAddress) {
-        protected = protected.replace(/^ip\s+".*"$/m, `ip "${ipAddress}"`);
+        protectedContent = protectedContent.replace(/^ip\s+".*"$/m, `ip "${ipAddress}"`);
       }
       if (port) {
-        protected = protected.replace(/^hostport\s+\d+$/m, `hostport ${port}`);
+        protectedContent = protectedContent.replace(/^hostport\s+\d+$/m, `hostport ${port}`);
       }
-      protected = protected.replace(/^maxplayers\s+\d+$/m, `maxplayers ${maxPlayers}`);
+      protectedContent = protectedContent.replace(/^maxplayers\s+\d+$/m, `maxplayers ${maxPlayers}`);
       break;
 
     case 'SEVEN_DAYS_TO_DIE':
       // ServerPort védelem
       if (port) {
-        protected = protected.replace(/<property\s+name="ServerPort"\s+value="[^"]*"\/>/g, `<property name="ServerPort" value="${port}"/>`);
+        protectedContent = protectedContent.replace(/<property\s+name="ServerPort"\s+value="[^"]*"\/>/g, `<property name="ServerPort" value="${port}"/>`);
       }
-      protected = protected.replace(/<property\s+name="ServerMaxPlayerCount"\s+value="[^"]*"\/>/g, `<property name="ServerMaxPlayerCount" value="${maxPlayers}"/>`);
+      protectedContent = protectedContent.replace(/<property\s+name="ServerMaxPlayerCount"\s+value="[^"]*"\/>/g, `<property name="ServerMaxPlayerCount" value="${maxPlayers}"/>`);
       break;
 
     case 'VALHEIM':
       // Port védelem a start script-ben
       if (port) {
-        protected = protected.replace(/-port\s+\d+/g, `-port ${port}`);
+        protectedContent = protectedContent.replace(/-port\s+\d+/g, `-port ${port}`);
       }
       break;
 
     case 'SATISFACTORY':
       // GamePort védelem
       if (port) {
-        protected = protected.replace(/GamePort=\d+/g, `GamePort=${port}`);
+        protectedContent = protectedContent.replace(/GamePort=\d+/g, `GamePort=${port}`);
       }
-      protected = protected.replace(/MaxPlayers=\d+/g, `MaxPlayers=${maxPlayers}`);
+      protectedContent = protectedContent.replace(/MaxPlayers=\d+/g, `MaxPlayers=${maxPlayers}`);
       break;
 
     default:
       // Általános védelem - próbáljuk meg megtalálni az IP, port és maxPlayers mezőket
       if (ipAddress) {
-        protected = protected.replace(/(?:ip|IP|server-ip|ServerIP|PublicIP)\s*[=:]\s*[^\s\n]+/gi, `IP=${ipAddress}`);
+        protectedContent = protectedContent.replace(/(?:ip|IP|server-ip|ServerIP|PublicIP)\s*[=:]\s*[^\s\n]+/gi, `IP=${ipAddress}`);
       }
       if (port) {
-        protected = protected.replace(/(?:port|Port|server-port|ServerPort|PublicPort|hostport)\s*[=:]\s*\d+/gi, `Port=${port}`);
+        protectedContent = protectedContent.replace(/(?:port|Port|server-port|ServerPort|PublicPort|hostport)\s*[=:]\s*\d+/gi, `Port=${port}`);
       }
-      protected = protected.replace(/(?:max-players|MaxPlayers|maxplayers|server\.maxplayers)\s*[=:]\s*\d+/gi, `MaxPlayers=${maxPlayers}`);
+      protectedContent = protectedContent.replace(/(?:max-players|MaxPlayers|maxplayers|server\.maxplayers)\s*[=:]\s*\d+/gi, `MaxPlayers=${maxPlayers}`);
   }
 
-  return protected;
+  return protectedContent;
 }
 
