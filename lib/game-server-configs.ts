@@ -94,15 +94,37 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
       set +e
       SERVER_DIR="/opt/servers/{serverId}"
       
+      # Ellenőrizzük, hogy root-ként futunk-e
+      CURRENT_USER=$(whoami)
+      CURRENT_UID=$(id -u)
+      echo "Jelenlegi felhasználó: $CURRENT_USER (UID: $CURRENT_UID)"
+      
+      if [ "$CURRENT_UID" != "0" ]; then
+        echo "FIGYELMEZTETÉS: Nem root-ként futunk! (UID: $CURRENT_UID)" >&2
+      fi
+      
       # Minden könyvtárat root tulajdonba teszünk, mivel root-ként futunk mindent
       mkdir -p /opt/servers
       chmod 755 /opt/servers
       chown root:root /opt/servers
       
+      # Ellenőrizzük a /opt/servers könyvtár jogosultságait
+      echo "Jogosultságok ellenőrzése:"
+      ls -ld /opt/servers || true
+      
       # Szerver könyvtár létrehozása root tulajdonban
       mkdir -p "$SERVER_DIR/server"
       chmod -R 755 "$SERVER_DIR"
       chown -R root:root "$SERVER_DIR"
+      
+      # Ellenőrizzük a szerver könyvtár jogosultságait
+      echo "Szerver könyvtár jogosultságok:"
+      ls -ld "$SERVER_DIR" || true
+      ls -ld "$SERVER_DIR/server" || true
+      
+      # Teszteljük, hogy írhatunk-e a könyvtárba
+      echo "Írási teszt a könyvtárba..."
+      touch "$SERVER_DIR/.write_test" 2>&1 && rm -f "$SERVER_DIR/.write_test" && echo "Írási teszt sikeres" || echo "Írási teszt SIKERTELEN" >&2
       
       cd "$SERVER_DIR"
       
@@ -123,9 +145,34 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         chown -R root:root "$SERVER_DIR"
         chmod -R 755 "$SERVER_DIR"
         
-        # SteamCMD futtatása - root-ként futunk, így nincs jogosultsági probléma
-        /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 258550 validate +quit
+        # SteamCMD home könyvtár létrehozása és jogosultságok beállítása
+        STEAM_HOME="/tmp/steamcmd-home-$$"
+        mkdir -p "$STEAM_HOME"
+        chown -R root:root "$STEAM_HOME"
+        chmod -R 755 "$STEAM_HOME"
+        
+        # Ellenőrizzük, hogy a SteamCMD létezik-e és végrehajtható-e
+        if [ ! -f /opt/steamcmd/steamcmd.sh ]; then
+          echo "HIBA: SteamCMD nem található: /opt/steamcmd/steamcmd.sh" >&2
+          exit 1
+        fi
+        
+        # Ellenőrizzük a SteamCMD jogosultságait
+        if [ ! -x /opt/steamcmd/steamcmd.sh ]; then
+          chmod +x /opt/steamcmd/steamcmd.sh
+        fi
+        
+        # Ellenőrizzük a /opt/steamcmd könyvtár jogosultságait
+        chown -R root:root /opt/steamcmd 2>/dev/null || true
+        chmod -R 755 /opt/steamcmd 2>/dev/null || true
+        
+        # SteamCMD futtatása ideiglenes HOME könyvtárral
+        # Ez biztosítja, hogy a SteamCMD nem használja a /root/.local/share/Steam/ könyvtárat
+        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 258550 validate +quit
         EXIT_CODE=$?
+        
+        # Ideiglenes Steam home könyvtár törlése
+        rm -rf "$STEAM_HOME" 2>/dev/null || true
         
         # Letöltött fájlok jogosultságainak beállítása (root tulajdonban maradnak)
         if [ -d "$SERVER_DIR/server" ]; then
