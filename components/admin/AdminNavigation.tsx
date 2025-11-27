@@ -22,6 +22,7 @@ import {
   Menu,
   X,
   Network,
+  MessageSquare,
 } from 'lucide-react';
 
 interface AdminNavigationProps {
@@ -45,6 +46,7 @@ export function AdminNavigation({ locale }: AdminNavigationProps) {
 
   const menuItems = [
     { href: `/${locale}/admin`, label: 'Vezérlőpult', icon: LayoutDashboard },
+    { href: `/${locale}/admin/ai-chat`, label: 'AI Chat', icon: MessageSquare },
     { href: `/${locale}/admin/monitoring`, label: 'Monitoring', icon: BarChart3 },
     { href: `/${locale}/admin/performance`, label: 'Performance', icon: BarChart3 },
     { href: `/${locale}/admin/reports`, label: 'Jelentések', icon: BarChart3 },

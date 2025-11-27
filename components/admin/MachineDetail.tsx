@@ -51,6 +51,7 @@ interface MachineDetailProps {
 export function MachineDetail({ machine, locale }: MachineDetailProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isInstallingAgent, setIsInstallingAgent] = useState(false);
+  const [isInstallingAI, setIsInstallingAI] = useState(false);
   const [isReinstallingAgent, setIsReinstallingAgent] = useState(false);
   const [isTestingSSH, setIsTestingSSH] = useState(false);
   const [formData, setFormData] = useState({
@@ -182,6 +183,41 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
       toast.error('Hiba történt az SSH tesztelése során');
     } finally {
       setIsTestingSSH(false);
+    }
+  };
+
+  const handleInstallAI = async () => {
+    if (!confirm('Biztosan telepíteni szeretnéd az AI rendszert erre a gépre? Ez eltarthat néhány percig, ha a modellt letölti.')) {
+      return;
+    }
+
+    setIsInstallingAI(true);
+
+    try {
+      const response = await fetch(`/api/admin/machines/${machine.id}/install-ai`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        toast.error(result.error || 'AI telepítés sikertelen');
+        if (result.logs && result.logs.length > 0) {
+          console.log('AI telepítési logok:', result.logs);
+        }
+        return;
+      }
+
+      toast.success('AI rendszer sikeresen telepítve!');
+      if (result.logs && result.logs.length > 0) {
+        console.log('AI telepítési logok:', result.logs);
+      }
+    } catch (error) {
+      console.error('AI telepítési hiba:', error);
+      toast.error('Hiba történt az AI telepítése során');
+    } finally {
+      setIsInstallingAI(false);
     }
   };
 
@@ -460,6 +496,14 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
               {isInstallingAgent ? 'Telepítés...' : 'Agent Telepítés'}
             </button>
           )}
+          <button
+            onClick={handleInstallAI}
+            disabled={isInstallingAI}
+            className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed ml-2"
+            title="AI rendszer telepítése (Ollama + modell) - nem szükséges újratelepíteni az agentet"
+          >
+            {isInstallingAI ? 'AI Telepítés...' : '🤖 AI Telepítés'}
+          </button>
           {machine.agents.length > 0 && (
             <button
               onClick={handleReinstallAgent}

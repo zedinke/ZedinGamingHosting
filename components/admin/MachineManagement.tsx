@@ -91,6 +91,46 @@ export function MachineManagement({
   };
 
   const [installingAgents, setInstallingAgents] = useState<Set<string>>(new Set());
+  const [installingAI, setInstallingAI] = useState<Set<string>>(new Set());
+
+  const handleInstallAI = async (machineId: string) => {
+    if (!confirm('Biztosan telepíteni szeretnéd az AI rendszert erre a gépre? Ez eltarthat néhány percig, ha a modellt letölti.')) {
+      return;
+    }
+
+    setInstallingAI((prev) => new Set(prev).add(machineId));
+
+    try {
+      const response = await fetch(`/api/admin/machines/${machineId}/install-ai`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        toast.error(result.error || 'AI telepítés sikertelen');
+        if (result.logs && result.logs.length > 0) {
+          console.log('AI telepítési logok:', result.logs);
+        }
+        return;
+      }
+
+      toast.success('AI rendszer sikeresen telepítve!');
+      if (result.logs && result.logs.length > 0) {
+        console.log('AI telepítési logok:', result.logs);
+      }
+    } catch (error) {
+      console.error('AI telepítési hiba:', error);
+      toast.error('Hiba történt az AI telepítése során');
+    } finally {
+      setInstallingAI((prev) => {
+        const next = new Set(prev);
+        next.delete(machineId);
+        return next;
+      });
+    }
+  };
 
   const handleInstallAgent = async (machineId: string) => {
     if (!confirm('Biztosan telepíteni szeretnéd az agentet erre a gépre?')) {
@@ -359,7 +399,7 @@ export function MachineManagement({
                       : '-'}
                   </td>
                   <td className="p-3">
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap">
                       <Link
                         href={`/${locale}/admin/machines/${machine.id}`}
                         className="text-primary-600 hover:text-primary-700 hover:underline text-sm font-medium"
@@ -375,6 +415,14 @@ export function MachineManagement({
                           {installingAgents.has(machine.id) ? 'Telepítés...' : 'Agent telepítés'}
                         </button>
                       )}
+                      <button
+                        onClick={() => handleInstallAI(machine.id)}
+                        disabled={installingAI.has(machine.id)}
+                        className="text-purple-600 hover:text-purple-700 hover:underline text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="AI rendszer telepítése (Ollama + modell) - nem szükséges újratelepíteni az agentet"
+                      >
+                        {installingAI.has(machine.id) ? 'AI Telepítés...' : '🤖 AI Telepítés'}
+                      </button>
                     </div>
                   </td>
                 </tr>

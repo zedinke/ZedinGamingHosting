@@ -636,6 +636,69 @@ else
     echo "Service logok:" >&2
     $SUDO_CMD journalctl -u game-server-agent -n 20 --no-pager >&2 || true
 fi
+
+# AI Rendszer automatikus telepítése (szerver gép)
+echo ""
+echo "=== AI Rendszer automatikus telepítése ==="
+echo "🤖 AI Server Agent telepítése..."
+
+# Ollama telepítése (ha nincs)
+if ! command -v ollama &> /dev/null; then
+    echo "📦 Ollama telepítése..."
+    curl -fsSL https://ollama.com/install.sh | $SUDO_CMD -E bash - || {
+        echo "⚠️  Ollama telepítési figyelmeztetés (nem kritikus)" >&2
+    }
+    # Ollama service indítása
+    $SUDO_CMD systemctl start ollama 2>/dev/null || {
+        echo "⚠️  Ollama service indítás figyelmeztetés (nem kritikus)" >&2
+    }
+    $SUDO_CMD systemctl enable ollama 2>/dev/null || true
+    sleep 5
+fi
+
+# Ollama elérhetőség ellenőrzése
+OLLAMA_URL="http://localhost:11434"
+AI_SERVER_MODEL="${AI_SERVER_MODEL:-llama3.2:3b}"
+
+# Export környezeti változók az AI rendszerhez
+export AI_SERVER_MODE=true
+export OLLAMA_URL="$OLLAMA_URL"
+export AI_SERVER_MODEL="$AI_SERVER_MODEL"
+
+echo "🔍 Ollama elérhetőség ellenőrzése..."
+for i in {1..12}; do
+    if curl -s -f "$OLLAMA_URL/api/tags" > /dev/null 2>&1; then
+        echo "✅ Ollama elérhető!"
+        break
+    fi
+    if [ $i -eq 12 ]; then
+        echo "⚠️  Ollama nem elérhető (nem kritikus, később is telepíthető)" >&2
+    else
+        sleep 5
+    fi
+done
+
+# Modell letöltése (ha Ollama elérhető)
+if curl -s -f "$OLLAMA_URL/api/tags" > /dev/null 2>&1; then
+    echo "🔍 Modell ellenőrzése: $AI_SERVER_MODEL..."
+    MODEL_EXISTS=$(curl -s "$OLLAMA_URL/api/tags" | grep -o "$AI_SERVER_MODEL" || echo "")
+    
+    if [ -z "$MODEL_EXISTS" ]; then
+        echo "📥 Modell letöltése: $AI_SERVER_MODEL (ez eltarthat néhány percig)..."
+        curl -X POST "$OLLAMA_URL/api/pull" \
+            -H "Content-Type: application/json" \
+            -d "{\"name\": \"$AI_SERVER_MODEL\", \"stream\": false}" > /dev/null 2>&1 || {
+            echo "⚠️  Modell letöltési figyelmeztetés (nem kritikus)" >&2
+        }
+        echo "✅ Modell letöltése befejezve"
+    else
+        echo "✅ Modell már letöltve: $AI_SERVER_MODEL"
+    fi
+fi
+
+echo "🎉 AI rendszer telepítés kész!"
+echo "✅ Környezet: Szerver gép"
+echo "✅ Modell: $AI_SERVER_MODEL"
 `;
 }
 

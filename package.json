@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "postinstall": "node scripts/create-uploads-dirs.js && node scripts/setup-ollama.js",
+    "postinstall": "node scripts/create-uploads-dirs.js && node scripts/setup-ollama.js && node scripts/setup-ai-system.js",
     "build": "next build && node scripts/copy-public-to-standalone.js",
     "start": "node scripts/setup-ollama.js && next start",
     "lint": "next lint",
@@ -15,7 +15,9 @@
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
     "setup:ollama": "node scripts/setup-ollama.js",
-    "test:chat": "node scripts/test-chat-api.js"
+    "test:chat": "node scripts/test-chat-api.js",
+    "test:game-installations": "tsx scripts/test-game-installations.ts",
+    "test:game-configs": "tsx scripts/test-game-installations-dry-run.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.940.0",

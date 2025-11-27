@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { UserRole } from '@prisma/client';
-import { exec } from 'child_process';
+import { exec, spawn } from 'child_process';
 import { promisify } from 'util';
 import { writeFile, readFile, appendFile, unlink } from 'fs/promises';
 import { join, resolve } from 'path';
@@ -651,6 +651,32 @@ async function startUpdateProcess() {
             }
           } catch (copyError: any) {
             await appendLog(`  ⚠️  Public fájlok másolása figyelmeztetés: ${copyError.message}`);
+            // Not critical, continue
+          }
+
+          // AI rendszer automatikus telepítése (központi gép)
+          try {
+            await appendLog('  - AI rendszer telepítése...');
+            await writeProgress({
+              status: 'in_progress',
+              message: 'AI rendszer telepítése...',
+              progress: 85,
+              currentStep: 'ai_setup',
+            });
+            
+            try {
+              await execAsync('node scripts/setup-ai-system.js', {
+                cwd: PROJECT_ROOT,
+                timeout: 300000, // 5 perc timeout (modell letöltés miatt)
+                env: { ...process.env, AI_SERVER_MODE: 'false' } as any,
+              });
+              await appendLog('  ✓ AI rendszer telepítve');
+            } catch (aiError: any) {
+              await appendLog(`  ⚠️  AI telepítés figyelmeztetés: ${aiError.message}`);
+              // Not critical, continue - az AI funkciók később is működhetnek
+            }
+          } catch (aiSetupError: any) {
+            await appendLog(`  ⚠️  AI telepítés kihagyva: ${aiSetupError.message}`);
             // Not critical, continue
           }
         } catch (error: any) {
