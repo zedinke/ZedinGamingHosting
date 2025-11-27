@@ -323,7 +323,7 @@ Válaszolj JSON formátumban:
 
     return result;
   } catch (error: any) {
-    logger.error('AI hibakeresés hiba', error);
+    logger.error('AI hibakeresés hiba', error instanceof Error ? error : new Error(String(error)));
     throw error;
   }
 }

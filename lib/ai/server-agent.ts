@@ -108,7 +108,7 @@ Válaszolj JSON formátumban:
 
     return result;
   } catch (error: any) {
-    logger.error('AI rendszer elemzés hiba', error);
+    logger.error('AI rendszer elemzés hiba', error instanceof Error ? error : new Error(String(error)));
     throw error;
   }
 }
@@ -240,7 +240,7 @@ Válaszolj JSON formátumban:
 
     return result;
   } catch (error: any) {
-    logger.error('AI prediktív karbantartás hiba', error);
+    logger.error('AI prediktív karbantartás hiba', error instanceof Error ? error : new Error(String(error)));
     throw error;
   }
 }
@@ -297,7 +297,7 @@ Válaszolj JSON formátumban:
     logger.info('AI automatikus javítás javaslat kész', { issue: issue.message });
     return result;
   } catch (error: any) {
-    logger.error('AI automatikus javítás javaslat hiba', error);
+    logger.error('AI automatikus javítás javaslat hiba', error instanceof Error ? error : new Error(String(error)));
     throw error;
   }
 }

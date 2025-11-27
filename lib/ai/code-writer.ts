@@ -139,8 +139,8 @@ export async function generateCode(
     if (useWebSearch) {
       try {
         webContext = await searchAndFormatContext(prompt, 3);
-      } catch (error) {
-        logger.warn('Web keresés hiba, folytatás nélküle', error);
+      } catch (error: any) {
+        logger.warn('Web keresés hiba, folytatás nélküle', { error: error?.message || String(error) });
       }
     }
 
@@ -252,8 +252,8 @@ export async function autoFixCode(
       try {
         const searchQuery = issues.map(i => i.message).join(' ');
         webContext = await searchAndFormatContext(searchQuery, 2);
-      } catch (error) {
-        logger.warn('Web keresés hiba, folytatás nélküle', error);
+      } catch (error: any) {
+        logger.warn('Web keresés hiba, folytatás nélküle', { error: error?.message || String(error) });
       }
     }
 

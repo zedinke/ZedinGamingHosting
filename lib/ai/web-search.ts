@@ -64,7 +64,7 @@ async function searchDuckDuckGo(query: string, maxResults: number = 5): Promise<
 
     return results;
   } catch (error: any) {
-    logger.error('DuckDuckGo search error', error);
+    logger.error('DuckDuckGo search error', error instanceof Error ? error : new Error(String(error)));
     return [];
   }
 }
@@ -106,7 +106,7 @@ async function searchGoogle(query: string, maxResults: number = 5): Promise<Sear
 
     return results;
   } catch (error: any) {
-    logger.error('Google Search API error', error);
+    logger.error('Google Search API error', error instanceof Error ? error : new Error(String(error)));
     return [];
   }
 }
@@ -138,7 +138,7 @@ export async function searchWeb(
     logger.info('Web keresés befejezve', { query, resultsCount: results.length });
     return results.slice(0, maxResults);
   } catch (error: any) {
-    logger.error('Web keresés hiba', error, { query });
+    logger.error('Web keresés hiba', error instanceof Error ? error : new Error(String(error)), { query });
     return [];
   }
 }
