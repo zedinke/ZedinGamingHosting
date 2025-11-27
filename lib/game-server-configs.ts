@@ -200,9 +200,16 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
       ls -ld /opt/servers || true
       
       # Szerver könyvtár létrehozása root tulajdonban
-      mkdir -p "$SERVER_DIR/server"
+      # A Rust szerver fájlok közvetlenül a SERVER_DIR-be kerülnek
+      mkdir -p "$SERVER_DIR"
       chmod -R 755 "$SERVER_DIR"
       chown -R root:root "$SERVER_DIR"
+      
+      # A Rust szerver a server/ alkönyvtárban keresi a konfigurációs fájlt
+      # Ezt a könyvtárat létrehozzuk a konfigurációs fájl számára
+      mkdir -p "$SERVER_DIR/server"
+      chmod 755 "$SERVER_DIR/server"
+      chown root:root "$SERVER_DIR/server"
       
       # Ellenőrizzük a szerver könyvtár jogosultságait
       echo "Szerver könyvtár jogosultságok:"
@@ -216,7 +223,7 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
       cd "$SERVER_DIR"
       
       # Rust szerver telepítése SteamCMD-vel
-      # A fájlok a server/ alkönyvtárba kerülnek
+      # A SteamCMD közvetlenül a SERVER_DIR-be telepíti a fájlokat
       echo "Rust szerver telepítése kezdődik..."
       echo "Szerver könyvtár: $SERVER_DIR"
       
@@ -262,13 +269,16 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         rm -rf "$STEAM_HOME" 2>/dev/null || true
         
         # Letöltött fájlok jogosultságainak beállítása (root tulajdonban maradnak)
-        if [ -d "$SERVER_DIR/server" ]; then
-          chown -R root:root "$SERVER_DIR/server"
-          chmod -R 755 "$SERVER_DIR/server"
-        fi
+        chown -R root:root "$SERVER_DIR" 2>/dev/null || true
+        chmod -R 755 "$SERVER_DIR" 2>/dev/null || true
+        
+        # Biztosítjuk, hogy a server/ könyvtár létezik a konfigurációs fájl számára
+        mkdir -p "$SERVER_DIR/server"
+        chmod 755 "$SERVER_DIR/server"
+        chown root:root "$SERVER_DIR/server"
         
         # Ellenőrizzük, hogy a bináris létezik-e (ez a legfontosabb, nem az exit code)
-        # A SteamCMD közvetlenül a SERVER_DIR-be telepíti, nem a server/ alkönyvtárba
+        # A SteamCMD közvetlenül a SERVER_DIR-be telepíti a RustDedicated binárist
         if [ -f "$SERVER_DIR/RustDedicated" ]; then
           echo "RustDedicated bináris megtalálva, telepítés sikeres!"
           INSTALL_SUCCESS=true
@@ -306,7 +316,7 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
       echo "Rust szerver sikeresen telepítve: $SERVER_DIR/RustDedicated (méret: $FILE_SIZE bytes)"
     `,
     configPath: '/opt/servers/{serverId}/server/server.cfg',
-    startCommand: './RustDedicated -batchmode -server.port {port} -server.queryport {queryPort} -server.maxplayers {maxPlayers} -server.hostname "{name}"',
+    startCommand: './RustDedicated -batchmode -server.port {port} -server.queryport {queryPort} -server.maxplayers {maxPlayers} -server.hostname "{name}" -server.identity "{name}"',
     stopCommand: 'quit',
     port: 28015,
     queryPort: 28016,

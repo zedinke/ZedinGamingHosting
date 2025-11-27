@@ -756,12 +756,21 @@ rcon_password "${config.password || 'changeme'}"
       `.trim();
 
     case 'RUST':
+      // Rust szerver konfigurációs fájl (server.cfg)
+      // A Rust szerver automatikusan betölti ezt a fájlt a server/ könyvtárból
+      const rconPort = queryPort + 1;
+      const rconPassword = config.adminPassword || config.password || 'changeme';
       return `
 server.hostname "${name}"
 server.identity "${name}"
 server.maxplayers ${maxPlayers}
 server.port ${port}
 server.queryport ${queryPort}
+rcon.port ${rconPort}
+rcon.password "${rconPassword}"
+server.seed ${config.seed || Math.floor(Math.random() * 1000000)}
+server.worldsize ${config.worldsize || 4000}
+server.saveinterval ${config.saveinterval || 600}
       `.trim();
 
     case 'VALHEIM':
