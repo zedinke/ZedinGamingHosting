@@ -828,7 +828,7 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
           echo "steamapps/ könyvtár tartalma:"
           find "$SERVER_DIR/steamapps" -type d -maxdepth 4 2>/dev/null | head -30
           echo "steamapps/ fájlok (összes .x86_64 és Forest/Dedicated):"
-          find "$SERVER_DIR/steamapps" -type f \( -name "*.x86_64" -o -name "*Forest*" -o -name "*Dedicated*" \) 2>/dev/null | head -30
+          find "$SERVER_DIR/steamapps" -type f \\( -name "*.x86_64" -o -name "*Forest*" -o -name "*Dedicated*" \\) 2>/dev/null | head -30
         fi
         
         # 1. Közvetlenül a SERVER_DIR-ben
