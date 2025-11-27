@@ -658,7 +658,9 @@ fi
 
 # Ollama elérhetőség ellenőrzése
 OLLAMA_URL="http://localhost:11434"
-AI_SERVER_MODEL="${AI_SERVER_MODEL:-llama3.2:3b}"
+if [ -z "$AI_SERVER_MODEL" ]; then
+    AI_SERVER_MODEL="llama3.2:3b"
+fi
 
 # Export környezeti változók az AI rendszerhez
 export AI_SERVER_MODE=true
