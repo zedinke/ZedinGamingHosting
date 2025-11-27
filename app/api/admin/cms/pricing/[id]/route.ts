@@ -76,7 +76,7 @@ export async function PUT(
     }
 
     const plan = await prisma.pricingPlan.update({
-      where: { id: id },
+      where: { id },
       data: {
         name: data.name,
         description: data.description || null,

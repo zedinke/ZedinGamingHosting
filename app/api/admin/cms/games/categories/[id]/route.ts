@@ -78,7 +78,7 @@ export async function PUT(
     }
 
     const category = await prisma.gameCategory.update({
-      where: { id: id },
+      where: { id },
       data: {
         name: data.name,
         slug: data.slug,
