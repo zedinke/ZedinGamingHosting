@@ -95,8 +95,8 @@ export async function getFAQContext(query: string, locale: string = 'hu'): Promi
         isActive: true,
         locale: locale,
         OR: [
-          { question: { contains: query, mode: 'insensitive' as const } },
-          { answer: { contains: query, mode: 'insensitive' as const } },
+          { question: { contains: query } },
+          { answer: { contains: query } },
         ],
       },
       take: 5,
