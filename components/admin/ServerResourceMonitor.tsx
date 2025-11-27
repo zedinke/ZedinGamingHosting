@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface ResourceUsage {
   cpu?: {
@@ -49,6 +49,14 @@ export function ServerResourceMonitor({
       setLoading(false);
     }
   };
+
+  // Csak első betöltéskor töltjük be az adatokat, ha nincs initialResourceUsage
+  useEffect(() => {
+    if (!initialResourceUsage && !resourceUsage) {
+      loadResourceUsage();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serverId]);
 
   if (!resourceUsage) {
     return (
