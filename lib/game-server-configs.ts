@@ -90,7 +90,8 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
     requiresSteamCMD: true,
     installScript: `
       #!/bin/bash
-      set -e
+      # Ne használjunk set -e-t, mert a SteamCMD exit code 8 lehet warning, de a fájlok letöltődhetnek
+      set +e
       SERVER_DIR="/opt/servers/{serverId}"
       mkdir -p "$SERVER_DIR"
       cd "$SERVER_DIR"
@@ -108,27 +109,28 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
       while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
         echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
         
-        if /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 258550 validate +quit; then
+        # SteamCMD futtatása - nem használunk if-t, mert az exit code-ot külön kezeljük
+        /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 258550 validate +quit
+        EXIT_CODE=$?
+        
+        # Ellenőrizzük, hogy a bináris létezik-e (ez a legfontosabb, nem az exit code)
+        if [ -f "$SERVER_DIR/server/RustDedicated" ]; then
+          echo "RustDedicated bináris megtalálva, telepítés sikeres!"
           INSTALL_SUCCESS=true
           break
         else
-          EXIT_CODE=$?
-          echo "SteamCMD hibával kilépett (exit code: $EXIT_CODE)" >&2
+          echo "SteamCMD exit code: $EXIT_CODE" >&2
+          echo "RustDedicated bináris még nem található, újrapróbálkozás..." >&2
           RETRY_COUNT=$((RETRY_COUNT + 1))
           
           if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
-            echo "Várakozás 10 másodpercet az újrapróbálkozás előtt..."
-            sleep 10
+            echo "Várakozás 15 másodpercet az újrapróbálkozás előtt..."
+            sleep 15
           fi
         fi
       done
       
-      if [ "$INSTALL_SUCCESS" != "true" ]; then
-        echo "HIBA: SteamCMD nem sikerült $MAX_RETRIES próbálkozás után" >&2
-        exit 1
-      fi
-      
-      # Ellenőrizzük, hogy a bináris létezik-e
+      # Végleges ellenőrzés - ha a bináris nem létezik, akkor hiba
       if [ ! -f "$SERVER_DIR/server/RustDedicated" ]; then
         echo "HIBA: RustDedicated bináris nem található a $SERVER_DIR/server/ könyvtárban" >&2
         echo "Könyvtár tartalma:" >&2
@@ -136,14 +138,23 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         if [ -d "$SERVER_DIR/server" ]; then
           echo "server/ könyvtár tartalma:" >&2
           ls -la "$SERVER_DIR/server" >&2 || true
+        else
+          echo "server/ könyvtár nem létezik!" >&2
         fi
+        echo "SteamCMD utolsó exit code: $EXIT_CODE" >&2
         exit 1
       fi
       
       # Végrehajtási jogosultság beállítása
       chmod +x "$SERVER_DIR/server/RustDedicated" || true
       
-      echo "Rust szerver sikeresen telepítve: $SERVER_DIR/server/RustDedicated"
+      # Ellenőrizzük a fájl méretét is (nem lehet 0)
+      FILE_SIZE=$(stat -f%z "$SERVER_DIR/server/RustDedicated" 2>/dev/null || stat -c%s "$SERVER_DIR/server/RustDedicated" 2>/dev/null || echo "0")
+      if [ "$FILE_SIZE" = "0" ]; then
+        echo "FIGYELMEZTETÉS: RustDedicated bináris mérete 0, lehet, hogy sérült" >&2
+      fi
+      
+      echo "Rust szerver sikeresen telepítve: $SERVER_DIR/server/RustDedicated (méret: $FILE_SIZE bytes)"
     `,
     configPath: '/opt/servers/{serverId}/server/server.cfg',
     startCommand: './server/RustDedicated -batchmode -server.port {port} -server.queryport {queryPort} -server.maxplayers {maxPlayers} -server.hostname "{name}"',

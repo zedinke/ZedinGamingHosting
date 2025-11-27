@@ -209,7 +209,16 @@ fi
         `chmod +x ${scriptPath} && ${scriptPath} > ${logPath} 2>&1; EXIT_CODE=$?; cat ${logPath}; exit $EXIT_CODE`
       );
 
-      if (executeResult.exitCode !== 0) {
+      // SteamCMD exit code 8 lehet warning, de a fájlok letöltődhetnek
+      // Ellenőrizzük a logot, hogy van-e valódi hiba vagy csak warning
+      const hasRealError = executeResult.stdout?.includes('ERROR') || 
+                          executeResult.stdout?.includes('HIBA') ||
+                          executeResult.stderr?.includes('ERROR') ||
+                          executeResult.stderr?.includes('HIBA');
+      
+      // Ha exit code 8 és nincs valódi hiba a logban, lehet, hogy csak warning
+      // De ha van valódi hiba vagy más exit code, akkor hibát dobunk
+      if (executeResult.exitCode !== 0 && (executeResult.exitCode !== 8 || hasRealError)) {
         logger.error('Installation script failed', new Error(executeResult.stderr || executeResult.stdout || 'Unknown error'), {
           serverId,
           gameType,
