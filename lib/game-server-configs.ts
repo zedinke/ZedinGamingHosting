@@ -94,33 +94,15 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
       set +e
       SERVER_DIR="/opt/servers/{serverId}"
       
-      # Először biztosítjuk, hogy az /opt/servers/ könyvtár létezik és megfelelő jogosultságokkal
-      # Mivel SSH root-ként van bejegyezve, a parancsok root-ként futnak
+      # Minden könyvtárat root tulajdonba teszünk, mivel root-ként futunk mindent
       mkdir -p /opt/servers
-      chmod 755 /opt/servers || true
-      chown root:root /opt/servers 2>/dev/null || true
+      chmod 755 /opt/servers
+      chown root:root /opt/servers
       
-      # Ellenőrizzük, hogy tényleg root tulajdonban van
-      echo "Szülőkönyvtár (/opt/servers) jogosultságok beállítása után:"
-      ls -ld /opt/servers || true
-      
-      # Könyvtár létrehozása megfelelő jogosultságokkal
-      mkdir -p "$SERVER_DIR"
-      # Előre létrehozzuk a server/ alkönyvtárat is, mert a SteamCMD nem tudja létrehozni
+      # Szerver könyvtár létrehozása root tulajdonban
       mkdir -p "$SERVER_DIR/server"
-      # Biztosítjuk, hogy a root írni tudjon (SteamCMD root-ként fut)
-      # Mivel SSH root-ként van bejegyezve, a parancsok root-ként futnak
-      chmod 755 "$SERVER_DIR" || true
-      chmod 755 "$SERVER_DIR/server" || true
-      chown -R root:root "$SERVER_DIR" 2>/dev/null || true
-      
-      # Ellenőrizzük a jogosultságokat
-      echo "Szülőkönyvtár (/opt/servers) jogosultságok:"
-      ls -ld /opt/servers || true
-      echo "Szerver könyvtár jogosultságok:"
-      ls -ld "$SERVER_DIR" || true
-      echo "Server alkönyvtár jogosultságok:"
-      ls -ld "$SERVER_DIR/server" || true
+      chmod -R 755 "$SERVER_DIR"
+      chown -R root:root "$SERVER_DIR"
       
       cd "$SERVER_DIR"
       
@@ -128,8 +110,6 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
       # A fájlok a server/ alkönyvtárba kerülnek
       echo "Rust szerver telepítése kezdődik..."
       echo "Szerver könyvtár: $SERVER_DIR"
-      echo "Könyvtár jogosultságok:"
-      ls -ld "$SERVER_DIR" || true
       
       # SteamCMD futtatása - több próbálkozás, ha szükséges
       MAX_RETRIES=3
@@ -139,48 +119,18 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
       while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
         echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
         
-        # Jogosultságok ellenőrzése és beállítása SteamCMD előtt
-        # A SteamCMD root-ként fut, ezért a könyvtárat root tulajdonba tesszük
-        # Ez biztosítja, hogy a SteamCMD írni tudjon
-        # Mivel SSH root-ként van bejegyezve, a parancsok root-ként futnak
-        chmod 755 "$SERVER_DIR" || true
-        chown -R root:root "$SERVER_DIR" 2>/dev/null || true
+        # Biztosítjuk, hogy minden root tulajdonban legyen
+        chown -R root:root "$SERVER_DIR"
+        chmod -R 755 "$SERVER_DIR"
         
-        # Ellenőrizzük, hogy tényleg root tulajdonban van
-        echo "Jelenlegi user: $(whoami)"
-        echo "Jelenlegi user ID: $(id -u)"
-        
-        # Ellenőrizzük a jogosultságokat
-        echo "Könyvtár jogosultságok SteamCMD előtt:"
-        ls -ld "$SERVER_DIR" || true
-        
-        # SteamCMD futtatása - nem használunk if-t, mert az exit code-ot külön kezeljük
-        # A SteamCMD root-ként fut, ezért biztosítjuk, hogy írni tudjon
-        # A SteamCMD home könyvtárát is beállítjuk, hogy biztosan írni tudjon
-        # Használunk egy ideiglenes home könyvtárat a SteamCMD-nek
-        STEAMCMD_HOME="/tmp/steamcmd-home-$$"
-        mkdir -p "$STEAMCMD_HOME"
-        chmod 755 "$STEAMCMD_HOME" || true
-        
-        # Ellenőrizzük a SteamCMD jogosultságait
-        echo "SteamCMD script jogosultságok:"
-        ls -l /opt/steamcmd/steamcmd.sh || true
-        
-        # SteamCMD futtatása HOME environment változóval
-        HOME="$STEAMCMD_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 258550 validate +quit
+        # SteamCMD futtatása - root-ként futunk, így nincs jogosultsági probléma
+        /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 258550 validate +quit
         EXIT_CODE=$?
         
-        # Tisztítás
-        rm -rf "$STEAMCMD_HOME" 2>/dev/null || true
-        
-        # Jogosultságok beállítása a letöltött fájlokra
-        # A fájlokat root tulajdonban hagyjuk, mert a systemd service is root-ként fut
+        # Letöltött fájlok jogosultságainak beállítása (root tulajdonban maradnak)
         if [ -d "$SERVER_DIR/server" ]; then
-          chmod -R 755 "$SERVER_DIR/server" || true
-          chown -R root:root "$SERVER_DIR/server" 2>/dev/null || true
-          echo "server/ könyvtár jogosultságok beállítva"
-          echo "server/ könyvtár jogosultságok ellenőrzése:"
-          ls -ld "$SERVER_DIR/server" || true
+          chown -R root:root "$SERVER_DIR/server"
+          chmod -R 755 "$SERVER_DIR/server"
         fi
         
         # Ellenőrizzük, hogy a bináris létezik-e (ez a legfontosabb, nem az exit code)

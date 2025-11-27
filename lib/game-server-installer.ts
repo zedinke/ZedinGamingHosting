@@ -198,7 +198,7 @@ export async function installGameServer(
         user: machine.sshUser,
         keyPath: machine.sshKeyPath || undefined,
       },
-      `mkdir -p /opt/servers && chmod 755 /opt/servers && chown root:root /opt/servers 2>/dev/null || true && mkdir -p ${serverPath} && chmod 755 ${serverPath} && chown -R root:root ${serverPath} 2>/dev/null || true && echo "Könyvtár jogosultságok beállítva: $(ls -ld ${serverPath})"`
+      `mkdir -p /opt/servers && chmod 755 /opt/servers && chown root:root /opt/servers && mkdir -p ${serverPath} && chmod -R 755 ${serverPath} && chown -R root:root ${serverPath}`
     );
     
     if (writeProgress) {
