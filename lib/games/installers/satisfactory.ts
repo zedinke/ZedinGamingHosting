@@ -147,9 +147,9 @@ BINARY_DIR="$(pwd)"
 
 # Wine prefix beállítása (szerver könyvtárban)
 SERVER_DIR="$(cd ../../.. && pwd)"
-WINEPREFIX="${WINEPREFIX:-$SERVER_DIR/wineprefix}"
+WINEPREFIX="\${WINEPREFIX:-\$SERVER_DIR/wineprefix}"
 export WINEPREFIX
-export WINEARCH="${WINEARCH:-win64}"
+export WINEARCH="\${WINEARCH:-win64}"
 
 # Wine parancs meghatározása
 WINE_CMD="wine"
@@ -172,9 +172,9 @@ else
 fi
 
 # Argumentumok environment változókból (systemd service állítja be)
-PORT="${PORT:-15777}"
-QUERY_PORT="${QUERY_PORT:-7777}"
-BEACON_PORT="${BEACON_PORT:-15000}"
+PORT="\${PORT:-15777}"
+QUERY_PORT="\${QUERY_PORT:-7777}"
+BEACON_PORT="\${BEACON_PORT:-15000}"
 
 echo "Satisfactory szerver indítása..."
 echo "Könyvtár: $BINARY_DIR"
