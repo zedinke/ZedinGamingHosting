@@ -6,6 +6,7 @@ interface ProvisioningOptions {
   gameType: GameType;
   maxPlayers: number;
   planId?: string;
+  gamePackageId?: string;
 }
 
 interface MachineResources {
@@ -316,6 +317,7 @@ export async function provisionServer(
           gameType: options.gameType,
           maxPlayers: options.maxPlayers,
           planId: options.planId,
+          gamePackageId: options.gamePackageId,
         },
       },
     });

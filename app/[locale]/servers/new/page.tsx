@@ -16,23 +16,18 @@ export default async function NewServerPage({
   await requireAuth();
   const t = getTranslations(locale, 'common');
 
-  // Game package ellenőrzése
-  const selectedGamePackage = searchParams.package
-    ? await prisma.gamePackage.findUnique({
-        where: { id: searchParams.package },
-      })
-    : null;
+  // Game package ellenőrzése - kötelező
+  if (!searchParams.package) {
+    redirect(`/${locale}/games`);
+  }
 
-  const selectedPlan = searchParams.plan
-    ? await prisma.pricingPlan.findUnique({
-        where: { id: searchParams.plan },
-      })
-    : null;
-
-  const plans = await prisma.pricingPlan.findMany({
-    where: { isActive: true },
-    orderBy: { order: 'asc' },
+  const selectedGamePackage = await prisma.gamePackage.findUnique({
+    where: { id: searchParams.package },
   });
+
+  if (!selectedGamePackage || !selectedGamePackage.isActive) {
+    redirect(`/${locale}/games`);
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -49,35 +44,7 @@ export default async function NewServerPage({
             </p>
           </div>
 
-          {/* Progress Steps */}
-          <div className="mb-8">
-            <div className="flex items-center justify-center gap-4">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center font-semibold">
-                  1
-                </div>
-                <span className="text-sm font-medium">Játék választása</span>
-              </div>
-              <div className="w-12 h-0.5 bg-gray-300"></div>
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center font-semibold">
-                  2
-                </div>
-                <span className="text-sm text-gray-600">Csomag választása</span>
-              </div>
-              <div className="w-12 h-0.5 bg-gray-300"></div>
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center font-semibold">
-                  3
-                </div>
-                <span className="text-sm text-gray-600">Rendelés</span>
-              </div>
-            </div>
-          </div>
-
           <ServerOrderForm
-            plans={plans}
-            selectedPlan={selectedPlan}
             selectedGamePackage={selectedGamePackage}
             locale={locale}
           />

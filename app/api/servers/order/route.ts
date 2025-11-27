@@ -17,66 +17,41 @@ export const POST = withPerformanceMonitoring(
       }
 
       const body = await request.json();
-      const { name, gameType, planId, maxPlayers, gamePackageId } = body;
+      const { name, gameType, gamePackageId, billingInfo } = body;
 
       // Validáció
       if (!name || !gameType) {
         throw createValidationError('form', 'Név és játék típus megadása kötelező');
       }
 
-      // Game package vagy pricing plan ellenőrzése
-      let gamePackage = null;
-      let plan = null;
-      let finalMaxPlayers = maxPlayers;
-      let finalPrice = 0;
-      let finalCurrency = 'HUF';
-
-      if (gamePackageId) {
-        // Game package használata
-        gamePackage = await prisma.gamePackage.findUnique({
-          where: { id: gamePackageId },
-        });
-
-        if (!gamePackage || !gamePackage.isActive) {
-          throw new AppError(
-            ErrorCodes.VALIDATION_ERROR,
-            'Érvénytelen vagy inaktív játék csomag',
-            400
-          );
-        }
-
-        finalMaxPlayers = gamePackage.slot;
-        finalPrice = gamePackage.discountPrice || gamePackage.price;
-        finalCurrency = gamePackage.currency;
-      } else if (planId) {
-        // Pricing plan használata (régi módszer)
-        plan = await prisma.pricingPlan.findUnique({
-          where: { id: planId },
-        });
-
-        if (!plan || !plan.isActive) {
-          throw new AppError(
-            ErrorCodes.VALIDATION_ERROR,
-            'Érvénytelen vagy inaktív csomag',
-            400
-          );
-        }
-
-        if (!maxPlayers) {
-          throw createValidationError('form', 'Max játékosok száma megadása kötelező');
-        }
-
-        finalMaxPlayers = parseInt(maxPlayers);
-        finalPrice = plan.price;
-        finalCurrency = plan.currency;
-      } else {
-        throw createValidationError('form', 'Csomag vagy játék csomag megadása kötelező');
+      if (!gamePackageId) {
+        throw createValidationError('form', 'Játék csomag megadása kötelező');
       }
+
+      if (!billingInfo || !billingInfo.billingName || !billingInfo.billingAddress) {
+        throw createValidationError('form', 'Számlázási adatok megadása kötelező');
+      }
+
+      // Game package ellenőrzése
+      const gamePackage = await prisma.gamePackage.findUnique({
+        where: { id: gamePackageId },
+      });
+
+      if (!gamePackage || !gamePackage.isActive) {
+        throw new AppError(
+          ErrorCodes.VALIDATION_ERROR,
+          'Érvénytelen vagy inaktív játék csomag',
+          400
+        );
+      }
+
+      const finalMaxPlayers = gamePackage.slot;
+      const finalPrice = gamePackage.discountPrice || gamePackage.price;
+      const finalCurrency = gamePackage.currency;
 
       logger.info('Server order request', {
         userId: (session.user as any).id,
         gameType,
-        planId,
         gamePackageId,
         maxPlayers: finalMaxPlayers,
       });
@@ -95,21 +70,21 @@ export const POST = withPerformanceMonitoring(
         status: 'OFFLINE',
         port,
         // Game package specifikációk mentése a konfigurációba
-        configuration: gamePackage ? {
+        configuration: {
           slot: gamePackage.slot,
           cpuCores: gamePackage.cpuCores,
           ram: gamePackage.ram,
           gamePackageId: gamePackage.id,
-        } : undefined,
+        },
       },
     });
 
-    // Szerver provisioning háttérben
+    // Szerver provisioning háttérben - GamePackage adataival
     const { provisionServer } = await import('@/lib/server-provisioning');
     provisionServer(server.id, {
       gameType: gameType as GameType,
       maxPlayers: finalMaxPlayers,
-      planId: planId || undefined,
+      gamePackageId: gamePackage.id,
       }).catch((error) => {
         logger.error('Server provisioning error', error as Error, {
           serverId: server.id,
@@ -135,7 +110,7 @@ export const POST = withPerformanceMonitoring(
       },
     });
 
-    // Számla létrehozása
+    // Számla létrehozása számlázási adatokkal
     const invoiceNumber = `INV-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const invoice = await prisma.invoice.create({
       data: {
@@ -146,6 +121,14 @@ export const POST = withPerformanceMonitoring(
         status: 'PENDING',
         invoiceNumber,
         dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 nap
+        // Számlázási adatok
+        billingName: billingInfo.billingName,
+        billingAddress: billingInfo.billingAddress,
+        billingTaxNumber: billingInfo.billingTaxNumber || null,
+        companyName: billingInfo.companyName || null,
+        companyAddress: billingInfo.companyAddress || null,
+        companyTaxNumber: billingInfo.companyTaxNumber || null,
+        companyVatNumber: billingInfo.companyVatNumber || null,
       },
     });
 

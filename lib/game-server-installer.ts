@@ -1042,7 +1042,9 @@ export async function createSystemdServiceForServer(
   // CPUQuota: 100% = 1 CPU core, 200% = 2 CPU core, stb.
   const cpuQuota = `${cpuCores * 100}%`;
   // MemoryLimit: RAM limitáció GB-ban (pl. "2G" = 2 GB)
-  const memoryLimit = `${ram}G`;
+  // A ram értéke MB-ban van, konvertáljuk GB-ba
+  const ramGB = Math.ceil(ram / 1024); // MB -> GB (pl. 2048 MB = 2 GB)
+  const memoryLimit = `${ramGB}G`;
   
   // Ellenőrizzük, hogy a gameConfig létezik-e
   if (!gameConfig || typeof gameConfig !== 'object') {

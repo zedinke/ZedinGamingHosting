@@ -239,13 +239,30 @@ async function executeProvisionTask(task: any): Promise<any> {
 
   // Game szerver telepítése (ha még nem történt meg)
   const { installGameServer } = await import('./game-server-installer');
-  const plan = await prisma.pricingPlan.findUnique({
-    where: { id: task.command?.planId },
-  });
+  
+  // GamePackage vagy PricingPlan adatok lekérése
+  let ram = 2048; // Alapértelmezett RAM (MB)
+  let gamePackage = null;
+  
+  if (task.command?.gamePackageId) {
+    gamePackage = await prisma.gamePackage.findUnique({
+      where: { id: task.command.gamePackageId },
+    });
+    if (gamePackage) {
+      ram = gamePackage.ram * 1024; // GB -> MB konverzió (pl. 2 GB = 2048 MB)
+    }
+  } else if (task.command?.planId) {
+    const plan = await prisma.pricingPlan.findUnique({
+      where: { id: task.command.planId },
+    });
+    if (plan) {
+      ram = (plan.features as any)?.ram || 2048; // PricingPlan már MB-ban van
+    }
+  }
 
   const installResult = await installGameServer(task.serverId, server.gameType, {
     maxPlayers: server.maxPlayers,
-      ram: (plan?.features as any)?.ram || 2048,
+    ram: ram, // MB-ban
     port: server.port || 25565,
     name: server.name,
   });
