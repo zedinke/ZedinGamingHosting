@@ -1,19 +1,17 @@
 /**
  * Satisfactory indító és leállító parancsok
  * 
- * Megjegyzés: A Satisfactory dedikált szerver binárisa lehet:
- * - FactoryServer.sh (wrapper script)
- * - FactoryGameServer (bináris)
- * - FactoryServer (bináris)
- * - Vagy másik helyen a FactoryGame könyvtárban
+ * FONTOS: A Satisfactory-nak NINCS hivatalos Linux szerver verziója!
+ * A szerver Windows binárist használ, ami Wine-n keresztül fut.
+ * 
+ * A bináris fájl: FactoryServer.exe (Windows bináris)
+ * Elérési út: FactoryGame/Binaries/Win64/FactoryServer.exe
  */
 
 export const commands = {
-  // A startCommand a game-server-installer.ts-ben lesz dinamikusan módosítva
-  // hogy megtalálja a tényleges bináris fájlt
-  // Megjegyzés: A Satisfactory binárisa lehet FactoryGameServer vagy FactoryServer.sh
-  // A game-server-installer.ts automatikusan ellenőrzi és kiválasztja a megfelelőt
-  startCommand: 'cd FactoryGame/Binaries/Linux && ./FactoryGameServer -log -unattended -ServerQueryPort={queryPort} -BeaconPort={beaconPort} -Port={port}',
+  // Wine-n keresztül indítjuk a Windows binárist
+  // xvfb-run szükséges, mert a Wine-nek szüksége van egy display-re
+  startCommand: 'cd FactoryGame/Binaries/Win64 && xvfb-run -a wine FactoryServer.exe -log -unattended -multihome=0.0.0.0 -Port={port} -BeaconPort={beaconPort} -ServerQueryPort={queryPort}',
   stopCommand: 'quit', // Systemd automatikusan kezeli a leállítást, de a stopCommand mező kötelező
 };
 

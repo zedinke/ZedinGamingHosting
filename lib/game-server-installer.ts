@@ -1175,7 +1175,8 @@ export async function createSystemdServiceForServer(
   
   // Ha a startCommand tartalmazza a "cd" parancsot, akkor eltávolítjuk és módosítjuk a WorkingDirectory-t
   // Systemd-ben nem lehet cd-t használni az ExecStart-ban
-  if (startCommand.includes('cd ') && startCommand.includes(' && ')) {
+  // KIVÉTEL: Satisfactory esetén (Wine használat) megtartjuk a cd parancsot, mert a wrapper script kezeli
+  if (startCommand.includes('cd ') && startCommand.includes(' && ') && gameType !== 'SATISFACTORY') {
     // Kinyerjük a cd útvonalat
     const cdMatch = startCommand.match(/cd\s+([^\s&]+)/);
     if (cdMatch) {
@@ -1188,6 +1189,20 @@ export async function createSystemdServiceForServer(
       }
       // Eltávolítjuk a "cd ... && " részt a startCommand-ból
       startCommand = startCommand.replace(/cd\s+[^\s&]+\s+&&\s+/, '');
+    }
+  }
+  
+  // Satisfactory esetén a cd útvonalat megtartjuk, de az execDir-t is beállítjuk
+  if (gameType === 'SATISFACTORY' && startCommand.includes('cd ') && startCommand.includes(' && ')) {
+    const cdMatch = startCommand.match(/cd\s+([^\s&]+)/);
+    if (cdMatch) {
+      const cdPath = cdMatch[1];
+      // Ha relatív útvonal, akkor hozzáadjuk a workingDir-hez
+      if (!cdPath.startsWith('/')) {
+        execDir = `${workingDir}/${cdPath}`;
+      } else {
+        execDir = cdPath;
+      }
     }
   }
   
@@ -1230,28 +1245,38 @@ export async function createSystemdServiceForServer(
         const result = checkBinary.stdout?.trim();
         if (result && result.startsWith('found:')) {
           const foundPath = result.replace('found:', '');
-          // Ha abszolút útvonal, akkor azt használjuk
-          if (foundPath.startsWith('/')) {
-            startCommand = foundPath;
-            // Ha vannak argumentumok, hozzáadjuk őket
-            if (args) {
-              startCommand = `${foundPath} ${args}`;
-            }
-            // Ne folytassuk a további feldolgozást
-            binary = null;
+          // Satisfactory Windows bináris, Wine-n keresztül indítjuk
+          // xvfb-run szükséges, mert a Wine-nek szüksége van egy display-re
+          const winePrefix = `${workingDir}/wineprefix`;
+          const winePath = foundPath;
+          
+          // Wine parancs összeállítása
+          // Ha a startCommand már tartalmazza a wine parancsot, akkor csak az útvonalat cseréljük
+          if (startCommand.includes('wine')) {
+            // Ha már van wine a parancsban, csak az útvonalat cseréljük
+            startCommand = startCommand.replace(/wine\s+[^\s]+/, `wine "${winePath}"`);
           } else {
-            binary = foundPath;
+            // Ha nincs wine, hozzáadjuk
+            const cdPath = winePath.substring(0, winePath.lastIndexOf('/'));
+            const exeFile = winePath.substring(winePath.lastIndexOf('/') + 1);
+            startCommand = `cd "${cdPath}" && export WINEPREFIX="${winePrefix}" && export WINEARCH=win64 && xvfb-run -a wine "${exeFile}"${args ? ' ' + args : ''}`;
           }
+          
+          binary = null;
+          logger.info('Satisfactory Windows binary found, using Wine', {
+            serverId,
+            foundBinary: winePath,
+            winePrefix,
+          });
         } else {
-          // Ha nem találjuk a binárist, próbáljuk megkeresni
-          logger.warn('Satisfactory binary not found in expected locations', {
+          // Ha nem találjuk a binárist, próbáljuk megkeresni .exe fájlokat
+          logger.warn('Satisfactory Windows binary not found in expected locations', {
             serverId,
             execDir,
             workingDir,
-            binary,
           });
           
-          // Keresés a FactoryGame könyvtárban - csak bináris fájlokat, nem .pak fájlokat
+          // Keresés a FactoryGame könyvtárban - csak .exe fájlokat
           const findBinary = await executeSSHCommand(
             {
               host: machine.ipAddress,
@@ -1259,61 +1284,22 @@ export async function createSystemdServiceForServer(
               user: machine.sshUser,
               keyPath: machine.sshKeyPath || undefined,
             },
-            `find ${workingDir}/FactoryGame -type f \\( -name "*Factory*Server*" -o -name "*Server*.sh" \\) ! -name "*.pak" ! -name "*.pak.*" -executable 2>/dev/null | grep -v "\\.pak" | head -1`
+            `find ${workingDir}/FactoryGame -type f -name "*Factory*Server*.exe" ! -name "*.pak" 2>/dev/null | grep -v "\\.pak" | head -1`
           );
           
           const foundBinary = findBinary.stdout?.trim();
-          if (foundBinary && !foundBinary.endsWith('.pak') && !foundBinary.includes('/Paks/')) {
-            // Ellenőrizzük, hogy valóban futtatható bináris-e (nem .pak fájl)
-            const checkExecutable = await executeSSHCommand(
-              {
-                host: machine.ipAddress,
-                port: machine.sshPort,
-                user: machine.sshUser,
-                keyPath: machine.sshKeyPath || undefined,
-              },
-              `file "${foundBinary}" | grep -E "(ELF|executable|shell script)" && echo "valid" || echo "invalid"`
-            );
-            
-            if (checkExecutable.stdout?.trim() === 'valid') {
-              startCommand = foundBinary;
-              if (args) {
-                startCommand = `${foundBinary} ${args}`;
-              }
-              binary = null;
-              logger.info('Satisfactory binary found via find command', {
-                serverId,
-                foundBinary,
-              });
-            } else {
-              // Ha nem érvényes bináris, próbáljuk a Binaries/Linux könyvtárat
-              const checkBinariesDir = await executeSSHCommand(
-                {
-                  host: machine.ipAddress,
-                  port: machine.sshPort,
-                  user: machine.sshUser,
-                  keyPath: machine.sshKeyPath || undefined,
-                },
-                `(test -f ${workingDir}/FactoryGame/FactoryServer-Linux-Shipping && echo "${workingDir}/FactoryGame/FactoryServer-Linux-Shipping") || (test -f ${workingDir}/FactoryGame/FactoryGameServer && echo "${workingDir}/FactoryGame/FactoryGameServer") || (test -f ${workingDir}/FactoryGame/FactoryServer.sh && echo "${workingDir}/FactoryGame/FactoryServer.sh") || (test -f ${workingDir}/FactoryGame/FactoryServer && echo "${workingDir}/FactoryGame/FactoryServer") || (test -f ${workingDir}/FactoryServer-Linux-Shipping && echo "${workingDir}/FactoryServer-Linux-Shipping") || (test -f ${workingDir}/FactoryGameServer && echo "${workingDir}/FactoryGameServer") || (test -f ${workingDir}/FactoryServer.sh && echo "${workingDir}/FactoryServer.sh") || (test -f ${workingDir}/FactoryServer && echo "${workingDir}/FactoryServer") || echo "notfound"`
-              );
-              
-              const binariesDirResult = checkBinariesDir.stdout?.trim();
-              if (binariesDirResult && binariesDirResult !== 'notfound') {
-                startCommand = binariesDirResult;
-                if (args) {
-                  startCommand = `${binariesDirResult} ${args}`;
-                }
-                binary = null;
-                logger.info('Satisfactory binary found in Binaries/Linux directory', {
-                  serverId,
-                  foundBinary: binariesDirResult,
-                });
-              } else {
-                throw new Error(`Satisfactory binary not found for server ${serverId}. Please check installation.`);
-              }
-            }
+          if (foundBinary && foundBinary.endsWith('.exe')) {
+            const winePrefix = `${workingDir}/wineprefix`;
+            const cdPath = foundBinary.substring(0, foundBinary.lastIndexOf('/'));
+            const exeFile = foundBinary.substring(foundBinary.lastIndexOf('/') + 1);
+            startCommand = `cd "${cdPath}" && export WINEPREFIX="${winePrefix}" && export WINEARCH=win64 && xvfb-run -a wine "${exeFile}"${args ? ' ' + args : ''}`;
+            binary = null;
+            logger.info('Satisfactory Windows binary found via find command', {
+              serverId,
+              foundBinary,
+            });
           } else {
-            throw new Error(`Satisfactory binary not found for server ${serverId}. Please check installation.`);
+            throw new Error(`Satisfactory Windows binary (.exe) not found for server ${serverId}. Please check installation.`);
           }
         }
       } catch (error) {
@@ -1332,6 +1318,18 @@ export async function createSystemdServiceForServer(
       startCommand = `${fullBinaryPath}${args ? ' ' + args : ''}`.trim();
     }
     // Ha binary null, akkor már beállítottuk a startCommand-ot a Satisfactory ellenőrzés során
+  }
+
+  // Satisfactory esetén mindig Wine-t használunk, mert nincs Linux szerver verzió
+  if (gameType === 'SATISFACTORY' && gameConfig.requiresWine) {
+    // A startCommand már be van állítva a Satisfactory bináris keresés során
+    // Csak ellenőrizzük, hogy tartalmazza-e a wine parancsot
+    if (!startCommand.includes('wine') && !startCommand.includes('xvfb-run')) {
+      logger.warn('Satisfactory startCommand does not include Wine, but requiresWine is true', {
+        serverId,
+        startCommand,
+      });
+    }
   }
 
   // The Forest esetén ellenőrizzük, hogy Linux vagy Windows bináris van-e
@@ -1410,7 +1408,7 @@ export async function createSystemdServiceForServer(
   let finalStartCommand = startCommand;
   let useWrapperScript = false;
   
-  if ((gameType === 'THE_FOREST' && useWineForForest) || startCommand.includes('wine') || startCommand.includes('xvfb-run')) {
+  if ((gameType === 'THE_FOREST' && useWineForForest) || (gameType === 'SATISFACTORY' && gameConfig.requiresWine) || startCommand.includes('wine') || startCommand.includes('xvfb-run')) {
     useWrapperScript = true;
     // Escape-eljük a startCommand-ot, hogy biztonságosan beilleszthető legyen a scriptbe
     // A startCommand-ot közvetlenül beillesztjük a scriptbe, escape-eljük az idézőjeleket

@@ -17,6 +17,18 @@ chown -R root:root "$SERVER_DIR"
 
 cd "$SERVER_DIR"
 
+# Wine telepítése (ha még nincs)
+if ! command -v wine &> /dev/null; then
+  echo "Wine telepítése..."
+  apt-get update
+  apt-get install -y wine wine32 wine64 winetricks xvfb
+fi
+
+# Wine prefix beállítása
+export WINEPREFIX="$SERVER_DIR/wineprefix"
+export WINEARCH=win64
+mkdir -p "$WINEPREFIX"
+
 STEAM_HOME="/tmp/steamcmd-home-$$"
 mkdir -p "$STEAM_HOME"
 chown -R root:root "$STEAM_HOME"
@@ -42,7 +54,8 @@ while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
   sleep 5
   
   # Ellenőrizzük, hogy a telepítés sikeres volt-e
-  if [ -f "$SERVER_DIR/FactoryGame/Binaries/Linux/FactoryGameServer" ] || [ -d "$SERVER_DIR/FactoryGame" ]; then
+  # Satisfactory Windows bináris, ezért Win64 könyvtárban keresünk
+  if [ -f "$SERVER_DIR/FactoryGame/Binaries/Win64/FactoryServer.exe" ] || [ -d "$SERVER_DIR/FactoryGame" ]; then
     INSTALL_SUCCESS=true
     break
   fi
@@ -64,42 +77,39 @@ if [ "$INSTALL_SUCCESS" != "true" ]; then
   exit 1
 fi
 
-# Konfigurációs könyvtárak létrehozása
-mkdir -p "$SERVER_DIR/FactoryGame/Saved/Config/LinuxServer"
-chmod -R 755 "$SERVER_DIR/FactoryGame/Saved/Config/LinuxServer"
-chown -R root:root "$SERVER_DIR/FactoryGame/Saved/Config/LinuxServer"
+# Konfigurációs könyvtárak létrehozása (Windows szerver, ezért WindowsServer)
+mkdir -p "$SERVER_DIR/FactoryGame/Saved/Config/WindowsServer"
+chmod -R 755 "$SERVER_DIR/FactoryGame/Saved/Config/WindowsServer"
+chown -R root:root "$SERVER_DIR/FactoryGame/Saved/Config/WindowsServer"
 
-# Bináris fájl executable jogok beállítása
-# Satisfactory-nél több lehetséges bináris fájl lehet
+# Bináris fájl ellenőrzése (Windows .exe fájl)
 BINARY_FOUND=false
 
-# Próbáljuk a különböző lehetséges bináris fájlokat
-for binary in "FactoryServer.sh" "FactoryGameServer" "FactoryServer" "FactoryServer-Linux-Shipping"; do
-  if [ -f "$SERVER_DIR/FactoryGame/Binaries/Linux/$binary" ]; then
-    chmod +x "$SERVER_DIR/FactoryGame/Binaries/Linux/$binary"
-    echo "$binary executable jogok beállítva"
-    BINARY_FOUND=true
-    break
-  fi
-done
-
-# Ha a Binaries/Linux könyvtárban nincs, próbáljuk a FactoryGame gyökerét
-if [ "$BINARY_FOUND" = "false" ]; then
-  for binary in "FactoryServer.sh" "FactoryGameServer" "FactoryServer"; do
-    if [ -f "$SERVER_DIR/FactoryGame/$binary" ]; then
-      chmod +x "$SERVER_DIR/FactoryGame/$binary"
-      echo "$binary executable jogok beállítva (FactoryGame gyökér)"
-      BINARY_FOUND=true
-      break
-    fi
-  done
+# Próbáljuk a Windows binárist
+if [ -f "$SERVER_DIR/FactoryGame/Binaries/Win64/FactoryServer.exe" ]; then
+  echo "FactoryServer.exe található"
+  BINARY_FOUND=true
+elif [ -f "$SERVER_DIR/FactoryGame/Binaries/Win64/FactoryGameServer.exe" ]; then
+  echo "FactoryGameServer.exe található"
+  BINARY_FOUND=true
+elif [ -f "$SERVER_DIR/FactoryGame/Binaries/Win64/FactoryServer-Win64-Shipping.exe" ]; then
+  echo "FactoryServer-Win64-Shipping.exe található"
+  BINARY_FOUND=true
 fi
 
 # Ha még mindig nem található, keresés és hibaüzenet
 if [ "$BINARY_FOUND" = "false" ]; then
-  echo "FIGYELMEZTETÉS: Satisfactory bináris nem található a várt helyen" >&2
+  echo "FIGYELMEZTETÉS: Satisfactory Windows bináris nem található a várt helyen" >&2
   echo "Keresés a FactoryGame könyvtárban..." >&2
-  find "$SERVER_DIR/FactoryGame" -type f \( -name "*Factory*Server*" -o -name "*Server*.sh" \) 2>/dev/null | head -10 || echo "Nem található bináris fájl" >&2
+  find "$SERVER_DIR/FactoryGame" -type f -name "*.exe" 2>/dev/null | head -10 || echo "Nem található .exe fájl" >&2
+fi
+
+# Wine prefix inicializálása (első futtatáskor)
+if [ ! -d "$WINEPREFIX/drive_c" ]; then
+  echo "Wine prefix inicializálása..."
+  wineboot --init 2>/dev/null || true
+  # Várunk egy kicsit, hogy a wine prefix létrejöjjön
+  sleep 3
 fi
 
 # Szerver felhasználó beállítása (ha létezik)
