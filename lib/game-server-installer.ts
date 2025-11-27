@@ -1158,7 +1158,25 @@ export async function createSystemdServiceForServer(
   }
 
   const workingDir = paths?.serverPath || `/opt/servers/${serverId}`;
-  const execDir = paths?.isARK && paths.sharedPath ? paths.sharedPath : workingDir;
+  let execDir = paths?.isARK && paths.sharedPath ? paths.sharedPath : workingDir;
+  
+  // Ha a startCommand tartalmazza a "cd" parancsot, akkor eltávolítjuk és módosítjuk a WorkingDirectory-t
+  // Systemd-ben nem lehet cd-t használni az ExecStart-ban
+  if (startCommand.includes('cd ') && startCommand.includes(' && ')) {
+    // Kinyerjük a cd útvonalat
+    const cdMatch = startCommand.match(/cd\s+([^\s&]+)/);
+    if (cdMatch) {
+      const cdPath = cdMatch[1];
+      // Ha relatív útvonal, akkor hozzáadjuk a workingDir-hez
+      if (!cdPath.startsWith('/')) {
+        execDir = `${workingDir}/${cdPath}`;
+      } else {
+        execDir = cdPath;
+      }
+      // Eltávolítjuk a "cd ... && " részt a startCommand-ból
+      startCommand = startCommand.replace(/cd\s+[^\s&]+\s+&&\s+/, '');
+    }
+  }
 
   // The Forest esetén ellenőrizzük, hogy Linux vagy Windows bináris van-e
   let useWineForForest = false;
@@ -1425,8 +1443,7 @@ StandardOutput=journal
 StandardError=journal
 # CPU limitáció (100% = 1 CPU core, 200% = 2 CPU core, stb.)
 CPUQuota=${cpuQuota}
-# RAM limitáció (pl. "2G" = 2 GB RAM)
-MemoryLimit=${memoryLimit}
+# RAM limitáció (pl. "2G" = 2 GB RAM) - MemoryLimit deprecated, csak MemoryMax
 MemoryMax=${memoryLimit}
 # További erőforrás limitációk
 TasksMax=1000
