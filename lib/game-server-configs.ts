@@ -820,20 +820,38 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         # Keresés a bináris után - több helyen is
         SERVER_FILE=""
         
+        # Részletes debug információ
+        echo "Keresés a bináris után..."
+        echo "SERVER_DIR: $SERVER_DIR"
+        if [ -d "$SERVER_DIR/steamapps" ]; then
+          echo "steamapps/ könyvtár tartalma:"
+          find "$SERVER_DIR/steamapps" -type d -maxdepth 3 2>/dev/null | head -20
+          echo "steamapps/ fájlok:"
+          find "$SERVER_DIR/steamapps" -type f -name "*Forest*" -o -name "*Dedicated*" -o -name "*.x86_64" 2>/dev/null | head -20
+        fi
+        
         # 1. Közvetlenül a SERVER_DIR-ben
         if [ -f "$SERVER_DIR/TheForestDedicatedServer.x86_64" ]; then
           SERVER_FILE="$SERVER_DIR/TheForestDedicatedServer.x86_64"
         # 2. linux64/ könyvtárban
         elif [ -f "$SERVER_DIR/linux64/TheForestDedicatedServer.x86_64" ]; then
           SERVER_FILE="$SERVER_DIR/linux64/TheForestDedicatedServer.x86_64"
-        # 3. steamapps/common/ könyvtárban
+        # 3. steamapps/common/ könyvtárban - több lehetséges név
         elif [ -f "$SERVER_DIR/steamapps/common/The Forest Dedicated Server/TheForestDedicatedServer.x86_64" ]; then
           SERVER_FILE="$SERVER_DIR/steamapps/common/The Forest Dedicated Server/TheForestDedicatedServer.x86_64"
         elif [ -f "$SERVER_DIR/steamapps/common/TheForestDedicatedServer/TheForestDedicatedServer.x86_64" ]; then
           SERVER_FILE="$SERVER_DIR/steamapps/common/TheForestDedicatedServer/TheForestDedicatedServer.x86_64"
-        # 4. Keresés a teljes könyvtárban
+        elif [ -f "$SERVER_DIR/steamapps/common/TheForestDedicatedServer/TheForestDedicatedServer" ]; then
+          SERVER_FILE="$SERVER_DIR/steamapps/common/TheForestDedicatedServer/TheForestDedicatedServer"
+        # 4. Keresés a teljes könyvtárban - több lehetséges név
         else
           SERVER_FILE=$(find "$SERVER_DIR" -name "TheForestDedicatedServer.x86_64" -type f 2>/dev/null | head -1)
+          if [ -z "$SERVER_FILE" ]; then
+            SERVER_FILE=$(find "$SERVER_DIR" -name "TheForestDedicatedServer" -type f 2>/dev/null | head -1)
+          fi
+          if [ -z "$SERVER_FILE" ]; then
+            SERVER_FILE=$(find "$SERVER_DIR" -name "*Forest*Dedicated*" -type f -executable 2>/dev/null | head -1)
+          fi
         fi
         
         if [ -n "$SERVER_FILE" ] && [ -f "$SERVER_FILE" ]; then
