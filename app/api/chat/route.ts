@@ -11,38 +11,24 @@ async function getAIResponse(
   context?: string
 ) {
   const ollamaUrl = process.env.OLLAMA_URL || 'http://localhost:11434';
-  // Alapértelmezett: phi3:mini - erőforráshatékony, gyors, jó minőség (3.8B paraméter, ~2.3GB)
-  // Alternatívák: llama3.2:3b, qwen2.5:3b, tinyllama
-  const model = process.env.OLLAMA_MODEL || 'phi3:mini';
+  // Alapértelmezett: llama3.2:3b - jobb magyar nyelv támogatás, még mindig gyors
+  // Alternatívák: phi3:mini, qwen2.5:3b, tinyllama
+  const model = process.env.OLLAMA_MODEL || 'llama3.2:3b';
 
-  const systemPrompt = `Te egy szakértő vagy a gaming szerver hosting területén. 
-Segítesz a felhasználóknak kérdéseikkel kapcsolatban a szerver hosting, konfiguráció, 
-hibaelhárítás és általános technikai kérdésekben. 
+  // Egyszerű, világos system prompt
+  const systemPrompt = `Te egy gaming szerver hosting szakértő vagy. Segítesz a felhasználóknak magyar nyelven.
 
-FONTOS INSTRUKCIÓK:
-1. Válaszolj MINDIG magyarul, részletesen és barátságosan
-2. Használd a megadott kontextust a pontos válaszokhoz
-3. Ha a kontextusban van releváns információ, használd azt
-4. Ha nem tudsz pontos választ adni, javasolj alternatív megoldásokat
-5. Formázd a válaszokat olvashatóan (bekezdések, felsorolások)
-6. Ha szerver specifikus kérdés van, használd a felhasználó szervereinek adatait
-7. Ha számlázási kérdés van, használd a számla és előfizetés információkat
+SZABÁLYOK:
+- Válaszolj MINDIG magyarul, érthetően és barátságosan
+- Használd egyszerű, világos mondatokat
+- Ha nem tudod a választ, mondd el őszintén
+- Ha a kontextusban van releváns információ, használd azt
 
-TÉMÁK, AMIKBEN SEGÍTHETSZ:
-- Gaming szerver hosting szolgáltatások
-- Szerver konfiguráció és beállítások
-- Technikai hibaelhárítás
-- Játék szerverek kezelése (Minecraft, ARK, Rust, Valheim, Palworld, stb.)
-- Előfizetések és számlázás
-- Szerver állapot és monitoring
-- Port beállítások
-- Backup és restore
-- Plugin és mod telepítés
-- Szerver teljesítmény optimalizálás
+TÉMÁK: gaming szerver hosting, szerver beállítás, hibaelhárítás, Minecraft, ARK, Rust, Valheim, számlázás, előfizetések.
 
-${context ? `\n\n=== KONTEKTUS INFORMÁCIÓK ===\n${context}\n=== KONTEKTUS VÉGE ===\n` : ''}
+${context ? `\nRELEVÁNS INFORMÁCIÓK:\n${context}\n` : ''}
 
-Válaszolj a felhasználó kérdésére részletesen, használva a fenti kontextust, ha releváns.`;
+Válaszolj röviden, érthetően magyarul.`;
 
   try {
     const response = await fetch(`${ollamaUrl}/api/chat`, {
@@ -270,20 +256,23 @@ async function handleStreamingResponse(
   userId: string
 ): Promise<Response> {
   const ollamaUrl = process.env.OLLAMA_URL || 'http://localhost:11434';
-  // Alapértelmezett: phi3:mini - erőforráshatékony, gyors
-  const model = process.env.OLLAMA_MODEL || 'phi3:mini';
+  // Alapértelmezett: llama3.2:3b - jobb magyar nyelv támogatás
+  const model = process.env.OLLAMA_MODEL || 'llama3.2:3b';
 
-  const systemPrompt = `Te egy szakértő vagy a gaming szerver hosting területén. 
-Segítesz a felhasználóknak kérdéseikkel kapcsolatban a szerver hosting, konfiguráció, 
-hibaelhárítás és általános technikai kérdésekben. 
+  // Egyszerű, világos system prompt streaming-hez
+  const systemPrompt = `Te egy gaming szerver hosting szakértő vagy. Segítesz a felhasználóknak magyar nyelven.
 
-FONTOS INSTRUKCIÓK:
-1. Válaszolj MINDIG magyarul, részletesen és barátságosan
-2. Használd a megadott kontextust a pontos válaszokhoz
-3. Ha a kontextusban van releváns információ, használd azt
-4. Formázd a válaszokat olvashatóan (bekezdések, felsorolások)
+SZABÁLYOK:
+- Válaszolj MINDIG magyarul, érthetően és barátságosan
+- Használd egyszerű, világos mondatokat
+- Ha nem tudod a választ, mondd el őszintén
+- Ha a kontextusban van releváns információ, használd azt
 
-${context ? `\n\n=== KONTEKTUS INFORMÁCIÓK ===\n${context}\n=== KONTEKTUS VÉGE ===\n` : ''}`;
+TÉMÁK: gaming szerver hosting, szerver beállítás, hibaelhárítás, Minecraft, ARK, Rust, Valheim, számlázás, előfizetések.
+
+${context ? `\nRELEVÁNS INFORMÁCIÓK:\n${context}\n` : ''}
+
+Válaszolj röviden, érthetően magyarul.`;
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream({

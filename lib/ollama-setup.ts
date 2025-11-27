@@ -2,8 +2,8 @@
 // Ez a fájl biztosítja, hogy az Ollama elérhető legyen
 
 const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
-// Alapértelmezett: phi3:mini - erőforráshatékony, gyors, jó minőség
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'phi3:mini';
+// Alapértelmezett: llama3.2:3b - jobb magyar nyelv támogatás, még mindig gyors
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'llama3.2:3b';
 
 export async function ensureOllamaReady(): Promise<boolean> {
   try {

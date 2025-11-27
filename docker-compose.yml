@@ -21,7 +21,7 @@ services:
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
       - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
       - OLLAMA_URL=http://ollama:11434
-      - OLLAMA_MODEL=${OLLAMA_MODEL:-phi3:mini}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.2:3b}
     restart: unless-stopped
     depends_on:
       - ollama

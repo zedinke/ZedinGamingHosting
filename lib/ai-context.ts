@@ -50,36 +50,25 @@ export async function getUserContext(userId: string): Promise<string> {
       }),
     ]);
 
-    let context = 'Felhasználó információk:\n';
+    // Rövidebb, egyszerűbb kontextus
+    let context = '';
 
     if (servers.length > 0) {
-      context += `\nSzerverei (${servers.length} db):\n`;
-      servers.forEach((server) => {
-        context += `- ${server.name} (${server.gameType}): ${server.status}, Port: ${server.port || 'N/A'}, Max játékosok: ${server.maxPlayers}\n`;
-      });
-    } else {
-      context += '\nNincs aktív szervere.\n';
+      context += `Szerverei: ${servers.map(s => `${s.name} (${s.gameType}, ${s.status})`).join(', ')}.\n`;
     }
 
     if (subscriptions.length > 0) {
-      context += `\nElőfizetései (${subscriptions.length} db):\n`;
-      subscriptions.forEach((sub) => {
-        context += `- ${sub.server?.name || 'N/A'} (${sub.server?.gameType || 'N/A'}): ${sub.status}`;
-        if (sub.currentPeriodEnd) {
-          context += `, Lejárat: ${sub.currentPeriodEnd.toLocaleDateString('hu-HU')}`;
-        }
-        context += '\n';
-      });
+      context += `Előfizetései: ${subscriptions.map(s => `${s.server?.name || 'N/A'} (${s.status})`).join(', ')}.\n`;
     }
 
     if (invoices.length > 0) {
-      context += `\nLegutóbbi számlák (${invoices.length} db):\n`;
-      invoices.forEach((invoice) => {
-        context += `- #${invoice.invoiceNumber}: ${invoice.amount} ${invoice.currency} (${invoice.status}), ${invoice.createdAt.toLocaleDateString('hu-HU')}\n`;
-      });
+      const unpaid = invoices.filter(i => i.status === 'PENDING').length;
+      if (unpaid > 0) {
+        context += `Függő számlák: ${unpaid} db.\n`;
+      }
     }
 
-    return context;
+    return context.trim();
   } catch (error) {
     console.error('Hiba a felhasználó kontextus generálása során:', error);
     return '';
@@ -110,7 +99,7 @@ export async function getFAQContext(query: string, locale: string = 'hu'): Promi
           isActive: true,
           locale: locale,
         },
-        take: 3,
+        take: 2,
         orderBy: { order: 'asc' },
       });
 
@@ -118,16 +107,17 @@ export async function getFAQContext(query: string, locale: string = 'hu'): Promi
         return '';
       }
 
-      let context = 'Gyakran ismételt kérdések (FAQ):\n';
+      let context = 'FAQ:\n';
       generalFaqs.forEach((faq) => {
-        context += `\nK: ${faq.question}\nV: ${faq.answer}\n`;
+        context += `${faq.question}: ${faq.answer.substring(0, 150)}...\n`;
       });
       return context;
     }
 
-    let context = 'Releváns gyakran ismételt kérdések (FAQ):\n';
-    faqs.forEach((faq) => {
-      context += `\nK: ${faq.question}\nV: ${faq.answer}\n`;
+    // Csak a legrelevánsabb FAQ-kat adjuk vissza, röviden
+    let context = 'FAQ:\n';
+    faqs.slice(0, 3).forEach((faq) => {
+      context += `${faq.question}: ${faq.answer.substring(0, 150)}...\n`;
     });
 
     return context;
@@ -137,103 +127,40 @@ export async function getFAQContext(query: string, locale: string = 'hu'): Promi
   }
 }
 
-// Dokumentáció kontextus (játék specifikus információk)
+// Dokumentáció kontextus (játék specifikus információk) - röviden
 export function getDocumentationContext(gameType?: string): string {
   const gameDocs: Record<string, string> = {
-    MINECRAFT: `
-Minecraft szerver információk:
-- Alapértelmezett port: 25565
-- Java Edition szerverek támogatottak
-- Pluginek és modok telepíthetők
-- Vanilla és Bukkit/Spigot/Paper szerverek
-- Konfigurációs fájlok: server.properties, bukkit.yml, spigot.yml
-- Backup: World fájlok mentése ajánlott
-`,
-    ARK_EVOLVED: `
-ARK: Survival Evolved szerver információk:
-- Alapértelmezett port: 7777 (Game), 27015 (Query)
-- SteamCMD szükséges a telepítéshez
-- Modok támogatottak Steam Workshop-ból
-- Konfigurációs fájlok: GameUserSettings.ini, Game.ini
-- Admin parancsok: enablecheats <password>
-- Backup: Save fájlok mentése ajánlott
-`,
-    ARK_ASCENDED: `
-ARK: Survival Ascended szerver információk:
-- Unreal Engine 5 alapú, újabb verzió
-- Alapértelmezett port: 7777 (Game), 27015 (Query)
-- Modok támogatottak
-- Konfigurációs fájlok: GameUserSettings.ini, Game.ini
-- Jobb teljesítmény és grafikus minőség
-`,
-    RUST: `
-Rust szerver információk:
-- Alapértelmezett port: 28015 (Game), 28016 (RCon)
-- Oxide plugin támogatás
-- Konfigurációs fájlok: server.cfg, oxide/config/
-- Wipe: Térkép törlése és újraindítás
-- Admin parancsok: F1 konzolban
-`,
-    VALHEIM: `
-Valheim szerver információk:
-- Alapértelmezett port: 2456-2458
-- Dedicated szerver támogatott
-- Konfigurációs fájl: start_server.sh
-- World fájlok: .db és .fwl fájlok
-- Backup: World fájlok mentése ajánlott
-`,
-    PALWORLD: `
-Palworld szerver információk:
-- Alapértelmezett port: 8211 (UDP)
-- Dedicated szerver támogatott
-- Konfigurációs fájl: DefaultPalWorldSettings.ini
-- Multiplayer támogatás
-- Backup: Save fájlok mentése ajánlott
-`,
+    MINECRAFT: `Minecraft: Port 25565, Java Edition, pluginek telepíthetők, server.properties fájl.`,
+    ARK_EVOLVED: `ARK Evolved: Port 7777, SteamCMD, modok, GameUserSettings.ini fájl.`,
+    ARK_ASCENDED: `ARK Ascended: Port 7777, Unreal Engine 5, modok, GameUserSettings.ini fájl.`,
+    RUST: `Rust: Port 28015, Oxide plugin, server.cfg fájl.`,
+    VALHEIM: `Valheim: Port 2456-2458, dedicated szerver, .db fájlok.`,
+    PALWORLD: `Palworld: Port 8211, dedicated szerver, DefaultPalWorldSettings.ini fájl.`,
   };
 
   if (gameType && gameDocs[gameType]) {
-    return `Játék specifikus dokumentáció:\n${gameDocs[gameType]}`;
+    return gameDocs[gameType];
   }
 
-  return `Általános gaming szerver információk:
-- Szerverek kezelése: Start, Stop, Restart műveletek
-- Konzol hozzáférés: Valós idejű logok és parancsok
-- Fájlkezelő: FTP vagy webes felület
-- Backup: Rendszeres mentések ajánlottak
-- Monitoring: CPU, RAM, Disk használat követése
-- Portok: Automatikus port kiosztás
-- Konfiguráció: Játék specifikus beállítások
-`;
+  return `Gaming szerver: Start/Stop/Restart, konzol, fájlkezelő, backup, monitoring.`;
 }
 
-// Teljes kontextus generálása
+// Teljes kontextus generálása - röviden, csak a legfontosabb információk
 export async function generateAIContext(
   userId: string,
   query: string,
   locale: string = 'hu',
   gameType?: string
 ): Promise<string> {
+  // Csak a legrelevánsabb kontextust generáljuk
   const [userContext, faqContext, docContext] = await Promise.all([
     getUserContext(userId),
     getFAQContext(query, locale),
     Promise.resolve(getDocumentationContext(gameType)),
   ]);
 
-  let fullContext = '';
-
-  if (userContext) {
-    fullContext += userContext + '\n\n';
-  }
-
-  if (faqContext) {
-    fullContext += faqContext + '\n\n';
-  }
-
-  if (docContext) {
-    fullContext += docContext;
-  }
-
-  return fullContext.trim();
+  // Összefűzzük röviden
+  const parts = [userContext, faqContext, docContext].filter(Boolean);
+  return parts.join('\n').trim();
 }
 
