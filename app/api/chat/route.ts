@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { ensureOllamaReady } from '@/lib/ollama-setup';
+import { generateAIContext } from '@/lib/ai-context';
 
 // Ollama API integráció
 async function getAIResponse(
@@ -14,15 +15,32 @@ async function getAIResponse(
 
   const systemPrompt = `Te egy szakértő vagy a gaming szerver hosting területén. 
 Segítesz a felhasználóknak kérdéseikkel kapcsolatban a szerver hosting, konfiguráció, 
-hibaelhárítás és általános technikai kérdésekben. Válaszolj magyarul, részletesen és 
-barátságosan. Használd a következő információkat a válaszaidban:
+hibaelhárítás és általános technikai kérdésekben. 
+
+FONTOS INSTRUKCIÓK:
+1. Válaszolj MINDIG magyarul, részletesen és barátságosan
+2. Használd a megadott kontextust a pontos válaszokhoz
+3. Ha a kontextusban van releváns információ, használd azt
+4. Ha nem tudsz pontos választ adni, javasolj alternatív megoldásokat
+5. Formázd a válaszokat olvashatóan (bekezdések, felsorolások)
+6. Ha szerver specifikus kérdés van, használd a felhasználó szervereinek adatait
+7. Ha számlázási kérdés van, használd a számla és előfizetés információkat
+
+TÉMÁK, AMIKBEN SEGÍTHETSZ:
 - Gaming szerver hosting szolgáltatások
 - Szerver konfiguráció és beállítások
 - Technikai hibaelhárítás
-- Játék szerverek kezelése (Minecraft, ARK, Rust, Valheim, stb.)
+- Játék szerverek kezelése (Minecraft, ARK, Rust, Valheim, Palworld, stb.)
 - Előfizetések és számlázás
 - Szerver állapot és monitoring
-${context ? `\n\nKontextus: ${context}` : ''}`;
+- Port beállítások
+- Backup és restore
+- Plugin és mod telepítés
+- Szerver teljesítmény optimalizálás
+
+${context ? `\n\n=== KONTEKTUS INFORMÁCIÓK ===\n${context}\n=== KONTEKTUS VÉGE ===\n` : ''}
+
+Válaszolj a felhasználó kérdésére részletesen, használva a fenti kontextust, ha releváns.`;
 
   try {
     const response = await fetch(`${ollamaUrl}/api/chat`, {
@@ -85,7 +103,8 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { conversationId, message, context } = body;
+    const { conversationId, message, context: providedContext, stream } = body;
+    const userId = (session.user as any).id;
 
     if (!message?.trim()) {
       return NextResponse.json({ error: 'Üzenet kötelező' }, { status: 400 });
@@ -130,6 +149,23 @@ export async function POST(request: NextRequest) {
       content: m.content,
     }));
 
+    // Kontextus generálása (RAG + felhasználói adatok)
+    const aiContext = await generateAIContext(userId, message, 'hu');
+    const fullContext = providedContext 
+      ? `${providedContext}\n\n${aiContext}` 
+      : aiContext;
+
+    // Streaming válaszok támogatása
+    if (stream) {
+      return handleStreamingResponse(
+        previousMessages,
+        message,
+        fullContext,
+        conversation.id,
+        userId
+      );
+    }
+
     // AI válasz generálása
     let aiResponse: string;
     try {
@@ -141,7 +177,7 @@ export async function POST(request: NextRequest) {
       } else {
         aiResponse = await getAIResponse(
           [...previousMessages, { role: 'user', content: message }],
-          context
+          fullContext
         );
       }
     } catch (error) {
@@ -221,5 +257,147 @@ export async function GET(request: NextRequest) {
     console.error('Chat list error:', error);
     return NextResponse.json({ error: 'Hiba történt' }, { status: 500 });
   }
+}
+
+// Streaming válasz kezelése
+async function handleStreamingResponse(
+  previousMessages: Array<{ role: string; content: string }>,
+  message: string,
+  context: string,
+  conversationId: string,
+  userId: string
+): Promise<Response> {
+  const ollamaUrl = process.env.OLLAMA_URL || 'http://localhost:11434';
+  const model = process.env.OLLAMA_MODEL || 'llama3';
+
+  const systemPrompt = `Te egy szakértő vagy a gaming szerver hosting területén. 
+Segítesz a felhasználóknak kérdéseikkel kapcsolatban a szerver hosting, konfiguráció, 
+hibaelhárítás és általános technikai kérdésekben. 
+
+FONTOS INSTRUKCIÓK:
+1. Válaszolj MINDIG magyarul, részletesen és barátságosan
+2. Használd a megadott kontextust a pontos válaszokhoz
+3. Ha a kontextusban van releváns információ, használd azt
+4. Formázd a válaszokat olvashatóan (bekezdések, felsorolások)
+
+${context ? `\n\n=== KONTEKTUS INFORMÁCIÓK ===\n${context}\n=== KONTEKTUS VÉGE ===\n` : ''}`;
+
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    async start(controller) {
+      try {
+        const response = await fetch(`${ollamaUrl}/api/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: 'system', content: systemPrompt },
+              ...previousMessages,
+              { role: 'user', content: message },
+            ],
+            stream: true,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Ollama API hiba: ${response.status}`);
+        }
+
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+
+        if (!reader) {
+          throw new Error('Nem sikerült olvasni a stream-et');
+        }
+
+        let fullResponse = '';
+
+        let streamDone = false;
+        while (!streamDone) {
+          const { done, value } = await reader.read();
+          if (done) {
+            streamDone = true;
+            break;
+          }
+
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n').filter((line) => line.trim());
+
+          for (const line of lines) {
+            try {
+              const data = JSON.parse(line);
+              if (data.message?.content) {
+                const content = data.message.content;
+                fullResponse += content;
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
+              }
+              if (data.done) {
+                // Válasz mentése
+                try {
+                  await prisma.chatMessage.create({
+                    data: {
+                      conversationId,
+                      role: 'ASSISTANT',
+                      content: fullResponse,
+                    },
+                  });
+                  await prisma.chatConversation.update({
+                    where: { id: conversationId },
+                    data: { updatedAt: new Date() },
+                  });
+                } catch (error) {
+                  console.error('Hiba a válasz mentése során:', error);
+                }
+                streamDone = true;
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true, conversationId })}\n\n`));
+                controller.close();
+                break;
+              }
+            } catch (e) {
+              // JSON parse hiba, folytatjuk
+            }
+          }
+        }
+
+        // Ha a stream véget ért, de még nincs done flag
+        if (fullResponse && !streamDone) {
+          try {
+            await prisma.chatMessage.create({
+              data: {
+                conversationId,
+                role: 'ASSISTANT',
+                content: fullResponse,
+              },
+            });
+            await prisma.chatConversation.update({
+              where: { id: conversationId },
+              data: { updatedAt: new Date() },
+            });
+          } catch (error) {
+            console.error('Hiba a válasz mentése során:', error);
+          }
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true, conversationId })}\n\n`));
+        }
+        controller.close();
+      } catch (error) {
+        console.error('Streaming hiba:', error);
+        controller.enqueue(
+          encoder.encode(
+            `data: ${JSON.stringify({ error: 'Hiba történt a válasz generálása során' })}\n\n`
+          )
+        );
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+    },
+  });
 }
 

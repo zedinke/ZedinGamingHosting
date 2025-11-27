@@ -153,19 +153,27 @@ ollama pull llama3
 - Nézd meg a konzol logokat a böngészőben (F12)
 - Ellenőrizd a szerver logokat
 
-## Fejlesztési Lehetőségek
+## Fejlesztett Funkciók ✅
 
-### RAG (Retrieval Augmented Generation)
+### RAG (Retrieval Augmented Generation) ✅
 
-A válaszok minőségének javítása érdekében be lehet építeni egy RAG rendszert, ami a platform dokumentációjából, FAQ-ból és egyéb forrásokból nyújt információkat.
+A rendszer automatikusan használja a FAQ adatbázist a válaszok generálásához. Releváns FAQ kérdések és válaszok automatikusan bekerülnek a kontextusba.
 
-### Kontextus Bővítés
+### Kontextus Bővítés ✅
 
-A felhasználó szervereinek, előfizetéseinek és egyéb adatainak beépítése a válaszokba.
+A felhasználó szervereinek, előfizetéseinek és számláinak adatai automatikusan bekerülnek a kontextusba, így a válaszok személyre szabottak.
 
-### Streaming Válaszok
+### Streaming Válaszok ✅
 
-Valós idejű válaszgenerálás a jobb felhasználói élményért.
+Valós idejű válaszgenerálás - a válaszok folyamatosan jelennek meg, ahogy az AI generálja őket.
+
+### Játék Specifikus Dokumentáció ✅
+
+A rendszer tartalmaz játék specifikus információkat (Minecraft, ARK, Rust, Valheim, Palworld, stb.), amelyeket automatikusan használ a válaszokban.
+
+### Fejlett System Prompt ✅
+
+Részletes, strukturált system prompt biztosítja a pontos és releváns válaszokat.
 
 ## Biztonság
 

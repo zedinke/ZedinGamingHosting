@@ -60,36 +60,123 @@ export function AIChatPanel({ isOpen, onClose }: AIChatPanelProps) {
       createdAt: new Date(),
     };
 
+    const userInput = input;
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
 
+    // Streaming válasz kezelése
+    const useStreaming = true; // Streaming bekapcsolva
+
     try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          conversationId,
-          message: input,
-        }),
-      });
+      if (useStreaming) {
+        // Streaming válasz
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            conversationId,
+            message: userInput,
+            stream: true,
+          }),
+        });
 
-      const data = await response.json();
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Hiba történt');
+        }
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Hiba történt');
+        // Streaming válasz feldolgozása
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+
+        if (!reader) {
+          throw new Error('Nem sikerült olvasni a stream-et');
+        }
+
+        // Üres assistant üzenet létrehozása
+        const assistantMessageId = Date.now().toString();
+        let fullContent = '';
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: assistantMessageId,
+            role: 'ASSISTANT',
+            content: '',
+            createdAt: new Date(),
+          },
+        ]);
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n').filter((line) => line.trim());
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const data = JSON.parse(line.slice(6));
+                if (data.content) {
+                  fullContent += data.content;
+                  // Frissítjük az üzenetet
+                  setMessages((prev) =>
+                    prev.map((msg) =>
+                      msg.id === assistantMessageId
+                        ? { ...msg, content: fullContent }
+                        : msg
+                    )
+                  );
+                }
+                if (data.conversationId) {
+                  setConversationId(data.conversationId);
+                }
+                if (data.done) {
+                  if (data.conversationId) {
+                    setConversationId(data.conversationId);
+                  }
+                  break;
+                }
+                if (data.error) {
+                  throw new Error(data.error);
+                }
+              } catch (e) {
+                // JSON parse hiba, folytatjuk
+              }
+            }
+          }
+        }
+      } else {
+        // Normál válasz (nem streaming)
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            conversationId,
+            message: userInput,
+            stream: false,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Hiba történt');
+        }
+
+        setConversationId(data.conversationId);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: data.message.id,
+            role: 'ASSISTANT',
+            content: data.message.content,
+            createdAt: new Date(data.message.createdAt),
+          },
+        ]);
       }
-
-      setConversationId(data.conversationId);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: data.message.id,
-          role: 'ASSISTANT',
-          content: data.message.content,
-          createdAt: new Date(data.message.createdAt),
-        },
-      ]);
     } catch (error: any) {
       toast.error(error.message || 'Hiba történt a válasz generálása során');
       setMessages((prev) => prev.slice(0, -1)); // Visszavonjuk a felhasználó üzenetét
