@@ -7,6 +7,7 @@ import { CTASection } from '@/components/home/CTASection';
 import { SlideshowSection } from '@/components/home/SlideshowSection';
 import { PartnersSection } from '@/components/home/PartnersSection';
 import { Footer } from '@/components/home/Footer';
+import { PriceCalculator } from '@/components/home/PriceCalculator';
 import { prisma } from '@/lib/prisma';
 import { readFileSync } from 'fs';
 import { join } from 'path';
@@ -160,6 +161,13 @@ export default async function HomePage({
 
         {/* Partners Section */}
         <PartnersSection locale={locale} />
+
+        {/* Price Calculator Section */}
+        <section className="py-16 bg-gray-50">
+          <div className="container mx-auto px-4">
+            <PriceCalculator locale={validLocale} />
+          </div>
+        </section>
 
         {/* CTA Section */}
         {ctaSection ? (

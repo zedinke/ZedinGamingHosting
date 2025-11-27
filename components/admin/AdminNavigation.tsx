@@ -60,6 +60,7 @@ export function AdminNavigation({ locale }: AdminNavigationProps) {
     { href: `/${locale}/admin/invoices`, label: 'Számlák', icon: FileText },
     { href: `/${locale}/admin/tickets`, label: 'Ticketek', icon: Ticket },
     { href: `/${locale}/admin/cms`, label: 'CMS', icon: FileEdit },
+    { href: `/${locale}/admin/games`, label: 'Játékok Konfig', icon: Server },
     { href: `/${locale}/admin/analytics`, label: 'Analytics', icon: BarChart3 },
     { href: `/${locale}/admin/theme`, label: 'Téma', icon: Palette },
     { href: `/${locale}/admin/system`, label: 'Rendszer', icon: Settings },

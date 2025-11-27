@@ -129,7 +129,7 @@ enum GameType {
   // ARK játékok
   ARK_EVOLVED
   ARK_ASCENDED
-  
+
   // Survival játékok
   MINECRAFT
   RUST
@@ -145,7 +145,7 @@ enum GameType {
   GROUNDED
   V_RISING
   DONT_STARVE_TOGETHER
-  
+
   // FPS játékok
   CS2
   CSGO
@@ -156,7 +156,7 @@ enum GameType {
   HELL_LET_LOOSE
   POST_SCRIPTUM
   ARMA_3
-  
+
   // Sandbox játékok
   TERRARIA
   STARBOUND
@@ -165,10 +165,10 @@ enum GameType {
   SPACE_ENGINEERS
   GARRYS_MOD
   UNTURNED
-  
+
   // MOBA
   DOTA_2
-  
+
   // További játékok (30+)
   TEAM_FORTRESS_2
   HALF_LIFE_2_DEATHMATCH
@@ -200,7 +200,7 @@ enum GameType {
   SPIDER_MAN
   GHOST_OF_TSUSHIMA
   DEATH_STRANDING
-  
+
   // Egyéb
   OTHER
 }
@@ -476,24 +476,24 @@ model PricingPlan {
 model GamePackage {
   id            String   @id @default(cuid())
   gameType      GameType
-  name          String   // Csomag neve
+  name          String // Csomag neve
   description   String?  @db.Text
   price         Float
   currency      String   @default("HUF")
   interval      String   @default("month") // month, year
-  image         String?  // Kép URL
-  videoUrl      String?  // YouTube videó URL (opcionális)
-  slot          Int      // Fix slot szám
-  cpuCores      Int      // Fix CPU vCore szám
-  ram           Int      // Fix RAM mennyiség GB-ban
-  discountPrice Float?   // Akciós ár (opcionális)
+  image         String? // Kép URL
+  videoUrl      String? // YouTube videó URL (opcionális)
+  slot          Int // Fix slot szám
+  cpuCores      Int // Fix CPU vCore szám
+  ram           Int // Fix RAM mennyiség GB-ban
+  discountPrice Float? // Akciós ár (opcionális)
   isActive      Boolean  @default(true) // Ha aktív, akkor megjelenik és rendelhető
   order         Int      @default(0) // Rendezési sorrend
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  @@map("game_packages")
   @@index([gameType, isActive])
+  @@map("game_packages")
 }
 
 // CMS - Testimonials
@@ -781,12 +781,12 @@ enum TaskStatus {
 
 // AI Chat konverzációk
 model ChatConversation {
-  id        String       @id @default(cuid())
+  id        String        @id @default(cuid())
   userId    String
-  title     String?      // Automatikusan generált vagy felhasználó által megadott
+  title     String? // Automatikusan generált vagy felhasználó által megadott
   messages  ChatMessage[]
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -794,12 +794,12 @@ model ChatConversation {
 }
 
 model ChatMessage {
-  id             String           @id @default(cuid())
+  id             String          @id @default(cuid())
   conversationId String
-  role           ChatMessageRole   // USER vagy ASSISTANT
-  content        String            @db.Text
-  metadata       Json?             // További információk (pl. használt dokumentumok)
-  createdAt      DateTime          @default(now())
+  role           ChatMessageRole // USER vagy ASSISTANT
+  content        String          @db.Text
+  metadata       Json? // További információk (pl. használt dokumentumok)
+  createdAt      DateTime        @default(now())
 
   conversation ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
@@ -809,4 +809,90 @@ model ChatMessage {
 enum ChatMessageRole {
   USER
   ASSISTANT
+}
+
+// Játék konfigurációk - telepítési és indítási paraméterek
+model GameConfig {
+  id          String   @id @default(cuid())
+  gameType    GameType @unique
+  displayName String // Megjelenített név
+  isActive    Boolean  @default(true)
+  isVisible   Boolean  @default(true) // Megjelenik-e a játékok listájában
+
+  // Telepítési paraméterek
+  steamAppId       Int? // Steam App ID (ha SteamCMD-t használ)
+  installScript    String? @db.Text // Telepítési script
+  requiresSteamCMD Boolean @default(false)
+  requiresJava     Boolean @default(false)
+  requiresWine     Boolean @default(false)
+
+  // Indítási paraméterek
+  startCommand        String? @db.Text // Indítási parancs
+  startCommandWindows String? @db.Text // Windows verzió (ha Wine szükséges)
+  stopCommand         String? @db.Text
+
+  // Konfigurációs fájlok
+  configPath String? // Konfigurációs fájl elérési út
+
+  // Portok
+  defaultPort Int? // Alapértelmezett port
+  queryPort   Int? // Query port (ha külön van)
+
+  // Erőforrás követelmények (alapértelmezett)
+  defaultCpuCores Int @default(1)
+  defaultRamGB    Int @default(2)
+  defaultDiskGB   Int @default(5)
+
+  // További beállítások
+  description String? @db.Text
+  image       String? // Kép URL
+  order       Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  pricingConfig GamePricingConfig?
+
+  @@index([isActive, isVisible])
+  @@map("game_configs")
+}
+
+// Játék árazási konfiguráció - dinamikus árazás
+model GamePricingConfig {
+  id       String   @id @default(cuid())
+  gameType GameType @unique
+
+  // Alapár (havi)
+  basePrice Float  @default(0)
+  currency  String @default("HUF")
+
+  // Dinamikus árazás
+  pricePerSlot  Float @default(0) // Ár/slot
+  pricePerVCpu  Float @default(0) // Ár/vCPU
+  pricePerRamGB Float @default(0) // Ár/RAM GB
+
+  // Minimum értékek
+  minSlots Int @default(1)
+  minVCpu  Int @default(1)
+  minRamGB Int @default(1)
+
+  // Maximum értékek
+  maxSlots Int @default(100)
+  maxVCpu  Int @default(16)
+  maxRamGB Int @default(64)
+
+  // Lépésközök (hányasával változtatható)
+  slotStep Int @default(1)
+  vCpuStep Int @default(1)
+  ramStep  Int @default(1)
+
+  // Aktív-e a dinamikus árazás
+  dynamicPricingEnabled Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  gameConfig GameConfig @relation(fields: [gameType], references: [gameType], onDelete: Cascade)
+
+  @@map("game_pricing_configs")
 }
