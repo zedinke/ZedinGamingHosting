@@ -15,20 +15,47 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Webhook signature ellenőrzése (ha van)
+    // Webhook signature ellenőrzése (kötelező)
     const signature = request.headers.get('x-webhook-signature');
-    if (signature && process.env.WEBHOOK_SECRET) {
-      const expectedSignature = crypto
-        .createHmac('sha256', process.env.WEBHOOK_SECRET)
-        .update(JSON.stringify(body))
-        .digest('hex');
+    const webhookSecret = process.env.WEBHOOK_SECRET;
+    
+    if (!webhookSecret) {
+      console.error('WEBHOOK_SECRET nincs beállítva - webhookok nem biztonságosak!');
+      return NextResponse.json(
+        { error: 'Webhook konfiguráció hiányzik' },
+        { status: 500 }
+      );
+    }
+    
+    if (!signature) {
+      return NextResponse.json(
+        { error: 'Webhook signature hiányzik' },
+        { status: 401 }
+      );
+    }
+    
+    const expectedSignature = crypto
+      .createHmac('sha256', webhookSecret)
+      .update(JSON.stringify(body))
+      .digest('hex');
 
-      if (signature !== expectedSignature) {
-        return NextResponse.json(
-          { error: 'Érvénytelen signature' },
-          { status: 401 }
-        );
-      }
+    // Timing-safe comparison a timing attack ellen
+    // timingSafeEqual csak akkor működik, ha a buffer-ek ugyanolyan hosszúak
+    const signatureBuffer = Buffer.from(signature, 'hex');
+    const expectedBuffer = Buffer.from(expectedSignature, 'hex');
+    
+    if (signatureBuffer.length !== expectedBuffer.length) {
+      return NextResponse.json(
+        { error: 'Érvénytelen signature' },
+        { status: 401 }
+      );
+    }
+    
+    if (!crypto.timingSafeEqual(signatureBuffer, expectedBuffer)) {
+      return NextResponse.json(
+        { error: 'Érvénytelen signature' },
+        { status: 401 }
+      );
     }
 
     // Szerver ellenőrzése

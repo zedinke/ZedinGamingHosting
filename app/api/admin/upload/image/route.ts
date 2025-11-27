@@ -116,6 +116,56 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Fájl kiterjesztés ellenőrzése
+    const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'];
+    const fileExtension = file.name.split('.').pop()?.toLowerCase();
+    if (!fileExtension || !allowedExtensions.includes(fileExtension)) {
+      return NextResponse.json(
+        { error: 'Nem engedélyezett fájlformátum. Csak JPG, PNG, GIF, WEBP, SVG engedélyezett' },
+        { status: 400 }
+      );
+    }
+
+    // Magic bytes (fájl header) ellenőrzése a valós fájltípus meghatározásához
+    const fileBuffer = Buffer.from(await file.arrayBuffer());
+    const magicBytes = fileBuffer.slice(0, 12);
+    
+    // Képformátumok magic bytes
+    const imageMagicBytes: Record<string, Buffer[]> = {
+      jpg: [Buffer.from([0xFF, 0xD8, 0xFF])],
+      png: [Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])],
+      gif: [Buffer.from([0x47, 0x49, 0x46, 0x38, 0x37, 0x61]), Buffer.from([0x47, 0x49, 0x46, 0x38, 0x39, 0x61])],
+      webp: [Buffer.from([0x52, 0x49, 0x46, 0x46]), Buffer.from([0x57, 0x45, 0x42, 0x50])],
+      svg: [Buffer.from([0x3C, 0x3F, 0x78, 0x6D, 0x6C]), Buffer.from([0x3C, 0x73, 0x76, 0x67])], // XML/SVG
+    };
+    
+    let isValidImage = false;
+    for (const [format, signatures] of Object.entries(imageMagicBytes)) {
+      for (const signature of signatures) {
+        if (magicBytes.slice(0, signature.length).equals(signature)) {
+          // SVG esetén további ellenőrzés (XML dokumentum)
+          if (format === 'svg') {
+            const fileContent = fileBuffer.toString('utf-8', 0, Math.min(1000, fileBuffer.length));
+            if (fileContent.includes('<svg') || fileContent.includes('<?xml')) {
+              isValidImage = true;
+              break;
+            }
+          } else {
+            isValidImage = true;
+            break;
+          }
+        }
+      }
+      if (isValidImage) break;
+    }
+    
+    if (!isValidImage) {
+      return NextResponse.json(
+        { error: 'A fájl nem érvényes képfájl. A fájl header nem egyezik a képformátummal.' },
+        { status: 400 }
+      );
+    }
+
     // Find project root
     const projectRoot = findProjectRoot();
     const publicDir = join(projectRoot, 'public');

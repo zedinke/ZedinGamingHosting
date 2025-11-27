@@ -1,10 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { randomBytes } from 'crypto';
+import { UserRole } from '@prisma/client';
 
 // POST - Agent regisztráció (amikor egy agent először csatlakozik)
+// Biztonsági megjegyzés: Admin hitelesítés szükséges vagy regisztrációs token
 export async function POST(request: NextRequest) {
   try {
+    // Admin hitelesítés ellenőrzése
+    const session = await getServerSession(authOptions);
+    
+    if (!session || (session.user as any)?.role !== UserRole.ADMIN) {
+      // Alternatív: Regisztrációs token ellenőrzése (ha van)
+      const registrationToken = request.headers.get('x-registration-token');
+      const expectedToken = process.env.AGENT_REGISTRATION_TOKEN;
+      
+      if (!registrationToken || !expectedToken || registrationToken !== expectedToken) {
+        return NextResponse.json(
+          { error: 'Nincs jogosultság az agent regisztrációhoz' },
+          { status: 403 }
+        );
+      }
+    }
+    
     const body = await request.json();
     const { machineId, version, capabilities } = body;
 
