@@ -1211,16 +1211,18 @@ export async function createSystemdServiceForServer(
             keyPath: machine.sshKeyPath || undefined,
           },
           `(
-            (test -f ${execDir}/FactoryGameServer && echo "found:${execDir}/FactoryGameServer") ||
-            (test -f ${execDir}/FactoryServer.sh && echo "found:${execDir}/FactoryServer.sh") ||
-            (test -f ${execDir}/FactoryServer && echo "found:${execDir}/FactoryServer") ||
-            (test -f ${execDir}/FactoryServer-Linux-Shipping && echo "found:${execDir}/FactoryServer-Linux-Shipping") ||
-            (test -f ${workingDir}/FactoryGame/Binaries/Linux/FactoryGameServer && echo "found:${workingDir}/FactoryGame/Binaries/Linux/FactoryGameServer") ||
-            (test -f ${workingDir}/FactoryGame/Binaries/Linux/FactoryServer.sh && echo "found:${workingDir}/FactoryGame/Binaries/Linux/FactoryServer.sh") ||
-            (test -f ${workingDir}/FactoryGame/Binaries/Linux/FactoryServer && echo "found:${workingDir}/FactoryGame/Binaries/Linux/FactoryServer") ||
+            (test -f ${workingDir}/FactoryGame/FactoryServer-Linux-Shipping && echo "found:${workingDir}/FactoryGame/FactoryServer-Linux-Shipping") ||
             (test -f ${workingDir}/FactoryGame/FactoryGameServer && echo "found:${workingDir}/FactoryGame/FactoryGameServer") ||
             (test -f ${workingDir}/FactoryGame/FactoryServer.sh && echo "found:${workingDir}/FactoryGame/FactoryServer.sh") ||
             (test -f ${workingDir}/FactoryGame/FactoryServer && echo "found:${workingDir}/FactoryGame/FactoryServer") ||
+            (test -f ${workingDir}/FactoryServer-Linux-Shipping && echo "found:${workingDir}/FactoryServer-Linux-Shipping") ||
+            (test -f ${workingDir}/FactoryGameServer && echo "found:${workingDir}/FactoryGameServer") ||
+            (test -f ${workingDir}/FactoryServer.sh && echo "found:${workingDir}/FactoryServer.sh") ||
+            (test -f ${workingDir}/FactoryServer && echo "found:${workingDir}/FactoryServer") ||
+            (test -f ${execDir}/FactoryServer-Linux-Shipping && echo "found:${execDir}/FactoryServer-Linux-Shipping") ||
+            (test -f ${execDir}/FactoryGameServer && echo "found:${execDir}/FactoryGameServer") ||
+            (test -f ${execDir}/FactoryServer.sh && echo "found:${execDir}/FactoryServer.sh") ||
+            (test -f ${execDir}/FactoryServer && echo "found:${execDir}/FactoryServer") ||
             echo "notfound"
           )`
         );
@@ -1292,7 +1294,7 @@ export async function createSystemdServiceForServer(
                   user: machine.sshUser,
                   keyPath: machine.sshKeyPath || undefined,
                 },
-                `test -f ${workingDir}/FactoryGame/Binaries/Linux/FactoryGameServer && echo "${workingDir}/FactoryGame/Binaries/Linux/FactoryGameServer" || (test -f ${workingDir}/FactoryGame/Binaries/Linux/FactoryServer.sh && echo "${workingDir}/FactoryGame/Binaries/Linux/FactoryServer.sh" || echo "notfound")`
+                `(test -f ${workingDir}/FactoryGame/FactoryServer-Linux-Shipping && echo "${workingDir}/FactoryGame/FactoryServer-Linux-Shipping") || (test -f ${workingDir}/FactoryGame/FactoryGameServer && echo "${workingDir}/FactoryGame/FactoryGameServer") || (test -f ${workingDir}/FactoryGame/FactoryServer.sh && echo "${workingDir}/FactoryGame/FactoryServer.sh") || (test -f ${workingDir}/FactoryGame/FactoryServer && echo "${workingDir}/FactoryGame/FactoryServer") || (test -f ${workingDir}/FactoryServer-Linux-Shipping && echo "${workingDir}/FactoryServer-Linux-Shipping") || (test -f ${workingDir}/FactoryGameServer && echo "${workingDir}/FactoryGameServer") || (test -f ${workingDir}/FactoryServer.sh && echo "${workingDir}/FactoryServer.sh") || (test -f ${workingDir}/FactoryServer && echo "${workingDir}/FactoryServer") || echo "notfound"`
               );
               
               const binariesDirResult = checkBinariesDir.stdout?.trim();
