@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ServerStatus, GameType } from '@prisma/client';
 import toast from 'react-hot-toast';
 import { UserServerConfigEditor } from './UserServerConfigEditor';
+import { ServerSavesManager } from './ServerSavesManager';
 
 interface Server {
   id: string;
@@ -340,12 +341,20 @@ export function UserServerDetail({ server, locale }: UserServerDetailProps) {
       )}
 
       {activeTab === 'config' && (
-        <UserServerConfigEditor
-          serverId={server.id}
-          gameType={server.gameType}
-          maxPlayers={server.maxPlayers}
-          initialConfig={server.configuration}
-        />
+        <div className="space-y-6">
+          <UserServerConfigEditor
+            serverId={server.id}
+            gameType={server.gameType}
+            maxPlayers={server.maxPlayers}
+            initialConfig={server.configuration}
+          />
+          {server.gameType === 'THE_FOREST' && (
+            <ServerSavesManager
+              serverId={server.id}
+              gameType={server.gameType}
+            />
+          )}
+        </div>
       )}
     </div>
   );

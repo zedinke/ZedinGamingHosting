@@ -121,12 +121,20 @@ export async function PUT(
       );
     }
 
+    // The Forest esetén a szerver nevet is frissítjük, ha változott
+    let updateData: any = {
+      configuration: configuration || server.configuration,
+    };
+
+    // Ha a The Forest szerver neve változott, frissítjük a server.name mezőt is
+    if (server.gameType === 'THE_FOREST' && configuration?.servername) {
+      updateData.name = configuration.servername;
+    }
+
     // Konfiguráció frissítése
     const updatedServer = await prisma.server.update({
       where: { id },
-      data: {
-        configuration: configuration || server.configuration,
-      },
+      data: updateData,
     });
 
     // Konfiguráció alkalmazása SSH-n keresztül
