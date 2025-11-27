@@ -54,7 +54,7 @@ export function UserServerConfigFileEditor({
 
   const handleSave = async () => {
     if (!hasChanges) {
-      toast.info('Nincs változtatás a mentéshez');
+      toast('Nincs változtatás a mentéshez', { icon: 'ℹ️' });
       return;
     }
 
