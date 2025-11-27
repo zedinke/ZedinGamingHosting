@@ -51,8 +51,10 @@ export function validateEnvironment(): EnvValidationResult {
   }
 
   // Webhook secret ellenőrzése (ajánlott, de nem kötelező)
+  // Megjegyzés: A webhook endpointokban van ellenőrzés, ha nincs WEBHOOK_SECRET, akkor hibát dobnak
+  // Ezért itt csak warning, nem error
   if (!process.env.WEBHOOK_SECRET) {
-    warnings.push('WEBHOOK_SECRET nincs beállítva - webhookok nem lesznek teljesen biztonságosak');
+    warnings.push('WEBHOOK_SECRET nincs beállítva - webhookok nem lesznek teljesen biztonságosak (ha használod a webhook funkciót, állítsd be)');
   }
 
   // Production környezet ellenőrzése
@@ -61,8 +63,9 @@ export function validateEnvironment(): EnvValidationResult {
       warnings.push('Production környezetben a NEXTAUTH_URL-nek HTTPS-t kell használnia');
     }
 
+    // WEBHOOK_SECRET csak warning, nem error, mert opcionális funkció
     if (!process.env.WEBHOOK_SECRET) {
-      errors.push('Production környezetben a WEBHOOK_SECRET kötelező');
+      warnings.push('Production környezetben ajánlott a WEBHOOK_SECRET beállítása webhook biztonsághoz');
     }
   }
 
@@ -75,9 +78,18 @@ export function validateEnvironment(): EnvValidationResult {
 
 /**
  * Validálja a környezeti változókat és logolja az eredményt
- * Ha production-ben van hiba, dobjon hibát
+ * Build időben nem dob hibát, csak runtime-ban
  */
 export function validateAndLogEnvironment(): void {
+  // Build időben ne futtassuk a validációt (Next.js build process)
+  const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build' || 
+                       process.env.NEXT_PHASE === 'phase-development-build';
+  
+  if (isBuildTime) {
+    // Build időben csak alapvető ellenőrzés, nem dobunk hibát
+    return;
+  }
+
   const result = validateEnvironment();
 
   if (result.errors.length > 0) {
@@ -86,7 +98,11 @@ export function validateAndLogEnvironment(): void {
       console.error(`   - ${error}`);
     });
 
-    if (process.env.NODE_ENV === 'production') {
+    // Csak runtime-ban, production-ben dobunk hibát
+    // Build időben ne, mert akkor még nincs minden környezeti változó beállítva
+    if (process.env.NODE_ENV === 'production' && !isBuildTime) {
+      // Csak akkor dobunk hibát, ha ténylegesen fut az alkalmazás
+      // Ne build időben
       throw new Error('Kritikus környezeti változók hiányoznak. Az alkalmazás nem indítható.');
     }
   }
