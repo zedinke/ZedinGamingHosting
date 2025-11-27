@@ -1467,7 +1467,7 @@ bash -c "${escapedStartCommand}"
   if (gameConfig.environmentVariables && Object.keys(gameConfig.environmentVariables).length > 0) {
     for (const [key, value] of Object.entries(gameConfig.environmentVariables)) {
       // Cseréljük le a {serverId} placeholder-t
-      const envValue = value.replace(/{serverId}/g, serverId);
+      const envValue = typeof value === 'string' ? value.replace(/{serverId}/g, serverId) : String(value);
       environmentVars += `Environment="${key}=${envValue}"\n`;
     }
   }
