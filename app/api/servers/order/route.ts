@@ -17,7 +17,7 @@ export const POST = withPerformanceMonitoring(
       }
 
       const body = await request.json();
-      const { name, gameType, gamePackageId, billingInfo } = body;
+      const { name, gameType, gamePackageId, billingInfo, additionalVCpu, additionalRamGB } = body;
 
       // Validáció
       if (!name || !gameType) {
@@ -46,8 +46,27 @@ export const POST = withPerformanceMonitoring(
       }
 
       const finalMaxPlayers = gamePackage.slot;
-      const finalPrice = gamePackage.discountPrice || gamePackage.price;
+      const basePrice = gamePackage.discountPrice || gamePackage.price;
       const finalCurrency = gamePackage.currency;
+
+      // Bővítési árak lekérése és költség számítása
+      let upgradeCost = 0;
+      const additionalVCpuValue = additionalVCpu || 0;
+      const additionalRamGBValue = additionalRamGB || 0;
+
+      if (additionalVCpuValue > 0 || additionalRamGBValue > 0) {
+        const [pricePerVCpuSetting, pricePerRamGBSetting] = await Promise.all([
+          prisma.setting.findUnique({ where: { key: 'resource_upgrade_price_per_vcpu' } }),
+          prisma.setting.findUnique({ where: { key: 'resource_upgrade_price_per_ram_gb' } }),
+        ]);
+
+        const pricePerVCpu = pricePerVCpuSetting ? parseFloat(pricePerVCpuSetting.value) : 0;
+        const pricePerRamGB = pricePerRamGBSetting ? parseFloat(pricePerRamGBSetting.value) : 0;
+
+        upgradeCost = (additionalVCpuValue * pricePerVCpu) + (additionalRamGBValue * pricePerRamGB);
+      }
+
+      const finalPrice = basePrice + upgradeCost;
 
       logger.info('Server order request', {
         userId: (session.user as any).id,
@@ -69,12 +88,17 @@ export const POST = withPerformanceMonitoring(
         maxPlayers: finalMaxPlayers,
         status: 'OFFLINE',
         port,
-        // Game package specifikációk mentése a konfigurációba
+        // Game package specifikációk mentése a konfigurációba (bővített értékekkel)
         configuration: {
           slot: gamePackage.slot,
-          cpuCores: gamePackage.cpuCores,
-          ram: gamePackage.ram,
+          cpuCores: gamePackage.cpuCores + (additionalVCpuValue || 0),
+          ram: gamePackage.ram + (additionalRamGBValue || 0),
           gamePackageId: gamePackage.id,
+          baseCpuCores: gamePackage.cpuCores,
+          baseRam: gamePackage.ram,
+          additionalVCpu: additionalVCpuValue || 0,
+          additionalRamGB: additionalRamGBValue || 0,
+          upgradeCost: upgradeCost,
         },
       },
     });
@@ -112,6 +136,45 @@ export const POST = withPerformanceMonitoring(
 
     // Számla létrehozása számlázási adatokkal
     const invoiceNumber = `INV-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Számla tételek összeállítása
+    const invoiceItems: any[] = [
+      {
+        description: `${gamePackage.name} - ${gameType}`,
+        quantity: 1,
+        unitPrice: basePrice,
+        total: basePrice,
+      },
+    ];
+
+    // Bővítési tételek hozzáadása
+    if (upgradeCost > 0) {
+      const [pricePerVCpuSetting, pricePerRamGBSetting] = await Promise.all([
+        prisma.setting.findUnique({ where: { key: 'resource_upgrade_price_per_vcpu' } }),
+        prisma.setting.findUnique({ where: { key: 'resource_upgrade_price_per_ram_gb' } }),
+      ]);
+
+      const pricePerVCpu = pricePerVCpuSetting ? parseFloat(pricePerVCpuSetting.value) : 0;
+      const pricePerRamGB = pricePerRamGBSetting ? parseFloat(pricePerRamGBSetting.value) : 0;
+
+      if (additionalVCpuValue > 0 && pricePerVCpu > 0) {
+        invoiceItems.push({
+          description: `vCPU bővítés: +${additionalVCpuValue} vCPU`,
+          quantity: additionalVCpuValue,
+          unitPrice: pricePerVCpu,
+          total: additionalVCpuValue * pricePerVCpu,
+        });
+      }
+      if (additionalRamGBValue > 0 && pricePerRamGB > 0) {
+        invoiceItems.push({
+          description: `RAM bővítés: +${additionalRamGBValue} GB`,
+          quantity: additionalRamGBValue,
+          unitPrice: pricePerRamGB,
+          total: additionalRamGBValue * pricePerRamGB,
+        });
+      }
+    }
+
     const invoice = await prisma.invoice.create({
       data: {
         userId: (session.user as any).id,
@@ -124,6 +187,7 @@ export const POST = withPerformanceMonitoring(
         // Számlázási adatok
         billingName: billingInfo.billingName,
         billingAddress: billingInfo.billingAddress || `${billingInfo.street}, ${billingInfo.city} ${billingInfo.postalCode}, ${billingInfo.country}`,
+        items: invoiceItems,
       },
     });
 

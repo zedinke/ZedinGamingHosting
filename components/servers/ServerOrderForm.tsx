@@ -73,6 +73,9 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
   const [billingInfo, setBillingInfo] = useState<BillingInfoFormData | null>(null);
   const [showBillingForm, setShowBillingForm] = useState(false);
   const [billingFormData, setBillingFormData] = useState<BillingInfoFormData | null>(null);
+  const [additionalVCpu, setAdditionalVCpu] = useState(0);
+  const [additionalRamGB, setAdditionalRamGB] = useState(0);
+  const [upgradePrices, setUpgradePrices] = useState<{ pricePerVCpu: number; pricePerRamGB: number; currency: string } | null>(null);
 
   const {
     register,
@@ -103,6 +106,29 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
     };
 
     fetchBillingInfo();
+  }, []);
+
+  // Bővítési árak lekérése (minden bejelentkezett felhasználó számára elérhető)
+  useEffect(() => {
+    const fetchUpgradePrices = async () => {
+      try {
+        const response = await fetch('/api/admin/resource-upgrade-settings');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.settings) {
+            setUpgradePrices(data.settings);
+          }
+        } else if (response.status === 401) {
+          // Ha nincs bejelentkezve, akkor nincs bővítési ár
+          setUpgradePrices(null);
+        }
+      } catch (error) {
+        console.error('Upgrade prices fetch error:', error);
+        setUpgradePrices(null);
+      }
+    };
+
+    fetchUpgradePrices();
   }, []);
 
   // Ha nincs GamePackage, akkor redirect
@@ -177,6 +203,8 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
         gameType: selectedGamePackage.gameType,
         gamePackageId: selectedGamePackage.id,
         billingInfo: billingFormData,
+        additionalVCpu: additionalVCpu || 0,
+        additionalRamGB: additionalRamGB || 0,
       };
       
       const response = await fetch(`/api/servers/order`, {
@@ -311,23 +339,35 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
               </div>
               <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                 <p className="text-xs font-bold text-gray-900 mb-1 uppercase">CPU</p>
-                <p className="text-3xl font-bold text-primary-600">{selectedGamePackage.cpuCores}</p>
-                <p className="text-xs text-gray-800 font-medium mt-1">vCore</p>
+                <p className="text-3xl font-bold text-primary-600">{selectedGamePackage.cpuCores + additionalVCpu}</p>
+                <p className="text-xs text-gray-800 font-medium mt-1">vCore {additionalVCpu > 0 && <span className="text-green-600">(+{additionalVCpu})</span>}</p>
               </div>
               <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                 <p className="text-xs font-bold text-gray-900 mb-1 uppercase">RAM</p>
-                <p className="text-3xl font-bold text-primary-600">{selectedGamePackage.ram}</p>
-                <p className="text-xs text-gray-800 font-medium mt-1">GB</p>
+                <p className="text-3xl font-bold text-primary-600">{selectedGamePackage.ram + additionalRamGB}</p>
+                <p className="text-xs text-gray-800 font-medium mt-1">GB {additionalRamGB > 0 && <span className="text-green-600">(+{additionalRamGB})</span>}</p>
               </div>
               <div className="bg-emerald-50 rounded-lg p-4 border-2 border-emerald-400">
                 <p className="text-xs font-bold text-gray-900 mb-1 uppercase">Ár</p>
                 <p className="text-2xl font-bold text-emerald-700">
-                  {formatPrice(selectedGamePackage.discountPrice || selectedGamePackage.price, selectedGamePackage.currency)}
+                  {formatPrice(
+                    (selectedGamePackage.discountPrice || selectedGamePackage.price) + 
+                    (upgradePrices ? (additionalVCpu * upgradePrices.pricePerVCpu + additionalRamGB * upgradePrices.pricePerRamGB) : 0),
+                    selectedGamePackage.currency
+                  )}
                 </p>
                 <p className="text-xs text-gray-900 font-semibold mt-1">/{selectedGamePackage.interval === 'month' ? 'hó' : 'év'}</p>
                 {selectedGamePackage.discountPrice && (
                   <p className="text-xs text-gray-800 line-through mt-1 font-semibold">
                     {formatPrice(selectedGamePackage.price, selectedGamePackage.currency)}
+                  </p>
+                )}
+                {(additionalVCpu > 0 || additionalRamGB > 0) && upgradePrices && (
+                  <p className="text-xs text-green-700 font-semibold mt-1">
+                    +{formatPrice(
+                      additionalVCpu * upgradePrices.pricePerVCpu + additionalRamGB * upgradePrices.pricePerRamGB,
+                      upgradePrices.currency
+                    )} bővítés
                   </p>
                 )}
               </div>
@@ -371,6 +411,70 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
                 <p className="text-red-600 text-sm mt-1 font-semibold">{errors.name.message}</p>
               )}
             </div>
+
+            {/* Erőforrás bővítés - csak akkor jelenik meg, ha vannak bővítési árak beállítva */}
+            {upgradePrices && (upgradePrices.pricePerVCpu > 0 || upgradePrices.pricePerRamGB > 0) && (
+            <div className="border-t pt-5 mt-5">
+              <h3 className="text-lg font-bold text-gray-900 mb-4">Erőforrás Bővítés (Opcionális)</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Bővítsd a szervered erőforrásait a GamePackage alapértelmezett értékei felett.
+              </p>
+              
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="additionalVCpu" className="block text-sm font-medium text-gray-900 mb-2">
+                    További vCPU (jelenleg: {selectedGamePackage.cpuCores} vCPU)
+                  </label>
+                  <input
+                    type="number"
+                    id="additionalVCpu"
+                    min="0"
+                    value={additionalVCpu}
+                    onChange={(e) => setAdditionalVCpu(Math.max(0, parseInt(e.target.value) || 0))}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white text-base font-medium"
+                    placeholder="0"
+                  />
+                  {upgradePrices && additionalVCpu > 0 && (
+                    <p className="text-xs text-gray-600 mt-1">
+                      +{formatPrice(additionalVCpu * upgradePrices.pricePerVCpu, upgradePrices.currency)}/hó
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label htmlFor="additionalRamGB" className="block text-sm font-medium text-gray-900 mb-2">
+                    További RAM GB (jelenleg: {selectedGamePackage.ram} GB)
+                  </label>
+                  <input
+                    type="number"
+                    id="additionalRamGB"
+                    min="0"
+                    value={additionalRamGB}
+                    onChange={(e) => setAdditionalRamGB(Math.max(0, parseInt(e.target.value) || 0))}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white text-base font-medium"
+                    placeholder="0"
+                  />
+                  {upgradePrices && additionalRamGB > 0 && (
+                    <p className="text-xs text-gray-600 mt-1">
+                      +{formatPrice(additionalRamGB * upgradePrices.pricePerRamGB, upgradePrices.currency)}/hó
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {(additionalVCpu > 0 || additionalRamGB > 0) && upgradePrices && (
+                <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm font-semibold text-blue-900 mb-1">Bővítési költség:</p>
+                  <p className="text-lg font-bold text-blue-700">
+                    {formatPrice(
+                      additionalVCpu * upgradePrices.pricePerVCpu + additionalRamGB * upgradePrices.pricePerRamGB,
+                      upgradePrices.currency
+                    )}/hó
+                  </p>
+                </div>
+              )}
+            </div>
+            )}
           </div>
         </Card>
 

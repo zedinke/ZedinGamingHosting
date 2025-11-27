@@ -2,6 +2,7 @@ import { getTranslations } from '@/lib/i18n';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { BackupStorageSettings } from '@/components/admin/BackupStorageSettings';
 import { InvoiceSettings } from '@/components/admin/InvoiceSettings';
+import { ResourceUpgradeSettings } from '@/components/admin/ResourceUpgradeSettings';
 
 export default async function AdminSettingsPage({
   params: { locale },
@@ -23,6 +24,8 @@ export default async function AdminSettingsPage({
           <h2 className="text-xl font-bold text-gray-900 mb-4">Számlázási Beállítások</h2>
           <InvoiceSettings />
         </div>
+        
+        <ResourceUpgradeSettings />
         
         <BackupStorageSettings />
       </div>
