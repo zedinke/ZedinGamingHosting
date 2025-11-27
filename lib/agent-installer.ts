@@ -205,7 +205,7 @@ export async function installAgentViaSSH(
 /**
  * Agent telepítési script generálása
  */
-function generateInstallScript(managerUrl: string): string {
+export function generateInstallScript(managerUrl: string): string {
   return `#!/bin/bash
 set -e
 
