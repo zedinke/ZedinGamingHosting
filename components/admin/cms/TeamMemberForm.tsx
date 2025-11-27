@@ -136,11 +136,11 @@ export function TeamMemberForm({ locale, teamMember }: TeamMemberFormProps) {
         <h2 className="text-xl font-bold mb-4">Alapinformációk</h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Név *</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Név *</label>
             <input
               {...register('name')}
               type="text"
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-500"
             />
             {errors.name && (
               <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
@@ -148,12 +148,12 @@ export function TeamMemberForm({ locale, teamMember }: TeamMemberFormProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Pozíció *</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Pozíció *</label>
             <input
               {...register('role')}
               type="text"
               placeholder="Pl: CEO, Fejlesztő"
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-500"
             />
             {errors.role && (
               <p className="text-red-500 text-sm mt-1">{errors.role.message}</p>
@@ -161,22 +161,22 @@ export function TeamMemberForm({ locale, teamMember }: TeamMemberFormProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Bio</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Bio</label>
             <textarea
               {...register('bio')}
               rows={4}
               placeholder="Rövid bemutatkozás..."
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Avatar URL</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Avatar URL</label>
             <input
               {...register('avatar')}
               type="url"
               placeholder="https://example.com/avatar.jpg"
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-500"
             />
             {watch('avatar') && (
               <img
@@ -191,12 +191,12 @@ export function TeamMemberForm({ locale, teamMember }: TeamMemberFormProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Email</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Email</label>
             <input
               {...register('email')}
               type="email"
               placeholder="email@example.com"
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-500"
             />
           </div>
         </div>
@@ -206,32 +206,32 @@ export function TeamMemberForm({ locale, teamMember }: TeamMemberFormProps) {
         <h2 className="text-xl font-bold mb-4">Közösségi Média</h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Twitter/X URL</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Twitter/X URL</label>
             <input
               {...register('twitter')}
               type="url"
               placeholder="https://twitter.com/username"
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">LinkedIn URL</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">LinkedIn URL</label>
             <input
               {...register('linkedin')}
               type="url"
               placeholder="https://linkedin.com/in/username"
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">GitHub URL</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">GitHub URL</label>
             <input
               {...register('github')}
               type="url"
               placeholder="https://github.com/username"
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-500"
             />
           </div>
         </div>
@@ -241,12 +241,12 @@ export function TeamMemberForm({ locale, teamMember }: TeamMemberFormProps) {
         <h2 className="text-xl font-bold mb-4">Beállítások</h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Sorrend</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Sorrend</label>
             <input
               {...register('order', { valueAsNumber: true })}
               type="number"
               min="0"
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-500"
             />
           </div>
 
@@ -257,7 +257,7 @@ export function TeamMemberForm({ locale, teamMember }: TeamMemberFormProps) {
               id="isActive"
               className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
             />
-            <label htmlFor="isActive" className="text-sm font-medium">
+            <label htmlFor="isActive" className="text-sm font-semibold text-gray-900">
               Aktív
             </label>
           </div>

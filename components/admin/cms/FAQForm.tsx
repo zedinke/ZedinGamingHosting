@@ -97,11 +97,11 @@ export function FAQForm({ locale, faq }: FAQFormProps) {
         <h2 className="text-xl font-bold mb-4">FAQ Információk</h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Kérdés *</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Kérdés *</label>
             <input
               {...register('question')}
               type="text"
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-500"
             />
             {errors.question && (
               <p className="text-red-500 text-sm mt-1">{errors.question.message}</p>
@@ -109,11 +109,11 @@ export function FAQForm({ locale, faq }: FAQFormProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Válasz *</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Válasz *</label>
             <textarea
               {...register('answer')}
               rows={8}
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-500"
             />
             {errors.answer && (
               <p className="text-red-500 text-sm mt-1">{errors.answer.message}</p>
@@ -126,10 +126,10 @@ export function FAQForm({ locale, faq }: FAQFormProps) {
         <h2 className="text-xl font-bold mb-4">Beállítások</h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Nyelv *</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Nyelv *</label>
             <select
               {...register('locale')}
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-500"
             >
               <option value="hu">Magyar</option>
               <option value="en">English</option>
@@ -137,12 +137,12 @@ export function FAQForm({ locale, faq }: FAQFormProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Sorrend</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Sorrend</label>
             <input
               {...register('order', { valueAsNumber: true })}
               type="number"
               min="0"
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-500"
             />
             <p className="text-xs text-gray-500 mt-1">
               Alacsonyabb szám = előrébb jelenik meg
@@ -156,7 +156,7 @@ export function FAQForm({ locale, faq }: FAQFormProps) {
               id="isActive"
               className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
             />
-            <label htmlFor="isActive" className="text-sm font-medium">
+            <label htmlFor="isActive" className="text-sm font-semibold text-gray-900">
               Aktív
             </label>
           </div>

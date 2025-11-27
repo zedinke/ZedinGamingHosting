@@ -377,7 +377,7 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
           <h2 className="text-lg font-bold mb-3 text-gray-900">Slide Információk</h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-900">Cím</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Cím</label>
             <input
               {...register('title')}
               type="text"
@@ -387,7 +387,7 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-900">Alcím</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Alcím</label>
             <textarea
               {...register('subtitle')}
               rows={4}
@@ -398,7 +398,7 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
 
           {/* Media Type Selection */}
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-900">Média típus *</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Média típus *</label>
             <select
               {...register('mediaType')}
               onChange={(e) => {
@@ -418,7 +418,7 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
               
               {/* Képfeltöltés */}
               <div className="mb-4">
-                <label className="block text-sm text-gray-700 mb-2 font-medium">
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
                   Vagy tölts fel egy képet:
                 </label>
                 <div className="flex gap-2">
@@ -491,7 +491,7 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
 
               {/* Vagy URL megadása */}
               <div>
-                <label className="block text-sm text-gray-700 mb-2 font-medium">
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
                   Vagy add meg a kép URL-jét vagy relatív elérési útját:
                 </label>
               <input
@@ -537,7 +537,7 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
               
               {/* Videófeltöltés */}
               <div className="mb-4">
-                <label className="block text-sm text-gray-700 mb-2 font-medium">
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
                   Tölts fel egy videót:
                 </label>
                 <input
@@ -559,7 +559,7 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
 
               {/* Vagy URL megadása */}
               <div>
-                <label className="block text-sm text-gray-700 mb-2 font-medium">
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
                   Vagy add meg a videó URL-jét vagy relatív elérési útját:
                 </label>
                 <input
@@ -601,7 +601,7 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
           )}
 
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-900">
+            <label className="block text-sm font-semibold text-gray-900 mb-2">
               Link (opcionális - csak akkor szükséges, ha gombot szeretnél megjeleníteni)
             </label>
             <input
@@ -633,7 +633,7 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-900">
+            <label className="block text-sm font-semibold text-gray-900 mb-2">
               Gomb szöveg (opcionális - csak akkor jelenik meg, ha van link is)
             </label>
             <input
@@ -656,7 +656,7 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
           <h2 className="text-lg font-bold mb-3 text-gray-900">Beállítások</h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-900">Nyelv *</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Nyelv *</label>
             <select
               {...register('locale')}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white text-gray-900"
@@ -667,7 +667,7 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-900">Sorrend</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Sorrend</label>
             <input
               {...register('order', { valueAsNumber: true })}
               type="number"
@@ -683,7 +683,7 @@ export function SlideshowForm({ locale, slide }: SlideshowFormProps) {
               id="isActive"
               className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
             />
-            <label htmlFor="isActive" className="text-sm font-medium">
+            <label htmlFor="isActive" className="text-sm font-semibold text-gray-900">
               Aktív
             </label>
           </div>

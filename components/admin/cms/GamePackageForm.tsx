@@ -209,13 +209,13 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
           <h2 className="text-xl font-bold text-gray-900 mb-4">Alap információk</h2>
           <div className="grid md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="gameType" className="block text-sm font-medium mb-1">
+              <label htmlFor="gameType" className="block text-sm font-semibold text-gray-900 mb-1">
                 Játék típus *
               </label>
               <select
                 {...register('gameType')}
                 id="gameType"
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white"
               >
                 {GAME_TYPES.map((game) => (
                   <option key={game.value} value={game.value}>
@@ -229,14 +229,14 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
             </div>
 
             <div>
-              <label htmlFor="name" className="block text-sm font-medium mb-1">
+              <label htmlFor="name" className="block text-sm font-semibold text-gray-900 mb-1">
                 Csomag neve *
               </label>
               <input
                 {...register('name')}
                 type="text"
                 id="name"
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white"
                 placeholder="Pl. Starter Pack"
               />
               {errors.name && (
@@ -246,14 +246,14 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
           </div>
 
           <div className="mt-4">
-            <label htmlFor="description" className="block text-sm font-medium mb-1">
+            <label htmlFor="description" className="block text-sm font-semibold text-gray-900 mb-1">
               Leírás
             </label>
             <textarea
               {...register('description')}
               id="description"
               rows={3}
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-500"
               placeholder="Csomag leírása..."
             />
           </div>
@@ -264,7 +264,7 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
           <h2 className="text-xl font-bold text-gray-900 mb-4">Kép</h2>
           <div className="space-y-4">
             <div>
-              <label htmlFor="image" className="block text-sm font-medium mb-1">
+              <label htmlFor="image" className="block text-sm font-semibold text-gray-900 mb-1">
                 Csomag képe (Ajánlott méret: 800x600px, max 5MB)
               </label>
               <input
@@ -273,10 +273,10 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
                 accept="image/*"
                 onChange={handleImageUpload}
                 disabled={uploadingImage}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 disabled:opacity-50"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white disabled:opacity-50"
               />
               {uploadingImage && (
-                <p className="text-sm text-gray-600 mt-1">Kép feltöltése...</p>
+                <p className="text-sm text-gray-700 font-medium mt-1">Kép feltöltése...</p>
               )}
             </div>
 
@@ -307,7 +307,7 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
           <h2 className="text-xl font-bold text-gray-900 mb-4">Specifikációk</h2>
           <div className="grid md:grid-cols-3 gap-4">
             <div>
-              <label htmlFor="slot" className="block text-sm font-medium mb-1">
+              <label htmlFor="slot" className="block text-sm font-semibold text-gray-900 mb-1">
                 Fix Slot szám *
               </label>
               <input
@@ -315,7 +315,7 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
                 type="number"
                 id="slot"
                 min="1"
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white"
               />
               {errors.slot && (
                 <p className="text-red-500 text-sm mt-1">{errors.slot.message}</p>
@@ -323,7 +323,7 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
             </div>
 
             <div>
-              <label htmlFor="cpuCores" className="block text-sm font-medium mb-1">
+              <label htmlFor="cpuCores" className="block text-sm font-semibold text-gray-900 mb-1">
                 Fix CPU vCore szám *
               </label>
               <input
@@ -331,7 +331,7 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
                 type="number"
                 id="cpuCores"
                 min="1"
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white"
               />
               {errors.cpuCores && (
                 <p className="text-red-500 text-sm mt-1">{errors.cpuCores.message}</p>
@@ -339,7 +339,7 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
             </div>
 
             <div>
-              <label htmlFor="ram" className="block text-sm font-medium mb-1">
+              <label htmlFor="ram" className="block text-sm font-semibold text-gray-900 mb-1">
                 Fix RAM mennyiség (GB) *
               </label>
               <input
@@ -347,7 +347,7 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
                 type="number"
                 id="ram"
                 min="1"
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white"
               />
               {errors.ram && (
                 <p className="text-red-500 text-sm mt-1">{errors.ram.message}</p>
@@ -361,7 +361,7 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
           <h2 className="text-xl font-bold text-gray-900 mb-4">Árazás</h2>
           <div className="grid md:grid-cols-4 gap-4">
             <div>
-              <label htmlFor="price" className="block text-sm font-medium mb-1">
+              <label htmlFor="price" className="block text-sm font-semibold text-gray-900 mb-1">
                 Ár *
               </label>
               <input
@@ -370,7 +370,7 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
                 id="price"
                 min="0"
                 step="0.01"
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white"
               />
               {errors.price && (
                 <p className="text-red-500 text-sm mt-1">{errors.price.message}</p>
@@ -378,13 +378,13 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
             </div>
 
             <div>
-              <label htmlFor="currency" className="block text-sm font-medium mb-1">
+              <label htmlFor="currency" className="block text-sm font-semibold text-gray-900 mb-1">
                 Pénznem *
               </label>
               <select
                 {...register('currency')}
                 id="currency"
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white"
               >
                 <option value="HUF">HUF</option>
                 <option value="EUR">EUR</option>
@@ -393,13 +393,13 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
             </div>
 
             <div>
-              <label htmlFor="interval" className="block text-sm font-medium mb-1">
+              <label htmlFor="interval" className="block text-sm font-semibold text-gray-900 mb-1">
                 Időszak *
               </label>
               <select
                 {...register('interval')}
                 id="interval"
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white"
               >
                 <option value="month">Havi</option>
                 <option value="year">Éves</option>
@@ -407,7 +407,7 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
             </div>
 
             <div>
-              <label htmlFor="discountPrice" className="block text-sm font-medium mb-1">
+              <label htmlFor="discountPrice" className="block text-sm font-semibold text-gray-900 mb-1">
                 Akciós ár (opcionális)
               </label>
               <input
@@ -416,7 +416,7 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
                 id="discountPrice"
                 min="0"
                 step="0.01"
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white"
               />
             </div>
           </div>
@@ -427,7 +427,7 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
           <h2 className="text-xl font-bold text-gray-900 mb-4">Beállítások</h2>
           <div className="grid md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="order" className="block text-sm font-medium mb-1">
+              <label htmlFor="order" className="block text-sm font-semibold text-gray-900 mb-1">
                 Rendezési sorrend
               </label>
               <input
@@ -435,7 +435,7 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
                 type="number"
                 id="order"
                 min="0"
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white"
               />
             </div>
 
@@ -446,7 +446,7 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
                 id="isActive"
                 className="w-5 h-5 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
               />
-              <label htmlFor="isActive" className="ml-2 text-sm font-medium">
+              <label htmlFor="isActive" className="ml-2 text-sm font-semibold text-gray-900">
                 Aktív (megjelenik és rendelhető)
               </label>
             </div>

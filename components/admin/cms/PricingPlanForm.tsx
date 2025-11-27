@@ -142,11 +142,11 @@ export function PricingPlanForm({ locale, plan }: PricingPlanFormProps) {
         <h2 className="text-xl font-bold mb-4">Alapinformációk</h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Név *</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Név *</label>
             <input
               {...register('name')}
               type="text"
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white"
             />
             {errors.name && (
               <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
@@ -154,23 +154,23 @@ export function PricingPlanForm({ locale, plan }: PricingPlanFormProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Leírás</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Leírás</label>
             <textarea
               {...register('description')}
               rows={3}
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white"
             />
           </div>
 
           <div className="grid md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Ár *</label>
+              <label className="block text-sm font-semibold text-gray-900 mb-2">Ár *</label>
               <input
                 {...register('price', { valueAsNumber: true })}
                 type="number"
                 step="0.01"
                 min="0"
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white"
               />
               {errors.price && (
                 <p className="text-red-500 text-sm mt-1">{errors.price.message}</p>
@@ -178,10 +178,10 @@ export function PricingPlanForm({ locale, plan }: PricingPlanFormProps) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Pénznem *</label>
+              <label className="block text-sm font-semibold text-gray-900 mb-2">Pénznem *</label>
               <select
                 {...register('currency')}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white"
               >
                 <option value="HUF">HUF</option>
                 <option value="EUR">EUR</option>
@@ -190,10 +190,10 @@ export function PricingPlanForm({ locale, plan }: PricingPlanFormProps) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Időtartam *</label>
+              <label className="block text-sm font-semibold text-gray-900 mb-2">Időtartam *</label>
               <select
                 {...register('interval')}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white"
               >
                 <option value="month">Hónap</option>
                 <option value="year">Év</option>
@@ -202,12 +202,12 @@ export function PricingPlanForm({ locale, plan }: PricingPlanFormProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Stripe Price ID</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Stripe Price ID</label>
             <input
               {...register('stripePriceId')}
               type="text"
               placeholder="price_xxx"
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white"
             />
           </div>
         </div>
@@ -250,12 +250,12 @@ export function PricingPlanForm({ locale, plan }: PricingPlanFormProps) {
         <h2 className="text-xl font-bold mb-4">Beállítások</h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Sorrend</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Sorrend</label>
             <input
               {...register('order', { valueAsNumber: true })}
               type="number"
               min="0"
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white"
             />
           </div>
 
@@ -266,7 +266,7 @@ export function PricingPlanForm({ locale, plan }: PricingPlanFormProps) {
               id="isActive"
               className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
             />
-            <label htmlFor="isActive" className="text-sm font-medium">
+            <label htmlFor="isActive" className="text-sm font-semibold text-gray-900">
               Aktív
             </label>
           </div>

@@ -100,6 +100,23 @@
   .glass-effect {
     @apply bg-dark-800/30 backdrop-blur-md border border-dark-700/50;
   }
+
+  /* Admin form styles - improved contrast */
+  .admin-form-label {
+    @apply block text-sm font-semibold text-gray-900 mb-1;
+  }
+
+  .admin-form-input {
+    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-500;
+  }
+
+  .admin-form-select {
+    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white;
+  }
+
+  .admin-form-textarea {
+    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-500;
+  }
 }
 
 @layer utilities {

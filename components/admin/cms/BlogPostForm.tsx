@@ -167,12 +167,12 @@ export function BlogPostForm({ locale, post, authorId }: BlogPostFormProps) {
         <h2 className="text-xl font-bold mb-4">Alapinformációk</h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Slug *</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Slug *</label>
             <input
               {...register('slug')}
               type="text"
               placeholder="pl: my-first-post"
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-500"
             />
             {errors.slug && (
               <p className="text-red-500 text-sm mt-1">{errors.slug.message}</p>
@@ -180,11 +180,11 @@ export function BlogPostForm({ locale, post, authorId }: BlogPostFormProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Cím *</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Cím *</label>
             <input
               {...register('title')}
               type="text"
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-500"
             />
             {errors.title && (
               <p className="text-red-500 text-sm mt-1">{errors.title.message}</p>
@@ -192,22 +192,22 @@ export function BlogPostForm({ locale, post, authorId }: BlogPostFormProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Rövid leírás</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Rövid leírás</label>
             <textarea
               {...register('excerpt')}
               rows={3}
               placeholder="Rövid összefoglaló..."
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Borítókép URL</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Borítókép URL</label>
             <input
               {...register('coverImage')}
               type="url"
               placeholder="https://example.com/image.jpg"
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-500"
             />
             {watch('coverImage') && (
               <img
@@ -222,7 +222,7 @@ export function BlogPostForm({ locale, post, authorId }: BlogPostFormProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Tartalom *</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Tartalom *</label>
             <textarea
               {...register('content')}
               rows={15}
@@ -240,20 +240,20 @@ export function BlogPostForm({ locale, post, authorId }: BlogPostFormProps) {
         <h2 className="text-xl font-bold mb-4">SEO Beállítások</h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">SEO Cím</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">SEO Cím</label>
             <input
               {...register('seoTitle')}
               type="text"
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">SEO Leírás</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">SEO Leírás</label>
             <textarea
               {...register('seoDescription')}
               rows={3}
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-500"
             />
           </div>
         </div>
@@ -263,10 +263,10 @@ export function BlogPostForm({ locale, post, authorId }: BlogPostFormProps) {
         <h2 className="text-xl font-bold mb-4">Beállítások</h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Nyelv *</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Nyelv *</label>
             <select
               {...register('locale')}
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-500"
             >
               <option value="hu">Magyar</option>
               <option value="en">English</option>
@@ -274,11 +274,11 @@ export function BlogPostForm({ locale, post, authorId }: BlogPostFormProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Közzététel dátuma</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Közzététel dátuma</label>
             <input
               {...register('publishedAt')}
               type="date"
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-500"
             />
           </div>
 
@@ -289,7 +289,7 @@ export function BlogPostForm({ locale, post, authorId }: BlogPostFormProps) {
               id="isPublished"
               className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
             />
-            <label htmlFor="isPublished" className="text-sm font-medium">
+            <label htmlFor="isPublished" className="text-sm font-semibold text-gray-900">
               Közzétéve
             </label>
           </div>

@@ -118,11 +118,11 @@ export function TestimonialForm({ locale, testimonial }: TestimonialFormProps) {
         <h2 className="text-xl font-bold mb-4">Alapinformációk</h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Név *</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Név *</label>
             <input
               {...register('name')}
               type="text"
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-500"
             />
             {errors.name && (
               <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
@@ -130,21 +130,21 @@ export function TestimonialForm({ locale, testimonial }: TestimonialFormProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Pozíció</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Pozíció</label>
             <input
               {...register('role')}
               type="text"
               placeholder="Pl: CEO, Ügyfél"
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Tartalom *</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Tartalom *</label>
             <textarea
               {...register('content')}
               rows={6}
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-500"
             />
             {errors.content && (
               <p className="text-red-500 text-sm mt-1">{errors.content.message}</p>
@@ -152,12 +152,12 @@ export function TestimonialForm({ locale, testimonial }: TestimonialFormProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Avatar URL</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Avatar URL</label>
             <input
               {...register('avatar')}
               type="url"
               placeholder="https://example.com/avatar.jpg"
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-500"
             />
             {watch('avatar') && (
               <img
@@ -172,7 +172,7 @@ export function TestimonialForm({ locale, testimonial }: TestimonialFormProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Értékelés *</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Értékelés *</label>
             <div className="flex items-center gap-2">
               {Array.from({ length: 5 }).map((_, i) => {
                 const starValue = i + 1;
@@ -205,10 +205,10 @@ export function TestimonialForm({ locale, testimonial }: TestimonialFormProps) {
         <h2 className="text-xl font-bold mb-4">Beállítások</h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Nyelv *</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Nyelv *</label>
             <select
               {...register('locale')}
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-500"
             >
               <option value="hu">Magyar</option>
               <option value="en">English</option>
@@ -216,12 +216,12 @@ export function TestimonialForm({ locale, testimonial }: TestimonialFormProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Sorrend</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Sorrend</label>
             <input
               {...register('order', { valueAsNumber: true })}
               type="number"
               min="0"
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-500"
             />
           </div>
 
@@ -232,7 +232,7 @@ export function TestimonialForm({ locale, testimonial }: TestimonialFormProps) {
               id="isActive"
               className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
             />
-            <label htmlFor="isActive" className="text-sm font-medium">
+            <label htmlFor="isActive" className="text-sm font-semibold text-gray-900">
               Aktív
             </label>
           </div>

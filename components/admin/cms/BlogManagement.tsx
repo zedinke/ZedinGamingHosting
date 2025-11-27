@@ -50,7 +50,7 @@ export function BlogManagement({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Keresés cím vagy slug alapján..."
-            className="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-500"
           />
           <button
             type="submit"

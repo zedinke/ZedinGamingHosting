@@ -141,7 +141,7 @@ export function GameCategoryForm({ locale, category }: GameCategoryFormProps) {
         <h2 className="text-xl font-bold mb-4">Alapinformációk</h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Név *</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Név *</label>
             <input
               {...register('name')}
               type="text"
@@ -155,7 +155,7 @@ export function GameCategoryForm({ locale, category }: GameCategoryFormProps) {
                   }
                 }
               }}
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-500"
             />
             {errors.name && (
               <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
@@ -163,12 +163,12 @@ export function GameCategoryForm({ locale, category }: GameCategoryFormProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Slug *</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Slug *</label>
             <input
               {...register('slug')}
               type="text"
               placeholder="pl: survival-games"
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-500"
             />
             {errors.slug && (
               <p className="text-red-500 text-sm mt-1">{errors.slug.message}</p>
@@ -176,26 +176,26 @@ export function GameCategoryForm({ locale, category }: GameCategoryFormProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Leírás</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Leírás</label>
             <textarea
               {...register('description')}
               rows={3}
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Ikon (emoji vagy unicode)</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Ikon (emoji vagy unicode)</label>
             <input
               {...register('icon')}
               type="text"
               placeholder="🎮 vagy 🏹"
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Szín (hex)</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Szín (hex)</label>
             <div className="flex gap-4 items-center">
               <input
                 type="color"
@@ -220,10 +220,10 @@ export function GameCategoryForm({ locale, category }: GameCategoryFormProps) {
         <h2 className="text-xl font-bold mb-4">Beállítások</h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Nyelv *</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Nyelv *</label>
             <select
               {...register('locale')}
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-500"
             >
               <option value="hu">Magyar</option>
               <option value="en">English</option>
@@ -231,12 +231,12 @@ export function GameCategoryForm({ locale, category }: GameCategoryFormProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Sorrend</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Sorrend</label>
             <input
               {...register('order', { valueAsNumber: true })}
               type="number"
               min="0"
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-500"
             />
           </div>
 
@@ -247,7 +247,7 @@ export function GameCategoryForm({ locale, category }: GameCategoryFormProps) {
               id="isActive"
               className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
             />
-            <label htmlFor="isActive" className="text-sm font-medium">
+            <label htmlFor="isActive" className="text-sm font-semibold text-gray-900">
               Aktív
             </label>
           </div>

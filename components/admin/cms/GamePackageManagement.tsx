@@ -125,7 +125,7 @@ export function GamePackageManagement({ packages: initialPackages, locale }: Gam
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Játék Csomagok</h1>
-          <p className="text-gray-600 mt-1">Játékokhoz tartozó csomagok kezelése</p>
+          <p className="text-gray-700 mt-1 font-medium">Játékokhoz tartozó csomagok kezelése</p>
         </div>
         <Link
           href={`/${locale}/admin/cms/game-packages/new`}
@@ -144,14 +144,14 @@ export function GamePackageManagement({ packages: initialPackages, locale }: Gam
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Keresés név vagy játék alapján..."
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-500"
             />
           </div>
           <div className="min-w-[200px]">
             <select
               value={gameTypeFilter}
               onChange={(e) => setGameTypeFilter(e.target.value)}
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white"
             >
               <option value="">Összes játék</option>
               {gameTypes.map((gameType) => (
@@ -199,22 +199,22 @@ export function GamePackageManagement({ packages: initialPackages, locale }: Gam
               <h3 className="text-xl font-bold text-gray-900 mb-2">{pkg.name}</h3>
               
               {pkg.description && (
-                <p className="text-gray-600 text-sm mb-4 line-clamp-2">{pkg.description}</p>
+                <p className="text-gray-700 text-sm mb-4 line-clamp-2 font-medium">{pkg.description}</p>
               )}
 
               {/* Specifikációk */}
               <div className="grid grid-cols-3 gap-2 mb-4 text-sm">
                 <div>
-                  <div className="text-gray-500">Slot</div>
-                  <div className="font-semibold">{pkg.slot}</div>
+                  <div className="text-gray-700 font-semibold">Slot</div>
+                  <div className="font-bold text-gray-900">{pkg.slot}</div>
                 </div>
                 <div>
-                  <div className="text-gray-500">CPU</div>
-                  <div className="font-semibold">{pkg.cpuCores} vCore</div>
+                  <div className="text-gray-700 font-semibold">CPU</div>
+                  <div className="font-bold text-gray-900">{pkg.cpuCores} vCore</div>
                 </div>
                 <div>
-                  <div className="text-gray-500">RAM</div>
-                  <div className="font-semibold">{pkg.ram} GB</div>
+                  <div className="text-gray-700 font-semibold">RAM</div>
+                  <div className="font-bold text-gray-900">{pkg.ram} GB</div>
                 </div>
               </div>
 
@@ -269,7 +269,7 @@ export function GamePackageManagement({ packages: initialPackages, locale }: Gam
 
       {filteredPackages.length === 0 && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-          <p className="text-gray-600">Nincs találat</p>
+          <p className="text-gray-700 font-medium">Nincs találat</p>
         </div>
       )}
     </div>
