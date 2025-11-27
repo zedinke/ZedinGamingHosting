@@ -6,7 +6,8 @@
 set -e
 
 OLLAMA_URL="${OLLAMA_URL:-http://localhost:11434}"
-OLLAMA_MODEL="${OLLAMA_MODEL:-llama3}"
+# Alapértelmezett: phi3:mini - erőforráshatékony, gyors, jó minőség (3.8B paraméter, ~2.3GB)
+OLLAMA_MODEL="${OLLAMA_MODEL:-phi3:mini}"
 
 echo "🤖 Ollama automatikus beállítás..."
 echo "📍 Ollama URL: $OLLAMA_URL"

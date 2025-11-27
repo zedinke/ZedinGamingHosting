@@ -4,7 +4,8 @@
 # Ezt a scriptet a Docker Compose entrypoint-ként használjuk
 
 OLLAMA_URL="${OLLAMA_URL:-http://localhost:11434}"
-OLLAMA_MODEL="${OLLAMA_MODEL:-llama3}"
+# Alapértelmezett: phi3:mini - erőforráshatékony, gyors
+OLLAMA_MODEL="${OLLAMA_MODEL:-phi3:mini}"
 
 echo "🤖 Ollama Docker Init Script"
 echo "📍 Ollama URL: $OLLAMA_URL"

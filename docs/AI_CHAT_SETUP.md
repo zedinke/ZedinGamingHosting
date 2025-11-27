@@ -73,19 +73,43 @@ brew install ollama
 
 ## Modell Letöltése
 
-A rendszer alapértelmezetten a `llama3` modellt használja. Magyar nyelvű modellek letöltése:
+A rendszer alapértelmezetten a **`phi3:mini`** modellt használja, ami:
+- ✅ **Erőforráshatékony**: Csak ~2.3GB RAM (vs llama3 ~8GB)
+- ✅ **Gyors**: 2-3x gyorsabb válaszidő
+- ✅ **Jó minőség**: 3.8B paraméter, még mindig kiváló válaszokat ad
+- ✅ **Magyar nyelv támogatás**: Jól működik magyar nyelven
+
+### Alapértelmezett modell (ajánlott)
 
 ```bash
-# Alapértelmezett modell (angol, de magyarul is tud válaszolni)
-ollama pull llama3
-
-# Vagy magyar modell (ha elérhető)
-ollama pull magyar-llama3
-
-# További opciók:
-ollama pull mistral
-ollama pull llama2
+# Alapértelmezett modell - erőforráshatékony és gyors
+ollama pull phi3:mini
 ```
+
+### Alternatív modellek
+
+Ha több erőforrásod van és jobb minőséget szeretnél:
+
+```bash
+# Közepes méret, jobb minőség (3B paraméter, ~2GB)
+ollama pull llama3.2:3b
+
+# Kisebb, még gyorsabb (1.1B paraméter, ~700MB)
+ollama pull tinyllama
+
+# Nagyobb, jobb minőség (ha van elég RAM - 8GB+)
+ollama pull llama3
+ollama pull mistral
+```
+
+### Modell összehasonlítás
+
+| Modell | Méret | RAM | Sebesség | Minőség | Ajánlás |
+|--------|-------|-----|----------|---------|---------|
+| **phi3:mini** | 3.8B | ~2.3GB | ⚡⚡⚡ Gyors | ⭐⭐⭐⭐ Jó | ✅ **Ajánlott** |
+| llama3.2:3b | 3B | ~2GB | ⚡⚡⚡ Gyors | ⭐⭐⭐⭐ Jó | ✅ Alternatíva |
+| tinyllama | 1.1B | ~700MB | ⚡⚡⚡⚡ Nagyon gyors | ⭐⭐⭐ Közepes | ⚠️ Kisebb minőség |
+| llama3 | 8B | ~8GB | ⚡ Lassabb | ⭐⭐⭐⭐⭐ Kiváló | ⚠️ Nagy erőforrás |
 
 ## Környezeti Változók (Opcionális)
 
@@ -94,7 +118,8 @@ Az alapértelmezett beállítások automatikusan működnek. Ha testre szeretné
 ```env
 # Ollama konfiguráció (opcionális)
 OLLAMA_URL=http://localhost:11434  # Docker Compose esetén: http://ollama:11434
-OLLAMA_MODEL=llama3  # Választható: llama3, mistral, llama2, stb.
+OLLAMA_MODEL=phi3:mini  # Alapértelmezett: phi3:mini (erőforráshatékony, gyors)
+# Alternatívák: llama3.2:3b, qwen2.5:3b, tinyllama, llama3, mistral
 ```
 
 **Megjegyzés**: 

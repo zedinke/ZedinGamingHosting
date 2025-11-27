@@ -4,7 +4,8 @@
 const http = require('http');
 
 const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'llama3';
+// Alapértelmezett: phi3:mini - erőforráshatékony, gyors
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'phi3:mini';
 
 console.log('🤖 Ollama Docker Init Script');
 console.log(`📍 Ollama URL: ${OLLAMA_URL}`);

@@ -11,7 +11,9 @@ async function getAIResponse(
   context?: string
 ) {
   const ollamaUrl = process.env.OLLAMA_URL || 'http://localhost:11434';
-  const model = process.env.OLLAMA_MODEL || 'llama3'; // Alapértelmezett modell
+  // Alapértelmezett: phi3:mini - erőforráshatékony, gyors, jó minőség (3.8B paraméter, ~2.3GB)
+  // Alternatívák: llama3.2:3b, qwen2.5:3b, tinyllama
+  const model = process.env.OLLAMA_MODEL || 'phi3:mini';
 
   const systemPrompt = `Te egy szakértő vagy a gaming szerver hosting területén. 
 Segítesz a felhasználóknak kérdéseikkel kapcsolatban a szerver hosting, konfiguráció, 
@@ -268,7 +270,8 @@ async function handleStreamingResponse(
   userId: string
 ): Promise<Response> {
   const ollamaUrl = process.env.OLLAMA_URL || 'http://localhost:11434';
-  const model = process.env.OLLAMA_MODEL || 'llama3';
+  // Alapértelmezett: phi3:mini - erőforráshatékony, gyors
+  const model = process.env.OLLAMA_MODEL || 'phi3:mini';
 
   const systemPrompt = `Te egy szakértő vagy a gaming szerver hosting területén. 
 Segítesz a felhasználóknak kérdéseikkel kapcsolatban a szerver hosting, konfiguráció, 

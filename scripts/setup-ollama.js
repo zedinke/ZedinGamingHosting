@@ -2,7 +2,8 @@ const { execSync, spawn } = require('child_process');
 const http = require('http');
 
 const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'llama3';
+// Alapértelmezett: phi3:mini - erőforráshatékony, gyors, jó minőség (3.8B paraméter, ~2.3GB)
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'phi3:mini';
 
 console.log('🤖 Ollama automatikus beállítás...');
 console.log(`📍 Ollama URL: ${OLLAMA_URL}`);
