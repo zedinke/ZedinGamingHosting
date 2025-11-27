@@ -69,6 +69,19 @@ mkdir -p "$SERVER_DIR/FactoryGame/Saved/Config/LinuxServer"
 chmod -R 755 "$SERVER_DIR/FactoryGame/Saved/Config/LinuxServer"
 chown -R root:root "$SERVER_DIR/FactoryGame/Saved/Config/LinuxServer"
 
+# Bináris fájl executable jogok beállítása
+if [ -f "$SERVER_DIR/FactoryGame/Binaries/Linux/FactoryGameServer" ]; then
+  chmod +x "$SERVER_DIR/FactoryGame/Binaries/Linux/FactoryGameServer"
+  echo "FactoryGameServer executable jogok beállítva"
+elif [ -f "$SERVER_DIR/FactoryGame/Binaries/Linux/FactoryGameServer.sh" ]; then
+  chmod +x "$SERVER_DIR/FactoryGame/Binaries/Linux/FactoryGameServer.sh"
+  echo "FactoryGameServer.sh executable jogok beállítva"
+else
+  echo "FIGYELMEZTETÉS: FactoryGameServer bináris nem található a várt helyen" >&2
+  echo "Keresés a FactoryGame könyvtárban..." >&2
+  find "$SERVER_DIR/FactoryGame" -name "*FactoryGameServer*" -type f 2>/dev/null || echo "Nem található FactoryGameServer fájl" >&2
+fi
+
 # Szerver felhasználó beállítása (ha létezik)
 SERVER_USER="satisfactory"
 if id "$SERVER_USER" &>/dev/null; then

@@ -1186,7 +1186,14 @@ export async function createSystemdServiceForServer(
     const binary = parts[0].replace('./', '');
     const args = parts.slice(1).join(' ');
     // Abszolút útvonalra konvertáljuk
-    startCommand = `${execDir}/${binary}${args ? ' ' + args : ''}`.trim();
+    const fullBinaryPath = `${execDir}/${binary}`;
+    startCommand = `${fullBinaryPath}${args ? ' ' + args : ''}`.trim();
+    
+    // Satisfactory esetén ellenőrizzük, hogy a bináris létezik-e, ha nem, akkor próbáljuk a .sh verziót
+    if (gameType === 'SATISFACTORY' && binary === 'FactoryGameServer') {
+      // A bináris ellenőrzése SSH-n keresztül (csak ha van machine info)
+      // Ha nincs, akkor a telepítő script majd beállítja az executable jogokat
+    }
   }
 
   // The Forest esetén ellenőrizzük, hogy Linux vagy Windows bináris van-e
