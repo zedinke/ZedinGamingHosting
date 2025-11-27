@@ -56,7 +56,7 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
       
       # ARK Evolved szerver telepítése globális SteamCMD-vel
       echo "Installing ARK: Survival Evolved dedicated server..."
-      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 376030 validate +quit
+        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 376030 validate +quit
       EXIT_CODE=$?
       
       # Ideiglenes Steam home könyvtár törlése
@@ -109,11 +109,34 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
       
       # ARK Ascended szerver telepítése globális SteamCMD-vel
       echo "Installing ARK: Survival Ascended dedicated server..."
-      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 2430930 validate +quit
-      EXIT_CODE=$?
+        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 2430930 validate +quit
+        EXIT_CODE=$?
+        
+        # Várunk egy kicsit, hogy a fájlok biztosan leírásra kerüljenek
+        sleep 5
+        
+        # Ellenőrizzük, hogy a telepítés sikeres volt-e (könyvtárak léteznek)
+        if [ -d "$SERVER_DIR/ShooterGame" ] || [ -d "$SERVER_DIR/steamapps/common/ARK Survival Ascended" ]; then
+          INSTALL_SUCCESS=true
+          break
+        fi
+        
+        echo "SteamCMD exit code: $EXIT_CODE" >&2
+        echo "Telepítés még nem teljes, újrapróbálkozás..." >&2
+        RETRY_COUNT=$((RETRY_COUNT + 1))
+        
+        if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+          echo "Várakozás 15 másodpercet az újrapróbálkozás előtt..."
+          sleep 15
+        fi
+      done
       
-      # Ideiglenes Steam home könyvtár törlése
       rm -rf "$STEAM_HOME" 2>/dev/null || true
+      
+      if [ "$INSTALL_SUCCESS" != "true" ]; then
+        echo "HIBA: Telepítés nem sikerült $MAX_RETRIES próbálkozás után" >&2
+        exit 1
+      fi
       
       # Könyvtárak létrehozása
       mkdir -p ShooterGame/Saved/Config/LinuxServer
@@ -232,7 +255,7 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         
         # SteamCMD futtatása ideiglenes HOME könyvtárral
         # Ez biztosítja, hogy a SteamCMD nem használja a /root/.local/share/Steam/ könyvtárat
-        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 258550 validate +quit
+          HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 258550 validate +quit
         EXIT_CODE=$?
         
         # Ideiglenes Steam home könyvtár törlése
@@ -317,10 +340,43 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         exit 1
       fi
       
-      echo "Installing Valheim dedicated server..."
-      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 896660 validate +quit
+      MAX_RETRIES=3
+      RETRY_COUNT=0
+      INSTALL_SUCCESS=false
+      
+      while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
+        
+        echo "Installing Valheim dedicated server..."
+          HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 896660 validate +quit
+        EXIT_CODE=$?
+        
+        # Várunk egy kicsit, hogy a fájlok biztosan leírásra kerüljenek
+        sleep 5
+        
+        # Ellenőrizzük, hogy a telepítés sikeres volt-e
+        if [ -f "$SERVER_DIR/valheim_server.x86_64" ] || [ -d "$SERVER_DIR/steamapps/common/valheim dedicated server" ]; then
+          INSTALL_SUCCESS=true
+          break
+        fi
+        
+        echo "SteamCMD exit code: $EXIT_CODE" >&2
+        echo "Telepítés még nem teljes, újrapróbálkozás..." >&2
+        RETRY_COUNT=$((RETRY_COUNT + 1))
+        
+        if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+          echo "Várakozás 15 másodpercet az újrapróbálkozás előtt..."
+          sleep 15
+        fi
+      done
       
       rm -rf "$STEAM_HOME" 2>/dev/null || true
+      
+      if [ "$INSTALL_SUCCESS" != "true" ]; then
+        echo "HIBA: Telepítés nem sikerült $MAX_RETRIES próbálkozás után" >&2
+        exit 1
+      fi
+      
       chown -R root:root "$SERVER_DIR"
       chmod -R 755 "$SERVER_DIR"
     `,
@@ -358,8 +414,15 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         exit 1
       fi
       
-      echo "Installing 7 Days to Die dedicated server..."
-      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 294420 validate +quit
+      MAX_RETRIES=3
+      RETRY_COUNT=0
+      INSTALL_SUCCESS=false
+      
+      while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
+        
+        echo "Installing 7 Days to Die dedicated server..."
+        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 294420 validate +quit
       
       rm -rf "$STEAM_HOME" 2>/dev/null || true
       chown -R root:root "$SERVER_DIR"
@@ -399,8 +462,15 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         exit 1
       fi
       
-      echo "Installing Conan Exiles dedicated server..."
-      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 443030 validate +quit
+      MAX_RETRIES=3
+      RETRY_COUNT=0
+      INSTALL_SUCCESS=false
+      
+      while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
+        
+        echo "Installing Conan Exiles dedicated server..."
+        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 443030 validate +quit
       
       rm -rf "$STEAM_HOME" 2>/dev/null || true
       chown -R root:root "$SERVER_DIR"
@@ -441,8 +511,15 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         exit 1
       fi
       
-      echo "Installing DayZ dedicated server..."
-      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 223350 validate +quit
+      MAX_RETRIES=3
+      RETRY_COUNT=0
+      INSTALL_SUCCESS=false
+      
+      while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
+        
+        echo "Installing DayZ dedicated server..."
+        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 223350 validate +quit
       
       rm -rf "$STEAM_HOME" 2>/dev/null || true
       chown -R root:root "$SERVER_DIR"
@@ -482,8 +559,15 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         exit 1
       fi
       
-      echo "Installing Project Zomboid dedicated server..."
-      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 108600 validate +quit
+      MAX_RETRIES=3
+      RETRY_COUNT=0
+      INSTALL_SUCCESS=false
+      
+      while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
+        
+        echo "Installing Project Zomboid dedicated server..."
+        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 108600 validate +quit
       
       rm -rf "$STEAM_HOME" 2>/dev/null || true
       chown -R root:root "$SERVER_DIR"
@@ -523,8 +607,15 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         exit 1
       fi
       
-      echo "Installing Palworld dedicated server..."
-      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 2394010 validate +quit
+      MAX_RETRIES=3
+      RETRY_COUNT=0
+      INSTALL_SUCCESS=false
+      
+      while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
+        
+        echo "Installing Palworld dedicated server..."
+        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 2394010 validate +quit
       
       rm -rf "$STEAM_HOME" 2>/dev/null || true
       chown -R root:root "$SERVER_DIR"
@@ -564,8 +655,15 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         exit 1
       fi
       
-      echo "Installing Enshrouded dedicated server..."
-      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 2278520 validate +quit
+      MAX_RETRIES=3
+      RETRY_COUNT=0
+      INSTALL_SUCCESS=false
+      
+      while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
+        
+        echo "Installing Enshrouded dedicated server..."
+        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 2278520 validate +quit
       
       rm -rf "$STEAM_HOME" 2>/dev/null || true
       chown -R root:root "$SERVER_DIR"
@@ -605,8 +703,15 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         exit 1
       fi
       
-      echo "Installing Sons of the Forest dedicated server..."
-      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 1326470 validate +quit
+      MAX_RETRIES=3
+      RETRY_COUNT=0
+      INSTALL_SUCCESS=false
+      
+      while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
+        
+        echo "Installing Sons of the Forest dedicated server..."
+        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 1326470 validate +quit
       
       rm -rf "$STEAM_HOME" 2>/dev/null || true
       chown -R root:root "$SERVER_DIR"
@@ -626,71 +731,113 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
       set +e
       SERVER_DIR="/opt/servers/{serverId}"
       
-      # Minden könyvtárat root tulajdonba teszünk, mivel root-ként futunk mindent
       mkdir -p /opt/servers
       chmod 755 /opt/servers
       chown root:root /opt/servers
       
-      # Szerver könyvtár létrehozása root tulajdonban
       mkdir -p "$SERVER_DIR"
       chmod -R 755 "$SERVER_DIR"
       chown -R root:root "$SERVER_DIR"
       
       cd "$SERVER_DIR"
       
-      # SteamCMD home könyvtár létrehozása és jogosultságok beállítása
       STEAM_HOME="/tmp/steamcmd-home-$$"
       mkdir -p "$STEAM_HOME"
       chown -R root:root "$STEAM_HOME"
       chmod -R 755 "$STEAM_HOME"
       
-      # Ellenőrizzük, hogy a globális SteamCMD létezik-e
       if [ ! -f /opt/steamcmd/steamcmd.sh ]; then
         echo "HIBA: SteamCMD nem található: /opt/steamcmd/steamcmd.sh" >&2
         exit 1
       fi
       
-      # The Forest szerver telepítése globális SteamCMD-vel
-      echo "Installing The Forest dedicated server..."
-      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 556450 validate +quit
-      EXIT_CODE=$?
+      MAX_RETRIES=3
+      RETRY_COUNT=0
+      INSTALL_SUCCESS=false
       
-      # Ideiglenes Steam home könyvtár törlése
+      while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
+        
+        echo "Installing The Forest dedicated server..."
+      
+      MAX_RETRIES=3
+      RETRY_COUNT=0
+      INSTALL_SUCCESS=false
+      
+      while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
+        
+          HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 556450 validate +quit
+        EXIT_CODE=$?
+        
+        # Várunk egy kicsit, hogy a fájlok biztosan leírásra kerüljenek
+        sleep 5
+        
+        # Keresés a bináris után - több helyen is
+        SERVER_FILE=""
+        
+        # 1. Közvetlenül a SERVER_DIR-ben
+        if [ -f "$SERVER_DIR/TheForestDedicatedServer.x86_64" ]; then
+          SERVER_FILE="$SERVER_DIR/TheForestDedicatedServer.x86_64"
+        # 2. linux64/ könyvtárban
+        elif [ -f "$SERVER_DIR/linux64/TheForestDedicatedServer.x86_64" ]; then
+          SERVER_FILE="$SERVER_DIR/linux64/TheForestDedicatedServer.x86_64"
+        # 3. steamapps/common/ könyvtárban
+        elif [ -f "$SERVER_DIR/steamapps/common/The Forest Dedicated Server/TheForestDedicatedServer.x86_64" ]; then
+          SERVER_FILE="$SERVER_DIR/steamapps/common/The Forest Dedicated Server/TheForestDedicatedServer.x86_64"
+        elif [ -f "$SERVER_DIR/steamapps/common/TheForestDedicatedServer/TheForestDedicatedServer.x86_64" ]; then
+          SERVER_FILE="$SERVER_DIR/steamapps/common/TheForestDedicatedServer/TheForestDedicatedServer.x86_64"
+        # 4. Keresés a teljes könyvtárban
+        else
+          SERVER_FILE=$(find "$SERVER_DIR" -name "TheForestDedicatedServer.x86_64" -type f 2>/dev/null | head -1)
+        fi
+        
+        if [ -n "$SERVER_FILE" ] && [ -f "$SERVER_FILE" ]; then
+          FILE_SIZE=$(stat -c%s "$SERVER_FILE" 2>/dev/null || echo "0")
+          if [ "$FILE_SIZE" -gt "0" ]; then
+            echo "TheForestDedicatedServer.x86_64 bináris megtalálva: $SERVER_FILE (méret: $FILE_SIZE bytes)"
+            INSTALL_SUCCESS=true
+            break
+          fi
+        fi
+        
+        echo "SteamCMD exit code: $EXIT_CODE" >&2
+        echo "TheForestDedicatedServer.x86_64 bináris még nem található, újrapróbálkozás..." >&2
+        RETRY_COUNT=$((RETRY_COUNT + 1))
+        
+        if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+          echo "Várakozás 15 másodpercet az újrapróbálkozás előtt..."
+          sleep 15
+        fi
+      done
+      
       rm -rf "$STEAM_HOME" 2>/dev/null || true
       
-      # A The Forest szerver bináris általában a linux64/ könyvtárban van
-      # Először keressük a binárist
-      SERVER_FILE=""
-      if [ -f "$SERVER_DIR/TheForestDedicatedServer.x86_64" ]; then
-        SERVER_FILE="$SERVER_DIR/TheForestDedicatedServer.x86_64"
-      elif [ -f "$SERVER_DIR/linux64/TheForestDedicatedServer.x86_64" ]; then
-        SERVER_FILE="$SERVER_DIR/linux64/TheForestDedicatedServer.x86_64"
-      else
-        # Keresés a teljes könyvtárban
-        SERVER_FILE=$(find "$SERVER_DIR" -name "TheForestDedicatedServer.x86_64" -type f 2>/dev/null | head -1)
-      fi
-      
-      if [ -n "$SERVER_FILE" ] && [ -f "$SERVER_FILE" ]; then
-        echo "Found server file at: $SERVER_FILE"
-        # Ha nem a root könyvtárban van, létrehozunk egy symlink-et
-        if [ "$SERVER_FILE" != "$SERVER_DIR/TheForestDedicatedServer.x86_64" ]; then
-          ln -sf "$SERVER_FILE" "$SERVER_DIR/TheForestDedicatedServer.x86_64"
-          echo "Created symlink to server file"
-        fi
-        # Végrehajtási jogosultságok beállítása
-        chmod +x "$SERVER_FILE" 2>/dev/null || true
-        chmod +x "$SERVER_DIR/TheForestDedicatedServer.x86_64" 2>/dev/null || true
-        echo "Server file is executable - installation successful"
-      else
-        echo "ERROR: TheForestDedicatedServer.x86_64 not found after installation!" >&2
-        echo "Installation directory contents:" >&2
+      if [ "$INSTALL_SUCCESS" != "true" ]; then
+        echo "HIBA: TheForestDedicatedServer.x86_64 bináris nem található $MAX_RETRIES próbálkozás után" >&2
+        echo "Könyvtár tartalma:" >&2
         ls -la "$SERVER_DIR" >&2 || true
-        if [ -d "$SERVER_DIR/linux64" ]; then
-          echo "linux64/ directory contents:" >&2
-          ls -la "$SERVER_DIR/linux64" >&2 || true
+        if [ -d "$SERVER_DIR/steamapps" ]; then
+          echo "steamapps/ directory contents:" >&2
+          find "$SERVER_DIR/steamapps" -type f -name "*Forest*" 2>/dev/null | head -20 >&2 || true
         fi
         exit 1
       fi
+      
+      # Symlink létrehozása, ha nem a root könyvtárban van
+      if [ "$SERVER_FILE" != "$SERVER_DIR/TheForestDedicatedServer.x86_64" ]; then
+        ln -sf "$SERVER_FILE" "$SERVER_DIR/TheForestDedicatedServer.x86_64"
+        echo "Created symlink to server file at $SERVER_DIR/TheForestDedicatedServer.x86_64"
+      fi
+      
+      # Végrehajtási jogosultságok beállítása
+      chmod +x "$SERVER_FILE" 2>/dev/null || true
+      chmod +x "$SERVER_DIR/TheForestDedicatedServer.x86_64" 2>/dev/null || true
+      
+      chown -R root:root "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
+      
+      echo "The Forest szerver sikeresen telepítve: $SERVER_DIR/TheForestDedicatedServer.x86_64"
     `,
     configPath: '/opt/servers/{serverId}/config/config.cfg',
     startCommand: './TheForestDedicatedServer.x86_64 -batchmode -nographics -dedicated',
@@ -726,8 +873,15 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         exit 1
       fi
       
-      echo "Installing Grounded dedicated server..."
-      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 962130 validate +quit
+      MAX_RETRIES=3
+      RETRY_COUNT=0
+      INSTALL_SUCCESS=false
+      
+      while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
+        
+        echo "Installing Grounded dedicated server..."
+        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 962130 validate +quit
       
       rm -rf "$STEAM_HOME" 2>/dev/null || true
       chown -R root:root "$SERVER_DIR"
@@ -768,8 +922,15 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         exit 1
       fi
       
-      echo "Installing V Rising dedicated server..."
-      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 1604030 validate +quit
+      MAX_RETRIES=3
+      RETRY_COUNT=0
+      INSTALL_SUCCESS=false
+      
+      while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
+        
+        echo "Installing V Rising dedicated server..."
+        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 1604030 validate +quit
       
       rm -rf "$STEAM_HOME" 2>/dev/null || true
       chown -R root:root "$SERVER_DIR"
@@ -809,8 +970,15 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         exit 1
       fi
       
-      echo "Installing Don't Starve Together dedicated server..."
-      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 343050 validate +quit
+      MAX_RETRIES=3
+      RETRY_COUNT=0
+      INSTALL_SUCCESS=false
+      
+      while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
+        
+        echo "Installing Don't Starve Together dedicated server..."
+        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 343050 validate +quit
       
       rm -rf "$STEAM_HOME" 2>/dev/null || true
       chown -R root:root "$SERVER_DIR"
@@ -851,8 +1019,15 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         exit 1
       fi
       
-      echo "Installing Counter-Strike 2 dedicated server..."
-      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 730 validate +quit
+      MAX_RETRIES=3
+      RETRY_COUNT=0
+      INSTALL_SUCCESS=false
+      
+      while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
+        
+        echo "Installing Counter-Strike 2 dedicated server..."
+        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 730 validate +quit
       
       rm -rf "$STEAM_HOME" 2>/dev/null || true
       chown -R root:root "$SERVER_DIR"
@@ -892,8 +1067,15 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         exit 1
       fi
       
-      echo "Installing Counter-Strike: Global Offensive dedicated server..."
-      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 740 validate +quit
+      MAX_RETRIES=3
+      RETRY_COUNT=0
+      INSTALL_SUCCESS=false
+      
+      while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
+        
+        echo "Installing Counter-Strike: Global Offensive dedicated server..."
+        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 740 validate +quit
       
       rm -rf "$STEAM_HOME" 2>/dev/null || true
       chown -R root:root "$SERVER_DIR"
@@ -933,8 +1115,15 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         exit 1
       fi
       
-      echo "Installing Left 4 Dead 2 dedicated server..."
-      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 222860 validate +quit
+      MAX_RETRIES=3
+      RETRY_COUNT=0
+      INSTALL_SUCCESS=false
+      
+      while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
+        
+        echo "Installing Left 4 Dead 2 dedicated server..."
+        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 222860 validate +quit
       
       rm -rf "$STEAM_HOME" 2>/dev/null || true
       chown -R root:root "$SERVER_DIR"
@@ -974,8 +1163,15 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         exit 1
       fi
       
-      echo "Installing Killing Floor 2 dedicated server..."
-      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 232130 validate +quit
+      MAX_RETRIES=3
+      RETRY_COUNT=0
+      INSTALL_SUCCESS=false
+      
+      while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
+        
+        echo "Installing Killing Floor 2 dedicated server..."
+        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 232130 validate +quit
       
       rm -rf "$STEAM_HOME" 2>/dev/null || true
       chown -R root:root "$SERVER_DIR"
@@ -1016,8 +1212,15 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         exit 1
       fi
       
-      echo "Installing Insurgency: Sandstorm dedicated server..."
-      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 581330 validate +quit
+      MAX_RETRIES=3
+      RETRY_COUNT=0
+      INSTALL_SUCCESS=false
+      
+      while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
+        
+        echo "Installing Insurgency: Sandstorm dedicated server..."
+        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 581330 validate +quit
       
       rm -rf "$STEAM_HOME" 2>/dev/null || true
       chown -R root:root "$SERVER_DIR"
@@ -1057,8 +1260,15 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         exit 1
       fi
       
-      echo "Installing Squad dedicated server..."
-      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 393380 validate +quit
+      MAX_RETRIES=3
+      RETRY_COUNT=0
+      INSTALL_SUCCESS=false
+      
+      while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
+        
+        echo "Installing Squad dedicated server..."
+        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 393380 validate +quit
       
       rm -rf "$STEAM_HOME" 2>/dev/null || true
       chown -R root:root "$SERVER_DIR"
@@ -1099,8 +1309,15 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         exit 1
       fi
       
-      echo "Installing Hell Let Loose dedicated server..."
-      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 686810 validate +quit
+      MAX_RETRIES=3
+      RETRY_COUNT=0
+      INSTALL_SUCCESS=false
+      
+      while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
+        
+        echo "Installing Hell Let Loose dedicated server..."
+        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 686810 validate +quit
       
       rm -rf "$STEAM_HOME" 2>/dev/null || true
       chown -R root:root "$SERVER_DIR"
@@ -1141,8 +1358,15 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         exit 1
       fi
       
-      echo "Installing Post Scriptum dedicated server..."
-      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 736220 validate +quit
+      MAX_RETRIES=3
+      RETRY_COUNT=0
+      INSTALL_SUCCESS=false
+      
+      while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
+        
+        echo "Installing Post Scriptum dedicated server..."
+        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 736220 validate +quit
       
       rm -rf "$STEAM_HOME" 2>/dev/null || true
       chown -R root:root "$SERVER_DIR"
@@ -1182,8 +1406,15 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         exit 1
       fi
       
-      echo "Installing Arma 3 dedicated server..."
-      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 107410 validate +quit
+      MAX_RETRIES=3
+      RETRY_COUNT=0
+      INSTALL_SUCCESS=false
+      
+      while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
+        
+        echo "Installing Arma 3 dedicated server..."
+        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 107410 validate +quit
       
       rm -rf "$STEAM_HOME" 2>/dev/null || true
       chown -R root:root "$SERVER_DIR"
@@ -1224,8 +1455,15 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         exit 1
       fi
       
-      echo "Installing Terraria dedicated server..."
-      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 105600 validate +quit
+      MAX_RETRIES=3
+      RETRY_COUNT=0
+      INSTALL_SUCCESS=false
+      
+      while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
+        
+        echo "Installing Terraria dedicated server..."
+        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 105600 validate +quit
       
       rm -rf "$STEAM_HOME" 2>/dev/null || true
       chown -R root:root "$SERVER_DIR"
@@ -1265,8 +1503,15 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         exit 1
       fi
       
-      echo "Installing Starbound dedicated server..."
-      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 211820 validate +quit
+      MAX_RETRIES=3
+      RETRY_COUNT=0
+      INSTALL_SUCCESS=false
+      
+      while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
+        
+        echo "Installing Starbound dedicated server..."
+        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 211820 validate +quit
       
       rm -rf "$STEAM_HOME" 2>/dev/null || true
       chown -R root:root "$SERVER_DIR"
@@ -1306,8 +1551,15 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         exit 1
       fi
       
-      echo "Installing Factorio dedicated server..."
-      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 427520 validate +quit
+      MAX_RETRIES=3
+      RETRY_COUNT=0
+      INSTALL_SUCCESS=false
+      
+      while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
+        
+        echo "Installing Factorio dedicated server..."
+        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 427520 validate +quit
       
       rm -rf "$STEAM_HOME" 2>/dev/null || true
       chown -R root:root "$SERVER_DIR"
@@ -1347,8 +1599,15 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         exit 1
       fi
       
-      echo "Installing Satisfactory dedicated server..."
-      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 1690800 validate +quit
+      MAX_RETRIES=3
+      RETRY_COUNT=0
+      INSTALL_SUCCESS=false
+      
+      while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
+        
+        echo "Installing Satisfactory dedicated server..."
+        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 1690800 validate +quit
       
       rm -rf "$STEAM_HOME" 2>/dev/null || true
       chown -R root:root "$SERVER_DIR"
@@ -1388,8 +1647,15 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         exit 1
       fi
       
-      echo "Installing Space Engineers dedicated server..."
-      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 298420 validate +quit
+      MAX_RETRIES=3
+      RETRY_COUNT=0
+      INSTALL_SUCCESS=false
+      
+      while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
+        
+        echo "Installing Space Engineers dedicated server..."
+        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 298420 validate +quit
       
       rm -rf "$STEAM_HOME" 2>/dev/null || true
       chown -R root:root "$SERVER_DIR"
@@ -1429,8 +1695,15 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         exit 1
       fi
       
-      echo "Installing Garry's Mod dedicated server..."
-      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 4020 validate +quit
+      MAX_RETRIES=3
+      RETRY_COUNT=0
+      INSTALL_SUCCESS=false
+      
+      while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
+        
+        echo "Installing Garry's Mod dedicated server..."
+        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 4020 validate +quit
       
       rm -rf "$STEAM_HOME" 2>/dev/null || true
       chown -R root:root "$SERVER_DIR"
@@ -1470,8 +1743,15 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         exit 1
       fi
       
-      echo "Installing Unturned dedicated server..."
-      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 304930 validate +quit
+      MAX_RETRIES=3
+      RETRY_COUNT=0
+      INSTALL_SUCCESS=false
+      
+      while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
+        
+        echo "Installing Unturned dedicated server..."
+        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 304930 validate +quit
       
       rm -rf "$STEAM_HOME" 2>/dev/null || true
       chown -R root:root "$SERVER_DIR"
@@ -1512,8 +1792,15 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         exit 1
       fi
       
-      echo "Installing Dota 2 dedicated server..."
-      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 570 validate +quit
+      MAX_RETRIES=3
+      RETRY_COUNT=0
+      INSTALL_SUCCESS=false
+      
+      while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
+        
+        echo "Installing Dota 2 dedicated server..."
+        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 570 validate +quit
       
       rm -rf "$STEAM_HOME" 2>/dev/null || true
       chown -R root:root "$SERVER_DIR"
