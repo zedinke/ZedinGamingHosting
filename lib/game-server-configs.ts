@@ -471,8 +471,34 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         
         echo "Installing Conan Exiles dedicated server..."
         HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 443030 validate +quit
+        EXIT_CODE=$?
+        
+        # Várunk egy kicsit, hogy a fájlok biztosan leírásra kerüljenek
+        sleep 5
+        
+        # Ellenőrizzük, hogy a telepítés sikeres volt-e
+        if [ -f "$SERVER_DIR/ConanSandboxServer.sh" ] || [ -d "$SERVER_DIR/steamapps/common/Conan Exiles Dedicated Server" ]; then
+          INSTALL_SUCCESS=true
+          break
+        fi
+        
+        echo "SteamCMD exit code: $EXIT_CODE" >&2
+        echo "Telepítés még nem teljes, újrapróbálkozás..." >&2
+        RETRY_COUNT=$((RETRY_COUNT + 1))
+        
+        if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+          echo "Várakozás 15 másodpercet az újrapróbálkozás előtt..."
+          sleep 15
+        fi
+      done
       
       rm -rf "$STEAM_HOME" 2>/dev/null || true
+      
+      if [ "$INSTALL_SUCCESS" != "true" ]; then
+        echo "HIBA: Telepítés nem sikerült $MAX_RETRIES próbálkozás után" >&2
+        exit 1
+      fi
+      
       chown -R root:root "$SERVER_DIR"
       chmod -R 755 "$SERVER_DIR"
     `,
@@ -520,8 +546,34 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         
         echo "Installing DayZ dedicated server..."
         HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 223350 validate +quit
+        EXIT_CODE=$?
+        
+        # Várunk egy kicsit, hogy a fájlok biztosan leírásra kerüljenek
+        sleep 5
+        
+        # Ellenőrizzük, hogy a telepítés sikeres volt-e
+        if [ -f "$SERVER_DIR/DayZServer" ] || [ -d "$SERVER_DIR/steamapps/common/DayZServer" ]; then
+          INSTALL_SUCCESS=true
+          break
+        fi
+        
+        echo "SteamCMD exit code: $EXIT_CODE" >&2
+        echo "Telepítés még nem teljes, újrapróbálkozás..." >&2
+        RETRY_COUNT=$((RETRY_COUNT + 1))
+        
+        if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+          echo "Várakozás 15 másodpercet az újrapróbálkozás előtt..."
+          sleep 15
+        fi
+      done
       
       rm -rf "$STEAM_HOME" 2>/dev/null || true
+      
+      if [ "$INSTALL_SUCCESS" != "true" ]; then
+        echo "HIBA: Telepítés nem sikerült $MAX_RETRIES próbálkozás után" >&2
+        exit 1
+      fi
+      
       chown -R root:root "$SERVER_DIR"
       chmod -R 755 "$SERVER_DIR"
     `,
