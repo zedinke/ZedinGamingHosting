@@ -1,5 +1,5 @@
 /**
- * ARK: Survival Ascended telepítő script
+ * Terraria telepítő script
  */
 
 export const installScript = `
@@ -7,44 +7,40 @@ export const installScript = `
 set +e
 SERVER_DIR="/opt/servers/{serverId}"
 
-# Minden könyvtárat root tulajdonba teszünk, mivel root-ként futunk mindent
 mkdir -p /opt/servers
 chmod 755 /opt/servers
 chown root:root /opt/servers
 
-# Szerver könyvtár létrehozása root tulajdonban
 mkdir -p "$SERVER_DIR"
 chmod -R 755 "$SERVER_DIR"
 chown -R root:root "$SERVER_DIR"
 
 cd "$SERVER_DIR"
 
-# SteamCMD home könyvtár létrehozása és jogosultságok beállítása
 STEAM_HOME="/tmp/steamcmd-home-$$"
 mkdir -p "$STEAM_HOME"
 chown -R root:root "$STEAM_HOME"
 chmod -R 755 "$STEAM_HOME"
 
-# Ellenőrizzük, hogy a globális SteamCMD létezik-e
 if [ ! -f /opt/steamcmd/steamcmd.sh ]; then
   echo "HIBA: SteamCMD nem található: /opt/steamcmd/steamcmd.sh" >&2
   exit 1
 fi
 
-# ARK Ascended szerver telepítése globális SteamCMD-vel
-echo "Installing ARK: Survival Ascended dedicated server..."
+MAX_RETRIES=3
+RETRY_COUNT=0
+INSTALL_SUCCESS=false
 
 while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
   echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
   
-  HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 2430930 validate +quit
+  echo "Installing Terraria dedicated server..."
+  HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 105600 validate +quit
   EXIT_CODE=$?
   
-  # Várunk egy kicsit, hogy a fájlok biztosan leírásra kerüljenek
   sleep 5
   
-  # Ellenőrizzük, hogy a telepítés sikeres volt-e (könyvtárak léteznek)
-  if [ -d "$SERVER_DIR/ShooterGame" ] || [ -d "$SERVER_DIR/steamapps/common/ARK Survival Ascended" ]; then
+  if [ -f "$SERVER_DIR/TerrariaServer" ] || [ -f "$SERVER_DIR/TerrariaServer.bin.x86_64" ]; then
     INSTALL_SUCCESS=true
     break
   fi
@@ -66,10 +62,20 @@ if [ "$INSTALL_SUCCESS" != "true" ]; then
   exit 1
 fi
 
-# Könyvtárak létrehozása
-mkdir -p ShooterGame/Saved/Config/LinuxServer
-mkdir -p ShooterGame/Saved/SavedArks
+mkdir -p "$SERVER_DIR/Worlds"
+chmod -R 755 "$SERVER_DIR/Worlds"
+
+# Executable jogok beállítása
+if [ -f "$SERVER_DIR/TerrariaServer" ]; then
+  chmod +x "$SERVER_DIR/TerrariaServer"
+fi
+
+if [ -f "$SERVER_DIR/TerrariaServer.bin.x86_64" ]; then
+  chmod +x "$SERVER_DIR/TerrariaServer.bin.x86_64"
+fi
+
 chown -R root:root "$SERVER_DIR"
 chmod -R 755 "$SERVER_DIR"
-`;
 
+echo "Terraria szerver telepítése sikeresen befejezve."
+`;

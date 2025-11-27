@@ -1,5 +1,5 @@
 /**
- * ARK: Survival Ascended telepítő script
+ * V Rising telepítő script
  */
 
 export const installScript = `
@@ -31,20 +31,24 @@ if [ ! -f /opt/steamcmd/steamcmd.sh ]; then
   exit 1
 fi
 
-# ARK Ascended szerver telepítése globális SteamCMD-vel
-echo "Installing ARK: Survival Ascended dedicated server..."
+# V Rising szerver telepítése globális SteamCMD-vel
+echo "Installing V Rising dedicated server..."
+
+MAX_RETRIES=3
+RETRY_COUNT=0
+INSTALL_SUCCESS=false
 
 while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
   echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
   
-  HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 2430930 validate +quit
+  HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 1604030 validate +quit
   EXIT_CODE=$?
   
   # Várunk egy kicsit, hogy a fájlok biztosan leírásra kerüljenek
   sleep 5
   
-  # Ellenőrizzük, hogy a telepítés sikeres volt-e (könyvtárak léteznek)
-  if [ -d "$SERVER_DIR/ShooterGame" ] || [ -d "$SERVER_DIR/steamapps/common/ARK Survival Ascended" ]; then
+  # Ellenőrizzük, hogy a telepítés sikeres volt-e
+  if [ -f "$SERVER_DIR/VRisingServer" ] || [ -d "$SERVER_DIR/steamapps/common/VRisingDedicatedServer" ]; then
     INSTALL_SUCCESS=true
     break
   fi
@@ -67,9 +71,12 @@ if [ "$INSTALL_SUCCESS" != "true" ]; then
 fi
 
 # Könyvtárak létrehozása
-mkdir -p ShooterGame/Saved/Config/LinuxServer
-mkdir -p ShooterGame/Saved/SavedArks
+mkdir -p "$SERVER_DIR/SaveData"
 chown -R root:root "$SERVER_DIR"
 chmod -R 755 "$SERVER_DIR"
-`;
 
+# Executable jogok beállítása
+if [ -f "$SERVER_DIR/VRisingServer" ]; then
+  chmod +x "$SERVER_DIR/VRisingServer"
+fi
+`;
