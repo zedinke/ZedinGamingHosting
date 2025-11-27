@@ -817,14 +817,20 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
         
         echo "Installing The Forest dedicated server..."
-        # A hivatalos dokumentáció szerint a The Forest dedikált szerver telepítése:
-        # +force_install_dir +login anonymous +app_update 556450 validate +quit
-        # A validate opció biztosítja, hogy a fájlok teljesen letöltődjenek
-        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 556450 validate +quit
+        # Először letöltjük a fájlokat
+        echo "Fájlok letöltése..."
+        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 556450 +quit
         EXIT_CODE=$?
         
         # Várunk egy kicsit, hogy a fájlok biztosan leírásra kerüljenek
-        # A SteamCMD néha időt vesz igénybe, hogy a fájlokat a megfelelő helyre mozgassa
+        sleep 10
+        
+        # Utána validáljuk a letöltött fájlokat
+        echo "Fájlok validálása..."
+        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 556450 validate +quit
+        VALIDATE_EXIT_CODE=$?
+        
+        # Várunk egy kicsit, hogy a validálás befejeződjön
         sleep 15
         
         # Keresés a bináris után - több helyen is
