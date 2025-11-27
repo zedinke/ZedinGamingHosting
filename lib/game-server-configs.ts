@@ -375,50 +375,73 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
     requiresSteamCMD: true,
     installScript: `
       #!/bin/bash
-      set -e
+      set +e
       SERVER_DIR="/opt/servers/{serverId}"
+      
+      # Minden könyvtárat root tulajdonba teszünk, mivel root-ként futunk mindent
+      mkdir -p /opt/servers
+      chmod 755 /opt/servers
+      chown root:root /opt/servers
+      
+      # Szerver könyvtár létrehozása root tulajdonban
+      mkdir -p "$SERVER_DIR"
+      chmod -R 755 "$SERVER_DIR"
+      chown -R root:root "$SERVER_DIR"
+      
       cd "$SERVER_DIR"
       
-      # SteamCMD letöltése ha nincs
-      if [ ! -f steamcmd.sh ]; then
-        echo "Downloading SteamCMD..."
-        wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf -
+      # SteamCMD home könyvtár létrehozása és jogosultságok beállítása
+      STEAM_HOME="/tmp/steamcmd-home-$$"
+      mkdir -p "$STEAM_HOME"
+      chown -R root:root "$STEAM_HOME"
+      chmod -R 755 "$STEAM_HOME"
+      
+      # Ellenőrizzük, hogy a globális SteamCMD létezik-e
+      if [ ! -f /opt/steamcmd/steamcmd.sh ]; then
+        echo "HIBA: SteamCMD nem található: /opt/steamcmd/steamcmd.sh" >&2
+        exit 1
       fi
       
-      # The Forest szerver telepítése
+      # The Forest szerver telepítése globális SteamCMD-vel
       echo "Installing The Forest dedicated server..."
-      ./steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 556450 validate +quit
+      HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 556450 validate +quit
+      EXIT_CODE=$?
       
-      # A The Forest szerver fájlok általában a root könyvtárban vannak, de ellenőrizzük
-      if [ ! -f "$SERVER_DIR/TheForestDedicatedServer.x86_64" ]; then
-        echo "Searching for TheForestDedicatedServer.x86_64..."
+      # Ideiglenes Steam home könyvtár törlése
+      rm -rf "$STEAM_HOME" 2>/dev/null || true
+      
+      # A The Forest szerver bináris általában a linux64/ könyvtárban van
+      # Először keressük a binárist
+      SERVER_FILE=""
+      if [ -f "$SERVER_DIR/TheForestDedicatedServer.x86_64" ]; then
+        SERVER_FILE="$SERVER_DIR/TheForestDedicatedServer.x86_64"
+      elif [ -f "$SERVER_DIR/linux64/TheForestDedicatedServer.x86_64" ]; then
+        SERVER_FILE="$SERVER_DIR/linux64/TheForestDedicatedServer.x86_64"
+      else
+        # Keresés a teljes könyvtárban
         SERVER_FILE=$(find "$SERVER_DIR" -name "TheForestDedicatedServer.x86_64" -type f 2>/dev/null | head -1)
-        if [ -n "$SERVER_FILE" ]; then
-          echo "Found server file at: $SERVER_FILE"
-          # Ha nem a root könyvtárban van, létrehozunk egy symlink-et
-          if [ "$SERVER_FILE" != "$SERVER_DIR/TheForestDedicatedServer.x86_64" ]; then
-            ln -sf "$SERVER_FILE" "$SERVER_DIR/TheForestDedicatedServer.x86_64"
-            echo "Created symlink to server file"
-          fi
-        else
-          echo "ERROR: TheForestDedicatedServer.x86_64 not found after installation!"
-          echo "Installation directory contents:"
-          ls -la "$SERVER_DIR" || true
-          exit 1
-        fi
       fi
       
-      # Végrehajtási jogosultságok beállítása
-      echo "Setting executable permissions..."
-      chmod +x "$SERVER_DIR/TheForestDedicatedServer.x86_64" 2>/dev/null || true
-      find "$SERVER_DIR" -name "TheForestDedicatedServer.x86_64" -exec chmod +x {} \\; 2>/dev/null || true
-      
-      # Ellenőrizzük, hogy a fájl végrehajtható-e
-      if [ -x "$SERVER_DIR/TheForestDedicatedServer.x86_64" ]; then
+      if [ -n "$SERVER_FILE" ] && [ -f "$SERVER_FILE" ]; then
+        echo "Found server file at: $SERVER_FILE"
+        # Ha nem a root könyvtárban van, létrehozunk egy symlink-et
+        if [ "$SERVER_FILE" != "$SERVER_DIR/TheForestDedicatedServer.x86_64" ]; then
+          ln -sf "$SERVER_FILE" "$SERVER_DIR/TheForestDedicatedServer.x86_64"
+          echo "Created symlink to server file"
+        fi
+        # Végrehajtási jogosultságok beállítása
+        chmod +x "$SERVER_FILE" 2>/dev/null || true
+        chmod +x "$SERVER_DIR/TheForestDedicatedServer.x86_64" 2>/dev/null || true
         echo "Server file is executable - installation successful"
       else
-        echo "WARNING: Server file is not executable, attempting to fix..."
-        chmod +x "$SERVER_DIR/TheForestDedicatedServer.x86_64"
+        echo "ERROR: TheForestDedicatedServer.x86_64 not found after installation!" >&2
+        echo "Installation directory contents:" >&2
+        ls -la "$SERVER_DIR" >&2 || true
+        if [ -d "$SERVER_DIR/linux64" ]; then
+          echo "linux64/ directory contents:" >&2
+          ls -la "$SERVER_DIR/linux64" >&2 || true
+        fi
+        exit 1
       fi
     `,
     configPath: '/opt/servers/{serverId}/config/config.cfg',
