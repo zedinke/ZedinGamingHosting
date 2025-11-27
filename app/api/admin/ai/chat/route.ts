@@ -256,6 +256,29 @@ async function handleStreamingResponse(
   systemPrompt: string,
   conversationId: string
 ): Promise<Response> {
+  // Ollama elérhetőség ellenőrzése
+  const ollamaReady = await ensureOllamaReady();
+  if (!ollamaReady) {
+    const encoder = new TextEncoder();
+    const errorStream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(
+          encoder.encode(
+            `data: ${JSON.stringify({ error: 'AI szolgáltatás nem elérhető. Ellenőrizd, hogy az Ollama fut-e és a modell letöltve van-e.' })}\n\n`
+          )
+        );
+        controller.close();
+      },
+    });
+    return new Response(errorStream, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
+      },
+    });
+  }
+
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {

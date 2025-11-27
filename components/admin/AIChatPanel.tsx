@@ -111,7 +111,15 @@ export function AIChatPanel() {
         });
 
         if (!response.ok) {
-          throw new Error('Hiba történt');
+          const errorText = await response.text().catch(() => '');
+          let errorMessage = `Hiba történt (${response.status})`;
+          try {
+            const errorData = JSON.parse(errorText);
+            errorMessage = errorData.error || errorMessage;
+          } catch {
+            if (errorText) errorMessage = errorText;
+          }
+          throw new Error(errorMessage);
         }
 
         const reader = response.body?.getReader();
@@ -138,6 +146,9 @@ export function AIChatPanel() {
                 if (data.content) {
                   fullResponse += data.content;
                   setStreamingContent(fullResponse);
+                }
+                if (data.error) {
+                  throw new Error(data.error);
                 }
                 if (data.done) {
                   finalConversationId = data.conversationId || finalConversationId;
@@ -180,7 +191,15 @@ export function AIChatPanel() {
         });
 
         if (!response.ok) {
-          throw new Error('Hiba történt');
+          const errorText = await response.text().catch(() => '');
+          let errorMessage = `Hiba történt (${response.status})`;
+          try {
+            const errorData = JSON.parse(errorText);
+            errorMessage = errorData.error || errorMessage;
+          } catch {
+            if (errorText) errorMessage = errorText;
+          }
+          throw new Error(errorMessage);
         }
 
         const data = await response.json();
