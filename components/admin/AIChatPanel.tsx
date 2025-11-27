@@ -199,22 +199,6 @@ export function AIChatPanel() {
           }
           throw abortError;
         }
-        } catch (abortError: any) {
-          // AbortError esetén megszakítjuk
-          if (abortError.name === 'AbortError') {
-            if (fullResponse) {
-              const assistantMessage: Message = {
-                id: `msg-${Date.now()}`,
-                role: 'assistant',
-                content: fullResponse + '\n\n[Megszakítva]',
-                createdAt: new Date().toISOString(),
-              };
-              setMessages([...newMessages, assistantMessage]);
-            }
-            return;
-          }
-          throw abortError;
-        }
       } else {
         // Normál válasz
         const response = await fetch('/api/admin/ai/chat', {
