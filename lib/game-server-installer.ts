@@ -1074,6 +1074,16 @@ export async function createSystemdServiceForServer(
   
   if (gameType === 'THE_FOREST' || startCommand.includes('wine') || startCommand.includes('xvfb-run')) {
     useWrapperScript = true;
+    // Escape-eljük a startCommand-ot, hogy biztonságosan beilleszthető legyen a scriptbe
+    // A startCommand-ot közvetlenül beillesztjük a scriptbe, escape-eljük az idézőjeleket
+    // Fontos: a $ karaktereket is escape-eljük, hogy ne legyenek változóként értelmezve
+    // De a backslash-eket nem escape-eljük, mert azok szükségesek lehetnek
+    const escapedStartCommand = startCommand
+      .replace(/\\/g, '\\\\')  // Backslash escape-elése először
+      .replace(/"/g, '\\"')    // Dupla idézőjelek escape-elése
+      .replace(/\$/g, '\\$')   // $ karakterek escape-elése
+      .replace(/`/g, '\\`');   // Backtick escape-elése
+    
     // Wrapper script létrehozása, ami először telepíti az Xvfb-t, Wine-t, Winbind-et, majd futtatja a szervert
     const wrapperScript = `#!/bin/bash
 set +e
@@ -1188,7 +1198,7 @@ echo "xvfb-run elérhető: $(which xvfb-run)"
 echo "xauth elérhető: $(which xauth)"
 
 # The Forest szerver esetén a save könyvtárat is létrehozzuk
-if echo "${startCommand}" | grep -q "TheForestDedicatedServer.exe"; then
+if echo "${escapedStartCommand}" | grep -q "TheForestDedicatedServer.exe"; then
   echo "The Forest szerver észlelve, save könyvtár ellenőrzése..."
   mkdir -p ./savefilesserver
   chmod 755 ./savefilesserver
@@ -1197,7 +1207,8 @@ fi
 
 # Szerver futtatása
 set -e
-eval "${startCommand}"
+# A startCommand közvetlenül futtatása bash-ben (nem eval)
+bash -c "${escapedStartCommand}"
 `;
 
     const wrapperScriptBase64 = Buffer.from(wrapperScript).toString('base64');
