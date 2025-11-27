@@ -961,7 +961,8 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
     // A konfigurációból veszi az értékeket: servername, serverpassword, serverplayers, serverautosaveinterval, difficulty, inittype, enableVAC
     startCommand: './TheForestDedicatedServer.x86_64 -batchmode -nographics -savefolderpath ./savefilesserver/ -configfilepath ./server.cfg -servername "{name}" -serverplayers {maxPlayers} -serverautosaveinterval {serverautosaveinterval} -difficulty {difficulty} -inittype {inittype} -serverpassword "{password}" -enableVAC {enableVAC}',
     // Windows verzió parancs (ha csak .exe fájl van, Wine szükséges)
-    startCommandWindows: 'xvfb-run --auto-servernum --server-args="-screen 0 640x480x24:32" wine ./TheForestDedicatedServer.exe -batchmode -dedicated -nosteamclient -serversteamport 8766 -servergameport {port} -serverqueryport {queryPort} -servername "{name}" -serverplayers {maxPlayers} -serverautosaveinterval {serverautosaveinterval} -difficulty {difficulty} -inittype {inittype} -slot {slot} -serverpassword "{password}" -enableVAC {enableVAC}',
+    // -serverip paraméter hozzáadva, hogy ne kelljen automatikusan detektálni (Wine hálózati hiba elkerülése)
+    startCommandWindows: 'xvfb-run --auto-servernum --server-args="-screen 0 640x480x24:32" wine ./TheForestDedicatedServer.exe -batchmode -dedicated -nosteamclient -serversteamport 8766 -servergameport {port} -serverqueryport {queryPort} -serverip {serverip} -servername "{name}" -serverplayers {maxPlayers} -serverautosaveinterval {serverautosaveinterval} -difficulty {difficulty} -inittype {inittype} -slot {slot} -serverpassword "{password}" -enableVAC {enableVAC}',
     stopCommand: 'quit',
     port: 27015,
     queryPort: 27016,

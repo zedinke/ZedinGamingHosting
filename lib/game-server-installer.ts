@@ -1072,13 +1072,18 @@ export async function createSystemdServiceForServer(
     
     // The Forest specifikus placeholder-ek
     if (gameType === 'THE_FOREST') {
+      // IP cím meghatározása (machine IP vagy 0.0.0.0, ha nincs)
+      const serverIp = machine?.ipAddress || '0.0.0.0';
+      
       startCommand = startCommand
         .replace(/{serverautosaveinterval}/g, (config.serverautosaveinterval || 15).toString())
         .replace(/{difficulty}/g, config.difficulty || 'Normal')
         .replace(/{inittype}/g, config.inittype || 'Continue')
         .replace(/{enableVAC}/g, config.enableVAC || 'on')
         // Slot fix érték (csomaghoz kötött, nem változtatható)
-        .replace(/{slot}/g, (config.slot || 3).toString());
+        .replace(/{slot}/g, (config.slot || 3).toString())
+        // IP cím (Wine hálózati hiba elkerülése)
+        .replace(/{serverip}/g, serverIp);
     }
   }
 
@@ -1138,6 +1143,21 @@ export async function createSystemdServiceForServer(
           .replace(/{adminPassword}/g, config.adminPassword || 'changeme')
           .replace(/{queryPort}/g, (gameConfig.queryPort || port + 1).toString())
           .replace(/{map}/g, config.map || 'TheIsland');
+        
+        // The Forest specifikus placeholder-ek (Windows verzió)
+        if (gameType === 'THE_FOREST') {
+          // IP cím meghatározása (machine IP vagy 0.0.0.0, ha nincs)
+          const serverIp = machine?.ipAddress || '0.0.0.0';
+          
+          startCommand = startCommand
+            .replace(/{serverautosaveinterval}/g, (config.serverautosaveinterval || 15).toString())
+            .replace(/{difficulty}/g, config.difficulty || 'Normal')
+            .replace(/{inittype}/g, config.inittype || 'Continue')
+            .replace(/{enableVAC}/g, config.enableVAC || 'on')
+            .replace(/{slot}/g, (config.slot || 3).toString())
+            // IP cím (Wine hálózati hiba elkerülése)
+            .replace(/{serverip}/g, serverIp);
+        }
       }
     }
   }
