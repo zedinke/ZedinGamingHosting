@@ -51,11 +51,11 @@ export async function GET(
     }
 
     // The Forest esetén a szerver nevet a konfigurációból vesszük (servername), ha nincs, akkor a server.name-t használjuk
-    const config = server.configuration || {};
+    const config = (server.configuration as any) || {};
     const defaults = getDefaultConfig(server.gameType, server.maxPlayers);
     
     // Ha a szerver neve változott a konfigurációban, akkor azt használjuk
-    if (server.gameType === 'THE_FOREST' && config.servername) {
+    if (server.gameType === 'THE_FOREST' && config.servername && typeof config.servername === 'string') {
       defaults.servername = config.servername;
     }
 
