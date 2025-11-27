@@ -78,6 +78,7 @@ export default async function NewServerPage({
           <ServerOrderForm
             plans={plans}
             selectedPlan={selectedPlan}
+            selectedGamePackage={selectedGamePackage}
             locale={locale}
           />
         </div>

@@ -14,7 +14,8 @@
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
-    "setup:ollama": "node scripts/setup-ollama.js"
+    "setup:ollama": "node scripts/setup-ollama.js",
+    "test:chat": "node scripts/test-chat-api.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.940.0",

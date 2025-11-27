@@ -282,8 +282,38 @@ export function ServerOrderForm({ plans, selectedPlan, selectedGamePackage, loca
         )}
       </Card>
 
+      {/* Game Package Info */}
+      {selectedGamePackage && (
+        <Card padding="lg" className="bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200">
+          <h3 className="text-lg font-bold mb-3">Kiválasztott Csomag</h3>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Csomag neve</p>
+              <p className="font-semibold text-lg">{selectedGamePackage.name}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Ár</p>
+              <p className="text-2xl font-bold text-primary-600">
+                {formatPrice(selectedGamePackage.discountPrice || selectedGamePackage.price, selectedGamePackage.currency)}
+                <span className="text-sm text-gray-600 font-normal">/{selectedGamePackage.interval === 'month' ? 'hó' : 'év'}</span>
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Specifikációk</p>
+              <p className="font-semibold">{selectedGamePackage.slot} Slot • {selectedGamePackage.cpuCores} vCore • {selectedGamePackage.ram} GB RAM</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Játék</p>
+              <p className="font-semibold">
+                {selectedGameType ? gameTypes[selectedGameType as keyof typeof gameTypes]?.label : 'Nincs kiválasztva'}
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* Order Summary */}
-      {currentPlan && (
+      {currentPlan && !selectedGamePackage && (
         <Card padding="lg" className="bg-gradient-to-r from-primary-50 to-secondary-50 border-primary-200">
           <div className="flex justify-between items-center">
             <div>
