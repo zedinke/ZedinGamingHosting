@@ -815,8 +815,8 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         chmod -R 755 "$SERVER_DIR"
         
         echo "Installing The Forest dedicated server..."
-        # Ugyanúgy, mint a Rust-nál: egyetlen parancs validate opcióval
-        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 556450 validate +quit
+        # Linux platform beállítása, majd telepítés validate opcióval
+        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_set_config 556450 platform linux +app_update 556450 validate +quit
         EXIT_CODE=$?
         
         # Ideiglenes Steam home könyvtár törlése
