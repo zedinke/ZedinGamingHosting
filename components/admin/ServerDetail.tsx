@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ServerStatus, GameType } from '@prisma/client';
+import { ServerStatus, GameType, SubscriptionStatus } from '@prisma/client';
 import toast from 'react-hot-toast';
 import { ServerFileManager } from './ServerFileManager';
 import { ServerConsole } from './ServerConsole';
@@ -73,6 +73,7 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
   const [showVerifyDialog, setShowVerifyDialog] = useState(false);
   const [verifyResults, setVerifyResults] = useState<any>(null);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [subscriptionStatus, setSubscriptionStatus] = useState(server.subscription?.status || null);
 
   const handleServerAction = async (action: string) => {
     setIsLoading(true);
@@ -390,18 +391,69 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
       {/* Előfizetés információk */}
       {server.subscription && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Előfizetés</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold text-gray-900">Előfizetés</h2>
+            <div className="flex gap-2">
+              <select
+                value={subscriptionStatus || ''}
+                onChange={async (e) => {
+                  const newStatus = e.target.value as SubscriptionStatus;
+                  if (!confirm(`Biztosan megváltoztatod az előfizetés státuszát ${server.subscription?.status}-ről ${newStatus}-re?`)) {
+                    return;
+                  }
+
+                  setIsLoading(true);
+                  try {
+                    const response = await fetch(`/api/admin/subscriptions/${server.subscription?.id}/status`, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({ status: newStatus }),
+                    });
+
+                    const result = await response.json();
+
+                    if (!response.ok) {
+                      toast.error(result.error || 'Hiba történt');
+                      return;
+                    }
+
+                    setSubscriptionStatus(newStatus);
+                    toast.success('Előfizetés státusza sikeresen frissítve');
+                    setTimeout(() => window.location.reload(), 1000);
+                  } catch (error) {
+                    toast.error('Hiba történt');
+                  } finally {
+                    setIsLoading(false);
+                  }
+                }}
+                disabled={isLoading}
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-900 bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <option value="ACTIVE">ACTIVE (Aktív)</option>
+                <option value="CANCELED">CANCELED (Törölve)</option>
+                <option value="PAST_DUE">PAST_DUE (Lejárt)</option>
+                <option value="UNPAID">UNPAID (Fizetetlen)</option>
+                <option value="TRIALING">TRIALING (Próba)</option>
+              </select>
+            </div>
+          </div>
           <div className="space-y-3">
             <div className="flex justify-between items-center">
               <span className="text-gray-700 font-medium">Státusz:</span>
               <span
-                className={`px-2 py-1 rounded text-xs ${
-                  server.subscription.status === 'ACTIVE'
+                className={`px-2 py-1 rounded text-xs font-semibold ${
+                  subscriptionStatus === 'ACTIVE'
                     ? 'bg-green-100 text-green-800'
+                    : subscriptionStatus === 'UNPAID' || subscriptionStatus === 'PAST_DUE'
+                    ? 'bg-yellow-100 text-yellow-800'
+                    : subscriptionStatus === 'CANCELED'
+                    ? 'bg-red-100 text-red-800'
                     : 'bg-gray-100 text-gray-800'
                 }`}
               >
-                {server.subscription.status}
+                {subscriptionStatus}
               </span>
             </div>
             {server.subscription.invoices.length > 0 && (
