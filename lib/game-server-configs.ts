@@ -1732,15 +1732,47 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         
         echo "Installing Satisfactory dedicated server..."
         HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 1690800 validate +quit
+        EXIT_CODE=$?
+        
+        # Várunk egy kicsit, hogy a fájlok biztosan leírásra kerüljenek
+        sleep 5
+        
+        # Ellenőrizzük, hogy a telepítés sikeres volt-e
+        if [ -f "$SERVER_DIR/FactoryGame/Binaries/Linux/FactoryGameServer" ] || [ -d "$SERVER_DIR/FactoryGame" ]; then
+          INSTALL_SUCCESS=true
+          break
+        fi
+        
+        echo "SteamCMD exit code: $EXIT_CODE" >&2
+        echo "Telepítés még nem teljes, újrapróbálkozás..." >&2
+        RETRY_COUNT=$((RETRY_COUNT + 1))
+        
+        if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+          echo "Várakozás 15 másodpercet az újrapróbálkozás előtt..."
+          sleep 15
+        fi
+      done
       
       rm -rf "$STEAM_HOME" 2>/dev/null || true
+      
+      if [ "$INSTALL_SUCCESS" != "true" ]; then
+        echo "HIBA: Telepítés nem sikerült $MAX_RETRIES próbálkozás után" >&2
+        exit 1
+      fi
+      
+      # Konfigurációs könyvtárak létrehozása
+      mkdir -p "$SERVER_DIR/FactoryGame/Saved/Config/LinuxServer"
+      chmod -R 755 "$SERVER_DIR/FactoryGame/Saved/Config/LinuxServer"
+      chown -R root:root "$SERVER_DIR/FactoryGame/Saved/Config/LinuxServer"
+      
       chown -R root:root "$SERVER_DIR"
       chmod -R 755 "$SERVER_DIR"
     `,
-    configPath: '/opt/servers/{serverId}/FactoryGame/Saved/Config/LinuxServer/ServerSettings.ini',
-    startCommand: './FactoryServer.sh',
+    configPath: '/opt/servers/{serverId}/FactoryGame/Saved/Config/LinuxServer/GameUserSettings.ini',
+    startCommand: 'cd FactoryGame/Binaries/Linux && ./FactoryGameServer -log -unattended',
     stopCommand: 'quit',
-    port: 7777,
+    port: 15777,
+    queryPort: 7777,
   },
 
   SPACE_ENGINEERS: {

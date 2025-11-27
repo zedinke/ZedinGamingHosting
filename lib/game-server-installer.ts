@@ -521,6 +521,7 @@ fi
         }
       }
       
+      // Satisfactory-nál a GameUserSettings.ini fájlt hozzuk létre
       await executeSSHCommand(
         {
           host: machine.ipAddress,
@@ -533,6 +534,28 @@ fi
       
       if (writeProgress) {
         await appendInstallLog(serverId, `Konfigurációs fájl létrehozva: ${configPath}`);
+      }
+      
+      // Satisfactory-nál a Game.ini fájlt is létrehozzuk (alapértelmezett értékekkel)
+      if (gameType === 'SATISFACTORY') {
+        const gameIniPath = configPath.replace('GameUserSettings.ini', 'Game.ini');
+        const gameIniContent = `[/Script/Engine.GameNetworkManager]
+TotalNetBandwidth=20000
+MaxDynamicBandwidth=10000
+MinDynamicBandwidth=1000
+`;
+        await executeSSHCommand(
+          {
+            host: machine.ipAddress,
+            port: machine.sshPort,
+            user: machine.sshUser,
+            keyPath: machine.sshKeyPath || undefined,
+          },
+          `cat > ${gameIniPath} << 'EOF'\n${gameIniContent}\nEOF`
+        );
+        if (writeProgress) {
+          await appendInstallLog(serverId, `Game.ini fájl létrehozva: ${gameIniPath}`);
+        }
       }
     } else if (gameType === 'THE_FOREST') {
       // The Forest-nál a configfilepath kötelező, de ha nincs configContent,
@@ -881,6 +904,34 @@ saveFolderPath=./savefilesserver/
 
 # Additional settings can be added here
 # For more information, see the official The Forest server documentation
+      `.trim();
+
+    case 'SATISFACTORY':
+      // Satisfactory szerver konfigurációs fájl (GameUserSettings.ini)
+      // A Game.ini fájl alapértelmezett értékekkel működik, de a GameUserSettings.ini tartalmazza a legtöbb beállítást
+      const gamePort = port || 15777;
+      const beaconPort = 15000;
+      const queryPortSatisfactory = gameConfig.queryPort || 7777;
+      return `[/Script/Engine.GameSession]
+MaxPlayers=${maxPlayers}
+
+[/Script/FactoryGame.FGServerSubsystem]
+ServerName="${name}"
+ServerPassword="${config.password || ''}"
+AdminPassword="${config.adminPassword || 'changeme123'}"
+GamePort=${gamePort}
+BeaconPort=${beaconPort}
+QueryPort=${queryPortSatisfactory}
+Autopause=${config.autopause !== undefined ? config.autopause : false}
+AutoSaveOnDisconnect=${config.autoSaveOnDisconnect !== undefined ? config.autoSaveOnDisconnect : true}
+AutoSaveInterval=${config.autoSaveInterval || 5}
+NetworkQuality=${config.networkQuality || 3}
+FriendlyFire=${config.friendlyFire !== undefined ? config.friendlyFire : false}
+AutoArmor=${config.autoArmor !== undefined ? config.autoArmor : true}
+EnableCheats=${config.enableCheats !== undefined ? config.enableCheats : false}
+GamePhase=${config.gamePhase || 1}
+StartingPhase=${config.startingPhase || 1}
+SkipTutorial=${config.skipTutorial !== undefined ? config.skipTutorial : false}
       `.trim();
 
     default:

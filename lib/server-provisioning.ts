@@ -246,6 +246,7 @@ function getGameRequirements(gameType: GameType, maxPlayers: number) {
     GROUNDED: { cpu: 1, ram: 2 * 1024 * 1024 * 1024, disk: 5 * 1024 * 1024 * 1024 },
     V_RISING: { cpu: 2, ram: 4 * 1024 * 1024 * 1024, disk: 10 * 1024 * 1024 * 1024 },
     DONT_STARVE_TOGETHER: { cpu: 1, ram: 2 * 1024 * 1024 * 1024, disk: 5 * 1024 * 1024 * 1024 },
+    SATISFACTORY: { cpu: 2, ram: 6 * 1024 * 1024 * 1024, disk: 15 * 1024 * 1024 * 1024 }, // 6GB RAM, 15GB Disk
     OTHER: { cpu: 1, ram: 2 * 1024 * 1024 * 1024, disk: 5 * 1024 * 1024 * 1024 }, // 2GB RAM, 5GB Disk
   };
 
@@ -399,6 +400,7 @@ export async function generateServerPort(
     GROUNDED: 7777,
     V_RISING: 9876,
     DONT_STARVE_TOGETHER: 10999,
+    SATISFACTORY: 15777, // GamePort (BeaconPort=15000, QueryPort=7777)
     OTHER: 25565,
   };
 
