@@ -51,6 +51,7 @@ interface MachineDetailProps {
 export function MachineDetail({ machine, locale }: MachineDetailProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isInstallingAgent, setIsInstallingAgent] = useState(false);
+  const [isReinstallingAgent, setIsReinstallingAgent] = useState(false);
   const [isTestingSSH, setIsTestingSSH] = useState(false);
   const [formData, setFormData] = useState({
     name: machine.name,
@@ -85,6 +86,34 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
       window.location.reload();
     } catch (error) {
       toast.error('Hiba történt');
+    }
+  };
+
+  const handleReinstallAgent = async () => {
+    if (!confirm('Biztosan újratelepíted az agentet erre a gépre? Ez törli a meglévő agentet és minden könyvtárat root tulajdonba helyezi. Ez néhány percig eltarthat.')) {
+      return;
+    }
+
+    setIsReinstallingAgent(true);
+
+    try {
+      const response = await fetch(`/api/admin/machines/${machine.id}/reinstall-agent`, {
+        method: 'POST',
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        toast.error(result.error || 'Hiba történt');
+        return;
+      }
+
+      toast.success(result.message || 'Agent sikeresen újratelepítve');
+      setTimeout(() => window.location.reload(), 2000);
+    } catch (error) {
+      toast.error('Hiba történt');
+    } finally {
+      setIsReinstallingAgent(false);
     }
   };
 
@@ -429,6 +458,15 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
               className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isInstallingAgent ? 'Telepítés...' : 'Agent Telepítés'}
+            </button>
+          )}
+          {machine.agents.length > 0 && (
+            <button
+              onClick={handleReinstallAgent}
+              disabled={isReinstallingAgent}
+              className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed ml-2"
+            >
+              {isReinstallingAgent ? 'Újratelepítés...' : 'Agent Újratelepítése (Root)'}
             </button>
           )}
         </div>
