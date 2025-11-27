@@ -188,6 +188,8 @@ export async function installGameServer(
       await appendInstallLog(serverId, `Szerver könyvtár létrehozása: ${serverPath}`);
     }
     
+    // Könyvtár létrehozása megfelelő jogosultságokkal
+    // A SteamCMD root-ként fut, ezért biztosítjuk, hogy írni tudjon
     await executeSSHCommand(
       {
         host: machine.ipAddress,
@@ -195,11 +197,11 @@ export async function installGameServer(
         user: machine.sshUser,
         keyPath: machine.sshKeyPath || undefined,
       },
-      `mkdir -p ${serverPath}`
+      `mkdir -p ${serverPath} && chmod 755 ${serverPath} && chown -R root:root ${serverPath} 2>/dev/null || chmod 755 ${serverPath}`
     );
     
     if (writeProgress) {
-      await appendInstallLog(serverId, 'Szerver könyvtár létrehozva');
+      await appendInstallLog(serverId, 'Szerver könyvtár létrehozva megfelelő jogosultságokkal');
     }
 
     // Függőségek telepítése

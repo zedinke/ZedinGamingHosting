@@ -93,13 +93,25 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
       # Ne használjunk set -e-t, mert a SteamCMD exit code 8 lehet warning, de a fájlok letöltődhetnek
       set +e
       SERVER_DIR="/opt/servers/{serverId}"
+      
+      # Könyvtár létrehozása megfelelő jogosultságokkal
       mkdir -p "$SERVER_DIR"
+      # Biztosítjuk, hogy a root írni tudjon (SteamCMD root-ként fut)
+      chmod 755 "$SERVER_DIR" || true
+      # Ha van gameserver user, akkor neki is adjunk jogot
+      if id "gameserver" &>/dev/null; then
+        chown -R gameserver:gameserver "$SERVER_DIR" 2>/dev/null || true
+        chmod -R 755 "$SERVER_DIR" || true
+      fi
+      
       cd "$SERVER_DIR"
       
       # Rust szerver telepítése SteamCMD-vel
       # A fájlok a server/ alkönyvtárba kerülnek
       echo "Rust szerver telepítése kezdődik..."
       echo "Szerver könyvtár: $SERVER_DIR"
+      echo "Könyvtár jogosultságok:"
+      ls -ld "$SERVER_DIR" || true
       
       # SteamCMD futtatása - több próbálkozás, ha szükséges
       MAX_RETRIES=3
@@ -109,9 +121,28 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
       while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
         echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
         
+        # Jogosultságok ellenőrzése és beállítása SteamCMD előtt
+        # A SteamCMD root-ként fut, ezért a könyvtárat root tulajdonba tesszük
+        # Ez biztosítja, hogy a SteamCMD írni tudjon
+        chmod 755 "$SERVER_DIR" || true
+        chown -R root:root "$SERVER_DIR" 2>/dev/null || true
+        
+        # Ellenőrizzük a jogosultságokat
+        echo "Könyvtár jogosultságok SteamCMD előtt:"
+        ls -ld "$SERVER_DIR" || true
+        
         # SteamCMD futtatása - nem használunk if-t, mert az exit code-ot külön kezeljük
+        # A SteamCMD root-ként fut, ezért biztosítjuk, hogy írni tudjon
         /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 258550 validate +quit
         EXIT_CODE=$?
+        
+        # Jogosultságok beállítása a letöltött fájlokra
+        # A fájlokat root tulajdonban hagyjuk, mert a systemd service is root-ként fut
+        if [ -d "$SERVER_DIR/server" ]; then
+          chmod -R 755 "$SERVER_DIR/server" || true
+          chown -R root:root "$SERVER_DIR/server" 2>/dev/null || true
+          echo "server/ könyvtár jogosultságok beállítva"
+        fi
         
         # Ellenőrizzük, hogy a bináris létezik-e (ez a legfontosabb, nem az exit code)
         if [ -f "$SERVER_DIR/server/RustDedicated" ]; then
