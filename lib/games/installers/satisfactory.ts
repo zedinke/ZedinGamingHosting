@@ -55,7 +55,11 @@ while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
   
   # Ellenőrizzük, hogy a telepítés sikeres volt-e
   # Satisfactory Windows bináris, ezért Win64 könyvtárban keresünk
-  if [ -f "$SERVER_DIR/FactoryGame/Binaries/Win64/FactoryServer.exe" ] || [ -d "$SERVER_DIR/FactoryGame" ]; then
+  # Ellenőrizzük, hogy van-e Windows bináris
+  if [ -f "$SERVER_DIR/FactoryGame/Binaries/Win64/FactoryServer.exe" ] || \
+     [ -f "$SERVER_DIR/FactoryGame/Binaries/Win64/FactoryGameServer.exe" ] || \
+     [ -f "$SERVER_DIR/FactoryGame/Binaries/Win64/FactoryServer-Win64-Shipping.exe" ] || \
+     [ -d "$SERVER_DIR/FactoryGame/Binaries/Win64" ]; then
     INSTALL_SUCCESS=true
     break
   fi
@@ -84,16 +88,20 @@ chown -R root:root "$SERVER_DIR/FactoryGame/Saved/Config/WindowsServer"
 
 # Bináris fájl ellenőrzése (Windows .exe fájl)
 BINARY_FOUND=false
+BINARY_PATH=""
 
-# Próbáljuk a Windows binárist
+# Próbáljuk a Windows binárist Win64 könyvtárban
 if [ -f "$SERVER_DIR/FactoryGame/Binaries/Win64/FactoryServer.exe" ]; then
-  echo "FactoryServer.exe található"
+  echo "FactoryServer.exe található: $SERVER_DIR/FactoryGame/Binaries/Win64/FactoryServer.exe"
+  BINARY_PATH="$SERVER_DIR/FactoryGame/Binaries/Win64/FactoryServer.exe"
   BINARY_FOUND=true
 elif [ -f "$SERVER_DIR/FactoryGame/Binaries/Win64/FactoryGameServer.exe" ]; then
-  echo "FactoryGameServer.exe található"
+  echo "FactoryGameServer.exe található: $SERVER_DIR/FactoryGame/Binaries/Win64/FactoryGameServer.exe"
+  BINARY_PATH="$SERVER_DIR/FactoryGame/Binaries/Win64/FactoryGameServer.exe"
   BINARY_FOUND=true
 elif [ -f "$SERVER_DIR/FactoryGame/Binaries/Win64/FactoryServer-Win64-Shipping.exe" ]; then
-  echo "FactoryServer-Win64-Shipping.exe található"
+  echo "FactoryServer-Win64-Shipping.exe található: $SERVER_DIR/FactoryGame/Binaries/Win64/FactoryServer-Win64-Shipping.exe"
+  BINARY_PATH="$SERVER_DIR/FactoryGame/Binaries/Win64/FactoryServer-Win64-Shipping.exe"
   BINARY_FOUND=true
 fi
 
@@ -101,15 +109,101 @@ fi
 if [ "$BINARY_FOUND" = "false" ]; then
   echo "FIGYELMEZTETÉS: Satisfactory Windows bináris nem található a várt helyen" >&2
   echo "Keresés a FactoryGame könyvtárban..." >&2
-  find "$SERVER_DIR/FactoryGame" -type f -name "*.exe" 2>/dev/null | head -10 || echo "Nem található .exe fájl" >&2
+  FOUND_EXE=$(find "$SERVER_DIR/FactoryGame" -type f -name "*Factory*Server*.exe" 2>/dev/null | head -1)
+  if [ -n "$FOUND_EXE" ]; then
+    echo "Talált .exe fájl: $FOUND_EXE" >&2
+    BINARY_PATH="$FOUND_EXE"
+    BINARY_FOUND=true
+  else
+    echo "Nem található .exe fájl" >&2
+    echo "Elérhető fájlok a Win64 könyvtárban:" >&2
+    ls -la "$SERVER_DIR/FactoryGame/Binaries/Win64/" 2>/dev/null || echo "Win64 könyvtár nem létezik" >&2
+  fi
 fi
 
 # Wine prefix inicializálása (első futtatáskor)
 if [ ! -d "$WINEPREFIX/drive_c" ]; then
   echo "Wine prefix inicializálása..."
+  export WINEPREFIX
+  export WINEARCH=win64
   wineboot --init 2>/dev/null || true
   # Várunk egy kicsit, hogy a wine prefix létrejöjjön
   sleep 3
+fi
+
+# Indító script létrehozása a Win64 könyvtárban
+if [ "$BINARY_FOUND" = "true" ] && [ -n "$BINARY_PATH" ]; then
+  BINARY_DIR=$(dirname "$BINARY_PATH")
+  BINARY_NAME=$(basename "$BINARY_PATH")
+  
+  echo "Indító script létrehozása: $BINARY_DIR/start-server.sh"
+  cat > "$BINARY_DIR/start-server.sh" << 'EOFSCRIPT'
+#!/bin/bash
+set +e
+
+# Könyvtár beállítása
+cd "$(dirname "$0")"
+BINARY_DIR="$(pwd)"
+
+# Wine prefix beállítása (szerver könyvtárban)
+SERVER_DIR="$(cd ../../.. && pwd)"
+WINEPREFIX="${WINEPREFIX:-$SERVER_DIR/wineprefix}"
+export WINEPREFIX
+export WINEARCH="${WINEARCH:-win64}"
+
+# Wine parancs meghatározása
+WINE_CMD="wine"
+if command -v wine64 &> /dev/null; then
+  WINE_CMD="wine64"
+fi
+
+# Bináris fájl meghatározása
+if [ -f "FactoryServer.exe" ]; then
+  BINARY="FactoryServer.exe"
+elif [ -f "FactoryGameServer.exe" ]; then
+  BINARY="FactoryGameServer.exe"
+elif [ -f "FactoryServer-Win64-Shipping.exe" ]; then
+  BINARY="FactoryServer-Win64-Shipping.exe"
+else
+  echo "HIBA: Nem található bináris fájl!" >&2
+  echo "Elérhető fájlok:" >&2
+  ls -la *.exe 2>/dev/null || echo "Nincs .exe fájl" >&2
+  exit 1
+fi
+
+# Argumentumok environment változókból (systemd service állítja be)
+PORT="${PORT:-15777}"
+QUERY_PORT="${QUERY_PORT:-7777}"
+BEACON_PORT="${BEACON_PORT:-15000}"
+
+echo "Satisfactory szerver indítása..."
+echo "Könyvtár: $BINARY_DIR"
+echo "Bináris: $BINARY"
+echo "Wine prefix: $WINEPREFIX"
+echo "Port: $PORT"
+echo "Query Port: $QUERY_PORT"
+echo "Beacon Port: $BEACON_PORT"
+
+# Szerver indítása xvfb-run-nal (virtuális display)
+if command -v xvfb-run &> /dev/null; then
+  echo "xvfb-run használata..."
+  xvfb-run -a $WINE_CMD "$BINARY" -log -unattended -multihome=0.0.0.0 -Port=$PORT -BeaconPort=$BEACON_PORT -ServerQueryPort=$QUERY_PORT
+else
+  echo "Wine használata (xvfb-run nélkül)..."
+  $WINE_CMD "$BINARY" -log -unattended -multihome=0.0.0.0 -Port=$PORT -BeaconPort=$BEACON_PORT -ServerQueryPort=$QUERY_PORT
+fi
+EOFSCRIPT
+  
+  chmod +x "$BINARY_DIR/start-server.sh"
+  echo "Indító script létrehozva: $BINARY_DIR/start-server.sh"
+  
+  # Ellenőrizzük, hogy a script létezik és futtatható
+  if [ -x "$BINARY_DIR/start-server.sh" ]; then
+    echo "Indító script sikeresen létrehozva és futtatható"
+  else
+    echo "HIBA: Az indító script nem futtatható!" >&2
+    exit 1
+  fi
 fi
 
 # Szerver felhasználó beállítása (ha létezik)

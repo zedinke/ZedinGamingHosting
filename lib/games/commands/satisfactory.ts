@@ -6,12 +6,15 @@
  * 
  * A bináris fájl: FactoryServer.exe (Windows bináris)
  * Elérési út: FactoryGame/Binaries/Win64/FactoryServer.exe
+ * 
+ * A telepítő script létrehoz egy start-server.sh fájlt a Win64 könyvtárban,
+ * amit a systemd service használ.
  */
 
 export const commands = {
-  // Wine-n keresztül indítjuk a Windows binárist
-  // xvfb-run szükséges, mert a Wine-nek szüksége van egy display-re
-  startCommand: 'cd FactoryGame/Binaries/Win64 && xvfb-run -a wine FactoryServer.exe -log -unattended -multihome=0.0.0.0 -Port={port} -BeaconPort={beaconPort} -ServerQueryPort={queryPort}',
+  // A telepítő script létrehozza a start-server.sh fájlt a Win64 könyvtárban
+  // Ez a script kezeli a Wine-t és az xvfb-t
+  startCommand: 'cd FactoryGame/Binaries/Win64 && ./start-server.sh',
   stopCommand: 'quit', // Systemd automatikusan kezeli a leállítást, de a stopCommand mező kötelező
 };
 
