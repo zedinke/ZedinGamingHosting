@@ -94,14 +94,55 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
       SERVER_DIR="/opt/servers/{serverId}"
       mkdir -p "$SERVER_DIR"
       cd "$SERVER_DIR"
+      
       # Rust szerver telepítése SteamCMD-vel
       # A fájlok a server/ alkönyvtárba kerülnek
-      /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 258550 validate +quit
+      echo "Rust szerver telepítése kezdődik..."
+      echo "Szerver könyvtár: $SERVER_DIR"
+      
+      # SteamCMD futtatása - több próbálkozás, ha szükséges
+      MAX_RETRIES=3
+      RETRY_COUNT=0
+      INSTALL_SUCCESS=false
+      
+      while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
+        
+        if /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 258550 validate +quit; then
+          INSTALL_SUCCESS=true
+          break
+        else
+          EXIT_CODE=$?
+          echo "SteamCMD hibával kilépett (exit code: $EXIT_CODE)" >&2
+          RETRY_COUNT=$((RETRY_COUNT + 1))
+          
+          if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+            echo "Várakozás 10 másodpercet az újrapróbálkozás előtt..."
+            sleep 10
+          fi
+        fi
+      done
+      
+      if [ "$INSTALL_SUCCESS" != "true" ]; then
+        echo "HIBA: SteamCMD nem sikerült $MAX_RETRIES próbálkozás után" >&2
+        exit 1
+      fi
+      
       # Ellenőrizzük, hogy a bináris létezik-e
       if [ ! -f "$SERVER_DIR/server/RustDedicated" ]; then
         echo "HIBA: RustDedicated bináris nem található a $SERVER_DIR/server/ könyvtárban" >&2
+        echo "Könyvtár tartalma:" >&2
+        ls -la "$SERVER_DIR" >&2 || true
+        if [ -d "$SERVER_DIR/server" ]; then
+          echo "server/ könyvtár tartalma:" >&2
+          ls -la "$SERVER_DIR/server" >&2 || true
+        fi
         exit 1
       fi
+      
+      # Végrehajtási jogosultság beállítása
+      chmod +x "$SERVER_DIR/server/RustDedicated" || true
+      
       echo "Rust szerver sikeresen telepítve: $SERVER_DIR/server/RustDedicated"
     `,
     configPath: '/opt/servers/{serverId}/server/server.cfg',
