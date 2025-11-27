@@ -1132,6 +1132,14 @@ export async function createSystemdServiceForServer(
       .replace(/{beaconPort}/g, beaconPort.toString())
       .replace(/{map}/g, config.map || 'TheIsland');
     
+    // Valheim specifikus placeholder-ek
+    if (gameType === 'VALHEIM') {
+      // Public flag: 1 = nyilvános, 0 = privát
+      const isPublic = config.public !== undefined ? (config.public ? '1' : '0') : '1';
+      startCommand = startCommand
+        .replace(/{public}/g, isPublic);
+    }
+    
     // The Forest specifikus placeholder-ek
     if (gameType === 'THE_FOREST') {
       // IP cím meghatározása (machine IP vagy 0.0.0.0, ha nincs)
