@@ -287,12 +287,23 @@ async function executeStartTask(task: any): Promise<any> {
   if (task.agent && task.agent.machine) {
     const { executeSSHCommand } = await import('./ssh-client');
     const { createSystemdServiceForServer } = await import('./game-server-installer');
+    const { ALL_GAME_SERVER_CONFIGS } = await import('./game-server-configs');
     const machine = task.agent.machine;
     
     // Systemd service újragenerálása a frissített startCommand-tal
     try {
+      const gameConfig = ALL_GAME_SERVER_CONFIGS[server.gameType as keyof typeof ALL_GAME_SERVER_CONFIGS];
+      if (!gameConfig) {
+        throw new Error(`Game config not found for type: ${server.gameType}`);
+      }
+      
+      const config = typeof server.config === 'string' ? JSON.parse(server.config) : server.config;
+      
       await createSystemdServiceForServer(
-        server,
+        server.id,
+        server.gameType as any,
+        gameConfig,
+        config,
         machine,
         task.agent.paths
       );
