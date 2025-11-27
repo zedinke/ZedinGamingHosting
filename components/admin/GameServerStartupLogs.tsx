@@ -57,18 +57,18 @@ export function GameServerStartupLogs({
   const getLogColor = (log: string) => {
     const lowerLog = log.toLowerCase();
     if (lowerLog.includes('error') || lowerLog.includes('failed') || lowerLog.includes('fatal')) {
-      return 'text-red-600 font-semibold';
+      return 'text-red-400 font-semibold';
     }
     if (lowerLog.includes('warning') || lowerLog.includes('warn')) {
-      return 'text-yellow-600';
+      return 'text-yellow-400';
     }
     if (lowerLog.includes('active') || lowerLog.includes('started') || lowerLog.includes('success')) {
-      return 'text-green-600';
+      return 'text-green-400';
     }
     if (lowerLog.includes('inactive') || lowerLog.includes('stopped') || lowerLog.includes('failed')) {
-      return 'text-red-600';
+      return 'text-red-400';
     }
-    return 'text-gray-800';
+    return 'text-white';
   };
 
   const getServiceStatusColor = () => {
@@ -121,9 +121,9 @@ export function GameServerStartupLogs({
         </div>
       </div>
 
-      <div className="bg-gray-900 text-gray-100 p-4 rounded-lg font-mono text-sm h-96 overflow-y-auto">
+      <div className="bg-gray-900 text-white p-4 rounded-lg font-mono text-sm h-96 overflow-y-auto">
         {logs.length === 0 ? (
-          <div className="text-gray-500">Nincs log</div>
+          <div className="text-gray-300">Nincs log</div>
         ) : (
           logs.map((log, index) => (
             <div

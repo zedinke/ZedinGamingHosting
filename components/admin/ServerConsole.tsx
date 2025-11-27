@@ -80,13 +80,13 @@ export function ServerConsole({ serverId, locale }: ServerConsoleProps) {
   const getLevelColor = (level: string) => {
     switch (level.toUpperCase()) {
       case 'ERROR':
-        return 'text-red-600';
+        return 'text-red-400';
       case 'WARN':
-        return 'text-yellow-600';
+        return 'text-yellow-400';
       case 'INFO':
-        return 'text-blue-600';
+        return 'text-blue-400';
       default:
-        return 'text-gray-600';
+        return 'text-gray-300';
     }
   };
 
@@ -114,17 +114,17 @@ export function ServerConsole({ serverId, locale }: ServerConsoleProps) {
       {/* Konzol logok */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h3 className="text-lg font-bold mb-4">Konzol Logok</h3>
-        <div className="bg-gray-900 text-green-400 font-mono text-sm p-4 rounded h-96 overflow-y-auto">
+        <div className="bg-gray-900 text-white font-mono text-sm p-4 rounded h-96 overflow-y-auto">
           {logs.length === 0 ? (
-            <div className="text-gray-500">Nincs log bejegyzés</div>
+            <div className="text-gray-300">Nincs log bejegyzés</div>
           ) : (
             logs.map((log, index) => (
               <div key={index} className="mb-1">
-                <span className="text-gray-500">
+                <span className="text-gray-400">
                   [{new Date(log.timestamp).toLocaleTimeString('hu-HU')}]
                 </span>{' '}
                 <span className={getLevelColor(log.level)}>[{log.level}]</span>{' '}
-                <span>{log.message}</span>
+                <span className="text-white">{log.message}</span>
               </div>
             ))
           )}

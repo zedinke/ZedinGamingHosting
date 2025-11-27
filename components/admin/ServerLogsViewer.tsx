@@ -51,10 +51,10 @@ export function ServerLogsViewer({
   };
 
   const getLogColor = (log: string) => {
-    if (log.includes('[ERROR]')) return 'text-red-600';
-    if (log.includes('[WARN]')) return 'text-yellow-600';
-    if (log.includes('[INFO]')) return 'text-blue-600';
-    return 'text-gray-800';
+    if (log.includes('[ERROR]')) return 'text-red-400';
+    if (log.includes('[WARN]')) return 'text-yellow-400';
+    if (log.includes('[INFO]')) return 'text-blue-400';
+    return 'text-white';
   };
 
   return (
@@ -92,9 +92,9 @@ export function ServerLogsViewer({
         </div>
       </div>
 
-      <div className="bg-gray-900 text-gray-100 p-4 rounded-lg font-mono text-sm h-96 overflow-y-auto">
+      <div className="bg-gray-900 text-white p-4 rounded-lg font-mono text-sm h-96 overflow-y-auto">
         {logs.length === 0 ? (
-          <div className="text-gray-500">Nincs log</div>
+          <div className="text-gray-300">Nincs log</div>
         ) : (
           logs.map((log, index) => (
             <div
