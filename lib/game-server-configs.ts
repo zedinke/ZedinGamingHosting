@@ -793,6 +793,12 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
       
       cd "$SERVER_DIR"
       
+      # Töröljük a korábbi telepítési maradványokat, hogy kényszerítsük a teljes újratelepítést
+      if [ -d "$SERVER_DIR/steamapps" ]; then
+        echo "Korábbi telepítési maradványok törlése..."
+        rm -rf "$SERVER_DIR/steamapps" 2>/dev/null || true
+      fi
+      
       STEAM_HOME="/tmp/steamcmd-home-$$"
       mkdir -p "$STEAM_HOME"
       chown -R root:root "$STEAM_HOME"
@@ -811,8 +817,10 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
         
         echo "Installing The Forest dedicated server..."
-        # Eltávolítjuk a validate opciót és hozzáadunk app_set_config-ot Linux platformhoz
-        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_set_config 556450 platform linux +app_update 556450 +quit
+        # A hivatalos dokumentáció szerint a The Forest dedikált szerver telepítése:
+        # +force_install_dir +login anonymous +app_update 556450 validate +quit
+        # A validate opció biztosítja, hogy a fájlok teljesen letöltődjenek
+        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 556450 validate +quit
         EXIT_CODE=$?
         
         # Várunk egy kicsit, hogy a fájlok biztosan leírásra kerüljenek
