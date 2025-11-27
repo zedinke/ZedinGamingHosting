@@ -1297,6 +1297,11 @@ if echo "${escapedStartCommand}" | grep -q "TheForestDedicatedServer"; then
   mkdir -p ./savefilesserver
   chmod 755 ./savefilesserver
   echo "Save könyvtár: $(pwd)/savefilesserver"
+  
+  # Wine hálózati beállítások javítása (hálózati hiba elkerülése)
+  echo "Wine hálózati beállítások beállítása..."
+  export WINE_NETWORK_DRIVER=winetap
+  # Alternatív: export WINEPREFIX="$HOME/.wine" (ha szükséges)
 fi
 
 # Szerver futtatása
