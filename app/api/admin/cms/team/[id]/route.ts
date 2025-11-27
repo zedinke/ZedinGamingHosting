@@ -55,11 +55,12 @@ export async function PUT(
       return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 403 });
     }
 
+    const { id } = await params;
     const body = await request.json();
     const data = teamMemberSchema.parse(body);
 
     const teamMember = await prisma.teamMember.update({
-      where: { id: id },
+      where: { id },
       data: {
         name: data.name,
         role: data.role,
@@ -98,8 +99,9 @@ export async function DELETE(
       return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 403 });
     }
 
+    const { id } = await params;
     await prisma.teamMember.delete({
-      where: { id: id },
+      where: { id },
     });
 
     return NextResponse.json({ success: true });
