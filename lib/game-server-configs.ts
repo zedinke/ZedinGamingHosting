@@ -91,14 +91,21 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
     installScript: `
       #!/bin/bash
       set -e
-      cd /opt/servers/{serverId}
-      if [ ! -f steamcmd.sh ]; then
-        wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf -
+      SERVER_DIR="/opt/servers/{serverId}"
+      mkdir -p "$SERVER_DIR"
+      cd "$SERVER_DIR"
+      # Rust szerver telepítése SteamCMD-vel
+      # A fájlok a server/ alkönyvtárba kerülnek
+      /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 258550 validate +quit
+      # Ellenőrizzük, hogy a bináris létezik-e
+      if [ ! -f "$SERVER_DIR/server/RustDedicated" ]; then
+        echo "HIBA: RustDedicated bináris nem található a $SERVER_DIR/server/ könyvtárban" >&2
+        exit 1
       fi
-      ./steamcmd.sh +force_install_dir /opt/servers/{serverId} +login anonymous +app_update 258550 validate +quit
+      echo "Rust szerver sikeresen telepítve: $SERVER_DIR/server/RustDedicated"
     `,
     configPath: '/opt/servers/{serverId}/server/server.cfg',
-    startCommand: './RustDedicated -batchmode -server.port {port} -server.queryport {queryPort} -server.maxplayers {maxPlayers} -server.hostname "{name}"',
+    startCommand: './server/RustDedicated -batchmode -server.port {port} -server.queryport {queryPort} -server.maxplayers {maxPlayers} -server.hostname "{name}"',
     stopCommand: 'quit',
     port: 28015,
     queryPort: 28016,
