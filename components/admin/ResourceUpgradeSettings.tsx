@@ -89,25 +89,33 @@ export function ResourceUpgradeSettings() {
   };
 
   if (loading) {
-    return <div className="text-center py-8 text-gray-500">Betöltés...</div>;
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="text-center py-8 text-gray-700 font-medium">Betöltés...</div>
+      </div>
+    );
   }
 
   if (!settings) {
-    return <div className="text-center py-8 text-gray-500">Betöltés...</div>;
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="text-center py-8 text-gray-700 font-medium">Betöltés...</div>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h2 className="text-xl font-bold mb-4">Erőforrás Bővítési Árak</h2>
-        <p className="text-sm text-gray-600 mb-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Erőforrás Bővítési Árak</h2>
+        <p className="text-sm text-gray-700 mb-6 font-medium">
           Itt állíthatod be, hogy mennyibe kerüljön a vCPU és RAM bővítés rendeléskor.
           Ezek az árak havonta vonatkoznak a bővített erőforrásokra.
         </p>
         
         <div className="grid md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium mb-2">
+            <label className="block text-sm font-semibold text-gray-900 mb-2">
               Ár vCPU számonként (havonta) *
             </label>
             <div className="flex items-center gap-2">
@@ -115,22 +123,22 @@ export function ResourceUpgradeSettings() {
                 type="number"
                 value={settings.pricePerVCpu}
                 onChange={(e) => handleChange('pricePerVCpu', parseFloat(e.target.value) || 0)}
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white font-medium"
                 min="0"
                 step="0.01"
                 required
               />
-              <span className="text-sm font-medium text-gray-700 whitespace-nowrap">
+              <span className="text-sm font-semibold text-gray-900 whitespace-nowrap">
                 {settings.currency}
               </span>
             </div>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-600 mt-1 font-medium">
               Pl. ha 1000 HUF, akkor 1 vCPU bővítés 1000 HUF/hó
             </p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">
+            <label className="block text-sm font-semibold text-gray-900 mb-2">
               Ár RAM GB-onként (havonta) *
             </label>
             <div className="flex items-center gap-2">
@@ -138,26 +146,26 @@ export function ResourceUpgradeSettings() {
                 type="number"
                 value={settings.pricePerRamGB}
                 onChange={(e) => handleChange('pricePerRamGB', parseFloat(e.target.value) || 0)}
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white font-medium"
                 min="0"
                 step="0.01"
                 required
               />
-              <span className="text-sm font-medium text-gray-700 whitespace-nowrap">
+              <span className="text-sm font-semibold text-gray-900 whitespace-nowrap">
                 {settings.currency}
               </span>
             </div>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-600 mt-1 font-medium">
               Pl. ha 500 HUF, akkor 1 GB RAM bővítés 500 HUF/hó
             </p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Pénznem *</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Pénznem *</label>
             <select
               value={settings.currency}
               onChange={(e) => handleChange('currency', e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white font-medium"
             >
               <option value="HUF">HUF - Magyar Forint</option>
               <option value="EUR">EUR - Euro</option>
@@ -166,9 +174,9 @@ export function ResourceUpgradeSettings() {
           </div>
         </div>
 
-        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-blue-800">
-            <strong>Példa:</strong> Ha a vCPU ára 1000 HUF és a RAM ára 500 HUF/GB, akkor:
+        <div className="mt-6 p-4 bg-blue-50 border-2 border-blue-300 rounded-lg">
+          <p className="text-sm text-blue-900 font-semibold">
+            <strong className="font-bold">Példa:</strong> Ha a vCPU ára 1000 HUF és a RAM ára 500 HUF/GB, akkor:
             <br />
             • 2 vCPU bővítés = 2 × 1000 = 2000 HUF/hó
             <br />
