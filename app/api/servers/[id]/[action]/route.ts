@@ -3,10 +3,11 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { ServerStatus } from '@prisma/client';
+import { logger } from '@/lib/logger';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string; action: string } }
+  { params }: { params: Promise<{ id: string; action: string }> | { id: string; action: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -18,7 +19,9 @@ export async function POST(
       );
     }
 
-    const { id, action } = params;
+    // Resolve params if it's a Promise (Next.js 15+)
+    const resolvedParams = params instanceof Promise ? await params : params;
+    const { id, action } = resolvedParams;
 
     // Szerver keresése
     const server = await prisma.server.findUnique({
@@ -82,12 +85,57 @@ export async function POST(
     }
 
     // Státusz frissítése
-    await prisma.server.update({
+    const updatedServer = await prisma.server.update({
       where: { id },
       data: { status: newStatus },
     });
 
-    // TODO: Valós implementációban itt kellene a tényleges szerver műveletet végrehajtani
+    // Task létrehozása a művelethez
+    let taskType: 'START' | 'STOP' | 'RESTART';
+    switch (action) {
+      case 'start':
+        taskType = 'START';
+        break;
+      case 'stop':
+        taskType = 'STOP';
+        break;
+      case 'restart':
+        taskType = 'RESTART';
+        break;
+      default:
+        taskType = 'START';
+    }
+
+    if (server.agentId) {
+      const task = await prisma.task.create({
+        data: {
+          agentId: server.agentId,
+          serverId: server.id,
+          type: taskType,
+          status: 'PENDING',
+          command: {
+            action,
+            serverId: server.id,
+          },
+        },
+      });
+
+      // Task végrehajtása háttérben
+      const { executeTask } = await import('@/lib/task-executor');
+      executeTask(task.id).catch((error) => {
+        logger.error(`Task ${task.id} végrehajtási hiba`, error as Error, {
+          taskId: task.id,
+          serverId: server.id,
+        });
+      });
+    }
+
+    logger.info('Server action completed', {
+      serverId: server.id,
+      action,
+      newStatus,
+      userId: (session.user as any).id,
+    });
 
     return NextResponse.json({
       success: true,
@@ -95,7 +143,10 @@ export async function POST(
       message: `Szerver ${action} művelet elindítva`,
     });
   } catch (error) {
-    console.error('Server action error:', error);
+    logger.error('Server action error', error as Error, {
+      serverId: params instanceof Promise ? 'unknown' : params.id,
+      action: params instanceof Promise ? 'unknown' : params.action,
+    });
     return NextResponse.json(
       { error: 'Hiba történt a művelet végrehajtása során' },
       { status: 500 }

@@ -12,7 +12,7 @@ import { logger } from '@/lib/logger';
 export const POST = withPerformanceMonitoring(
   async (
     request: NextRequest,
-    { params }: { params: { id: string; action: string } }
+    { params }: { params: Promise<{ id: string; action: string }> | { id: string; action: string } }
   ) => {
     try {
       const session = await getServerSession(authOptions);
@@ -21,13 +21,15 @@ export const POST = withPerformanceMonitoring(
         throw createForbiddenError('Nincs jogosultság');
       }
 
+      // Resolve params if it's a Promise (Next.js 15+)
+      const resolvedParams = params instanceof Promise ? await params : params;
+      const { id, action } = resolvedParams;
+
       logger.info('Server action request', {
-        serverId: params.id,
-        action: params.action,
+        serverId: id,
+        action: action,
         adminId: (session.user as any).id,
       });
-
-    const { id, action } = params;
 
     // Szerver keresése
     const server = await prisma.server.findUnique({
@@ -167,9 +169,10 @@ export const POST = withPerformanceMonitoring(
         message: `Szerver ${action} művelet elindítva`,
       });
     } catch (error) {
+      const resolvedParams = params instanceof Promise ? await params : params;
       logger.error('Server action error', error as Error, {
-        serverId: params.id,
-        action: params.action,
+        serverId: resolvedParams.id,
+        action: resolvedParams.action,
       });
       return handleApiError(error);
     }
