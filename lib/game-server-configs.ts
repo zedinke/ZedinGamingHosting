@@ -811,15 +811,7 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
         
         echo "Installing The Forest dedicated server..."
-      
-      MAX_RETRIES=3
-      RETRY_COUNT=0
-      INSTALL_SUCCESS=false
-      
-      while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-        echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
-        
-          HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 556450 validate +quit
+        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 556450 validate +quit
         EXIT_CODE=$?
         
         # Várunk egy kicsit, hogy a fájlok biztosan leírásra kerüljenek
