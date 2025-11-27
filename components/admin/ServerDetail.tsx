@@ -594,8 +594,8 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
             initialConfig={server.configuration}
           />
         )}
-        {activeTab === 'logs' && <ServerLogsViewer serverId={server.id} autoRefresh={true} />}
-        {activeTab === 'startup-logs' && <GameServerStartupLogs serverId={server.id} autoRefresh={true} />}
+        {activeTab === 'logs' && <ServerLogsViewer serverId={server.id} />}
+        {activeTab === 'startup-logs' && <GameServerStartupLogs serverId={server.id} />}
         {activeTab === 'limits' && <ResourceLimitsEditor serverId={server.id} />}
       </div>
 

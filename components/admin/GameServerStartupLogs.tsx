@@ -20,19 +20,11 @@ export function GameServerStartupLogs({
   const [serviceActive, setServiceActive] = useState<boolean>(false);
   const logsEndRef = useRef<HTMLDivElement>(null);
 
+  // Csak első betöltéskor és filter/lines változásakor töltjük be
   useEffect(() => {
     loadLogs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter, lines]);
-
-  useEffect(() => {
-    if (autoRefresh) {
-      const interval = setInterval(() => {
-        loadLogs();
-      }, 5000); // 5 másodpercenként frissítés
-
-      return () => clearInterval(interval);
-    }
-  }, [autoRefresh, filter, lines]);
 
   useEffect(() => {
     // Automatikus görgetés az új logokhoz
@@ -149,9 +141,7 @@ export function GameServerStartupLogs({
         <p className="text-sm text-blue-800">
           <strong>Info:</strong> Ezek a logok a systemd service indítási és futási logjait mutatják. 
           Itt láthatók az indítási hibák, a service státusz változások és a szerver indításakor fellépő problémák.
-          {autoRefresh && (
-            <span className="block mt-1">Automatikus frissítés aktív (5 másodpercenként)</span>
-          )}
+          A logok frissítéséhez használd a "Frissítés" gombot.
         </p>
       </div>
     </div>

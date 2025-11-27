@@ -21,10 +21,10 @@ export function ServerConsole({ serverId, locale }: ServerConsoleProps) {
   const [autoScroll, setAutoScroll] = useState(true);
   const logsEndRef = useRef<HTMLDivElement>(null);
 
+  // Csak első betöltéskor töltjük be az adatokat
   useEffect(() => {
     loadLogs();
-    const interval = setInterval(loadLogs, 5000); // 5 másodpercenként frissítés
-    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

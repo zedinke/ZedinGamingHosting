@@ -18,19 +18,11 @@ export function ServerLogsViewer({
   const [lines, setLines] = useState(100);
   const logsEndRef = useRef<HTMLDivElement>(null);
 
+  // Csak első betöltéskor és logType/lines változásakor töltjük be
   useEffect(() => {
     loadLogs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [logType, lines]);
-
-  useEffect(() => {
-    if (autoRefresh) {
-      const interval = setInterval(() => {
-        loadLogs();
-      }, 5000); // 5 másodpercenként frissítés
-
-      return () => clearInterval(interval);
-    }
-  }, [autoRefresh]);
 
   useEffect(() => {
     // Automatikus görgetés az új logokhoz
@@ -115,12 +107,6 @@ export function ServerLogsViewer({
         )}
         <div ref={logsEndRef} />
       </div>
-
-      {autoRefresh && (
-        <div className="mt-2 text-xs text-gray-600">
-          Automatikus frissítés aktív (5 másodpercenként)
-        </div>
-      )}
     </div>
   );
 }
