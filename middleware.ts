@@ -90,7 +90,7 @@ export async function middleware(request: NextRequest) {
               req: request, 
               secret: process.env.NEXTAUTH_SECRET 
             });
-            isAdmin = token && (token.role === UserRole.ADMIN || token.role === 'ADMIN');
+            isAdmin = !!(token && token.role === UserRole.ADMIN);
           } catch (tokenError) {
             // Token hiba esetén nem admin
             isAdmin = false;

@@ -27,7 +27,7 @@ export default async function GamesPage({
         {/* Games Section */}
         <GamesSection locale={locale} />
       </main>
-      <Footer locale={locale} />
+      <Footer />
     </div>
   );
 }

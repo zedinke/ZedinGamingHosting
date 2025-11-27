@@ -37,7 +37,7 @@ export const POST = withPerformanceMonitoring(
     });
 
       if (!server) {
-        throw createNotFoundError('Szerver', params.id);
+        throw createNotFoundError('Szerver', id);
       }
 
     let newStatus: ServerStatus;

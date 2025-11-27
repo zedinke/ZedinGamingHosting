@@ -32,8 +32,8 @@ export default async function MaintenancePage({
           <div className="bg-gradient-to-r from-blue-100 to-purple-100 rounded-xl p-6 mb-8 border-2 border-blue-200">
             <div className="flex items-center justify-center space-x-2 mb-4">
               <div className="w-4 h-4 bg-primary-600 rounded-full animate-pulse"></div>
-              <div className="w-4 h-4 bg-primary-600 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-              <div className="w-4 h-4 bg-primary-600 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+              <div className="w-4 h-4 bg-primary-600 rounded-full animate-pulse [animation-delay:0.2s]"></div>
+              <div className="w-4 h-4 bg-primary-600 rounded-full animate-pulse [animation-delay:0.4s]"></div>
             </div>
             <p className="text-center text-gray-700 font-medium">
               Várjunk egy pillanatot, hamarosan visszatérünk...
@@ -44,7 +44,9 @@ export default async function MaintenancePage({
             <h2 className="text-2xl font-bold text-center mb-4 text-gray-800">
               Játsz Super Mario-t addig, amíg vársz! 🎮
             </h2>
-            <MarioGame className="flex justify-center" />
+            <div className="flex justify-center">
+              <MarioGame />
+            </div>
           </div>
 
           <div className="mt-8 text-center">
@@ -56,22 +58,6 @@ export default async function MaintenancePage({
           </div>
         </div>
       </div>
-      
-      <style jsx>{`
-        @keyframes fade-in {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-fade-in {
-          animation: fade-in 0.6s ease-out;
-        }
-      `}</style>
     </div>
   );
 }

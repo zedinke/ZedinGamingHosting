@@ -17,32 +17,69 @@ export const POST = withPerformanceMonitoring(
       }
 
       const body = await request.json();
-      const { name, gameType, planId, maxPlayers } = body;
+      const { name, gameType, planId, maxPlayers, gamePackageId } = body;
 
       // Validáció
-      if (!name || !gameType || !planId || !maxPlayers) {
-        throw createValidationError('form', 'Minden mező kitöltése kötelező');
+      if (!name || !gameType) {
+        throw createValidationError('form', 'Név és játék típus megadása kötelező');
+      }
+
+      // Game package vagy pricing plan ellenőrzése
+      let gamePackage = null;
+      let plan = null;
+      let finalMaxPlayers = maxPlayers;
+      let finalPrice = 0;
+      let finalCurrency = 'HUF';
+
+      if (gamePackageId) {
+        // Game package használata
+        gamePackage = await prisma.gamePackage.findUnique({
+          where: { id: gamePackageId },
+        });
+
+        if (!gamePackage || !gamePackage.isActive) {
+          throw new AppError(
+            ErrorCodes.VALIDATION_ERROR,
+            'Érvénytelen vagy inaktív játék csomag',
+            400
+          );
+        }
+
+        finalMaxPlayers = gamePackage.slot;
+        finalPrice = gamePackage.discountPrice || gamePackage.price;
+        finalCurrency = gamePackage.currency;
+      } else if (planId) {
+        // Pricing plan használata (régi módszer)
+        plan = await prisma.pricingPlan.findUnique({
+          where: { id: planId },
+        });
+
+        if (!plan || !plan.isActive) {
+          throw new AppError(
+            ErrorCodes.VALIDATION_ERROR,
+            'Érvénytelen vagy inaktív csomag',
+            400
+          );
+        }
+
+        if (!maxPlayers) {
+          throw createValidationError('form', 'Max játékosok száma megadása kötelező');
+        }
+
+        finalMaxPlayers = parseInt(maxPlayers);
+        finalPrice = plan.price;
+        finalCurrency = plan.currency;
+      } else {
+        throw createValidationError('form', 'Csomag vagy játék csomag megadása kötelező');
       }
 
       logger.info('Server order request', {
         userId: (session.user as any).id,
         gameType,
         planId,
-        maxPlayers,
+        gamePackageId,
+        maxPlayers: finalMaxPlayers,
       });
-
-    // Csomag ellenőrzése
-    const plan = await prisma.pricingPlan.findUnique({
-      where: { id: planId },
-    });
-
-      if (!plan || !plan.isActive) {
-        throw new AppError(
-          ErrorCodes.VALIDATION_ERROR,
-          'Érvénytelen vagy inaktív csomag',
-          400
-        );
-      }
 
     // Port generálása
     const { generateServerPort } = await import('@/lib/server-provisioning');
@@ -54,9 +91,16 @@ export const POST = withPerformanceMonitoring(
         userId: (session.user as any).id,
         name,
         gameType: gameType as GameType,
-        maxPlayers: parseInt(maxPlayers),
+        maxPlayers: finalMaxPlayers,
         status: 'OFFLINE',
         port,
+        // Game package specifikációk mentése a konfigurációba
+        configuration: gamePackage ? {
+          slot: gamePackage.slot,
+          cpuCores: gamePackage.cpuCores,
+          ram: gamePackage.ram,
+          gamePackageId: gamePackage.id,
+        } : undefined,
       },
     });
 
@@ -64,8 +108,8 @@ export const POST = withPerformanceMonitoring(
     const { provisionServer } = await import('@/lib/server-provisioning');
     provisionServer(server.id, {
       gameType: gameType as GameType,
-      maxPlayers: parseInt(maxPlayers),
-      planId,
+      maxPlayers: finalMaxPlayers,
+      planId: planId || undefined,
       }).catch((error) => {
         logger.error('Server provisioning error', error as Error, {
           serverId: server.id,
@@ -97,8 +141,8 @@ export const POST = withPerformanceMonitoring(
       data: {
         userId: (session.user as any).id,
         subscriptionId: subscription.id,
-        amount: plan.price,
-        currency: plan.currency,
+        amount: finalPrice,
+        currency: finalCurrency,
         status: 'PENDING',
         invoiceNumber,
         dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 nap
