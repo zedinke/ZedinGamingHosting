@@ -95,18 +95,20 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
       SERVER_DIR="/opt/servers/{serverId}"
       
       # Először biztosítjuk, hogy az /opt/servers/ könyvtár létezik és megfelelő jogosultságokkal
+      # Használunk sudo-t, ha nem root-ként futunk
       mkdir -p /opt/servers
-      chmod 755 /opt/servers || true
-      chown root:root /opt/servers 2>/dev/null || true
+      chmod 755 /opt/servers || sudo chmod 755 /opt/servers || true
+      chown root:root /opt/servers 2>/dev/null || sudo chown root:root /opt/servers 2>/dev/null || true
       
       # Könyvtár létrehozása megfelelő jogosultságokkal
       mkdir -p "$SERVER_DIR"
       # Előre létrehozzuk a server/ alkönyvtárat is, mert a SteamCMD nem tudja létrehozni
       mkdir -p "$SERVER_DIR/server"
       # Biztosítjuk, hogy a root írni tudjon (SteamCMD root-ként fut)
-      chmod 755 "$SERVER_DIR" || true
-      chmod 755 "$SERVER_DIR/server" || true
-      chown -R root:root "$SERVER_DIR" 2>/dev/null || true
+      # Használunk sudo-t, ha nem root-ként futunk
+      chmod 755 "$SERVER_DIR" || sudo chmod 755 "$SERVER_DIR" || true
+      chmod 755 "$SERVER_DIR/server" || sudo chmod 755 "$SERVER_DIR/server" || true
+      chown -R root:root "$SERVER_DIR" 2>/dev/null || sudo chown -R root:root "$SERVER_DIR" 2>/dev/null || true
       
       # Ellenőrizzük a jogosultságokat
       echo "Szülőkönyvtár (/opt/servers) jogosultságok:"
@@ -136,8 +138,9 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         # Jogosultságok ellenőrzése és beállítása SteamCMD előtt
         # A SteamCMD root-ként fut, ezért a könyvtárat root tulajdonba tesszük
         # Ez biztosítja, hogy a SteamCMD írni tudjon
-        chmod 755 "$SERVER_DIR" || true
-        chown -R root:root "$SERVER_DIR" 2>/dev/null || true
+        # Használunk sudo-t, ha nem root-ként futunk
+        chmod 755 "$SERVER_DIR" || sudo chmod 755 "$SERVER_DIR" || true
+        chown -R root:root "$SERVER_DIR" 2>/dev/null || sudo chown -R root:root "$SERVER_DIR" 2>/dev/null || true
         
         # Ellenőrizzük a jogosultságokat
         echo "Könyvtár jogosultságok SteamCMD előtt:"
@@ -150,9 +153,10 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         
         # Jogosultságok beállítása a letöltött fájlokra
         # A fájlokat root tulajdonban hagyjuk, mert a systemd service is root-ként fut
+        # Használunk sudo-t, ha nem root-ként futunk
         if [ -d "$SERVER_DIR/server" ]; then
-          chmod -R 755 "$SERVER_DIR/server" || true
-          chown -R root:root "$SERVER_DIR/server" 2>/dev/null || true
+          chmod -R 755 "$SERVER_DIR/server" || sudo chmod -R 755 "$SERVER_DIR/server" || true
+          chown -R root:root "$SERVER_DIR/server" 2>/dev/null || sudo chown -R root:root "$SERVER_DIR/server" 2>/dev/null || true
           echo "server/ könyvtár jogosultságok beállítva"
         fi
         

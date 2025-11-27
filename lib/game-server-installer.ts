@@ -198,7 +198,7 @@ export async function installGameServer(
         user: machine.sshUser,
         keyPath: machine.sshKeyPath || undefined,
       },
-      `mkdir -p /opt/servers && chmod 755 /opt/servers && chown root:root /opt/servers 2>/dev/null || true && mkdir -p ${serverPath} && chmod 755 ${serverPath} && chown -R root:root ${serverPath} 2>/dev/null || chmod 755 ${serverPath}`
+      `mkdir -p /opt/servers && (chmod 755 /opt/servers || sudo chmod 755 /opt/servers || true) && (chown root:root /opt/servers 2>/dev/null || sudo chown root:root /opt/servers 2>/dev/null || true) && mkdir -p ${serverPath} && (chmod 755 ${serverPath} || sudo chmod 755 ${serverPath} || true) && (chown -R root:root ${serverPath} 2>/dev/null || sudo chown -R root:root ${serverPath} 2>/dev/null || true)`
     );
     
     if (writeProgress) {
