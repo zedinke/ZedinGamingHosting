@@ -297,19 +297,80 @@ async function executeStartTask(task: any): Promise<any> {
         throw new Error(`Game config not found for type: ${server.gameType}`);
       }
       
-      const config = typeof server.config === 'string' ? JSON.parse(server.config) : server.config;
+      // Config objektum előkészítése - ha nincs, akkor a szerver adatbázisból származó adatokat használjuk
+      let config: any = {};
+      
+      // Próbáljuk meg kinyerni a config-ot a server.configuration-ból
+      if (server.configuration) {
+        try {
+          const parsedConfig = typeof server.configuration === 'string' 
+            ? JSON.parse(server.configuration) 
+            : server.configuration;
+          
+          if (parsedConfig && typeof parsedConfig === 'object' && parsedConfig !== null) {
+            config = { ...parsedConfig };
+          }
+        } catch (parseError) {
+          console.warn('Config parse hiba:', parseError);
+          // Folytatjuk az alapértelmezett config-gal
+        }
+      }
+      
+      // Biztosítjuk, hogy a szükséges mezők létezzenek - a szerver adatbázisból származó adatokat használjuk
+      const finalConfig = {
+        port: config.port || server.port || 25565,
+        maxPlayers: config.maxPlayers || server.maxPlayers || 10,
+        name: config.name || server.name || `Server-${server.id}`,
+        ram: config.ram || 2048,
+        world: config.world || 'Dedicated',
+        password: config.password || '',
+        adminPassword: config.adminPassword || 'changeme',
+        map: config.map || 'TheIsland',
+        clusterId: config.clusterId || '',
+        ...config, // Meglévő config mezők megtartása (felülírja az alapértelmezetteket, ha vannak)
+      };
+      
+      // Ellenőrizzük, hogy a finalConfig tartalmazza-e a szükséges mezőket
+      if (!finalConfig || typeof finalConfig !== 'object') {
+        throw new Error('Config objektum nem hozható létre');
+      }
+      
+      if (!finalConfig.port || typeof finalConfig.port !== 'number') {
+        throw new Error(`Érvénytelen port: ${finalConfig.port}`);
+      }
+      
+      if (!finalConfig.name || typeof finalConfig.name !== 'string') {
+        throw new Error(`Érvénytelen name: ${finalConfig.name}`);
+      }
+      
+      // Paths objektum előkészítése - ha nincs, akkor undefined
+      const paths = task.agent?.paths ? {
+        isARK: task.agent.paths.isARK || false,
+        sharedPath: task.agent.paths.sharedPath || null,
+        serverPath: task.agent.paths.serverPath || `/opt/servers/${server.id}`,
+      } : undefined;
       
       await createSystemdServiceForServer(
         server.id,
         server.gameType as any,
         gameConfig,
-        config,
+        finalConfig,
         machine,
-        task.agent.paths
+        paths
       );
     } catch (error: any) {
       // Ha a service generálás sikertelen, próbáljuk meg továbbra is indítani
       console.warn('Systemd service újragenerálása sikertelen, folytatás a meglévő service-szel:', error.message);
+      console.warn('Hiba részletei:', {
+        serverId: server.id,
+        gameType: server.gameType,
+        hasConfiguration: !!server.configuration,
+        serverPort: server.port,
+        serverMaxPlayers: server.maxPlayers,
+        serverName: server.name,
+        error: error.message,
+        stack: error.stack,
+      });
     }
     
     // Systemd service indítása
