@@ -156,13 +156,22 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         
         # SteamCMD futtatása - nem használunk if-t, mert az exit code-ot külön kezeljük
         # A SteamCMD root-ként fut, ezért biztosítjuk, hogy írni tudjon
-        # Explicit módon root-ként futtatjuk, ha nem root-ként vagyunk
-        if [ "$(id -u)" = "0" ]; then
-          /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 258550 validate +quit
-        else
-          sudo /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 258550 validate +quit
-        fi
+        # A SteamCMD home könyvtárát is beállítjuk, hogy biztosan írni tudjon
+        # Használunk egy ideiglenes home könyvtárat a SteamCMD-nek
+        STEAMCMD_HOME="/tmp/steamcmd-home-$$"
+        mkdir -p "$STEAMCMD_HOME"
+        chmod 755 "$STEAMCMD_HOME" || true
+        
+        # Ellenőrizzük a SteamCMD jogosultságait
+        echo "SteamCMD script jogosultságok:"
+        ls -l /opt/steamcmd/steamcmd.sh || true
+        
+        # SteamCMD futtatása HOME environment változóval
+        HOME="$STEAMCMD_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 258550 validate +quit
         EXIT_CODE=$?
+        
+        # Tisztítás
+        rm -rf "$STEAMCMD_HOME" 2>/dev/null || true
         
         # Jogosultságok beállítása a letöltött fájlokra
         # A fájlokat root tulajdonban hagyjuk, mert a systemd service is root-ként fut
