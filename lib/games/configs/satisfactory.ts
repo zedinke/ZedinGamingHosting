@@ -8,9 +8,9 @@ export const config: GameServerConfig = {
   steamAppId: 1690800,
   requiresSteamCMD: true,
   installScript: '', // Telepítő script külön fájlban
-  configPath: '/opt/servers/{serverId}/FactoryGame/Saved/Config/LinuxServer/Game.ini',
-  startCommand: 'cd FactoryGame/Binaries/Linux && ./FactoryGameServer -log -unattended -ServerQueryPort=7777 -BeaconPort=15000 -Port=15777',
-  stopCommand: 'SIGINT',
+  configPath: '/opt/servers/{serverId}/FactoryGame/Saved/Config/LinuxServer/GameUserSettings.ini',
+  startCommand: 'cd FactoryGame/Binaries/Linux && ./FactoryGameServer -log -unattended -ServerQueryPort={queryPort} -BeaconPort={beaconPort} -Port={port}',
+  stopCommand: 'quit', // Systemd automatikusan kezeli a leállítást, de a stopCommand mező kötelező
   port: 15777,
   queryPort: 7777,
   beaconPort: 15000,

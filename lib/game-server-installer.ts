@@ -1119,6 +1119,7 @@ export async function createSystemdServiceForServer(
     startCommand = `cd ${paths.sharedPath} && ./ShooterGame/Binaries/Linux/ShooterGameServer ${map}?listen?Port=${port}?QueryPort=${queryPort}?ServerAdminPassword=${adminPassword} -servergamelog -servergamelogincludetribelogs -NoBattlEye -UseBattlEye -clusterid=${config.clusterId || ''} -ClusterDirOverride=${paths.serverPath}/ShooterGame/Saved`;
   } else {
     // Normál játékok
+    const beaconPort = gameConfig.beaconPort || (gameConfig.queryPort ? gameConfig.queryPort + 1 : port + 2);
     startCommand = startCommand
       .replace(/{port}/g, port.toString())
       .replace(/{maxPlayers}/g, maxPlayers.toString())
@@ -1128,6 +1129,7 @@ export async function createSystemdServiceForServer(
       .replace(/{password}/g, config.password || '')
       .replace(/{adminPassword}/g, config.adminPassword || 'changeme')
       .replace(/{queryPort}/g, (gameConfig.queryPort || port + 1).toString())
+      .replace(/{beaconPort}/g, beaconPort.toString())
       .replace(/{map}/g, config.map || 'TheIsland');
     
     // The Forest specifikus placeholder-ek

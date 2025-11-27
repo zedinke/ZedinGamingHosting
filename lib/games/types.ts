@@ -13,6 +13,10 @@ export interface GameServerConfig {
   stopCommand: string;
   port: number;
   queryPort?: number; // Query port (ha külön van)
+  beaconPort?: number; // Beacon port (pl. Satisfactory)
+  additionalPorts?: number[]; // További portok, amiket meg kell nyitni
+  environmentVariables?: Record<string, string>; // Környezeti változók
+  defaultSettings?: Record<string, string>; // Alapértelmezett beállítások
   requiresSteamCMD: boolean;
   requiresJava?: boolean;
   requiresWine?: boolean;
