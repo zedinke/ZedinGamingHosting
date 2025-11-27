@@ -1126,7 +1126,6 @@ export async function createSystemdServiceForServer(
       .replace(/{ram}/g, ram.toString())
       .replace(/{name}/g, name)
       .replace(/{world}/g, config.world || 'Dedicated')
-      .replace(/{password}/g, config.password || '')
       .replace(/{adminPassword}/g, config.adminPassword || 'changeme')
       .replace(/{queryPort}/g, (gameConfig.queryPort || port + 1).toString())
       .replace(/{beaconPort}/g, beaconPort.toString())
@@ -1134,10 +1133,24 @@ export async function createSystemdServiceForServer(
     
     // Valheim specifikus placeholder-ek
     if (gameType === 'VALHEIM') {
+      // Valheim jelszó validáció: minimum 5 karakter kell
+      let valheimPassword = config.password || '';
+      if (valheimPassword.length < 5) {
+        // Ha a jelszó túl rövid vagy üres, generálunk egy alapértelmezettet
+        // Használjuk a szerver nevét + egy random számot, hogy legalább 5 karakter legyen
+        const randomSuffix = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+        valheimPassword = (name.substring(0, 1) + randomSuffix).substring(0, 5);
+        logger.warn(`Valheim jelszó túl rövid, generált jelszó: ${valheimPassword}`);
+      }
+      startCommand = startCommand.replace(/{password}/g, valheimPassword);
+      
       // Public flag: 1 = nyilvános, 0 = privát
       const isPublic = config.public !== undefined ? (config.public ? '1' : '0') : '1';
       startCommand = startCommand
         .replace(/{public}/g, isPublic);
+    } else {
+      // Más játékoknál nincs jelszó validáció
+      startCommand = startCommand.replace(/{password}/g, config.password || '');
     }
     
     // The Forest specifikus placeholder-ek
