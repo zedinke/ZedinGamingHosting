@@ -286,7 +286,20 @@ async function executeStartTask(task: any): Promise<any> {
   // SSH kapcsolat az agent géppel és systemd service indítása
   if (task.agent && task.agent.machine) {
     const { executeSSHCommand } = await import('./ssh-client');
+    const { createSystemdServiceForServer } = await import('./game-server-installer');
     const machine = task.agent.machine;
+    
+    // Systemd service újragenerálása a frissített startCommand-tal
+    try {
+      await createSystemdServiceForServer(
+        server,
+        machine,
+        task.agent.paths
+      );
+    } catch (error: any) {
+      // Ha a service generálás sikertelen, próbáljuk meg továbbra is indítani
+      console.warn('Systemd service újragenerálása sikertelen, folytatás a meglévő service-szel:', error.message);
+    }
     
     // Systemd service indítása
     const serviceName = `server-${task.serverId}`;
