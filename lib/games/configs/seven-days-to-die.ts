@@ -15,7 +15,7 @@ export const config: GameServerConfig = {
   port: 26900,
   queryPort: 26901,
   defaultSettings: {
-    ServerPort: 26900,
+    ServerPort: '26900',
     ServerName: 'Seven Days to Die Server',
     ServerPassword: '',
     MaxPlayers: '8',

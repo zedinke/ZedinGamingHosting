@@ -26,7 +26,7 @@ export const config: GameServerConfig = {
     Difficulty: 'Normal', // Novice, Normal, Hard, Hardcore
     Zombies: 'Medium', // Low, Medium, High, Extreme
     Map: 'Muldraugh, KY', // alaptérkép
-    ServerPort: 16261,
+    ServerPort: '16261',
     AdminUsername: '',
     AdminPassword: '',
     SafetySystem: 'true',
