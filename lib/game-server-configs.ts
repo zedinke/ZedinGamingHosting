@@ -181,7 +181,8 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         fi
         
         # Ellenőrizzük, hogy a bináris létezik-e (ez a legfontosabb, nem az exit code)
-        if [ -f "$SERVER_DIR/server/RustDedicated" ]; then
+        # A SteamCMD közvetlenül a SERVER_DIR-be telepíti, nem a server/ alkönyvtárba
+        if [ -f "$SERVER_DIR/RustDedicated" ]; then
           echo "RustDedicated bináris megtalálva, telepítés sikeres!"
           INSTALL_SUCCESS=true
           break
@@ -198,33 +199,27 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
       done
       
       # Végleges ellenőrzés - ha a bináris nem létezik, akkor hiba
-      if [ ! -f "$SERVER_DIR/server/RustDedicated" ]; then
-        echo "HIBA: RustDedicated bináris nem található a $SERVER_DIR/server/ könyvtárban" >&2
+      if [ ! -f "$SERVER_DIR/RustDedicated" ]; then
+        echo "HIBA: RustDedicated bináris nem található a $SERVER_DIR könyvtárban" >&2
         echo "Könyvtár tartalma:" >&2
         ls -la "$SERVER_DIR" >&2 || true
-        if [ -d "$SERVER_DIR/server" ]; then
-          echo "server/ könyvtár tartalma:" >&2
-          ls -la "$SERVER_DIR/server" >&2 || true
-        else
-          echo "server/ könyvtár nem létezik!" >&2
-        fi
         echo "SteamCMD utolsó exit code: $EXIT_CODE" >&2
         exit 1
       fi
       
       # Végrehajtási jogosultság beállítása
-      chmod +x "$SERVER_DIR/server/RustDedicated" || true
+      chmod +x "$SERVER_DIR/RustDedicated" || true
       
       # Ellenőrizzük a fájl méretét is (nem lehet 0)
-      FILE_SIZE=$(stat -f%z "$SERVER_DIR/server/RustDedicated" 2>/dev/null || stat -c%s "$SERVER_DIR/server/RustDedicated" 2>/dev/null || echo "0")
+      FILE_SIZE=$(stat -f%z "$SERVER_DIR/RustDedicated" 2>/dev/null || stat -c%s "$SERVER_DIR/RustDedicated" 2>/dev/null || echo "0")
       if [ "$FILE_SIZE" = "0" ]; then
         echo "FIGYELMEZTETÉS: RustDedicated bináris mérete 0, lehet, hogy sérült" >&2
       fi
       
-      echo "Rust szerver sikeresen telepítve: $SERVER_DIR/server/RustDedicated (méret: $FILE_SIZE bytes)"
+      echo "Rust szerver sikeresen telepítve: $SERVER_DIR/RustDedicated (méret: $FILE_SIZE bytes)"
     `,
     configPath: '/opt/servers/{serverId}/server/server.cfg',
-    startCommand: './server/RustDedicated -batchmode -server.port {port} -server.queryport {queryPort} -server.maxplayers {maxPlayers} -server.hostname "{name}"',
+    startCommand: './RustDedicated -batchmode -server.port {port} -server.queryport {queryPort} -server.maxplayers {maxPlayers} -server.hostname "{name}"',
     stopCommand: 'quit',
     port: 28015,
     queryPort: 28016,
