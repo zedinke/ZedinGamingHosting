@@ -29,6 +29,7 @@ interface AnalysisResult {
     code?: string;
   }>;
   confidence: number;
+  [key: string]: any; // Index signature for Prisma Json compatibility
 }
 
 interface TestResult {
@@ -127,7 +128,7 @@ Válaszolj JSON formátumban:
         target: filePath,
         targetType: 'file',
         status: 'completed',
-        findings: result,
+        findings: result as any,
         confidence: result.confidence,
         model: AI_MODEL,
         userId,
@@ -225,7 +226,7 @@ Válaszolj JSON formátumban:
         target: filePath,
         targetType: 'code',
         status: 'completed',
-        result: result,
+        result: result as any,
         userId,
         completedAt: new Date(),
       },
@@ -313,7 +314,7 @@ Válaszolj JSON formátumban:
         target: 'logs',
         targetType: 'logs',
         status: 'completed',
-        findings: result,
+        findings: result as any,
         confidence: result.confidence,
         model: AI_MODEL,
         userId,
@@ -399,7 +400,7 @@ Válaszolj JSON formátumban:
         target: filePath,
         targetType: 'code',
         status: 'completed',
-        result: result,
+        result: result as any,
         userId,
         completedAt: new Date(),
       },
@@ -502,7 +503,7 @@ Válaszolj JSON formátumban:
         target: filePath,
         targetType: 'file',
         status: 'completed',
-        findings: result,
+        findings: result as any,
         model: AI_MODEL,
         userId,
         completedAt: new Date(),

@@ -202,7 +202,7 @@ ${filePath ? `\nFájl elérési út: ${filePath}` : ''}`;
         target: filePath || 'new',
         targetType: 'code',
         status: 'completed',
-        result: result,
+        result: result as any,
         userId,
         completedAt: new Date(),
       },
