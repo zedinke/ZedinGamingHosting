@@ -110,8 +110,11 @@ SZABÁLYOK:
 - Ha kódot javasolsz, használj TypeScript/JavaScript szintaxist
 - Ha internetes információt használsz, jelöld meg a forrást
 - Ne írj hosszú bevezetőket vagy magyarázatokat, menj rögtön a lényegre
+- SOHA ne használj placeholder szövegeket, mint "_HUGE STEP BY STEP WORKING DEMO PICTURE HERE._" vagy "_PLEASE REMOVE_"
+- SOHA ne írj placeholder szövegeket vagy demo szövegeket a válaszaidba
+- Csak valós, használható információt adj
 
-FONTOS: Válaszaid legyenek RÖVIDEK és TÖMÖREK! Ne írj hosszú szövegeket, csak a lényeget!
+FONTOS: Válaszaid legyenek RÖVIDEK és TÖMÖREK! Ne írj hosszú szövegeket, csak a lényeget! SOHA ne használj placeholder szövegeket!
 
 TÉMÁK: Next.js, TypeScript, Prisma, Docker, Server management, Game server hosting, System administration
 
@@ -147,8 +150,16 @@ ${webContext ? `\n\nINTERNETES INFORMÁCIÓK:\n${webContext}\n` : ''}`;
           { role: 'user', content: message },
         ],
         stream: false,
+        options: {
+          num_predict: 256, // Maximum 256 token (rövid válaszokhoz elég)
+          temperature: 0.7, // Alapértelmezett kreativitás
+          num_ctx: 2048, // Context window mérete (alapértelmezett)
+          repeat_penalty: 1.1, // Ismétlés büntetés
+          top_k: 40, // Top-k sampling
+          top_p: 0.9, // Nucleus sampling
+        },
       }),
-      signal: AbortSignal.timeout(120000),
+      signal: AbortSignal.timeout(60000), // 60 másodperc timeout (gyorsabb válaszok)
     });
 
     if (!response.ok) {
@@ -298,6 +309,14 @@ async function handleStreamingResponse(
               { role: 'user', content: message },
             ],
             stream: true,
+            options: {
+              num_predict: 256, // Maximum 256 token (rövid válaszokhoz elég)
+              temperature: 0.7, // Alapértelmezett kreativitás
+              num_ctx: 2048, // Context window mérete (alapértelmezett)
+              repeat_penalty: 1.1, // Ismétlés büntetés
+              top_k: 40, // Top-k sampling
+              top_p: 0.9, // Nucleus sampling
+            },
           }),
         });
 
@@ -386,11 +405,12 @@ async function handleStreamingResponse(
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true, conversationId })}\n\n`));
         }
         controller.close();
-      } catch (error) {
+      } catch (error: any) {
         console.error('Streaming hiba:', error);
+        const errorMessage = error.message || 'Hiba történt a válasz generálása során';
         controller.enqueue(
           encoder.encode(
-            `data: ${JSON.stringify({ error: 'Hiba történt a válasz generálása során' })}\n\n`
+            `data: ${JSON.stringify({ error: errorMessage })}\n\n`
           )
         );
         controller.close();

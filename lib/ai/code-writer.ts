@@ -18,6 +18,20 @@ const execAsync = promisify(exec);
 const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
 const AI_MODEL = process.env.AI_DEV_MODEL || process.env.OLLAMA_MODEL || 'phi3:mini';
 
+/**
+ * Optimalizált Ollama opciók az erőforrás hatékony használathoz
+ */
+function getOptimizedOllamaOptions() {
+  return {
+    num_predict: 512, // Maximum 512 token (közepes válaszokhoz)
+    temperature: 0.7, // Alapértelmezett kreativitás
+    num_ctx: 2048, // Context window mérete
+    repeat_penalty: 1.1, // Ismétlés büntetés
+    top_k: 40, // Top-k sampling
+    top_p: 0.9, // Nucleus sampling
+  };
+}
+
 // Biztonságos könyvtárak (csak ezekben lehet módosítani)
 const ALLOWED_DIRECTORIES = [
   'lib',
@@ -175,8 +189,9 @@ ${filePath ? `\nFájl elérési út: ${filePath}` : ''}`;
           { role: 'user', content: userPrompt },
         ],
         stream: false,
+        options: getOptimizedOllamaOptions(),
       }),
-      signal: AbortSignal.timeout(180000), // 3 perc timeout
+      signal: AbortSignal.timeout(60000), // 60 másodperc timeout
     });
 
     if (!response.ok) {

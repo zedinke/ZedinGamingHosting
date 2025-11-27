@@ -12,6 +12,20 @@ const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
 // De alapértelmezetten használjuk a könnyűt is a sebesség miatt
 const AI_MODEL = process.env.AI_SERVER_MODEL || process.env.OLLAMA_MODEL || 'llama3.2:3b';
 
+/**
+ * Optimalizált Ollama opciók az erőforrás hatékony használathoz
+ */
+function getOptimizedOllamaOptions() {
+  return {
+    num_predict: 512, // Maximum 512 token (közepes válaszokhoz)
+    temperature: 0.7, // Alapértelmezett kreativitás
+    num_ctx: 2048, // Context window mérete
+    repeat_penalty: 1.1, // Ismétlés büntetés
+    top_k: 40, // Top-k sampling
+    top_p: 0.9, // Nucleus sampling
+  };
+}
+
 interface SystemMetrics {
   cpu: number;
   ram: number;
@@ -81,6 +95,7 @@ Válaszolj JSON formátumban:
           { role: 'user', content: `Metrikák:\n${metricsText}${logsText}` },
         ],
         stream: false,
+        options: getOptimizedOllamaOptions(),
       }),
       signal: AbortSignal.timeout(60000),
     });
@@ -149,6 +164,7 @@ Disk: ${metrics.disk}%
           { role: 'user', content: `Konfiguráció típus: ${configType}\n\nJelenlegi konfig:\n\`\`\`\n${currentConfig}\n\`\`\`\n\nMetrikák:\n${metricsText}` },
         ],
         stream: false,
+        options: getOptimizedOllamaOptions(),
       }),
       signal: AbortSignal.timeout(60000),
     });
@@ -214,6 +230,7 @@ Válaszolj JSON formátumban:
           { role: 'user', content: `Jelenlegi metrikák:\nCPU: ${metrics.cpu}%, RAM: ${metrics.ram}%, Disk: ${metrics.disk}%\n\nElőzmények:\n${historyText}` },
         ],
         stream: false,
+        options: getOptimizedOllamaOptions(),
       }),
       signal: AbortSignal.timeout(60000),
     });
@@ -274,6 +291,7 @@ Válaszolj JSON formátumban:
           { role: 'user', content: `Probléma: ${issue.message}\nTípus: ${issue.type}\nSúlyosság: ${issue.severity}\nJavaslat: ${issue.suggestion}\n\nRendszer info: ${JSON.stringify(systemInfo)}` },
         ],
         stream: false,
+        options: getOptimizedOllamaOptions(),
       }),
       signal: AbortSignal.timeout(60000),
     });

@@ -258,15 +258,13 @@ export function AIChatPanel() {
       }
       
       console.error('Üzenet küldés hiba:', error);
-      toast.error(error.message || 'Hiba történt az üzenet küldése során');
       
-      const errorMessage: Message = {
-        id: `error-${Date.now()}`,
-        role: 'assistant',
-        content: 'Sajnálom, hiba történt. Kérlek, próbáld újra.',
-        createdAt: new Date().toISOString(),
-      };
-      setMessages([...newMessages, errorMessage]);
+      // Csak akkor jelenjen meg hibaüzenet, ha nem abort error
+      const errorMessage = error.message || 'Hiba történt az üzenet küldése során';
+      toast.error(errorMessage);
+      
+      // Ne adjunk hozzá automatikus hibaüzenetet a chathez
+      // A felhasználó látja a toast üzenetet
     } finally {
       setLoading(false);
       setStreaming(false);

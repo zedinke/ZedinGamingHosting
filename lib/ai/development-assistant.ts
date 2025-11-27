@@ -16,6 +16,20 @@ const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
 // Könnyű modell a központi gépen (4 vCPU, 8GB RAM)
 const AI_MODEL = process.env.AI_DEV_MODEL || process.env.OLLAMA_MODEL || 'phi3:mini';
 
+/**
+ * Optimalizált Ollama opciók az erőforrás hatékony használathoz
+ */
+function getOptimizedOllamaOptions() {
+  return {
+    num_predict: 512, // Maximum 512 token (közepes válaszokhoz)
+    temperature: 0.7, // Alapértelmezett kreativitás
+    num_ctx: 2048, // Context window mérete
+    repeat_penalty: 1.1, // Ismétlés büntetés
+    top_k: 40, // Top-k sampling
+    top_p: 0.9, // Nucleus sampling
+  };
+}
+
 interface AnalysisResult {
   issues: Array<{
     severity: 'error' | 'warning' | 'info';
@@ -100,8 +114,9 @@ Válaszolj JSON formátumban:
           { role: 'user', content: `Fájl: ${filePath}\n\nKód:\n\`\`\`${extension}\n${content}\n\`\`\`` },
         ],
         stream: false,
+        options: getOptimizedOllamaOptions(),
       }),
-      signal: AbortSignal.timeout(120000), // 2 perc timeout
+      signal: AbortSignal.timeout(60000), // 60 másodperc timeout
     });
 
     if (!response.ok) {
