@@ -114,6 +114,7 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
   }, [selectedGamePackage, locale, router]);
 
   const handleBillingSubmit = async (data: BillingInfoFormData) => {
+    setIsLoading(true);
     try {
       // Mentjük el az adatokat az API-ba
       const response = await fetch('/api/user/billing-info', {
@@ -128,19 +129,32 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
 
       if (!response.ok) {
         toast.error(result.error || 'Hiba történt a számlázási adatok mentése során');
+        setIsLoading(false);
         return;
       }
 
-      // Frissítjük a state-et
-      setBillingFormData(result.billingInfo || data);
+      // Frissítjük a state-et - biztosítjuk, hogy minden mező meglegyen
+      const savedData = result.billingInfo || data;
+      // Ha nincs billingAddress, generáljuk a többi mezőből
+      if (!savedData.billingAddress && savedData.street && savedData.city && savedData.postalCode && savedData.country) {
+        savedData.billingAddress = `${savedData.street}, ${savedData.city} ${savedData.postalCode}, ${savedData.country}`;
+      }
+      
+      setBillingFormData(savedData);
       setShowBillingForm(false);
       toast.success('Számlázási adatok sikeresen mentve');
     } catch (error) {
       console.error('Billing info save error:', error);
       // Ha az API hívás sikertelen, akkor is használjuk az adatokat lokálisan
-      setBillingFormData(data);
+      const localData = { ...data };
+      if (!localData.billingAddress && localData.street && localData.city && localData.postalCode && localData.country) {
+        localData.billingAddress = `${localData.street}, ${localData.city} ${localData.postalCode}, ${localData.country}`;
+      }
+      setBillingFormData(localData);
       setShowBillingForm(false);
       toast.error('Hiba történt a számlázási adatok mentése során');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -323,7 +337,18 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
       </Card>
 
       {/* Server Details */}
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form 
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!billingFormData || !billingFormData.billingName || !billingFormData.billingAddress) {
+            toast.error('Kérjük, töltsd ki a számlázási adatokat');
+            setShowBillingForm(true);
+            return;
+          }
+          handleSubmit(onSubmit)(e);
+        }} 
+        className="space-y-6"
+      >
         <Card padding="lg" className="bg-white">
           <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 text-gray-900">
             <Server className="w-6 h-6" />
@@ -349,7 +374,19 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
           </div>
         </Card>
 
-        {/* Billing Info */}
+        <Button
+          type="submit"
+          size="lg"
+          isLoading={isLoading}
+          className="w-full text-lg font-bold py-4"
+          disabled={!billingFormData || !billingFormData.billingName || !billingFormData.billingAddress || isLoading}
+        >
+          {isLoading ? 'Feldolgozás...' : 'Rendelés Jóváhagyása'}
+        </Button>
+      </form>
+
+      {/* Billing Info - Külön div-ben, hogy ne triggerelje a form submit-ot */}
+      <div className="space-y-6">
         {showBillingForm ? (
           <BillingInfoForm
             initialData={billingFormData || undefined}
@@ -390,23 +427,13 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
             isLoading={isLoading}
           />
         )}
+      </div>
 
-        <Button
-          type="submit"
-          size="lg"
-          isLoading={isLoading}
-          className="w-full text-lg font-bold py-4"
-          disabled={!billingFormData || !billingFormData.billingName || !billingFormData.billingAddress || isLoading}
-        >
-          {isLoading ? 'Feldolgozás...' : 'Rendelés Jóváhagyása'}
-        </Button>
-
-        <p className="text-sm text-center text-gray-800 font-semibold">
-          A rendelés megerősítésével elfogadod az Általános Szerződési Feltételeket.
-          <br />
-          A szerver percek alatt készen áll a GamePackage specifikációk alapján.
-        </p>
-      </form>
+      <p className="text-sm text-center text-gray-800 font-semibold">
+        A rendelés megerősítésével elfogadod az Általános Szerződési Feltételeket.
+        <br />
+        A szerver percek alatt készen áll a GamePackage specifikációk alapján.
+      </p>
     </div>
   );
 }

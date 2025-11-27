@@ -62,8 +62,14 @@ export function BillingInfoForm({ initialData, onSubmit, isLoading, showSubmitBu
     }
   }, [postalCode, city, street, country, setValue]);
 
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    handleSubmit(onSubmit)(e);
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleFormSubmit} className="space-y-6">
       <Card padding="lg" className="bg-white">
         <h2 className="text-2xl font-bold mb-2 flex items-center gap-2 text-gray-900">
           <FileText className="w-6 h-6" />
