@@ -42,7 +42,7 @@ while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
   sleep 5
   
   # Ellenőrizzük, hogy a telepítés sikeres volt-e
-  if [ -f "$SERVER_DIR/valheim_server.x86_64" ] || [ -d "$SERVER_DIR/steamapps/common/valheim dedicated server" ]; then
+  if [ -f "$SERVER_DIR/valheim_server.x86_64" ] || [ -f "$SERVER_DIR/start_server.sh" ]; then
     INSTALL_SUCCESS=true
     break
   fi
@@ -64,7 +64,45 @@ if [ "$INSTALL_SUCCESS" != "true" ]; then
   exit 1
 fi
 
+# Start script executable jogok beállítása
+if [ -f "$SERVER_DIR/start_server.sh" ]; then
+  chmod +x "$SERVER_DIR/start_server.sh"
+fi
+
+if [ -f "$SERVER_DIR/valheim_server.x86_64" ]; then
+  chmod +x "$SERVER_DIR/valheim_server.x86_64"
+fi
+
+# Steam runtime beállítása Valheim-hoz
+# A Valheim szervernek szüksége van a steamclient.so fájlra
+if [ -d "/opt/steamcmd/linux64" ]; then
+  # Másoljuk a steamclient.so fájlt a szerver könyvtárba, ha nincs
+  if [ ! -f "$SERVER_DIR/linux64/steamclient.so" ]; then
+    mkdir -p "$SERVER_DIR/linux64"
+    if [ -f "/opt/steamcmd/linux64/steamclient.so" ]; then
+      cp /opt/steamcmd/linux64/steamclient.so "$SERVER_DIR/linux64/steamclient.so"
+      echo "steamclient.so másolva a szerver könyvtárba"
+    fi
+  fi
+  
+  # Másoljuk a steamclient.so fájlt a szerver gyökerébe is (alternatíva)
+  if [ -f "/opt/steamcmd/linux64/steamclient.so" ] && [ ! -f "$SERVER_DIR/steamclient.so" ]; then
+    cp /opt/steamcmd/linux64/steamclient.so "$SERVER_DIR/steamclient.so"
+    echo "steamclient.so másolva a szerver gyökerébe"
+  fi
+fi
+
+# Steam runtime könyvtár létrehozása a root home könyvtárban
+mkdir -p /root/.steam/sdk64
+if [ -f "/opt/steamcmd/linux64/steamclient.so" ]; then
+  if [ ! -f "/root/.steam/sdk64/steamclient.so" ]; then
+    cp /opt/steamcmd/linux64/steamclient.so /root/.steam/sdk64/steamclient.so
+    echo "steamclient.so másolva /root/.steam/sdk64/ könyvtárba"
+  fi
+fi
+
 chown -R root:root "$SERVER_DIR"
 chmod -R 755 "$SERVER_DIR"
-`;
 
+echo "Valheim szerver telepítése sikeresen befejezve."
+`;

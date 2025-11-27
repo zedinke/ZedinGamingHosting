@@ -1462,6 +1462,16 @@ bash -c "${escapedStartCommand}"
     .replace(/\r/g, '') // Carriage return eltávolítása
     .trim();
   
+  // Környezeti változók beállítása
+  let environmentVars = '';
+  if (gameConfig.environmentVariables && Object.keys(gameConfig.environmentVariables).length > 0) {
+    for (const [key, value] of Object.entries(gameConfig.environmentVariables)) {
+      // Cseréljük le a {serverId} placeholder-t
+      const envValue = value.replace(/{serverId}/g, serverId);
+      environmentVars += `Environment="${key}=${envValue}"\n`;
+    }
+  }
+  
   // Systemd service fájl tartalom
   // Fontos: minden kulcs=érték pár egy sorban kell legyen, nincs sortörés
   // CPU és RAM limitációk hozzáadása a GamePackage specifikációk alapján
@@ -1473,7 +1483,7 @@ After=network.target
 Type=simple
 User=root
 WorkingDirectory=${execDir}
-ExecStart=${escapedStartCommand}
+${environmentVars}ExecStart=${escapedStartCommand}
 Restart=always
 RestartSec=10
 StandardOutput=journal

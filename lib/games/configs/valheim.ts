@@ -15,7 +15,12 @@ export const config: GameServerConfig = {
   port: 2456,
   queryPort: 2457,
   additionalPorts: [2457, 2458],
-  environmentVariables: {},
+  environmentVariables: {
+    // Steam runtime library path beállítása
+    LD_LIBRARY_PATH: '/opt/steamcmd/linux64:/opt/servers/{serverId}/linux64:/opt/servers/{serverId}:$LD_LIBRARY_PATH',
+    // Steam API inicializálás
+    STEAM_RUNTIME: '1'
+  },
   defaultSettings: {
     world: 'Dedicated',
     public: '1'
