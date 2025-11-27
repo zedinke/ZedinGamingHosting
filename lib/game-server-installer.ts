@@ -1177,6 +1177,17 @@ export async function createSystemdServiceForServer(
       startCommand = startCommand.replace(/cd\s+[^\s&]+\s+&&\s+/, '');
     }
   }
+  
+  // Systemd-ben nem lehet relatív útvonalat használni az ExecStart-ban
+  // Ha a startCommand "./"-tal kezdődik, akkor abszolút útvonalra konvertáljuk
+  if (startCommand.trim().startsWith('./')) {
+    // Kinyerjük a bináris nevét és argumentumait
+    const parts = startCommand.trim().split(/\s+/);
+    const binary = parts[0].replace('./', '');
+    const args = parts.slice(1).join(' ');
+    // Abszolút útvonalra konvertáljuk
+    startCommand = `${execDir}/${binary}${args ? ' ' + args : ''}`.trim();
+  }
 
   // The Forest esetén ellenőrizzük, hogy Linux vagy Windows bináris van-e
   let useWineForForest = false;
