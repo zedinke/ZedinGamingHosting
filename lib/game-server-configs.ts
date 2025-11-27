@@ -815,8 +815,9 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         chmod -R 755 "$SERVER_DIR"
         
         echo "Installing The Forest dedicated server..."
-        # Linux platform beállítása, majd telepítés validate opcióval
-        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_set_config 556450 platform linux +app_update 556450 validate +quit
+        # A The Forest dedikált szerver csak Windows-on elérhető, ezért Windows verziót töltünk le
+        # Az útmutató szerint: force_install_dir + login anonymous + app_update 556450 validate
+        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 556450 validate +quit
         EXIT_CODE=$?
         
         # Ideiglenes Steam home könyvtár törlése
@@ -825,39 +826,37 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         # Várunk egy kicsit, hogy a fájlok biztosan leírásra kerüljenek
         sleep 10
         
-        # Keresés a bináris után - több helyen is
+        # Keresés a bináris után - Windows verzió (.exe fájl)
+        # A The Forest dedikált szerver csak Windows-on elérhető
         SERVER_FILE=""
         
-        # 1. Közvetlenül a SERVER_DIR-ben
-        if [ -f "$SERVER_DIR/TheForestDedicatedServer.x86_64" ]; then
-          SERVER_FILE="$SERVER_DIR/TheForestDedicatedServer.x86_64"
-        # 2. linux64/ könyvtárban
-        elif [ -f "$SERVER_DIR/linux64/TheForestDedicatedServer.x86_64" ]; then
-          SERVER_FILE="$SERVER_DIR/linux64/TheForestDedicatedServer.x86_64"
-        # 3. steamapps/common/ könyvtárban - több lehetséges név
-        elif [ -f "$SERVER_DIR/steamapps/common/The Forest Dedicated Server/TheForestDedicatedServer.x86_64" ]; then
-          SERVER_FILE="$SERVER_DIR/steamapps/common/The Forest Dedicated Server/TheForestDedicatedServer.x86_64"
-        elif [ -f "$SERVER_DIR/steamapps/common/TheForestDedicatedServer/TheForestDedicatedServer.x86_64" ]; then
-          SERVER_FILE="$SERVER_DIR/steamapps/common/TheForestDedicatedServer/TheForestDedicatedServer.x86_64"
-        # 4. Keresés a teljes könyvtárban
+        # 1. Közvetlenül a SERVER_DIR-ben (Windows .exe)
+        if [ -f "$SERVER_DIR/TheForestDedicatedServer.exe" ]; then
+          SERVER_FILE="$SERVER_DIR/TheForestDedicatedServer.exe"
+        # 2. steamapps/common/ könyvtárban - több lehetséges név
+        elif [ -f "$SERVER_DIR/steamapps/common/The Forest Dedicated Server/TheForestDedicatedServer.exe" ]; then
+          SERVER_FILE="$SERVER_DIR/steamapps/common/The Forest Dedicated Server/TheForestDedicatedServer.exe"
+        elif [ -f "$SERVER_DIR/steamapps/common/TheForestDedicatedServer/TheForestDedicatedServer.exe" ]; then
+          SERVER_FILE="$SERVER_DIR/steamapps/common/TheForestDedicatedServer/TheForestDedicatedServer.exe"
+        # 3. Keresés a teljes könyvtárban (.exe fájlok)
         else
-          SERVER_FILE=$(find "$SERVER_DIR" -name "TheForestDedicatedServer.x86_64" -type f 2>/dev/null | head -1)
+          SERVER_FILE=$(find "$SERVER_DIR" -name "TheForestDedicatedServer.exe" -type f 2>/dev/null | head -1)
           if [ -z "$SERVER_FILE" ]; then
-            SERVER_FILE=$(find "$SERVER_DIR" -name "TheForestDedicatedServer" -type f 2>/dev/null | head -1)
+            SERVER_FILE=$(find "$SERVER_DIR" -name "*.exe" -type f 2>/dev/null | grep -i forest | head -1)
           fi
         fi
         
         if [ -n "$SERVER_FILE" ] && [ -f "$SERVER_FILE" ]; then
           FILE_SIZE=$(stat -c%s "$SERVER_FILE" 2>/dev/null || stat -f%z "$SERVER_FILE" 2>/dev/null || echo "0")
           if [ "$FILE_SIZE" -gt "0" ]; then
-            echo "TheForestDedicatedServer.x86_64 bináris megtalálva: $SERVER_FILE (méret: $FILE_SIZE bytes)"
+            echo "TheForestDedicatedServer.exe bináris megtalálva: $SERVER_FILE (méret: $FILE_SIZE bytes)"
             INSTALL_SUCCESS=true
             break
           fi
         fi
         
         echo "SteamCMD exit code: $EXIT_CODE" >&2
-        echo "TheForestDedicatedServer.x86_64 bináris még nem található, újrapróbálkozás..." >&2
+        echo "TheForestDedicatedServer.exe bináris még nem található, újrapróbálkozás..." >&2
         RETRY_COUNT=$((RETRY_COUNT + 1))
         
         if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
@@ -868,7 +867,9 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
       
       # Végleges ellenőrzés - ha a bináris nem létezik, akkor hiba
       if [ "$INSTALL_SUCCESS" != "true" ]; then
-        echo "HIBA: TheForestDedicatedServer.x86_64 bináris nem található $MAX_RETRIES próbálkozás után" >&2
+        echo "HIBA: TheForestDedicatedServer.exe bináris nem található $MAX_RETRIES próbálkozás után" >&2
+        echo "FIGYELMEZTETÉS: A The Forest dedikált szerver csak Windows-on elérhető!" >&2
+        echo "Linux-on Wine-on keresztül lehet futtatni, de ez nem hivatalosan támogatott." >&2
         echo "Könyvtár tartalma:" >&2
         ls -la "$SERVER_DIR" >&2 || true
         if [ -d "$SERVER_DIR/steamapps" ]; then
@@ -879,24 +880,25 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
       fi
       
       # Symlink létrehozása, ha nem a root könyvtárban van
-      if [ "$SERVER_FILE" != "$SERVER_DIR/TheForestDedicatedServer.x86_64" ]; then
-        ln -sf "$SERVER_FILE" "$SERVER_DIR/TheForestDedicatedServer.x86_64"
-        echo "Created symlink to server file at $SERVER_DIR/TheForestDedicatedServer.x86_64"
-        SERVER_FILE="$SERVER_DIR/TheForestDedicatedServer.x86_64"
+      if [ "$SERVER_FILE" != "$SERVER_DIR/TheForestDedicatedServer.exe" ]; then
+        ln -sf "$SERVER_FILE" "$SERVER_DIR/TheForestDedicatedServer.exe"
+        echo "Created symlink to server file at $SERVER_DIR/TheForestDedicatedServer.exe"
+        SERVER_FILE="$SERVER_DIR/TheForestDedicatedServer.exe"
       fi
       
       # Végrehajtási jogosultságok beállítása
       chmod +x "$SERVER_FILE" 2>/dev/null || true
-      chmod +x "$SERVER_DIR/TheForestDedicatedServer.x86_64" 2>/dev/null || true
+      chmod +x "$SERVER_DIR/TheForestDedicatedServer.exe" 2>/dev/null || true
       
       chown -R root:root "$SERVER_DIR"
       chmod -R 755 "$SERVER_DIR"
       
       FILE_SIZE=$(stat -c%s "$SERVER_FILE" 2>/dev/null || stat -f%z "$SERVER_FILE" 2>/dev/null || echo "0")
       echo "The Forest szerver sikeresen telepítve: $SERVER_FILE (méret: $FILE_SIZE bytes)"
+      echo "FIGYELMEZTETÉS: A The Forest dedikált szerver Windows verzió, Wine-on keresztül kell futtatni Linux-on!"
     `,
-    configPath: '/opt/servers/{serverId}/config/config.cfg',
-    startCommand: './TheForestDedicatedServer.x86_64 -batchmode -nographics -dedicated',
+    configPath: '/opt/servers/{serverId}/server.cfg',
+    startCommand: 'wine TheForestDedicatedServer.exe -batchmode -showlogs -treeregrowmode -configfilepath ./server.cfg -savefolderpath ./savefilesserver/',
     stopCommand: 'quit',
     port: 27015,
   },
