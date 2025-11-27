@@ -1249,7 +1249,7 @@ export async function createSystemdServiceForServer(
             binary,
           });
           
-          // Keresés a FactoryGame könyvtárban
+          // Keresés a FactoryGame könyvtárban - csak bináris fájlokat, nem .pak fájlokat
           const findBinary = await executeSSHCommand(
             {
               host: machine.ipAddress,
@@ -1257,20 +1257,59 @@ export async function createSystemdServiceForServer(
               user: machine.sshUser,
               keyPath: machine.sshKeyPath || undefined,
             },
-            `find ${workingDir}/FactoryGame -type f \\( -name "*Factory*Server*" -o -name "*Server*.sh" \\) -executable 2>/dev/null | head -1`
+            `find ${workingDir}/FactoryGame -type f \\( -name "*Factory*Server*" -o -name "*Server*.sh" \\) ! -name "*.pak" ! -name "*.pak.*" -executable 2>/dev/null | grep -v "\\.pak" | head -1`
           );
           
           const foundBinary = findBinary.stdout?.trim();
-          if (foundBinary) {
-            startCommand = foundBinary;
-            if (args) {
-              startCommand = `${foundBinary} ${args}`;
+          if (foundBinary && !foundBinary.endsWith('.pak') && !foundBinary.includes('/Paks/')) {
+            // Ellenőrizzük, hogy valóban futtatható bináris-e (nem .pak fájl)
+            const checkExecutable = await executeSSHCommand(
+              {
+                host: machine.ipAddress,
+                port: machine.sshPort,
+                user: machine.sshUser,
+                keyPath: machine.sshKeyPath || undefined,
+              },
+              `file "${foundBinary}" | grep -E "(ELF|executable|shell script)" && echo "valid" || echo "invalid"`
+            );
+            
+            if (checkExecutable.stdout?.trim() === 'valid') {
+              startCommand = foundBinary;
+              if (args) {
+                startCommand = `${foundBinary} ${args}`;
+              }
+              binary = null;
+              logger.info('Satisfactory binary found via find command', {
+                serverId,
+                foundBinary,
+              });
+            } else {
+              // Ha nem érvényes bináris, próbáljuk a Binaries/Linux könyvtárat
+              const checkBinariesDir = await executeSSHCommand(
+                {
+                  host: machine.ipAddress,
+                  port: machine.sshPort,
+                  user: machine.sshUser,
+                  keyPath: machine.sshKeyPath || undefined,
+                },
+                `test -f ${workingDir}/FactoryGame/Binaries/Linux/FactoryGameServer && echo "${workingDir}/FactoryGame/Binaries/Linux/FactoryGameServer" || (test -f ${workingDir}/FactoryGame/Binaries/Linux/FactoryServer.sh && echo "${workingDir}/FactoryGame/Binaries/Linux/FactoryServer.sh" || echo "notfound")`
+              );
+              
+              const binariesDirResult = checkBinariesDir.stdout?.trim();
+              if (binariesDirResult && binariesDirResult !== 'notfound') {
+                startCommand = binariesDirResult;
+                if (args) {
+                  startCommand = `${binariesDirResult} ${args}`;
+                }
+                binary = null;
+                logger.info('Satisfactory binary found in Binaries/Linux directory', {
+                  serverId,
+                  foundBinary: binariesDirResult,
+                });
+              } else {
+                throw new Error(`Satisfactory binary not found for server ${serverId}. Please check installation.`);
+              }
             }
-            binary = null;
-            logger.info('Satisfactory binary found via find command', {
-              serverId,
-              foundBinary,
-            });
           } else {
             throw new Error(`Satisfactory binary not found for server ${serverId}. Please check installation.`);
           }
