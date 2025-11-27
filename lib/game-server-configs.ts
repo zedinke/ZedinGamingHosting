@@ -811,12 +811,13 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
         
         echo "Installing The Forest dedicated server..."
-        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 556450 validate +quit
+        # Eltávolítjuk a validate opciót és hozzáadunk app_set_config-ot Linux platformhoz
+        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_set_config 556450 platform linux +app_update 556450 +quit
         EXIT_CODE=$?
         
         # Várunk egy kicsit, hogy a fájlok biztosan leírásra kerüljenek
         # A SteamCMD néha időt vesz igénybe, hogy a fájlokat a megfelelő helyre mozgassa
-        sleep 10
+        sleep 15
         
         # Keresés a bináris után - több helyen is
         SERVER_FILE=""
