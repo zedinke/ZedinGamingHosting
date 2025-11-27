@@ -56,6 +56,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 403 });
     }
 
+    const { id } = await params;
     const body = await request.json();
     const data = pricingPlanSchema.parse(body);
 
@@ -115,8 +116,9 @@ export async function DELETE(
       return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 403 });
     }
 
+    const { id } = await params;
     await prisma.pricingPlan.delete({
-      where: { id: id },
+      where: { id },
     });
 
     return NextResponse.json({ success: true });
