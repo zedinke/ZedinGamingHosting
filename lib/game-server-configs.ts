@@ -12,6 +12,7 @@ export interface GameServerConfig {
   installScript: string;
   configPath: string;
   startCommand: string;
+  startCommandWindows?: string; // Opcionális Windows verzió parancs (ha Wine szükséges)
   stopCommand: string;
   port: number;
   queryPort?: number; // Query port (ha külön van)
