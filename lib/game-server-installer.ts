@@ -231,7 +231,7 @@ fi
             },
             `cat ${logPath} 2>/dev/null || echo "Log file not found"`
           );
-          logger.error('Installation log', {
+          logger.error('Installation log', undefined, {
             serverId,
             gameType,
             log: logResult.stdout,
