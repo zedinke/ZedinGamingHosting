@@ -50,10 +50,19 @@ export async function GET(
       );
     }
 
+    // The Forest esetén a szerver nevet a konfigurációból vesszük (servername), ha nincs, akkor a server.name-t használjuk
+    const config = server.configuration || {};
+    const defaults = getDefaultConfig(server.gameType, server.maxPlayers);
+    
+    // Ha a szerver neve változott a konfigurációban, akkor azt használjuk
+    if (server.gameType === 'THE_FOREST' && config.servername) {
+      defaults.servername = config.servername;
+    }
+
     return NextResponse.json({
       success: true,
-      config: server.configuration || {},
-      defaults: getDefaultConfig(server.gameType, server.maxPlayers),
+      config: config,
+      defaults: defaults,
     });
   } catch (error) {
     logger.error('Get server config error', error as Error, {
@@ -161,6 +170,9 @@ export async function PUT(
         case 'CS2':
           configPath = `${serverPath}/csgo/cfg/server.cfg`;
           break;
+        case 'THE_FOREST':
+          configPath = `${serverPath}/server.cfg`;
+          break;
         default:
           configPath = `${serverPath}/server.cfg`;
       }
@@ -184,6 +196,46 @@ export async function PUT(
           gameType: server.gameType,
           configPath,
         });
+      }
+
+      // The Forest esetén újra kell generálni a systemd service-t, hogy a frissített startCommand-ot használja
+      if (server.gameType === 'THE_FOREST') {
+        try {
+          const { ALL_GAME_SERVER_CONFIGS } = await import('@/lib/game-server-configs');
+          const { createSystemdServiceForServer } = await import('@/lib/game-server-installer');
+          
+          const gameConfig = ALL_GAME_SERVER_CONFIGS[server.gameType];
+          if (gameConfig) {
+            // A szerver név a konfigurációból jön (servername), ha nincs, akkor a server.name-t használjuk
+            const serverName = configuration?.servername || server.name;
+            const finalConfig = {
+              ...configuration,
+              name: serverName,
+            };
+
+            await createSystemdServiceForServer(
+              server.id,
+              server.gameType,
+              gameConfig,
+              finalConfig,
+              machine,
+              {
+                isARK: false,
+                sharedPath: null,
+                serverPath: `/opt/servers/${server.id}`,
+              }
+            );
+
+            logger.info('Systemd service regenerated for The Forest server', {
+              serverId: id,
+            });
+          }
+        } catch (error) {
+          logger.error('Failed to regenerate systemd service for The Forest', error as Error, {
+            serverId: id,
+          });
+          // Nem dobunk hibát, mert a konfiguráció már frissítve lett
+        }
       }
     }
 
@@ -322,6 +374,16 @@ function getDefaultConfig(gameType: string, maxPlayers: number): any {
       MaxConnectedUsers: maxPlayers,
       Password: '',
     },
+    THE_FOREST: {
+      servername: 'The Forest Server',
+      serverpassword: '',
+      serverplayers: maxPlayers,
+      serverautosaveinterval: 15,
+      difficulty: 'Normal',
+      inittype: 'Continue',
+      enableVAC: 'on',
+      // IP, port, slot NEM változtatható (csomaghoz kötött)
+    },
   };
 
   return defaults[gameType] || {};
@@ -381,6 +443,37 @@ function convertConfigToGameFormat(gameType: string, config: any): string {
       return Object.entries(config)
         .map(([key, value]) => `${key} "${value}"`)
         .join('\n');
+    
+    case 'THE_FOREST':
+      // The Forest konfiguráció - a server.cfg fájlba írjuk, de a startCommand-ban is használjuk
+      // A konfigurációs fájl csak dokumentációként szolgál, a tényleges beállítások a startCommand-ban vannak
+      return `# The Forest Dedicated Server Configuration
+# Generated automatically
+# Note: Most settings are applied via command line parameters in startCommand
+
+# Server Name
+serverName="${config.servername || 'The Forest Server'}"
+
+# Server Password (leave empty for no password)
+serverPassword="${config.serverpassword || ''}"
+
+# Max Players
+maxPlayers=${config.serverplayers || 8}
+
+# Auto Save Interval (minutes)
+serverautosaveinterval=${config.serverautosaveinterval || 15}
+
+# Difficulty: Normal, Hard, Hard Survival
+difficulty=${config.difficulty || 'Normal'}
+
+# Init Type: Continue, New
+inittype=${config.inittype || 'Continue'}
+
+# VAC Enabled: on, off
+enableVAC=${config.enableVAC || 'on'}
+
+# Note: IP, port, slot are fixed and cannot be changed (package-bound)
+`;
     
     default:
       return JSON.stringify(config, null, 2);

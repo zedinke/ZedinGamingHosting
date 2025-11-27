@@ -1029,7 +1029,13 @@ export async function createSystemdServiceForServer(
   const port = (config.port && typeof config.port === 'number') ? config.port : 25565;
   const maxPlayers = (config.maxPlayers && typeof config.maxPlayers === 'number') ? config.maxPlayers : 10;
   const ram = (config.ram && typeof config.ram === 'number') ? config.ram : 2048;
-  const name = (config.name && typeof config.name === 'string') ? config.name : `Server-${serverId}`;
+  // The Forest esetén a szerver nevet a konfigurációból vesszük (servername), ha nincs, akkor a config.name-t használjuk
+  let name: string;
+  if (gameType === 'THE_FOREST' && config.servername) {
+    name = config.servername;
+  } else {
+    name = (config.name && typeof config.name === 'string') ? config.name : `Server-${serverId}`;
+  }
   
   // Ellenőrizzük, hogy a gameConfig létezik-e
   if (!gameConfig || typeof gameConfig !== 'object') {
@@ -1063,6 +1069,17 @@ export async function createSystemdServiceForServer(
       .replace(/{adminPassword}/g, config.adminPassword || 'changeme')
       .replace(/{queryPort}/g, (gameConfig.queryPort || port + 1).toString())
       .replace(/{map}/g, config.map || 'TheIsland');
+    
+    // The Forest specifikus placeholder-ek
+    if (gameType === 'THE_FOREST') {
+      startCommand = startCommand
+        .replace(/{serverautosaveinterval}/g, (config.serverautosaveinterval || 15).toString())
+        .replace(/{difficulty}/g, config.difficulty || 'Normal')
+        .replace(/{inittype}/g, config.inittype || 'Continue')
+        .replace(/{enableVAC}/g, config.enableVAC || 'on')
+        // Slot fix érték (csomaghoz kötött, nem változtatható)
+        .replace(/{slot}/g, (config.slot || 3).toString());
+    }
   }
 
   const workingDir = paths?.serverPath || `/opt/servers/${serverId}`;

@@ -135,6 +135,14 @@ export function UserServerConfigEditor({
       sv_password: 'Jelszó',
       rcon_password: 'RCON Jelszó',
       sv_lan: 'LAN Mód',
+      // The Forest
+      servername: 'Szerver Név',
+      serverpassword: 'Szerver Jelszó',
+      serverplayers: 'Max Játékosok',
+      serverautosaveinterval: 'Autosave Intervallum (perc)',
+      difficulty: 'Nehézség',
+      inittype: 'Init Típus',
+      enableVAC: 'VAC Engedélyezve',
     };
     return labels[key] || key;
   };
@@ -146,6 +154,8 @@ export function UserServerConfigEditor({
     // Speciális esetek
     if (key === 'difficulty' || key === 'gamemode') return 'select';
     if (key === 'GameDifficulty') return 'select';
+    if (key === 'inittype') return 'select';
+    if (key === 'enableVAC') return 'select';
     if (key === 'public' || key === 'sv_lan' || key === 'PvPEnabled' || key === 'PvP') return 'boolean';
     
     return 'text';
@@ -153,6 +163,15 @@ export function UserServerConfigEditor({
 
   const getSelectOptions = (key: string): Array<{ value: string; label: string }> => {
     if (key === 'difficulty') {
+      // The Forest difficulty options
+      if (gameType === 'THE_FOREST') {
+        return [
+          { value: 'Normal', label: 'Normál' },
+          { value: 'Hard', label: 'Nehéz' },
+          { value: 'Hard Survival', label: 'Nehéz Túlélés' },
+        ];
+      }
+      // Minecraft difficulty options
       return [
         { value: 'peaceful', label: 'Békés' },
         { value: 'easy', label: 'Könnyű' },
@@ -176,6 +195,18 @@ export function UserServerConfigEditor({
         { value: '3', label: 'Túlélő' },
         { value: '4', label: 'Insane' },
         { value: '5', label: 'Nightmare' },
+      ];
+    }
+    if (key === 'inittype') {
+      return [
+        { value: 'Continue', label: 'Folytatás' },
+        { value: 'New', label: 'Új' },
+      ];
+    }
+    if (key === 'enableVAC') {
+      return [
+        { value: 'on', label: 'Bekapcsolva' },
+        { value: 'off', label: 'Kikapcsolva' },
       ];
     }
     return [];
