@@ -30,6 +30,7 @@ export function AIChatPanel() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [showSidebar, setShowSidebar] = useState(true);
   const [useWebSearch, setUseWebSearch] = useState(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Konverzációk betöltése
   useEffect(() => {
@@ -99,6 +100,9 @@ export function AIChatPanel() {
 
       if (stream) {
         // Streaming válasz
+        // Abort controller létrehozása a megszakításhoz
+        abortControllerRef.current = new AbortController();
+        
         const response = await fetch('/api/admin/ai/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -108,6 +112,7 @@ export function AIChatPanel() {
             stream: true,
             useWebSearch,
           }),
+          signal: abortControllerRef.current.signal,
         });
 
         if (!response.ok) {
@@ -132,50 +137,83 @@ export function AIChatPanel() {
         let fullResponse = '';
         let finalConversationId = conversationId;
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
 
-          const chunk = decoder.decode(value);
-          const lines = chunk.split('\n').filter((line) => line.trim());
+            const chunk = decoder.decode(value);
+            const lines = chunk.split('\n').filter((line) => line.trim());
 
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              try {
-                const data = JSON.parse(line.slice(6));
-                if (data.content) {
-                  fullResponse += data.content;
-                  setStreamingContent(fullResponse);
-                }
-                if (data.error) {
-                  throw new Error(data.error);
-                }
-                if (data.done) {
-                  finalConversationId = data.conversationId || finalConversationId;
-                  setStreaming(false);
-                  setStreamingContent('');
-                  
-                  // Válasz hozzáadása
-                  const assistantMessage: Message = {
-                    id: `msg-${Date.now()}`,
-                    role: 'assistant',
-                    content: fullResponse,
-                    createdAt: new Date().toISOString(),
-                  };
-                  setMessages([...newMessages, assistantMessage]);
-                  
-                  // Konverzáció frissítése
-                  if (finalConversationId) {
-                    await loadConversation(finalConversationId);
-                    await loadConversations();
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                try {
+                  const data = JSON.parse(line.slice(6));
+                  if (data.content) {
+                    fullResponse += data.content;
+                    setStreamingContent(fullResponse);
                   }
-                  break;
+                  if (data.error) {
+                    throw new Error(data.error);
+                  }
+                  if (data.done) {
+                    finalConversationId = data.conversationId || finalConversationId;
+                    setStreaming(false);
+                    setStreamingContent('');
+                    
+                    // Válasz hozzáadása
+                    const assistantMessage: Message = {
+                      id: `msg-${Date.now()}`,
+                      role: 'assistant',
+                      content: fullResponse,
+                      createdAt: new Date().toISOString(),
+                    };
+                    setMessages([...newMessages, assistantMessage]);
+                    
+                    // Konverzáció frissítése
+                    if (finalConversationId) {
+                      await loadConversation(finalConversationId);
+                      await loadConversations();
+                    }
+                    break;
+                  }
+                } catch (e) {
+                  // JSON parse hiba, folytatjuk
                 }
-              } catch (e) {
-                // JSON parse hiba, folytatjuk
               }
             }
           }
+        } catch (abortError: any) {
+          // AbortError esetén megszakítjuk
+          if (abortError.name === 'AbortError') {
+            if (fullResponse) {
+              const assistantMessage: Message = {
+                id: `msg-${Date.now()}`,
+                role: 'assistant',
+                content: fullResponse + '\n\n[Megszakítva]',
+                createdAt: new Date().toISOString(),
+              };
+              setMessages([...newMessages, assistantMessage]);
+            }
+            return;
+          }
+          throw abortError;
+        }
+        } catch (abortError: any) {
+          // AbortError esetén megszakítjuk
+          if (abortError.name === 'AbortError') {
+            if (fullResponse) {
+              const assistantMessage: Message = {
+                id: `msg-${Date.now()}`,
+                role: 'assistant',
+                content: fullResponse + '\n\n[Megszakítva]',
+                createdAt: new Date().toISOString(),
+              };
+              setMessages([...newMessages, assistantMessage]);
+            }
+            return;
+          }
+          throw abortError;
         }
       } else {
         // Normál válasz
@@ -220,6 +258,21 @@ export function AIChatPanel() {
         }
       }
     } catch (error: any) {
+      // AbortError esetén ne jelenjen meg hibaüzenet
+      if (error.name === 'AbortError') {
+        // Megszakított válasz mentése
+        if (streamingContent) {
+          const assistantMessage: Message = {
+            id: `msg-${Date.now()}`,
+            role: 'assistant',
+            content: streamingContent + '\n\n[Megszakítva]',
+            createdAt: new Date().toISOString(),
+          };
+          setMessages([...newMessages, assistantMessage]);
+        }
+        return;
+      }
+      
       console.error('Üzenet küldés hiba:', error);
       toast.error(error.message || 'Hiba történt az üzenet küldése során');
       
@@ -234,6 +287,17 @@ export function AIChatPanel() {
       setLoading(false);
       setStreaming(false);
       setStreamingContent('');
+      abortControllerRef.current = null;
+    }
+  };
+
+  const stopGeneration = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+      setStreaming(false);
+      setLoading(false);
+      toast.success('Válasz generálás megszakítva');
     }
   };
 
@@ -413,17 +477,26 @@ export function AIChatPanel() {
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Írj be egy kérdést vagy kérést... (pl: 'Írj egy új API endpointot', 'Javítsd a lib/error-handler.ts fájlt')"
-              className="flex-1 min-h-[60px] max-h-[200px] px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+              className="flex-1 min-h-[60px] max-h-[200px] px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none text-gray-900 bg-white"
               disabled={loading}
             />
             <div className="flex flex-col gap-2">
-              <button
-                onClick={() => sendMessage()}
-                disabled={loading || !input.trim()}
-                className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                Küldés
-              </button>
+              {streaming ? (
+                <button
+                  onClick={stopGeneration}
+                  className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  Leállítás
+                </button>
+              ) : (
+                <button
+                  onClick={() => sendMessage()}
+                  disabled={loading || !input.trim()}
+                  className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Küldés
+                </button>
+              )}
               <label className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer">
                 <input
                   type="checkbox"
