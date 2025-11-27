@@ -248,10 +248,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate unique filename
+    // fileExtension már definiálva van korábban (121. sor), és validálva van
     const timestamp = Date.now();
     const randomString = Math.random().toString(36).substring(2, 15);
-    const fileExtension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-    const fileName = `${timestamp}-${randomString}.${fileExtension}`;
+    // fileExtension már validálva van, biztosan van értéke
+    const finalExtension = fileExtension || 'jpg'; // Fallback biztonsági okokból
+    const fileName = `${timestamp}-${randomString}.${finalExtension}`;
     const filePath = join(uploadsDir, fileName);
 
     // Save file
