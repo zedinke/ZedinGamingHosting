@@ -666,9 +666,18 @@ export async function createSystemdServiceForServer(
   const workingDir = paths?.serverPath || `/opt/servers/${serverId}`;
   const execDir = paths?.isARK && paths.sharedPath ? paths.sharedPath : workingDir;
 
-  // Escape speciális karakterek a startCommand-ban
-  const escapedStartCommand = startCommand.replace(/\$/g, '\\$').replace(/"/g, '\\"');
+  // Escape speciális karakterek a startCommand-ban systemd-hez
+  // Systemd service fájlokban az ExecStart sorban escape-elni kell a $ karaktereket
+  // Fontos: az ExecStart sorban nem lehet sortörés, minden egy sorban kell legyen
+  const escapedStartCommand = startCommand
+    .replace(/\$/g, '\\$')
+    .replace(/"/g, '\\"')
+    .replace(/\n/g, ' ') // Új sorok eltávolítása
+    .replace(/\r/g, '') // Carriage return eltávolítása
+    .trim();
   
+  // Systemd service fájl tartalom
+  // Fontos: minden kulcs=érték pár egy sorban kell legyen, nincs sortörés
   const serviceContent = `[Unit]
 Description=Game Server ${serverId} (${gameType})
 After=network.target
@@ -686,6 +695,9 @@ StandardError=journal
 [Install]
 WantedBy=multi-user.target`;
 
+  // Base64 encoding használata a service fájl írásához, hogy elkerüljük az escape problémákat
+  const serviceContentBase64 = Buffer.from(serviceContent).toString('base64');
+  
   await executeSSHCommand(
     {
       host: machine.ipAddress,
@@ -693,7 +705,7 @@ WantedBy=multi-user.target`;
       user: machine.sshUser,
       keyPath: machine.sshKeyPath || undefined,
     },
-    `cat > /etc/systemd/system/server-${serverId}.service << 'EOF'\n${serviceContent}\nEOF && systemctl daemon-reload`
+    `echo '${serviceContentBase64}' | base64 -d > /etc/systemd/system/server-${serverId}.service && systemctl daemon-reload`
   );
 
   logger.info('Systemd service created', {
