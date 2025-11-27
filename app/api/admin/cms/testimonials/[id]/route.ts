@@ -18,7 +18,7 @@ const testimonialSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -26,8 +26,9 @@ export async function GET(
       return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 403 });
     }
 
+    const { id } = await params;
     const testimonial = await prisma.testimonial.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!testimonial) {
@@ -46,7 +47,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -58,7 +59,7 @@ export async function PUT(
     const data = testimonialSchema.parse(body);
 
     const testimonial = await prisma.testimonial.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         name: data.name,
         role: data.role || null,
@@ -89,7 +90,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -98,7 +99,7 @@ export async function DELETE(
     }
 
     await prisma.testimonial.delete({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     return NextResponse.json({ success: true });

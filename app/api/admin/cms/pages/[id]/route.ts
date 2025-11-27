@@ -17,7 +17,7 @@ const pageSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -25,8 +25,9 @@ export async function GET(
       return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 403 });
     }
 
+    const { id } = await params;
     const page = await prisma.page.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!page) {
@@ -45,7 +46,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -53,6 +54,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 403 });
     }
 
+    const { id } = await params;
     const body = await request.json();
     const data = pageSchema.parse(body);
 
@@ -61,7 +63,7 @@ export async function PUT(
       where: {
         slug: data.slug,
         locale: data.locale,
-        id: { not: params.id },
+        id: { not: id },
       },
     });
 
@@ -73,7 +75,7 @@ export async function PUT(
     }
 
     const page = await prisma.page.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         slug: data.slug,
         title: data.title,
@@ -103,7 +105,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -111,8 +113,9 @@ export async function DELETE(
       return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 403 });
     }
 
+    const { id } = await params;
     await prisma.page.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ success: true });

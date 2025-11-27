@@ -26,7 +26,7 @@ const homepageSectionSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -34,8 +34,9 @@ export async function GET(
       return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 403 });
     }
 
+    const { id } = await params;
     const section = await prisma.homepageSection.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!section) {
@@ -54,7 +55,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -66,7 +67,7 @@ export async function PUT(
     const data = homepageSectionSchema.parse(body);
 
     const section = await prisma.homepageSection.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         type: data.type,
         title: data.title || null,
@@ -99,7 +100,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -108,7 +109,7 @@ export async function DELETE(
     }
 
     await prisma.homepageSection.delete({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     return NextResponse.json({ success: true });

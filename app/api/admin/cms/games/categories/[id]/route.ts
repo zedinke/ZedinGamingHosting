@@ -21,7 +21,7 @@ const gameCategorySchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -29,8 +29,9 @@ export async function GET(
       return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 403 });
     }
 
+    const { id } = await params;
     const category = await prisma.gameCategory.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!category) {
@@ -49,7 +50,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -64,7 +65,7 @@ export async function PUT(
     const existing = await prisma.gameCategory.findFirst({
       where: {
         slug: data.slug,
-        id: { not: params.id },
+        id: { not: id },
       },
     });
 
@@ -76,7 +77,7 @@ export async function PUT(
     }
 
     const category = await prisma.gameCategory.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         name: data.name,
         slug: data.slug,
@@ -107,7 +108,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -116,7 +117,7 @@ export async function DELETE(
     }
 
     await prisma.gameCategory.delete({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     return NextResponse.json({ success: true });
