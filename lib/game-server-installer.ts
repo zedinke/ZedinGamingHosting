@@ -965,21 +965,55 @@ export async function createSystemdServiceForServer(
     useWrapperScript = true;
     // Wrapper script létrehozása, ami először telepíti az Xvfb-t, Wine-t, Winbind-et, majd futtatja a szervert
     const wrapperScript = `#!/bin/bash
-set -e
+set +e
 cd ${execDir}
 
 # Xvfb, Wine, Winbind telepítése, ha nincs
 if ! command -v xvfb-run >/dev/null 2>&1; then
-  echo "Xvfb telepítése..."
+  echo "Xvfb telepítése..." >&2
   export DEBIAN_FRONTEND=noninteractive
-  apt-get update -qq >/dev/null 2>&1
-  apt-get install -y xvfb wine-stable winbind >/dev/null 2>&1 || {
-    echo "HIBA: Xvfb/Wine/Winbind telepítése sikertelen" >&2
+  
+  # Apt-get update
+  apt-get update -qq 2>&1
+  UPDATE_EXIT=$?
+  if [ $UPDATE_EXIT -ne 0 ]; then
+    echo "FIGYELMEZTETÉS: apt-get update sikertelen (exit code: $UPDATE_EXIT), de folytatjuk..." >&2
+  fi
+  
+  # Xvfb telepítése
+  apt-get install -y xvfb 2>&1
+  XVFB_EXIT=$?
+  if [ $XVFB_EXIT -ne 0 ]; then
+    echo "HIBA: Xvfb telepítése sikertelen (exit code: $XVFB_EXIT)" >&2
     exit 1
-  }
+  fi
+  
+  # Wine telepítése
+  apt-get install -y wine-stable 2>&1
+  WINE_EXIT=$?
+  if [ $WINE_EXIT -ne 0 ]; then
+    echo "HIBA: Wine telepítése sikertelen (exit code: $WINE_EXIT)" >&2
+    exit 1
+  fi
+  
+  # Winbind telepítése
+  apt-get install -y winbind 2>&1
+  WINBIND_EXIT=$?
+  if [ $WINBIND_EXIT -ne 0 ]; then
+    echo "FIGYELMEZTETÉS: Winbind telepítése sikertelen (exit code: $WINBIND_EXIT), de folytatjuk..." >&2
+  fi
+  
+  # Ellenőrzés, hogy az xvfb-run most már elérhető-e
+  if ! command -v xvfb-run >/dev/null 2>&1; then
+    echo "HIBA: xvfb-run még mindig nem található a telepítés után" >&2
+    exit 1
+  fi
+  
+  echo "Xvfb, Wine, Winbind telepítése sikeres" >&2
 fi
 
 # Szerver futtatása
+set -e
 ${startCommand.replace(/"/g, '\\"')}
 `;
 
