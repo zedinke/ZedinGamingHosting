@@ -424,7 +424,7 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
             </div>
 
             {/* Erőforrás bővítés */}
-            {(upgradePrices && (upgradePrices.pricePerVCpu > 0 || upgradePrices.pricePerRamGB > 0)) || selectedGamePackage.pricePerSlot ? (
+            {((upgradePrices && (upgradePrices.pricePerVCpu > 0 || upgradePrices.pricePerRamGB > 0)) || selectedGamePackage.pricePerSlot) && (
             <div className="border-t pt-5 mt-5">
               <h3 className="text-lg font-bold text-gray-900 mb-4">Erőforrás Bővítés (Opcionális)</h3>
               <p className="text-sm text-gray-600 mb-4">
