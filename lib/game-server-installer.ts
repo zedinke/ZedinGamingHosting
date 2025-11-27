@@ -1133,8 +1133,9 @@ if ! command -v xauth >/dev/null 2>&1; then
 else
   echo "xauth már telepítve van"
 fi
-  
-  # Wine telepítése (hibaüzenetekkel)
+
+# Wine telepítése (hibaüzenetekkel)
+if ! command -v wine >/dev/null 2>&1; then
   echo "Wine telepítése..."
   apt-get install -y wine-stable 2>&1
   WINE_EXIT=$?
@@ -1149,8 +1150,12 @@ fi
     fi
   fi
   echo "Wine telepítése sikeres"
-  
-  # Winbind telepítése (hibaüzenetekkel)
+else
+  echo "Wine már telepítve van"
+fi
+
+# Winbind telepítése (hibaüzenetekkel)
+if ! command -v winbind >/dev/null 2>&1; then
   echo "Winbind telepítése..."
   apt-get install -y winbind 2>&1
   WINBIND_EXIT=$?
@@ -1159,26 +1164,28 @@ fi
   else
     echo "Winbind telepítése sikeres"
   fi
-  
-  # Ellenőrzés, hogy az xvfb-run és xauth most már elérhető-e
-  if ! command -v xvfb-run >/dev/null 2>&1; then
-    echo "HIBA: xvfb-run még mindig nem található a telepítés után"
-    echo "Keresés xvfb-run után:"
-    which xvfb-run 2>&1 || find /usr -name xvfb-run 2>&1 | head -5
-    exit 1
-  fi
-  
-  if ! command -v xauth >/dev/null 2>&1; then
-    echo "HIBA: xauth még mindig nem található a telepítés után"
-    echo "Keresés xauth után:"
-    which xauth 2>&1 || find /usr -name xauth 2>&1 | head -5
-    exit 1
-  fi
-  
-  echo "Xvfb, xauth, Wine, Winbind telepítése sikeres"
-  echo "xvfb-run elérhető: $(which xvfb-run)"
-  echo "xauth elérhető: $(which xauth)"
+else
+  echo "Winbind már telepítve van"
 fi
+
+# Ellenőrzés, hogy az xvfb-run és xauth most már elérhető-e
+if ! command -v xvfb-run >/dev/null 2>&1; then
+  echo "HIBA: xvfb-run még mindig nem található a telepítés után"
+  echo "Keresés xvfb-run után:"
+  which xvfb-run 2>&1 || find /usr -name xvfb-run 2>&1 | head -5
+  exit 1
+fi
+
+if ! command -v xauth >/dev/null 2>&1; then
+  echo "HIBA: xauth még mindig nem található a telepítés után"
+  echo "Keresés xauth után:"
+  which xauth 2>&1 || find /usr -name xauth 2>&1 | head -5
+  exit 1
+fi
+
+echo "Xvfb, xauth, Wine, Winbind telepítése sikeres"
+echo "xvfb-run elérhető: $(which xvfb-run)"
+echo "xauth elérhető: $(which xauth)"
 
 # The Forest szerver esetén a save könyvtárat is létrehozzuk
 if echo "${startCommand}" | grep -q "TheForestDedicatedServer.exe"; then
