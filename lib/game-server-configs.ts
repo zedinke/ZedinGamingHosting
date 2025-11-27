@@ -917,7 +917,7 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
       echo "FIGYELMEZTETÉS: A The Forest dedikált szerver Windows verzió, Wine-on keresztül kell futtatni Linux-on!"
     `,
     configPath: '/opt/servers/{serverId}/server.cfg',
-    startCommand: 'xvfb-run --auto-servernum --server-args="-screen 0 640x480x24:32" wine ./TheForestDedicatedServer.exe -batchmode -nographics -savefolderpath ./savefilesserver/ -configfilepath ./server.cfg',
+    startCommand: "xvfb-run --auto-servernum --server-args='-screen 0 640x480x24:32' wine ./TheForestDedicatedServer.exe -batchmode -nographics -savefolderpath ./savefilesserver/ -configfilepath ./server.cfg",
     stopCommand: 'quit',
     port: 27015,
     requiresWine: true,

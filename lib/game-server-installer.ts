@@ -1197,7 +1197,7 @@ fi
 
 # Szerver futtatása
 set -e
-${startCommand.replace(/"/g, '\\"')}
+eval "${startCommand}"
 `;
 
     const wrapperScriptBase64 = Buffer.from(wrapperScript).toString('base64');
