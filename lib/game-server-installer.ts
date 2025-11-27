@@ -289,17 +289,23 @@ fi
         installScript = installScript.replace(/\/opt\/servers\/\{serverId\}/g, sharedPath);
       }
       
-      // Placeholder-ek cseréje
+      // Placeholder-ek cseréje - biztosítjuk, hogy a config mezők létezzenek
+      const port = config.port || 25565;
+      const maxPlayers = config.maxPlayers || 10;
+      const ram = config.ram || 2048;
+      const name = config.name || `Server-${serverId}`;
+      const queryPort = gameConfig.queryPort || port + 1;
+      
       installScript = installScript
         .replace(/{serverId}/g, serverId)
-        .replace(/{port}/g, config.port.toString())
-        .replace(/{maxPlayers}/g, config.maxPlayers.toString())
-        .replace(/{ram}/g, config.ram.toString())
-        .replace(/{name}/g, config.name)
+        .replace(/{port}/g, port.toString())
+        .replace(/{maxPlayers}/g, maxPlayers.toString())
+        .replace(/{ram}/g, ram.toString())
+        .replace(/{name}/g, name)
         .replace(/{world}/g, config.world || 'Dedicated')
         .replace(/{password}/g, config.password || '')
         .replace(/{adminPassword}/g, config.adminPassword || 'changeme')
-        .replace(/{queryPort}/g, (gameConfig.queryPort || config.port + 1).toString());
+        .replace(/{queryPort}/g, queryPort.toString());
 
       // Script fájl létrehozása és futtatása
       const scriptPath = `/tmp/install-${isARK ? `ark-shared-${server.userId}` : serverId}.sh`;
@@ -498,6 +504,23 @@ fi
         configPath = configPath.replace(/{serverId}/g, serverId);
       }
       
+      // The Forest-nál a save könyvtárat is létrehozzuk
+      if (gameType === 'THE_FOREST') {
+        const savePath = `${serverPath}/savefilesserver`;
+        await executeSSHCommand(
+          {
+            host: machine.ipAddress,
+            port: machine.sshPort,
+            user: machine.sshUser,
+            keyPath: machine.sshKeyPath || undefined,
+          },
+          `mkdir -p ${savePath} && chmod 755 ${savePath} && chown root:root ${savePath}`
+        );
+        if (writeProgress) {
+          await appendInstallLog(serverId, `Save könyvtár létrehozva: ${savePath}`);
+        }
+      }
+      
       await executeSSHCommand(
         {
           host: machine.ipAddress,
@@ -510,6 +533,25 @@ fi
       
       if (writeProgress) {
         await appendInstallLog(serverId, `Konfigurációs fájl létrehozva: ${configPath}`);
+      }
+    } else if (gameType === 'THE_FOREST') {
+      // The Forest-nál a configfilepath kötelező, de ha nincs configContent,
+      // akkor is létrehozunk egy üres fájlt, hogy a szerver generáljon egy alapértelmezettet
+      let configPath = gameConfig.configPath.replace(/{serverId}/g, serverId);
+      const savePath = `${serverPath}/savefilesserver`;
+      
+      await executeSSHCommand(
+        {
+          host: machine.ipAddress,
+          port: machine.sshPort,
+          user: machine.sshUser,
+          keyPath: machine.sshKeyPath || undefined,
+        },
+        `mkdir -p ${savePath} && chmod 755 ${savePath} && chown root:root ${savePath} && mkdir -p $(dirname ${configPath}) && touch ${configPath} && chmod 644 ${configPath} && chown root:root ${configPath}`
+      );
+      
+      if (writeProgress) {
+        await appendInstallLog(serverId, `Save könyvtár és konfigurációs fájl könyvtár létrehozva (üres config fájl, a szerver generál egy alapértelmezettet)`);
       }
     }
 
@@ -667,16 +709,24 @@ function generateConfigFile(
   config: any,
   gameConfig: any
 ): string {
-  const queryPort = gameConfig.queryPort || config.port + 1;
+  // Biztosítjuk, hogy a config létezik és tartalmazza a szükséges mezőket
+  if (!config) {
+    throw new Error('Config objektum hiányzik a generateConfigFile függvényben');
+  }
+  
+  const port = config.port || 25565;
+  const maxPlayers = config.maxPlayers || 10;
+  const name = config.name || 'Server';
+  const queryPort = gameConfig.queryPort || port + 1;
 
   switch (gameType) {
     case 'MINECRAFT':
       return `
-server-port=${config.port}
-max-players=${config.maxPlayers}
+server-port=${port}
+max-players=${maxPlayers}
 online-mode=false
 white-list=false
-motd=${config.name}
+motd=${name}
 difficulty=normal
 gamemode=survival
       `.trim();
@@ -687,9 +737,9 @@ gamemode=survival
       return `
 [ServerSettings]
 ServerAdminPassword=${config.adminPassword || 'changeme'}
-MaxPlayers=${config.maxPlayers}
+MaxPlayers=${maxPlayers}
 ServerPassword=${config.password || ''}
-ServerName=${config.name}
+ServerName=${name}
 ${config.clusterId ? `ClusterDirOverride=/mnt/ark-cluster/${config.clusterId}` : ''}
 ${config.clusterId ? `ClusterId=${config.clusterId}` : ''}
 
@@ -699,18 +749,18 @@ ${config.clusterId ? `ClusterId=${config.clusterId}` : ''}
     case 'CS2':
     case 'CSGO':
       return `
-hostname "${config.name}"
-maxplayers ${config.maxPlayers}
+hostname "${name}"
+maxplayers ${maxPlayers}
 sv_lan 0
 rcon_password "${config.password || 'changeme'}"
       `.trim();
 
     case 'RUST':
       return `
-server.hostname "${config.name}"
-server.identity "${config.name}"
-server.maxplayers ${config.maxPlayers}
-server.port ${config.port}
+server.hostname "${name}"
+server.identity "${name}"
+server.maxplayers ${maxPlayers}
+server.port ${port}
 server.queryport ${queryPort}
       `.trim();
 
@@ -722,9 +772,9 @@ server.queryport ${queryPort}
 
     case 'SEVEN_DAYS_TO_DIE':
       return `
-<property name="ServerName" value="${config.name}"/>
-<property name="ServerPort" value="${config.port}"/>
-<property name="ServerMaxPlayerCount" value="${config.maxPlayers}"/>
+<property name="ServerName" value="${name}"/>
+<property name="ServerPort" value="${port}"/>
+<property name="ServerMaxPlayerCount" value="${maxPlayers}"/>
 <property name="ServerPassword" value="${config.password || ''}"/>
       `.trim();
 
@@ -778,11 +828,11 @@ OptionSettings=(
   bEnableDefenseOtherGuildPlayer=False,
   CoopPlayerMaxNum=4,
   ServerPlayerMaxNum=32,
-  ServerName="${config.name}",
+  ServerName="${name}",
   ServerDescription="",
   AdminPassword="${config.adminPassword || 'changeme'}",
   ServerPassword="${config.password || ''}",
-  PublicPort=${config.port},
+  PublicPort=${port},
   PublicIP="",
   RCONEnabled=True,
   RCONPort=25575,
@@ -790,6 +840,38 @@ OptionSettings=(
   bUseAuth=True,
   BanListURL="https://api.palworldgame.com/api/banlist.txt"
 )
+      `.trim();
+
+    case 'THE_FOREST':
+      // The Forest szerver konfigurációs fájl
+      // Az útmutató szerint a szerver generál egy alapértelmezett konfigurációt, ha a fájl nem létezik
+      // De létrehozunk egy alapvető konfigurációt, hogy biztosan működjön
+      return `# The Forest Dedicated Server Configuration
+# Generated automatically
+
+# Server Name
+serverName="${name}"
+
+# Server Password (leave empty for no password)
+serverPassword="${config.password || ''}"
+
+# Max Players
+maxPlayers=${maxPlayers}
+
+# Server Port
+serverPort=${port}
+
+# Query Port (usually port + 1)
+queryPort=${queryPort}
+
+# Admin Password
+adminPassword="${config.adminPassword || 'changeme'}"
+
+# Save Folder Path (relative to server directory)
+saveFolderPath=./savefilesserver/
+
+# Additional settings can be added here
+# For more information, see the official The Forest server documentation
       `.trim();
 
     default:
@@ -929,28 +1011,48 @@ export async function createSystemdServiceForServer(
     serverPath: string;
   }
 ): Promise<void> {
+  // Ellenőrizzük, hogy a config létezik-e és tartalmazza-e a szükséges mezőket
+  if (!config || typeof config !== 'object') {
+    throw new Error(`Config objektum hiányzik vagy érvénytelen: ${JSON.stringify(config)}`);
+  }
+  
+  // Alapértelmezett értékek beállítása, ha hiányoznak
+  const port = (config.port && typeof config.port === 'number') ? config.port : 25565;
+  const maxPlayers = (config.maxPlayers && typeof config.maxPlayers === 'number') ? config.maxPlayers : 10;
+  const ram = (config.ram && typeof config.ram === 'number') ? config.ram : 2048;
+  const name = (config.name && typeof config.name === 'string') ? config.name : `Server-${serverId}`;
+  
+  // Ellenőrizzük, hogy a gameConfig létezik-e
+  if (!gameConfig || typeof gameConfig !== 'object') {
+    throw new Error(`GameConfig objektum hiányzik vagy érvénytelen: ${JSON.stringify(gameConfig)}`);
+  }
+  
+  // Ellenőrizzük, hogy a startCommand létezik-e
+  if (!gameConfig.startCommand || typeof gameConfig.startCommand !== 'string') {
+    throw new Error(`GameConfig.startCommand hiányzik vagy érvénytelen: ${gameConfig.startCommand}`);
+  }
+  
   let startCommand = gameConfig.startCommand;
   
   // ARK-nál a közös fájlokat használjuk, de az instance könyvtárban dolgozunk
   if (paths?.isARK && paths.sharedPath) {
     // ARK start command a közös binárist használja, de az instance Saved könyvtárát
     const map = config.map || 'TheIsland';
-    const port = config.port;
-    const queryPort = gameConfig.queryPort || config.port + 1;
+    const queryPort = gameConfig.queryPort || port + 1;
     const adminPassword = config.adminPassword || 'changeme';
     
     startCommand = `cd ${paths.sharedPath} && ./ShooterGame/Binaries/Linux/ShooterGameServer ${map}?listen?Port=${port}?QueryPort=${queryPort}?ServerAdminPassword=${adminPassword} -servergamelog -servergamelogincludetribelogs -NoBattlEye -UseBattlEye -clusterid=${config.clusterId || ''} -ClusterDirOverride=${paths.serverPath}/ShooterGame/Saved`;
   } else {
     // Normál játékok
     startCommand = startCommand
-      .replace(/{port}/g, config.port.toString())
-      .replace(/{maxPlayers}/g, config.maxPlayers.toString())
-      .replace(/{ram}/g, config.ram.toString())
-      .replace(/{name}/g, config.name)
+      .replace(/{port}/g, port.toString())
+      .replace(/{maxPlayers}/g, maxPlayers.toString())
+      .replace(/{ram}/g, ram.toString())
+      .replace(/{name}/g, name)
       .replace(/{world}/g, config.world || 'Dedicated')
       .replace(/{password}/g, config.password || '')
       .replace(/{adminPassword}/g, config.adminPassword || 'changeme')
-      .replace(/{queryPort}/g, (gameConfig.queryPort || config.port + 1).toString())
+      .replace(/{queryPort}/g, (gameConfig.queryPort || port + 1).toString())
       .replace(/{map}/g, config.map || 'TheIsland');
   }
 
@@ -968,12 +1070,11 @@ export async function createSystemdServiceForServer(
 set +e
 cd ${execDir}
 
-# Xvfb, Wine, Winbind telepítése, ha nincs
-if ! command -v xvfb-run >/dev/null 2>&1; then
-  echo "Xvfb telepítése..."
-  export DEBIAN_FRONTEND=noninteractive
-  
-  # Apt-get update (hibaüzenetekkel)
+# Xvfb, xauth, Wine, Winbind telepítése, ha nincs
+export DEBIAN_FRONTEND=noninteractive
+
+# Apt-get update (hibaüzenetekkel) - csak akkor, ha valami hiányzik
+if ! command -v xvfb-run >/dev/null 2>&1 || ! command -v xauth >/dev/null 2>&1 || ! command -v wine >/dev/null 2>&1; then
   echo "apt-get update futtatása..."
   apt-get update 2>&1
   UPDATE_EXIT=$?
@@ -982,8 +1083,10 @@ if ! command -v xvfb-run >/dev/null 2>&1; then
   else
     echo "apt-get update sikeres"
   fi
-  
-  # Xvfb telepítése (hibaüzenetekkel)
+fi
+
+# Xvfb telepítése (hibaüzenetekkel)
+if ! command -v xvfb-run >/dev/null 2>&1; then
   echo "Xvfb telepítése..."
   apt-get install -y xvfb 2>&1
   XVFB_EXIT=$?
@@ -998,6 +1101,29 @@ if ! command -v xvfb-run >/dev/null 2>&1; then
     fi
   fi
   echo "Xvfb telepítése sikeres"
+else
+  echo "Xvfb már telepítve van"
+fi
+
+# xauth telepítése (xvfb-run működéséhez szükséges)
+if ! command -v xauth >/dev/null 2>&1; then
+  echo "xauth telepítése..."
+  apt-get install -y xauth 2>&1
+  XAUTH_EXIT=$?
+  if [ $XAUTH_EXIT -ne 0 ]; then
+    echo "HIBA: xauth telepítése sikertelen (exit code: $XAUTH_EXIT)"
+    echo "Próbáljuk meg az x11-xserver-utils csomagot telepíteni..."
+    apt-get install -y x11-xserver-utils 2>&1
+    XAUTH_EXIT=$?
+    if [ $XAUTH_EXIT -ne 0 ]; then
+      echo "HIBA: xauth telepítése még mindig sikertelen (exit code: $XAUTH_EXIT)"
+      exit 1
+    fi
+  fi
+  echo "xauth telepítése sikeres"
+else
+  echo "xauth már telepítve van"
+fi
   
   # Wine telepítése (hibaüzenetekkel)
   echo "Wine telepítése..."
@@ -1025,7 +1151,7 @@ if ! command -v xvfb-run >/dev/null 2>&1; then
     echo "Winbind telepítése sikeres"
   fi
   
-  # Ellenőrzés, hogy az xvfb-run most már elérhető-e
+  # Ellenőrzés, hogy az xvfb-run és xauth most már elérhető-e
   if ! command -v xvfb-run >/dev/null 2>&1; then
     echo "HIBA: xvfb-run még mindig nem található a telepítés után"
     echo "Keresés xvfb-run után:"
@@ -1033,8 +1159,24 @@ if ! command -v xvfb-run >/dev/null 2>&1; then
     exit 1
   fi
   
-  echo "Xvfb, Wine, Winbind telepítése sikeres"
+  if ! command -v xauth >/dev/null 2>&1; then
+    echo "HIBA: xauth még mindig nem található a telepítés után"
+    echo "Keresés xauth után:"
+    which xauth 2>&1 || find /usr -name xauth 2>&1 | head -5
+    exit 1
+  fi
+  
+  echo "Xvfb, xauth, Wine, Winbind telepítése sikeres"
   echo "xvfb-run elérhető: $(which xvfb-run)"
+  echo "xauth elérhető: $(which xauth)"
+fi
+
+# The Forest szerver esetén a save könyvtárat is létrehozzuk
+if echo "${startCommand}" | grep -q "TheForestDedicatedServer.exe"; then
+  echo "The Forest szerver észlelve, save könyvtár ellenőrzése..."
+  mkdir -p ./savefilesserver
+  chmod 755 ./savefilesserver
+  echo "Save könyvtár: $(pwd)/savefilesserver"
 fi
 
 # Szerver futtatása
