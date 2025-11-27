@@ -58,6 +58,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 403 });
     }
 
+    const { id } = await params;
     const body = await request.json();
     const data = blogPostSchema.parse(body);
 
