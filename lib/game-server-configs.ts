@@ -793,6 +793,15 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
       
       cd "$SERVER_DIR"
       
+      # Telepítjük a szükséges csomagokat (Wine, Winbind, Xvfb) - az útmutató szerint
+      echo "Szükséges csomagok telepítése (Wine, Winbind, Xvfb)..."
+      export DEBIAN_FRONTEND=noninteractive
+      apt-get update -qq >/dev/null 2>&1 || true
+      apt-get install -y wine-stable winbind xvfb >/dev/null 2>&1 || {
+        echo "FIGYELMEZTETÉS: Nem sikerült telepíteni a Wine/Winbind/Xvfb csomagokat automatikusan" >&2
+        echo "Kérem telepítse manuálisan: apt-get install -y wine-stable winbind xvfb" >&2
+      }
+      
       STEAM_HOME="/tmp/steamcmd-home-$$"
       mkdir -p "$STEAM_HOME"
       chown -R root:root "$STEAM_HOME"
