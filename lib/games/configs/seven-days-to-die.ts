@@ -18,13 +18,13 @@ export const config: GameServerConfig = {
     ServerPort: 26900,
     ServerName: 'Seven Days to Die Server',
     ServerPassword: '',
-    MaxPlayers: 8,
-    GameDifficulty: 2, // 0-4 között
+    MaxPlayers: '8',
+    GameDifficulty: '2', // 0-4 között
     GameWorld: 'Navezgane', // térképtípus
     WorldSize: 'medium', // térképméret
-    ZombiesRun: 0, // 0: lassúak, 1: futnak éjjel, 2: mindig futnak
-    LootRespawnDays: 7, // napok között mennyi idő után jelennek meg újra a tárgyak
-    EnemyDifficulty: 0, // ellenségek erősségi szintje
-    PlayerKillingMode: 0, // játékosok közötti PvP szabályok
+    ZombiesRun: '0', // 0: lassúak, 1: futnak éjjel, 2: mindig futnak
+    LootRespawnDays: '7', // napok között mennyi idő után jelennek meg újra a tárgyak
+    EnemyDifficulty: '0', // ellenségek erősségi szintje
+    PlayerKillingMode: '0', // játékosok közötti PvP szabályok
   }
 };

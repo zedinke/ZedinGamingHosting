@@ -19,23 +19,23 @@ export const config: GameServerConfig = {
     ServerName: 'Project Zomboid Server',
     ServerPassword: '',
     ServerWelcomeMessage: 'Üdvözöl a Project Zomboid szerver!',
-    MaxPlayers: 32,
-    PvP: false,
-    PauseEmpty: true,
-    PublicServer: true,
+    MaxPlayers: '32',
+    PvP: 'false',
+    PauseEmpty: 'true',
+    PublicServer: 'true',
     Difficulty: 'Normal', // Novice, Normal, Hard, Hardcore
     Zombies: 'Medium', // Low, Medium, High, Extreme
     Map: 'Muldraugh, KY', // alaptérkép
     ServerPort: 16261,
     AdminUsername: '',
     AdminPassword: '',
-    SafetySystem: true,
-    ShowFirstAidAllowed: true,
+    SafetySystem: 'true',
+    ShowFirstAidAllowed: 'true',
     SpawnRegion: 'Default',
     SpawnPoint: '0,0,0', // x,y,z koordináták
-    StartYear: 1993,
-    StartMonth: 7, // július
-    StartDay: 10,
+    StartYear: '1993',
+    StartMonth: '7', // július
+    StartDay: '10',
     StartTime: '09:00'
   }
 };

@@ -17,20 +17,20 @@ export const config: GameServerConfig = {
   defaultSettings: {
     ServerName: 'DayZ Server',
     ServerPassword: '',
-    MaxPlayers: 60,
-    BattlEye: 1, // Anti-cheat: 1=enabled, 0=disabled
-    Persistent: 1, // Mentett világ
+    MaxPlayers: '60',
+    BattlEye: '1', // Anti-cheat: 1=enabled, 0=disabled
+    Persistent: '1', // Mentett világ
     TimeStampFormat: 'dd.MM.yyyy HH:mm:ss',
-    LogAverageFPS: 1,
-    LogMemory: 1,
-    LogAdminActions: 1,
-    DisablePwnVerifySteam: 0,
-    ServerTimeAcceleration: 1, // napidő sebessége
-    ServerNightTimeAcceleration: 1,
-    Whitelist: 0, // whitelist engedélyezése
+    LogAverageFPS: '1',
+    LogMemory: '1',
+    LogAdminActions: '1',
+    DisablePwnVerifySteam: '0',
+    ServerTimeAcceleration: '1', // napidő sebessége
+    ServerNightTimeAcceleration: '1',
+    Whitelist: '0', // whitelist engedélyezése
     RequiredAdmin: '', // admin Steam64ID
-    AdminLogSize: 250,
-    EnableCfgImportExport: 0,
-    PersistentPlayerPositions: 1
+    AdminLogSize: '250',
+    EnableCfgImportExport: '0',
+    PersistentPlayerPositions: '1'
   }
 };

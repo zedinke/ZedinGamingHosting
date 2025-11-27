@@ -18,17 +18,17 @@ export const config: GameServerConfig = {
     ServerName: 'Conan Exiles Server',
     ServerPassword: '',
     AdminPassword: '',
-    MaxPlayers: 40,
-    PvP: true,
+    MaxPlayers: '40',
+    PvP: 'true',
     GameMode: 'survival', // survival, hardcore, roleplay
     ServerRegion: 'global',
-    ClanMaxSize: 10,
-    BuildingHealthMultiplier: 1.0,
-    PlayerKillsToBecomePK: 5,
-    EnableAntiCheat: true,
-    EnableFairplay: true,
-    DisableRaidProtection: false,
-    RaidProtectionHours: 24,
+    ClanMaxSize: '10',
+    BuildingHealthMultiplier: '1.0',
+    PlayerKillsToBecomePK: '5',
+    EnableAntiCheat: 'true',
+    EnableFairplay: 'true',
+    DisableRaidProtection: 'false',
+    RaidProtectionHours: '24',
     ServerLanguage: 'en'
   }
 };
