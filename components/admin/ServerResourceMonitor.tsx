@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { useServerSentEvents } from '@/lib/use-server-sent-events';
+import { useState } from 'react';
 
 interface ResourceUsage {
   cpu?: {
@@ -30,32 +29,26 @@ export function ServerResourceMonitor({
   const [resourceUsage, setResourceUsage] = useState<ResourceUsage | null>(
     initialResourceUsage || null
   );
-  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  // Real-time erőforrás monitoring SSE stream
-  const { data: streamData, connected } = useServerSentEvents({
-    url: `/api/admin/servers/${serverId}/resources/stream`,
-    enabled: true,
-    onMessage: (data) => {
-      if (data.type === 'resources') {
-        // Debounce: csak 500ms után frissítjük, hogy ne ugráljon
-        if (updateTimeoutRef.current) {
-          clearTimeout(updateTimeoutRef.current);
-        }
-        updateTimeoutRef.current = setTimeout(() => {
-          setResourceUsage(data.data.resourceUsage);
-        }, 500);
-      }
-    },
-  });
+  const loadResourceUsage = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/admin/servers/${serverId}/resources`);
+      const data = await response.json();
 
-  useEffect(() => {
-    return () => {
-      if (updateTimeoutRef.current) {
-        clearTimeout(updateTimeoutRef.current);
+      if (!response.ok) {
+        console.error('Hiba történt az erőforrás adatok betöltése során:', data.error);
+        return;
       }
-    };
-  }, []);
+
+      setResourceUsage(data.resourceUsage);
+    } catch (error) {
+      console.error('Hiba történt az erőforrás adatok betöltése során:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (!resourceUsage) {
     return (
@@ -72,16 +65,13 @@ export function ServerResourceMonitor({
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-bold text-gray-900">Erőforrás Használat</h3>
-        <div className="flex items-center gap-2">
-          <div
-            className={`w-2 h-2 rounded-full ${
-              connected ? 'bg-green-500' : 'bg-red-500'
-            }`}
-          />
-          <span className="text-xs text-gray-600">
-            {connected ? 'Live' : 'Offline'}
-          </span>
-        </div>
+        <button
+          onClick={loadResourceUsage}
+          disabled={loading}
+          className="px-3 py-1 bg-primary-600 text-white rounded hover:bg-primary-700 disabled:opacity-50 text-sm"
+        >
+          {loading ? 'Betöltés...' : 'Frissítés'}
+        </button>
       </div>
       <div className="space-y-4">
         {resourceUsage.cpu && (

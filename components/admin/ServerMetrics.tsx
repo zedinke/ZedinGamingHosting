@@ -18,9 +18,13 @@ export function ServerMetrics({
   const [loading, setLoading] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState<'cpu' | 'ram' | 'disk' | 'network' | 'players'>('cpu');
 
+  // Csak első betöltéskor töltjük be az adatokat (ha nincs még adat)
   useEffect(() => {
-    loadMetrics();
-  }, [serverId, period, interval]);
+    if (!metrics) {
+      loadMetrics();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serverId]);
 
   const loadMetrics = async () => {
     setLoading(true);
