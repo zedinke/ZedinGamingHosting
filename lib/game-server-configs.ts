@@ -834,9 +834,9 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         chmod -R 755 "$SERVER_DIR"
         
         echo "Installing The Forest dedicated server..."
-        # A The Forest dedikált szerver csak Windows-on elérhető
-        # Az útmutató szerint: +@sSteamCmdForcePlatformType windows +force_install_dir +login anonymous +app_update 556450 validate
-        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +@sSteamCmdForcePlatformType windows +force_install_dir "$SERVER_DIR" +login anonymous +app_update 556450 validate +quit
+        # Először próbáljuk meg a Linux natív verziót
+        # Ha nincs, akkor a Windows verziót Wine-on keresztül
+        HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 556450 validate +quit
         EXIT_CODE=$?
         
         # Ideiglenes Steam home könyvtár törlése
@@ -845,37 +845,65 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         # Várunk egy kicsit, hogy a fájlok biztosan leírásra kerüljenek
         sleep 10
         
-        # Keresés a bináris után - Windows verzió (.exe fájl)
-        # A The Forest dedikált szerver csak Windows-on elérhető
+        # Keresés a bináris után - először Linux natív verzió, majd Windows verzió
         SERVER_FILE=""
+        USE_WINE=false
         
-        # 1. Közvetlenül a SERVER_DIR-ben (Windows .exe)
-        if [ -f "$SERVER_DIR/TheForestDedicatedServer.exe" ]; then
-          SERVER_FILE="$SERVER_DIR/TheForestDedicatedServer.exe"
-        # 2. steamapps/common/ könyvtárban - több lehetséges név
-        elif [ -f "$SERVER_DIR/steamapps/common/The Forest Dedicated Server/TheForestDedicatedServer.exe" ]; then
-          SERVER_FILE="$SERVER_DIR/steamapps/common/The Forest Dedicated Server/TheForestDedicatedServer.exe"
-        elif [ -f "$SERVER_DIR/steamapps/common/TheForestDedicatedServer/TheForestDedicatedServer.exe" ]; then
-          SERVER_FILE="$SERVER_DIR/steamapps/common/TheForestDedicatedServer/TheForestDedicatedServer.exe"
-        # 3. Keresés a teljes könyvtárban (.exe fájlok)
+        # 1. Linux natív bináris keresése (.x86_64)
+        if [ -f "$SERVER_DIR/TheForestDedicatedServer.x86_64" ]; then
+          SERVER_FILE="$SERVER_DIR/TheForestDedicatedServer.x86_64"
+          USE_WINE=false
+        elif [ -f "$SERVER_DIR/steamapps/common/The Forest Dedicated Server/TheForestDedicatedServer.x86_64" ]; then
+          SERVER_FILE="$SERVER_DIR/steamapps/common/The Forest Dedicated Server/TheForestDedicatedServer.x86_64"
+          USE_WINE=false
+        elif [ -f "$SERVER_DIR/steamapps/common/TheForestDedicatedServer/TheForestDedicatedServer.x86_64" ]; then
+          SERVER_FILE="$SERVER_DIR/steamapps/common/TheForestDedicatedServer/TheForestDedicatedServer.x86_64"
+          USE_WINE=false
         else
-          SERVER_FILE=$(find "$SERVER_DIR" -name "TheForestDedicatedServer.exe" -type f 2>/dev/null | head -1)
-          if [ -z "$SERVER_FILE" ]; then
-            SERVER_FILE=$(find "$SERVER_DIR" -name "*.exe" -type f 2>/dev/null | grep -i forest | head -1)
+          # 2. Keresés Linux bináris után a teljes könyvtárban
+          SERVER_FILE=$(find "$SERVER_DIR" -name "TheForestDedicatedServer.x86_64" -type f 2>/dev/null | head -1)
+          if [ -n "$SERVER_FILE" ]; then
+            USE_WINE=false
+          else
+            # 3. Ha nincs Linux bináris, próbáljuk meg a Windows verziót (.exe)
+            if [ -f "$SERVER_DIR/TheForestDedicatedServer.exe" ]; then
+              SERVER_FILE="$SERVER_DIR/TheForestDedicatedServer.exe"
+              USE_WINE=true
+            elif [ -f "$SERVER_DIR/steamapps/common/The Forest Dedicated Server/TheForestDedicatedServer.exe" ]; then
+              SERVER_FILE="$SERVER_DIR/steamapps/common/The Forest Dedicated Server/TheForestDedicatedServer.exe"
+              USE_WINE=true
+            elif [ -f "$SERVER_DIR/steamapps/common/TheForestDedicatedServer/TheForestDedicatedServer.exe" ]; then
+              SERVER_FILE="$SERVER_DIR/steamapps/common/TheForestDedicatedServer/TheForestDedicatedServer.exe"
+              USE_WINE=true
+            else
+              SERVER_FILE=$(find "$SERVER_DIR" -name "TheForestDedicatedServer.exe" -type f 2>/dev/null | head -1)
+              if [ -n "$SERVER_FILE" ]; then
+                USE_WINE=true
+              else
+                SERVER_FILE=$(find "$SERVER_DIR" -name "*.exe" -type f 2>/dev/null | grep -i forest | head -1)
+                if [ -n "$SERVER_FILE" ]; then
+                  USE_WINE=true
+                fi
+              fi
+            fi
           fi
         fi
         
         if [ -n "$SERVER_FILE" ] && [ -f "$SERVER_FILE" ]; then
           FILE_SIZE=$(stat -c%s "$SERVER_FILE" 2>/dev/null || stat -f%z "$SERVER_FILE" 2>/dev/null || echo "0")
           if [ "$FILE_SIZE" -gt "0" ]; then
-            echo "TheForestDedicatedServer.exe bináris megtalálva: $SERVER_FILE (méret: $FILE_SIZE bytes)"
+            if [ "$USE_WINE" = "true" ]; then
+              echo "TheForestDedicatedServer.exe bináris megtalálva (Windows verzió, Wine szükséges): $SERVER_FILE (méret: $FILE_SIZE bytes)"
+            else
+              echo "TheForestDedicatedServer.x86_64 bináris megtalálva (Linux natív verzió): $SERVER_FILE (méret: $FILE_SIZE bytes)"
+            fi
             INSTALL_SUCCESS=true
             break
           fi
         fi
         
         echo "SteamCMD exit code: $EXIT_CODE" >&2
-        echo "TheForestDedicatedServer.exe bináris még nem található, újrapróbálkozás..." >&2
+        echo "TheForestDedicatedServer bináris még nem található, újrapróbálkozás..." >&2
         RETRY_COUNT=$((RETRY_COUNT + 1))
         
         if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
@@ -886,9 +914,8 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
       
       # Végleges ellenőrzés - ha a bináris nem létezik, akkor hiba
       if [ "$INSTALL_SUCCESS" != "true" ]; then
-        echo "HIBA: TheForestDedicatedServer.exe bináris nem található $MAX_RETRIES próbálkozás után" >&2
-        echo "FIGYELMEZTETÉS: A The Forest dedikált szerver csak Windows-on elérhető!" >&2
-        echo "Linux-on Wine-on keresztül lehet futtatni, de ez nem hivatalosan támogatott." >&2
+        echo "HIBA: TheForestDedicatedServer bináris nem található $MAX_RETRIES próbálkozás után" >&2
+        echo "Keresés Linux (.x86_64) és Windows (.exe) verziók után is sikertelen volt." >&2
         echo "Könyvtár tartalma:" >&2
         ls -la "$SERVER_DIR" >&2 || true
         if [ -d "$SERVER_DIR/steamapps" ]; then
@@ -899,29 +926,44 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
       fi
       
       # Symlink létrehozása, ha nem a root könyvtárban van
-      if [ "$SERVER_FILE" != "$SERVER_DIR/TheForestDedicatedServer.exe" ]; then
-        ln -sf "$SERVER_FILE" "$SERVER_DIR/TheForestDedicatedServer.exe"
-        echo "Created symlink to server file at $SERVER_DIR/TheForestDedicatedServer.exe"
-        SERVER_FILE="$SERVER_DIR/TheForestDedicatedServer.exe"
+      if [ "$USE_WINE" = "true" ]; then
+        if [ "$SERVER_FILE" != "$SERVER_DIR/TheForestDedicatedServer.exe" ]; then
+          ln -sf "$SERVER_FILE" "$SERVER_DIR/TheForestDedicatedServer.exe"
+          echo "Created symlink to server file at $SERVER_DIR/TheForestDedicatedServer.exe"
+          SERVER_FILE="$SERVER_DIR/TheForestDedicatedServer.exe"
+        fi
+        chmod +x "$SERVER_DIR/TheForestDedicatedServer.exe" 2>/dev/null || true
+      else
+        if [ "$SERVER_FILE" != "$SERVER_DIR/TheForestDedicatedServer.x86_64" ]; then
+          ln -sf "$SERVER_FILE" "$SERVER_DIR/TheForestDedicatedServer.x86_64"
+          echo "Created symlink to server file at $SERVER_DIR/TheForestDedicatedServer.x86_64"
+          SERVER_FILE="$SERVER_DIR/TheForestDedicatedServer.x86_64"
+        fi
+        chmod +x "$SERVER_DIR/TheForestDedicatedServer.x86_64" 2>/dev/null || true
       fi
       
       # Végrehajtási jogosultságok beállítása
       chmod +x "$SERVER_FILE" 2>/dev/null || true
-      chmod +x "$SERVER_DIR/TheForestDedicatedServer.exe" 2>/dev/null || true
       
       chown -R root:root "$SERVER_DIR"
       chmod -R 755 "$SERVER_DIR"
       
       FILE_SIZE=$(stat -c%s "$SERVER_FILE" 2>/dev/null || stat -f%z "$SERVER_FILE" 2>/dev/null || echo "0")
-      echo "The Forest szerver sikeresen telepítve: $SERVER_FILE (méret: $FILE_SIZE bytes)"
-      echo "FIGYELMEZTETÉS: A The Forest dedikált szerver Windows verzió, Wine-on keresztül kell futtatni Linux-on!"
+      if [ "$USE_WINE" = "true" ]; then
+        echo "The Forest szerver sikeresen telepítve (Windows verzió, Wine szükséges): $SERVER_FILE (méret: $FILE_SIZE bytes)"
+      else
+        echo "The Forest szerver sikeresen telepítve (Linux natív verzió): $SERVER_FILE (méret: $FILE_SIZE bytes)"
+      fi
     `,
     configPath: '/opt/servers/{serverId}/server.cfg',
-    startCommand: 'xvfb-run --auto-servernum --server-args="-screen 0 640x480x24:32" wine ./TheForestDedicatedServer.exe -batchmode -dedicated -nosteamclient -serversteamport 8766 -servergameport {port} -serverqueryport {queryPort} -servername "{name}" -serverplayers {maxPlayers} -serverautosaveinterval 15 -difficulty Normal -inittype Continue -slot 3 -serverpassword "{password}" -enableVAC on',
+    // Linux natív verzió parancs (ha van .x86_64 fájl)
+    startCommand: './TheForestDedicatedServer.x86_64 -batchmode -nographics -savefolderpath ./savefilesserver/ -configfilepath ./server.cfg',
+    // Windows verzió parancs (ha csak .exe fájl van, Wine szükséges)
+    startCommandWindows: 'xvfb-run --auto-servernum --server-args="-screen 0 640x480x24:32" wine ./TheForestDedicatedServer.exe -batchmode -dedicated -nosteamclient -serversteamport 8766 -servergameport {port} -serverqueryport {queryPort} -servername "{name}" -serverplayers {maxPlayers} -serverautosaveinterval 15 -difficulty Normal -inittype Continue -slot 3 -serverpassword "{password}" -enableVAC on',
     stopCommand: 'quit',
     port: 27015,
     queryPort: 27016,
-    requiresWine: true,
+    requiresWine: false, // Alapértelmezetten false, mert először Linux verziót próbálunk
   },
 
   GROUNDED: {

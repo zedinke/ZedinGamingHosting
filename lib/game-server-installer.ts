@@ -1068,11 +1068,68 @@ export async function createSystemdServiceForServer(
   const workingDir = paths?.serverPath || `/opt/servers/${serverId}`;
   const execDir = paths?.isARK && paths.sharedPath ? paths.sharedPath : workingDir;
 
-  // Ha a játék Wine-t használ (pl. The Forest), létrehozunk egy wrapper scriptet
+  // The Forest esetén ellenőrizzük, hogy Linux vagy Windows bináris van-e
+  let useWineForForest = false;
+  if (gameType === 'THE_FOREST') {
+    // Ellenőrizzük, hogy van-e Linux bináris
+    try {
+      const checkLinuxBinary = await executeSSHCommand(
+        {
+          host: machine.ipAddress,
+          port: machine.sshPort,
+          user: machine.sshUser,
+          keyPath: machine.sshKeyPath || undefined,
+        },
+        `test -f ${execDir}/TheForestDedicatedServer.x86_64 && echo "linux" || echo "windows"`
+      );
+      if (checkLinuxBinary.stdout?.trim() === 'linux') {
+        useWineForForest = false;
+        // Linux bináris esetén használjuk a startCommand-ot (nem tartalmazza a Wine-t)
+        if (gameConfig.startCommandWindows) {
+          // Ha van startCommandWindows, akkor a startCommand a Linux verzió
+          // Nem cseréljük le, mert már a startCommand a Linux verzió
+        }
+      } else {
+        useWineForForest = true;
+        // Windows bináris esetén használjuk a startCommandWindows-ot
+        if (gameConfig.startCommandWindows) {
+          startCommand = gameConfig.startCommandWindows;
+          startCommand = startCommand
+            .replace(/{port}/g, port.toString())
+            .replace(/{maxPlayers}/g, maxPlayers.toString())
+            .replace(/{ram}/g, ram.toString())
+            .replace(/{name}/g, name)
+            .replace(/{world}/g, config.world || 'Dedicated')
+            .replace(/{password}/g, config.password || '')
+            .replace(/{adminPassword}/g, config.adminPassword || 'changeme')
+            .replace(/{queryPort}/g, (gameConfig.queryPort || port + 1).toString())
+            .replace(/{map}/g, config.map || 'TheIsland');
+        }
+      }
+    } catch (error) {
+      // Ha nem sikerül ellenőrizni, akkor feltételezzük, hogy Windows bináris van
+      useWineForForest = true;
+      if (gameConfig.startCommandWindows) {
+        startCommand = gameConfig.startCommandWindows;
+        startCommand = startCommand
+          .replace(/{port}/g, port.toString())
+          .replace(/{maxPlayers}/g, maxPlayers.toString())
+          .replace(/{ram}/g, ram.toString())
+          .replace(/{name}/g, name)
+          .replace(/{world}/g, config.world || 'Dedicated')
+          .replace(/{password}/g, config.password || '')
+          .replace(/{adminPassword}/g, config.adminPassword || 'changeme')
+          .replace(/{queryPort}/g, (gameConfig.queryPort || port + 1).toString())
+          .replace(/{map}/g, config.map || 'TheIsland');
+      }
+    }
+  }
+  
+  // Ha a játék Wine-t használ (pl. The Forest Windows verzió), létrehozunk egy wrapper scriptet
   let finalStartCommand = startCommand;
   let useWrapperScript = false;
   
-  if (gameType === 'THE_FOREST' || startCommand.includes('wine') || startCommand.includes('xvfb-run')) {
+  if ((gameType === 'THE_FOREST' && useWineForForest) || startCommand.includes('wine') || startCommand.includes('xvfb-run')) {
     useWrapperScript = true;
     // Escape-eljük a startCommand-ot, hogy biztonságosan beilleszthető legyen a scriptbe
     // A startCommand-ot közvetlenül beillesztjük a scriptbe, escape-eljük az idézőjeleket
@@ -1198,7 +1255,7 @@ echo "xvfb-run elérhető: $(which xvfb-run)"
 echo "xauth elérhető: $(which xauth)"
 
 # The Forest szerver esetén a save könyvtárat is létrehozzuk
-if echo "${escapedStartCommand}" | grep -q "TheForestDedicatedServer.exe"; then
+if echo "${escapedStartCommand}" | grep -q "TheForestDedicatedServer"; then
   echo "The Forest szerver észlelve, save könyvtár ellenőrzése..."
   mkdir -p ./savefilesserver
   chmod 755 ./savefilesserver
