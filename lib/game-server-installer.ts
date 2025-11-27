@@ -1202,7 +1202,7 @@ export async function createSystemdServiceForServer(
     // Satisfactory esetén ellenőrizzük, hogy a bináris létezik-e, ha nem, akkor próbáljuk a másik verziókat
     if (gameType === 'SATISFACTORY') {
       try {
-        // Ellenőrizzük, hogy melyik bináris létezik
+        // Ellenőrizzük, hogy melyik bináris létezik - több helyen is keresünk
         const checkBinary = await executeSSHCommand(
           {
             host: machine.ipAddress,
@@ -1210,22 +1210,87 @@ export async function createSystemdServiceForServer(
             user: machine.sshUser,
             keyPath: machine.sshKeyPath || undefined,
           },
-          `(test -f ${execDir}/FactoryGameServer && echo "found:FactoryGameServer") || (test -f ${execDir}/FactoryServer.sh && echo "found:FactoryServer.sh") || (test -f ${execDir}/FactoryServer && echo "found:FactoryServer") || (test -f ${execDir}/${binary} && echo "found:${binary}") || echo "notfound"`
+          `(
+            (test -f ${execDir}/FactoryGameServer && echo "found:${execDir}/FactoryGameServer") ||
+            (test -f ${execDir}/FactoryServer.sh && echo "found:${execDir}/FactoryServer.sh") ||
+            (test -f ${execDir}/FactoryServer && echo "found:${execDir}/FactoryServer") ||
+            (test -f ${execDir}/FactoryServer-Linux-Shipping && echo "found:${execDir}/FactoryServer-Linux-Shipping") ||
+            (test -f ${workingDir}/FactoryGame/Binaries/Linux/FactoryGameServer && echo "found:${workingDir}/FactoryGame/Binaries/Linux/FactoryGameServer") ||
+            (test -f ${workingDir}/FactoryGame/Binaries/Linux/FactoryServer.sh && echo "found:${workingDir}/FactoryGame/Binaries/Linux/FactoryServer.sh") ||
+            (test -f ${workingDir}/FactoryGame/Binaries/Linux/FactoryServer && echo "found:${workingDir}/FactoryGame/Binaries/Linux/FactoryServer") ||
+            (test -f ${workingDir}/FactoryGame/FactoryGameServer && echo "found:${workingDir}/FactoryGame/FactoryGameServer") ||
+            (test -f ${workingDir}/FactoryGame/FactoryServer.sh && echo "found:${workingDir}/FactoryGame/FactoryServer.sh") ||
+            (test -f ${workingDir}/FactoryGame/FactoryServer && echo "found:${workingDir}/FactoryGame/FactoryServer") ||
+            echo "notfound"
+          )`
         );
         
         const result = checkBinary.stdout?.trim();
         if (result && result.startsWith('found:')) {
-          binary = result.replace('found:', '');
+          const foundPath = result.replace('found:', '');
+          // Ha abszolút útvonal, akkor azt használjuk
+          if (foundPath.startsWith('/')) {
+            startCommand = foundPath;
+            // Ha vannak argumentumok, hozzáadjuk őket
+            if (args) {
+              startCommand = `${foundPath} ${args}`;
+            }
+            // Ne folytassuk a további feldolgozást
+            binary = null;
+          } else {
+            binary = foundPath;
+          }
+        } else {
+          // Ha nem találjuk a binárist, próbáljuk megkeresni
+          logger.warn('Satisfactory binary not found in expected locations', {
+            serverId,
+            execDir,
+            workingDir,
+            binary,
+          });
+          
+          // Keresés a FactoryGame könyvtárban
+          const findBinary = await executeSSHCommand(
+            {
+              host: machine.ipAddress,
+              port: machine.sshPort,
+              user: machine.sshUser,
+              keyPath: machine.sshKeyPath || undefined,
+            },
+            `find ${workingDir}/FactoryGame -type f \\( -name "*Factory*Server*" -o -name "*Server*.sh" \\) -executable 2>/dev/null | head -1`
+          );
+          
+          const foundBinary = findBinary.stdout?.trim();
+          if (foundBinary) {
+            startCommand = foundBinary;
+            if (args) {
+              startCommand = `${foundBinary} ${args}`;
+            }
+            binary = null;
+            logger.info('Satisfactory binary found via find command', {
+              serverId,
+              foundBinary,
+            });
+          } else {
+            throw new Error(`Satisfactory binary not found for server ${serverId}. Please check installation.`);
+          }
         }
       } catch (error) {
-        // Ha nem sikerül ellenőrizni, használjuk az eredeti binárist
-        // A telepítő script majd beállítja az executable jogokat
+        logger.error('Error checking Satisfactory binary', error as Error, {
+          serverId,
+          execDir,
+          workingDir,
+        });
+        throw error;
       }
     }
     
-    // Abszolút útvonalra konvertáljuk
-    const fullBinaryPath = `${execDir}/${binary}`;
-    startCommand = `${fullBinaryPath}${args ? ' ' + args : ''}`.trim();
+    // Abszolút útvonalra konvertáljuk (csak ha még nem állítottuk be)
+    if (binary) {
+      const fullBinaryPath = `${execDir}/${binary}`;
+      startCommand = `${fullBinaryPath}${args ? ' ' + args : ''}`.trim();
+    }
+    // Ha binary null, akkor már beállítottuk a startCommand-ot a Satisfactory ellenőrzés során
   }
 
   // The Forest esetén ellenőrizzük, hogy Linux vagy Windows bináris van-e
