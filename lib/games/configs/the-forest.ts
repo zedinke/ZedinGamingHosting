@@ -3,17 +3,16 @@
  */
 
 import { GameServerConfig } from '../types';
+import { commands } from '../commands/the-forest';
 
 export const config: GameServerConfig = {
   steamAppId: 556450,
   requiresSteamCMD: true,
   installScript: '', // Telepítő script külön fájlban
   configPath: '/opt/servers/{serverId}/server.cfg',
-  // Linux natív verzió parancs (ha van .x86_64 fájl)
-  startCommand: './TheForestDedicatedServer.x86_64 -batchmode -nographics -savefolderpath ./savefilesserver/ -configfilepath ./server.cfg -servername "{name}" -serverplayers {maxPlayers} -serverautosaveinterval {serverautosaveinterval} -difficulty {difficulty} -inittype {inittype} -serverpassword "{password}" -enableVAC {enableVAC}',
-  // Windows verzió parancs (ha csak .exe fájl van, Wine szükséges)
-  startCommandWindows: 'xvfb-run --auto-servernum --server-args="-screen 0 640x480x24:32" wine ./TheForestDedicatedServer.exe -batchmode -dedicated -nosteamclient -serversteamport 8766 -servergameport {port} -serverqueryport {queryPort} -serverip {serverip} -servername "{name}" -serverplayers {maxPlayers} -serverautosaveinterval {serverautosaveinterval} -difficulty {difficulty} -inittype {inittype} -slot {slot} -serverpassword "{password}" -enableVAC {enableVAC}',
-  stopCommand: 'quit',
+  startCommand: commands.startCommand,
+  startCommandWindows: commands.startCommandWindows,
+  stopCommand: commands.stopCommand,
   port: 27015,
   queryPort: 27016,
   requiresWine: false, // Alapértelmezetten false, mert először Linux verziót próbálunk

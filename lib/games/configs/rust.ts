@@ -3,14 +3,15 @@
  */
 
 import { GameServerConfig } from '../types';
+import { commands } from '../commands/rust';
 
 export const config: GameServerConfig = {
   steamAppId: 258550,
   requiresSteamCMD: true,
   installScript: '', // Telepítő script külön fájlban
   configPath: '/opt/servers/{serverId}/server/server.cfg',
-  startCommand: './RustDedicated -batchmode -server.port {port} -server.queryport {queryPort} -server.maxplayers {maxPlayers} -server.hostname "{name}" -server.identity "{name}"',
-  stopCommand: 'quit',
+  startCommand: commands.startCommand,
+  stopCommand: commands.stopCommand,
   port: 28015,
   queryPort: 28016,
 };
