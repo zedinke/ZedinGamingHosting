@@ -123,12 +123,7 @@ export const POST = withPerformanceMonitoring(
         dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 nap
         // Számlázási adatok
         billingName: billingInfo.billingName,
-        billingAddress: billingInfo.billingAddress,
-        billingTaxNumber: billingInfo.billingTaxNumber || null,
-        companyName: billingInfo.companyName || null,
-        companyAddress: billingInfo.companyAddress || null,
-        companyTaxNumber: billingInfo.companyTaxNumber || null,
-        companyVatNumber: billingInfo.companyVatNumber || null,
+        billingAddress: billingInfo.billingAddress || `${billingInfo.street}, ${billingInfo.city} ${billingInfo.postalCode}, ${billingInfo.country}`,
       },
     });
 

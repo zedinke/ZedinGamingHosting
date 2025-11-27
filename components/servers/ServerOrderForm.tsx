@@ -245,24 +245,16 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
           <Card padding="lg" className="bg-blue-50 border-blue-200">
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1">
-                <h3 className="text-lg font-bold mb-2">Számlázási Adatok</h3>
-                <div className="space-y-1 text-sm text-gray-700">
-                  <p><strong>Név:</strong> {billingFormData.billingName}</p>
-                  <p><strong>Cím:</strong> {billingFormData.billingAddress}</p>
-                  {billingFormData.billingTaxNumber && (
-                    <p><strong>Adószám:</strong> {billingFormData.billingTaxNumber}</p>
+                <h3 className="text-xl font-bold mb-3 text-gray-900">Számlázási Adatok</h3>
+                <div className="space-y-2 text-base text-gray-800">
+                  <p><strong className="font-bold">Név:</strong> {billingFormData.billingName}</p>
+                  {billingFormData.email && (
+                    <p><strong className="font-bold">Email:</strong> {billingFormData.email}</p>
                   )}
-                  {billingFormData.companyName && (
-                    <>
-                      <p><strong>Cégnév:</strong> {billingFormData.companyName}</p>
-                      {billingFormData.companyAddress && (
-                        <p><strong>Cég címe:</strong> {billingFormData.companyAddress}</p>
-                      )}
-                      {billingFormData.companyTaxNumber && (
-                        <p><strong>Cég adószáma:</strong> {billingFormData.companyTaxNumber}</p>
-                      )}
-                    </>
+                  {billingFormData.phone && (
+                    <p><strong className="font-bold">Telefon:</strong> {billingFormData.phone}</p>
                   )}
+                  <p><strong className="font-bold">Cím:</strong> {billingFormData.billingAddress || `${billingFormData.street}, ${billingFormData.city} ${billingFormData.postalCode}, ${billingFormData.country}`}</p>
                 </div>
               </div>
               <Button
