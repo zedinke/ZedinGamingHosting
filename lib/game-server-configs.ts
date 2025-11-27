@@ -875,6 +875,16 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
           FILE_SIZE=$(stat -c%s "$SERVER_FILE" 2>/dev/null || echo "0")
           if [ "$FILE_SIZE" -gt "0" ]; then
             echo "TheForestDedicatedServer.x86_64 bináris megtalálva: $SERVER_FILE (méret: $FILE_SIZE bytes)"
+            
+            # Ha a bináris a temp vagy downloading könyvtárban van, mozgassuk át a SERVER_DIR-be
+            if [[ "$SERVER_FILE" == *"/steamapps/temp/"* ]] || [[ "$SERVER_FILE" == *"/steamapps/downloading/"* ]]; then
+              echo "Bináris ideiglenes könyvtárban található, mozgatás a SERVER_DIR-be..."
+              cp "$SERVER_FILE" "$SERVER_DIR/TheForestDedicatedServer.x86_64"
+              chmod +x "$SERVER_DIR/TheForestDedicatedServer.x86_64"
+              SERVER_FILE="$SERVER_DIR/TheForestDedicatedServer.x86_64"
+              echo "Bináris sikeresen átmozgatva: $SERVER_FILE"
+            fi
+            
             INSTALL_SUCCESS=true
             break
           fi
