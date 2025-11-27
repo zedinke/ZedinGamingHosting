@@ -65,34 +65,23 @@ export async function POST(
       map: config.map,
     };
 
-    // Szerver újratelepítése
-    const result = await installGameServer(
+    // Szerver újratelepítése (aszinkron módon, progress tracking-gel)
+    // Azonnal visszatérünk, hogy a frontend elkezdhesse a progress polling-ot
+    installGameServer(
       server.id,
       server.gameType,
-      installConfig
-    );
-
-    if (!result.success) {
-      return NextResponse.json(
-        { 
-          error: result.error || 'Szerver újratelepítése sikertelen',
-        },
-        { status: 500 }
-      );
-    }
-
-    // Szerver státusz frissítése
-    await prisma.server.update({
-      where: { id },
-      data: {
-        status: 'OFFLINE', // Újratelepítés után offline lesz
-        updatedAt: new Date(),
-      },
+      installConfig,
+      { writeProgress: true } // Progress tracking engedélyezése
+    ).catch((error) => {
+      console.error('Background installation error:', error);
+      // A hiba már a progress fájlban lesz, nem kell itt kezelni
     });
 
+    // Azonnal visszatérünk, mert a telepítés háttérben fut
+    // A frontend a /api/admin/servers/[id]/install-progress endpoint-on keresztül követheti a folyamatot
     return NextResponse.json({
       success: true,
-      message: 'Szerver sikeresen újratelepítve. A szerver fájlok telepítve lettek.',
+      message: 'Szerver újratelepítés elindítva. A telepítés folyamatát az élő terminálban követheted.',
     });
   } catch (error) {
     console.error('Server reinstall error:', error);

@@ -15,6 +15,7 @@ import { ResourceLimitsEditor } from './ResourceLimitsEditor';
 import { ServerScaling } from './ServerScaling';
 import { ServerMigration } from './ServerMigration';
 import { ServerDeleteDialog } from './ServerDeleteDialog';
+import { InstallProgress } from './InstallProgress';
 
 interface Server {
   id: string;
@@ -74,6 +75,7 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
   const [verifyResults, setVerifyResults] = useState<any>(null);
   const [isVerifying, setIsVerifying] = useState(false);
   const [subscriptionStatus, setSubscriptionStatus] = useState(server.subscription?.status || null);
+  const [showInstallProgress, setShowInstallProgress] = useState(false);
 
   const handleServerAction = async (action: string) => {
     setIsLoading(true);
@@ -279,33 +281,35 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
               </button>
               <button
                 onClick={async () => {
-                  if (!confirm('Biztosan újratelepíted a szervert? Ez újra letölti a játék fájlokat és újragenerálja a konfigurációt. Ez néhány percig eltarthat.')) {
+                  if (!confirm('Biztosan újratelepíted a szervert? Ez újra letölti a játék fájlokat és újragenerálja a konfigurációt. Ez néhány percig eltarthat.\n\nA telepítés folyamatát egy élő terminálban követheted.')) {
                     return;
                   }
 
                   setIsLoading(true);
+                  setShowInstallProgress(true);
                   try {
                     const response = await fetch(`/api/admin/servers/${server.id}/reinstall`, {
                       method: 'POST',
                     });
                     const result = await response.json();
                     if (response.ok) {
-                      toast.success(result.message || 'Szerver újratelepítve');
+                      toast.success(result.message || 'Szerver újratelepítés elindítva');
                       setServerStatus('OFFLINE');
-                      setTimeout(() => window.location.reload(), 2000);
                     } else {
                       toast.error(result.error || 'Hiba történt');
+                      setShowInstallProgress(false);
                     }
                   } catch (error) {
                     toast.error('Hiba történt');
+                    setShowInstallProgress(false);
                   } finally {
                     setIsLoading(false);
                   }
                 }}
-                disabled={isLoading}
+                disabled={isLoading || showInstallProgress}
                 className="w-full bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Szerver Újratelepítése
+                {showInstallProgress ? 'Telepítés folyamatban...' : 'Szerver Újratelepítése'}
               </button>
               <button
                 onClick={async () => {
@@ -739,6 +743,42 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
                   Bezárás
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Install Progress Dialog */}
+      {showInstallProgress && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold text-gray-900">Szerver Telepítés - Élő Terminál</h2>
+                <button
+                  onClick={() => {
+                    if (confirm('Biztosan bezárod a telepítési terminált? A telepítés továbbra is fut a háttérben.')) {
+                      setShowInstallProgress(false);
+                    }
+                  }}
+                  className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+                >
+                  ×
+                </button>
+              </div>
+              
+              <InstallProgress
+                serverId={server.id}
+                onComplete={() => {
+                  toast.success('Telepítés sikeresen befejezve!');
+                  setShowInstallProgress(false);
+                  setTimeout(() => window.location.reload(), 2000);
+                }}
+                onError={(error) => {
+                  toast.error(`Telepítés sikertelen: ${error}`);
+                  // Dialog marad nyitva, hogy lássa a hibát
+                }}
+              />
             </div>
           </div>
         </div>

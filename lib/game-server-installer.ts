@@ -10,6 +10,65 @@ import { GameType } from '@prisma/client';
 import { ALL_GAME_SERVER_CONFIGS } from './game-server-configs';
 import { addServerToCluster, createClusterFolder } from './ark-cluster';
 import { logger } from './logger';
+import { writeFile, appendFile, mkdir } from 'fs/promises';
+import { existsSync } from 'fs';
+import { join } from 'path';
+
+// Progress fájl elérési út
+function getProgressFilePath(serverId: string): string {
+  return join(process.cwd(), 'logs', 'install', `server-${serverId}.progress.json`);
+}
+
+function getLogFilePath(serverId: string): string {
+  return join(process.cwd(), 'logs', 'install', `server-${serverId}.log`);
+}
+
+// Progress írása
+async function writeInstallProgress(serverId: string, progress: {
+  status: string;
+  message: string;
+  progress: number;
+  currentStep?: string;
+  totalSteps?: number;
+  error?: string;
+}) {
+  try {
+    const progressPath = getProgressFilePath(serverId);
+    const progressDir = join(process.cwd(), 'logs', 'install');
+    
+    // Könyvtár létrehozása, ha nincs
+    if (!existsSync(progressDir)) {
+      await mkdir(progressDir, { recursive: true });
+    }
+    
+    const progressWithTimestamp = {
+      ...progress,
+      timestamp: new Date().toISOString(),
+    };
+    await writeFile(progressPath, JSON.stringify(progressWithTimestamp, null, 2), 'utf-8');
+  } catch (error: any) {
+    console.error('Error writing install progress:', error.message);
+  }
+}
+
+// Log írása
+async function appendInstallLog(serverId: string, message: string) {
+  try {
+    const logPath = getLogFilePath(serverId);
+    const logDir = join(process.cwd(), 'logs', 'install');
+    
+    // Könyvtár létrehozása, ha nincs
+    if (!existsSync(logDir)) {
+      await mkdir(logDir, { recursive: true });
+    }
+    
+    const timestamp = new Date().toISOString();
+    const logMessage = `[${timestamp}] ${message}\n`;
+    await appendFile(logPath, logMessage);
+  } catch (error: any) {
+    console.error('Error writing install log:', error.message);
+  }
+}
 
 /**
  * Game szerver telepítése
@@ -27,14 +86,28 @@ export async function installGameServer(
     adminPassword?: string;
     clusterId?: string; // ARK Cluster ID (ha van)
     map?: string; // ARK map (TheIsland, TheCenter, Ragnarok, stb.)
+  },
+  options?: {
+    writeProgress?: boolean; // Ha true, akkor progress fájlokat ír
   }
 ): Promise<{ success: boolean; error?: string }> {
+  const writeProgress = options?.writeProgress ?? false;
+  
   try {
     logger.info('Installing game server', {
       serverId,
       gameType,
       config: { ...config, password: '***' },
     });
+    
+    if (writeProgress) {
+      await writeInstallProgress(serverId, {
+        status: 'starting',
+        message: 'Telepítés indítása...',
+        progress: 0,
+      });
+      await appendInstallLog(serverId, 'Game szerver telepítés indítása...');
+    }
 
     const server = await prisma.server.findUnique({
       where: { id: serverId },
@@ -49,9 +122,19 @@ export async function installGameServer(
     });
 
     if (!server || !server.agent) {
+      const error = 'Szerver vagy agent nem található';
+      if (writeProgress) {
+        await writeInstallProgress(serverId, {
+          status: 'error',
+          message: error,
+          progress: 0,
+          error,
+        });
+        await appendInstallLog(serverId, `HIBA: ${error}`);
+      }
       return {
         success: false,
-        error: 'Szerver vagy agent nem található',
+        error,
       };
     }
 
@@ -59,10 +142,31 @@ export async function installGameServer(
     const gameConfig = ALL_GAME_SERVER_CONFIGS[gameType];
 
     if (!gameConfig || gameType === 'OTHER') {
+      const error = 'Játék típus nem támogatott automatikus telepítéshez';
+      if (writeProgress) {
+        await writeInstallProgress(serverId, {
+          status: 'error',
+          message: error,
+          progress: 0,
+          error,
+        });
+        await appendInstallLog(serverId, `HIBA: ${error}`);
+      }
       return {
         success: false,
-        error: 'Játék típus nem támogatott automatikus telepítéshez',
+        error,
       };
+    }
+    
+    if (writeProgress) {
+      await writeInstallProgress(serverId, {
+        status: 'in_progress',
+        message: 'Szerver adatok ellenőrzése...',
+        progress: 5,
+        currentStep: 'check',
+        totalSteps: 6,
+      });
+      await appendInstallLog(serverId, `Szerver adatok ellenőrizve: ${gameType}`);
     }
 
     // ARK játékoknál közös fájlokat használunk felhasználó + szervergép kombinációként
@@ -73,6 +177,17 @@ export async function installGameServer(
     const serverPath = isARK ? `${sharedPath}/instances/${serverId}` : `/opt/servers/${serverId}`;
 
     // Szerver könyvtár létrehozása
+    if (writeProgress) {
+      await writeInstallProgress(serverId, {
+        status: 'in_progress',
+        message: 'Szerver könyvtár létrehozása...',
+        progress: 10,
+        currentStep: 'directory',
+        totalSteps: 6,
+      });
+      await appendInstallLog(serverId, `Szerver könyvtár létrehozása: ${serverPath}`);
+    }
+    
     await executeSSHCommand(
       {
         host: machine.ipAddress,
@@ -82,10 +197,24 @@ export async function installGameServer(
       },
       `mkdir -p ${serverPath}`
     );
+    
+    if (writeProgress) {
+      await appendInstallLog(serverId, 'Szerver könyvtár létrehozva');
+    }
 
     // Függőségek telepítése
     if (gameConfig.requiresJava) {
-      await executeSSHCommand(
+      if (writeProgress) {
+        await writeInstallProgress(serverId, {
+          status: 'in_progress',
+          message: 'Java telepítése...',
+          progress: 15,
+          currentStep: 'dependencies',
+          totalSteps: 6,
+        });
+        await appendInstallLog(serverId, 'Java telepítés ellenőrzése...');
+      }
+      const javaResult = await executeSSHCommand(
         {
           host: machine.ipAddress,
           port: machine.sshPort,
@@ -94,10 +223,16 @@ export async function installGameServer(
         },
         `which java || (apt-get update && apt-get install -y openjdk-17-jre-headless)`
       );
+      if (writeProgress) {
+        await appendInstallLog(serverId, `Java telepítés eredmény: ${javaResult.stdout || 'OK'}`);
+      }
     }
 
     if (gameConfig.requiresWine) {
-      await executeSSHCommand(
+      if (writeProgress) {
+        await appendInstallLog(serverId, 'Wine telepítés ellenőrzése...');
+      }
+      const wineResult = await executeSSHCommand(
         {
           host: machine.ipAddress,
           port: machine.sshPort,
@@ -106,6 +241,9 @@ export async function installGameServer(
         },
         `which wine || (apt-get update && apt-get install -y wine64)`
       );
+      if (writeProgress) {
+        await appendInstallLog(serverId, `Wine telepítés eredmény: ${wineResult.stdout || 'OK'}`);
+      }
     }
 
     // Telepítési script generálása (csak ha nem ARK, vagy ha még nincs telepítve)
@@ -164,6 +302,17 @@ fi
       const scriptPath = `/tmp/install-${isARK ? `ark-shared-${server.userId}` : serverId}.sh`;
       const logPath = `/tmp/install-${isARK ? `ark-shared-${server.userId}` : serverId}.log`;
       
+      if (writeProgress) {
+        await writeInstallProgress(serverId, {
+          status: 'in_progress',
+          message: 'Telepítési script létrehozása...',
+          progress: 20,
+          currentStep: 'script',
+          totalSteps: 6,
+        });
+        await appendInstallLog(serverId, `Telepítési script előkészítése: ${scriptPath}`);
+      }
+      
       logger.info('Creating installation script', {
         serverId,
         gameType,
@@ -183,22 +332,49 @@ fi
       );
 
       if (createScriptResult.exitCode !== 0) {
+        const error = `Nem sikerült létrehozni a telepítési scriptet: ${createScriptResult.stderr}`;
         logger.error('Failed to create installation script', new Error(createScriptResult.stderr || 'Unknown error'), {
           serverId,
           gameType,
           scriptPath,
           stderr: createScriptResult.stderr,
         });
-        throw new Error(`Nem sikerült létrehozni a telepítési scriptet: ${createScriptResult.stderr}`);
+        if (writeProgress) {
+          await writeInstallProgress(serverId, {
+            status: 'error',
+            message: error,
+            progress: 20,
+            error,
+          });
+          await appendInstallLog(serverId, `HIBA: ${error}`);
+        }
+        throw new Error(error);
+      }
+      
+      if (writeProgress) {
+        await appendInstallLog(serverId, 'Telepítési script létrehozva');
       }
 
       // Script futtatása loggal
+      if (writeProgress) {
+        await writeInstallProgress(serverId, {
+          status: 'in_progress',
+          message: 'Játék fájlok letöltése SteamCMD-vel (ez eltarthat néhány percig)...',
+          progress: 30,
+          currentStep: 'download',
+          totalSteps: 6,
+        });
+        await appendInstallLog(serverId, 'Telepítési script futtatása kezdődik...');
+        await appendInstallLog(serverId, 'Ez eltarthat néhány percig, kérjük várjon...');
+      }
+      
       logger.info('Executing installation script', {
         serverId,
         gameType,
         scriptPath,
       });
 
+      // Script futtatása - a logot folyamatosan olvassuk és írjuk a progress fájlba
       const executeResult = await executeSSHCommand(
         {
           host: machine.ipAddress,
@@ -208,6 +384,16 @@ fi
         },
         `chmod +x ${scriptPath} && ${scriptPath} > ${logPath} 2>&1; EXIT_CODE=$?; cat ${logPath}; exit $EXIT_CODE`
       );
+      
+      // Log tartalom hozzáadása a progress loghoz
+      if (writeProgress && executeResult.stdout) {
+        const logLines = executeResult.stdout.split('\n');
+        for (const line of logLines) {
+          if (line.trim()) {
+            await appendInstallLog(serverId, line);
+          }
+        }
+      }
 
       // SteamCMD exit code 8 lehet warning, de a fájlok letöltődhetnek
       // Ellenőrizzük a logot, hogy van-e valódi hiba vagy csak warning
@@ -219,6 +405,8 @@ fi
       // Ha exit code 8 és nincs valódi hiba a logban, lehet, hogy csak warning
       // De ha van valódi hiba vagy más exit code, akkor hibát dobunk
       if (executeResult.exitCode !== 0 && (executeResult.exitCode !== 8 || hasRealError)) {
+        const error = `Telepítési script sikertelen (exit code: ${executeResult.exitCode}): ${executeResult.stderr || executeResult.stdout || 'Ismeretlen hiba'}`;
+        
         logger.error('Installation script failed', new Error(executeResult.stderr || executeResult.stdout || 'Unknown error'), {
           serverId,
           gameType,
@@ -245,13 +433,38 @@ fi
             gameType,
             log: logResult.stdout,
           });
+          
+          if (writeProgress && logResult.stdout) {
+            await appendInstallLog(serverId, `\n=== TELJES LOG ===\n${logResult.stdout}\n=== LOG VÉGE ===`);
+          }
         } catch (logError) {
           // Ignore log read errors
         }
         
-        throw new Error(`Telepítési script sikertelen (exit code: ${executeResult.exitCode}): ${executeResult.stderr || executeResult.stdout || 'Ismeretlen hiba'}`);
+        if (writeProgress) {
+          await writeInstallProgress(serverId, {
+            status: 'error',
+            message: error,
+            progress: 30,
+            error,
+          });
+          await appendInstallLog(serverId, `HIBA: ${error}`);
+        }
+        
+        throw new Error(error);
       }
 
+      if (writeProgress) {
+        await writeInstallProgress(serverId, {
+          status: 'in_progress',
+          message: 'Játék fájlok letöltése befejezve',
+          progress: 60,
+          currentStep: 'download',
+          totalSteps: 6,
+        });
+        await appendInstallLog(serverId, 'Telepítési script sikeresen lefutott');
+      }
+      
       logger.info('Installation script completed successfully', {
         serverId,
         gameType,
@@ -260,6 +473,17 @@ fi
     }
 
     // Konfigurációs fájl létrehozása
+    if (writeProgress) {
+      await writeInstallProgress(serverId, {
+        status: 'in_progress',
+        message: 'Konfigurációs fájl létrehozása...',
+        progress: 70,
+        currentStep: 'config',
+        totalSteps: 6,
+      });
+      await appendInstallLog(serverId, 'Konfigurációs fájl generálása...');
+    }
+    
     const configContent = generateConfigFile(gameType, config, gameConfig);
     if (configContent) {
       let configPath = gameConfig.configPath;
@@ -280,6 +504,10 @@ fi
         },
         `mkdir -p $(dirname ${configPath}) && cat > ${configPath} << 'EOF'\n${configContent}\nEOF`
       );
+      
+      if (writeProgress) {
+        await appendInstallLog(serverId, `Konfigurációs fájl létrehozva: ${configPath}`);
+      }
     }
 
     // Szerver konfiguráció mentése az adatbázisba (ARK path-okkal)
@@ -323,15 +551,34 @@ fi
     }
 
     // Systemd service létrehozása
+    if (writeProgress) {
+      await writeInstallProgress(serverId, {
+        status: 'in_progress',
+        message: 'Systemd service létrehozása...',
+        progress: 85,
+        currentStep: 'service',
+        totalSteps: 6,
+      });
+      await appendInstallLog(serverId, 'Systemd service létrehozása...');
+    }
+    
     await createSystemdServiceForServer(serverId, gameType, gameConfig, config, machine, {
       isARK,
       sharedPath,
       serverPath,
     });
+    
+    if (writeProgress) {
+      await appendInstallLog(serverId, 'Systemd service létrehozva');
+    }
 
     // Systemd service engedélyezése és indítása
     const serviceName = `server-${serverId}`;
     try {
+      if (writeProgress) {
+        await appendInstallLog(serverId, `Systemd service engedélyezése és indítása: ${serviceName}`);
+      }
+      
       await executeSSHCommand(
         {
           host: machine.ipAddress,
@@ -341,12 +588,21 @@ fi
         },
         `systemctl enable ${serviceName} && systemctl start ${serviceName}`
       );
+      
+      if (writeProgress) {
+        await appendInstallLog(serverId, 'Systemd service sikeresen elindítva');
+      }
+      
       logger.info('Game server service started', {
         serverId,
         gameType,
         serviceName,
       });
     } catch (serviceError: any) {
+      if (writeProgress) {
+        await appendInstallLog(serverId, `FIGYELMEZETÉS: Systemd service indítása sikertelen: ${serviceError.message}`);
+      }
+      
       logger.warn('Failed to start game server service', {
         serverId,
         gameType,
@@ -357,6 +613,17 @@ fi
       // A felhasználó később manuálisan is elindíthatja
     }
 
+    if (writeProgress) {
+      await writeInstallProgress(serverId, {
+        status: 'completed',
+        message: 'Telepítés sikeresen befejezve!',
+        progress: 100,
+        currentStep: 'completed',
+        totalSteps: 6,
+      });
+      await appendInstallLog(serverId, '✓ Game szerver telepítése sikeresen befejezve!');
+    }
+    
     logger.info('Game server installed successfully', {
       serverId,
       gameType,
@@ -366,13 +633,25 @@ fi
       success: true,
     };
   } catch (error: any) {
+    const errorMessage = error.message || 'Ismeretlen hiba a szerver telepítése során';
+    
+    if (writeProgress) {
+      await writeInstallProgress(serverId, {
+        status: 'error',
+        message: `Telepítés sikertelen: ${errorMessage}`,
+        progress: 0,
+        error: errorMessage,
+      });
+      await appendInstallLog(serverId, `HIBA: ${errorMessage}`);
+    }
+    
     logger.error('Game server installation error', error as Error, {
       serverId,
       gameType,
     });
     return {
       success: false,
-      error: error.message || 'Ismeretlen hiba a szerver telepítése során',
+      error: errorMessage,
     };
   }
 }
