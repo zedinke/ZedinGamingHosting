@@ -137,6 +137,8 @@ ${modifiedInstallScript}`;
     const tempLocalPath = join(os.tmpdir(), `agent-reinstall-${randomBytes(8).toString('hex')}.sh`);
     const tempRemotePath = `/tmp/agent-reinstall-${randomBytes(8).toString('hex')}.sh`;
     
+    let scriptResult;
+    
     try {
       // Script írása lokális ideiglenes fájlba
       await writeFile(tempLocalPath, reinstallScript, { mode: 0o755 });
@@ -154,6 +156,8 @@ ${modifiedInstallScript}`;
       );
       
       if (copyResult.exitCode !== 0) {
+        // Lokális fájl törlése
+        await unlink(tempLocalPath).catch(() => {});
         return NextResponse.json(
           {
             error: 'Script másolási hiba',
@@ -164,7 +168,7 @@ ${modifiedInstallScript}`;
       }
       
       // Script futtatása
-      const scriptResult = await executeSSHCommand(
+      scriptResult = await executeSSHCommand(
         {
           host: machine.ipAddress,
           port: machine.sshPort,
@@ -189,7 +193,10 @@ ${modifiedInstallScript}`;
     } catch (fileError: any) {
       // Lokális fájl törlése hiba esetén is
       await unlink(tempLocalPath).catch(() => {});
-      throw fileError;
+      return NextResponse.json(
+        { error: fileError.message || 'Hiba történt az agent újratelepítése során' },
+        { status: 500 }
+      );
     }
 
     // Agent ID kinyerése a kimenetből
