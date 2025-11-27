@@ -39,7 +39,7 @@ export default async function NewServerPage({
             <h1 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900">
               Új Szerver Rendelése
             </h1>
-            <p className="text-xl text-gray-600">
+            <p className="text-xl text-gray-800 font-medium">
               Töltsd ki az alábbi űrlapot és szervered percek alatt készen áll
             </p>
           </div>

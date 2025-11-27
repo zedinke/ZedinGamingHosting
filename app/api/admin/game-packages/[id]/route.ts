@@ -64,6 +64,7 @@ export async function PUT(
       currency,
       interval,
       image,
+      videoUrl,
       slot,
       cpuCores,
       ram,
@@ -81,6 +82,7 @@ export async function PUT(
     if (currency !== undefined) updateData.currency = currency;
     if (interval !== undefined) updateData.interval = interval;
     if (image !== undefined) updateData.image = image;
+    if (videoUrl !== undefined) updateData.videoUrl = videoUrl || null;
     if (slot !== undefined) updateData.slot = parseInt(slot);
     if (cpuCores !== undefined) updateData.cpuCores = parseInt(cpuCores);
     if (ram !== undefined) updateData.ram = parseInt(ram);

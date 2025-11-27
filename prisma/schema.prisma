@@ -482,6 +482,7 @@ model GamePackage {
   currency      String   @default("HUF")
   interval      String   @default("month") // month, year
   image         String?  // Kép URL
+  videoUrl      String?  // YouTube videó URL (opcionális)
   slot          Int      // Fix slot szám
   cpuCores      Int      // Fix CPU vCore szám
   ram           Int      // Fix RAM mennyiség GB-ban

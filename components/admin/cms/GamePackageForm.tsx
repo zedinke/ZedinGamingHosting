@@ -17,6 +17,7 @@ const gamePackageSchema = z.object({
   currency: z.string().min(1, 'Pénznem megadása kötelező'),
   interval: z.enum(['month', 'year']),
   image: z.string().optional(),
+  videoUrl: z.string().url('Érvényes YouTube URL megadása kötelező').optional().or(z.literal('')),
   slot: z.number().int().min(1, 'Slot szám megadása kötelező'),
   cpuCores: z.number().int().min(1, 'CPU vCore szám megadása kötelező'),
   ram: z.number().int().min(1, 'RAM mennyiség megadása kötelező'),
@@ -36,6 +37,7 @@ interface GamePackage {
   currency: string;
   interval: string;
   image: string | null;
+  videoUrl: string | null;
   slot: number;
   cpuCores: number;
   ram: number;
@@ -94,6 +96,7 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
           currency: packageData.currency,
           interval: packageData.interval as 'month' | 'year',
           image: packageData.image || '',
+          videoUrl: packageData.videoUrl || '',
           slot: packageData.slot,
           cpuCores: packageData.cpuCores,
           ram: packageData.ram,
@@ -109,6 +112,7 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
           currency: 'HUF',
           interval: 'month',
           image: '',
+          videoUrl: '',
           slot: 10,
           cpuCores: 2,
           ram: 4,
@@ -299,6 +303,31 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
                 </button>
               </div>
             )}
+          </div>
+        </div>
+
+        {/* YouTube videó */}
+        <div>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">YouTube Videó</h2>
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="videoUrl" className="block text-sm font-semibold text-gray-900 mb-1">
+                YouTube videó URL (opcionális)
+              </label>
+              <input
+                {...register('videoUrl')}
+                type="url"
+                id="videoUrl"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white"
+                placeholder="https://www.youtube.com/watch?v=..."
+              />
+              <p className="text-xs text-gray-600 mt-1">
+                A videó a szerver rendelési oldalon jelenik meg. Támogatott formátumok: youtube.com/watch?v=... vagy youtu.be/...
+              </p>
+              {errors.videoUrl && (
+                <p className="text-red-500 text-sm mt-1">{errors.videoUrl.message}</p>
+              )}
+            </div>
           </div>
         </div>
 
