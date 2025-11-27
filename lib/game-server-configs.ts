@@ -95,20 +95,24 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
       SERVER_DIR="/opt/servers/{serverId}"
       
       # Először biztosítjuk, hogy az /opt/servers/ könyvtár létezik és megfelelő jogosultságokkal
-      # Használunk sudo-t, ha nem root-ként futunk
+      # Mivel SSH root-ként van bejegyezve, a parancsok root-ként futnak
       mkdir -p /opt/servers
-      chmod 755 /opt/servers || sudo chmod 755 /opt/servers || true
-      chown root:root /opt/servers 2>/dev/null || sudo chown root:root /opt/servers 2>/dev/null || true
+      chmod 755 /opt/servers || true
+      chown root:root /opt/servers 2>/dev/null || true
+      
+      # Ellenőrizzük, hogy tényleg root tulajdonban van
+      echo "Szülőkönyvtár (/opt/servers) jogosultságok beállítása után:"
+      ls -ld /opt/servers || true
       
       # Könyvtár létrehozása megfelelő jogosultságokkal
       mkdir -p "$SERVER_DIR"
       # Előre létrehozzuk a server/ alkönyvtárat is, mert a SteamCMD nem tudja létrehozni
       mkdir -p "$SERVER_DIR/server"
       # Biztosítjuk, hogy a root írni tudjon (SteamCMD root-ként fut)
-      # Használunk sudo-t, ha nem root-ként futunk
-      chmod 755 "$SERVER_DIR" || sudo chmod 755 "$SERVER_DIR" || true
-      chmod 755 "$SERVER_DIR/server" || sudo chmod 755 "$SERVER_DIR/server" || true
-      chown -R root:root "$SERVER_DIR" 2>/dev/null || sudo chown -R root:root "$SERVER_DIR" 2>/dev/null || true
+      # Mivel SSH root-ként van bejegyezve, a parancsok root-ként futnak
+      chmod 755 "$SERVER_DIR" || true
+      chmod 755 "$SERVER_DIR/server" || true
+      chown -R root:root "$SERVER_DIR" 2>/dev/null || true
       
       # Ellenőrizzük a jogosultságokat
       echo "Szülőkönyvtár (/opt/servers) jogosultságok:"
@@ -138,9 +142,13 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         # Jogosultságok ellenőrzése és beállítása SteamCMD előtt
         # A SteamCMD root-ként fut, ezért a könyvtárat root tulajdonba tesszük
         # Ez biztosítja, hogy a SteamCMD írni tudjon
-        # Használunk sudo-t, ha nem root-ként futunk
-        chmod 755 "$SERVER_DIR" || sudo chmod 755 "$SERVER_DIR" || true
-        chown -R root:root "$SERVER_DIR" 2>/dev/null || sudo chown -R root:root "$SERVER_DIR" 2>/dev/null || true
+        # Mivel SSH root-ként van bejegyezve, a parancsok root-ként futnak
+        chmod 755 "$SERVER_DIR" || true
+        chown -R root:root "$SERVER_DIR" 2>/dev/null || true
+        
+        # Ellenőrizzük, hogy tényleg root tulajdonban van
+        echo "Jelenlegi user: $(whoami)"
+        echo "Jelenlegi user ID: $(id -u)"
         
         # Ellenőrizzük a jogosultságokat
         echo "Könyvtár jogosultságok SteamCMD előtt:"
@@ -148,16 +156,22 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         
         # SteamCMD futtatása - nem használunk if-t, mert az exit code-ot külön kezeljük
         # A SteamCMD root-ként fut, ezért biztosítjuk, hogy írni tudjon
-        /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 258550 validate +quit
+        # Explicit módon root-ként futtatjuk, ha nem root-ként vagyunk
+        if [ "$(id -u)" = "0" ]; then
+          /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 258550 validate +quit
+        else
+          sudo /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 258550 validate +quit
+        fi
         EXIT_CODE=$?
         
         # Jogosultságok beállítása a letöltött fájlokra
         # A fájlokat root tulajdonban hagyjuk, mert a systemd service is root-ként fut
-        # Használunk sudo-t, ha nem root-ként futunk
         if [ -d "$SERVER_DIR/server" ]; then
-          chmod -R 755 "$SERVER_DIR/server" || sudo chmod -R 755 "$SERVER_DIR/server" || true
-          chown -R root:root "$SERVER_DIR/server" 2>/dev/null || sudo chown -R root:root "$SERVER_DIR/server" 2>/dev/null || true
+          chmod -R 755 "$SERVER_DIR/server" || true
+          chown -R root:root "$SERVER_DIR/server" 2>/dev/null || true
           echo "server/ könyvtár jogosultságok beállítva"
+          echo "server/ könyvtár jogosultságok ellenőrzése:"
+          ls -ld "$SERVER_DIR/server" || true
         fi
         
         # Ellenőrizzük, hogy a bináris létezik-e (ez a legfontosabb, nem az exit code)
