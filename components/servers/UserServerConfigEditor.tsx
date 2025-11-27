@@ -143,6 +143,24 @@ export function UserServerConfigEditor({
       // difficulty már definiálva van (Minecraft résznél)
       inittype: 'Init Típus',
       enableVAC: 'VAC Engedélyezve',
+      // Satisfactory
+      ServerName: 'Szerver Név',
+      ServerPassword: 'Szerver Jelszó',
+      AdminPassword: 'Admin Jelszó',
+      MaxPlayers: 'Max Játékosok',
+      GamePort: 'Játék Port',
+      BeaconPort: 'Beacon Port',
+      QueryPort: 'Query Port',
+      Autopause: 'Automatikus Szünet',
+      AutoSaveOnDisconnect: 'Automatikus Mentés Kijelentkezéskor',
+      AutoSaveInterval: 'Automatikus Mentés Intervallum (perc)',
+      NetworkQuality: 'Hálózati Minőség',
+      FriendlyFire: 'Baráti Tűz',
+      AutoArmor: 'Automatikus Páncél',
+      EnableCheats: 'Csalások Engedélyezése',
+      GamePhase: 'Játék Fázis',
+      StartingPhase: 'Kezdő Fázis',
+      SkipTutorial: 'Oktatóanyag Kihagyása',
     };
     return labels[key] || key;
   };
@@ -157,6 +175,13 @@ export function UserServerConfigEditor({
     if (key === 'inittype') return 'select';
     if (key === 'enableVAC') return 'select';
     if (key === 'public' || key === 'sv_lan' || key === 'PvPEnabled' || key === 'PvP') return 'boolean';
+    // Satisfactory boolean mezők
+    if (key === 'Autopause' || key === 'AutoSaveOnDisconnect' || key === 'FriendlyFire' || 
+        key === 'AutoArmor' || key === 'EnableCheats' || key === 'SkipTutorial') return 'boolean';
+    // Satisfactory number mezők
+    if (key === 'GamePort' || key === 'BeaconPort' || key === 'QueryPort' || 
+        key === 'AutoSaveInterval' || key === 'NetworkQuality' || 
+        key === 'GamePhase' || key === 'StartingPhase') return 'number';
     
     return 'text';
   };

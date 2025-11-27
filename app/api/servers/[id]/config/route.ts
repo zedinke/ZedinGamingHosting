@@ -181,6 +181,9 @@ export async function PUT(
         case 'THE_FOREST':
           configPath = `${serverPath}/server.cfg`;
           break;
+        case 'SATISFACTORY':
+          configPath = `${serverPath}/FactoryGame/Saved/Config/LinuxServer/GameUserSettings.ini`;
+          break;
         default:
           configPath = `${serverPath}/server.cfg`;
       }
@@ -206,20 +209,35 @@ export async function PUT(
         });
       }
 
-      // The Forest esetén újra kell generálni a systemd service-t, hogy a frissített startCommand-ot használja
-      if (server.gameType === 'THE_FOREST') {
+      // The Forest és Satisfactory esetén újra kell generálni a systemd service-t, hogy a frissített startCommand-ot használja
+      if (server.gameType === 'THE_FOREST' || server.gameType === 'SATISFACTORY') {
         try {
           const { ALL_GAME_SERVER_CONFIGS } = await import('@/lib/game-server-configs');
           const { createSystemdServiceForServer } = await import('@/lib/game-server-installer');
           
           const gameConfig = ALL_GAME_SERVER_CONFIGS[server.gameType];
           if (gameConfig) {
-            // A szerver név a konfigurációból jön (servername), ha nincs, akkor a server.name-t használjuk
-            const serverName = configuration?.servername || server.name;
-            const finalConfig = {
-              ...configuration,
-              name: serverName,
-            };
+            let finalConfig: any;
+            
+            if (server.gameType === 'THE_FOREST') {
+              // A szerver név a konfigurációból jön (servername), ha nincs, akkor a server.name-t használjuk
+              const serverName = configuration?.servername || server.name;
+              finalConfig = {
+                ...configuration,
+                name: serverName,
+              };
+            } else if (server.gameType === 'SATISFACTORY') {
+              // Satisfactory esetén a szerver név a konfigurációból jön (ServerName)
+              const serverName = configuration?.ServerName || server.name;
+              finalConfig = {
+                ...configuration,
+                name: serverName,
+                port: configuration?.GamePort || server.port || 15777,
+                maxPlayers: configuration?.MaxPlayers || server.maxPlayers,
+                password: configuration?.ServerPassword || '',
+                adminPassword: configuration?.AdminPassword || 'changeme123',
+              };
+            }
 
             await createSystemdServiceForServer(
               server.id,
@@ -234,12 +252,12 @@ export async function PUT(
               }
             );
 
-            logger.info('Systemd service regenerated for The Forest server', {
+            logger.info(`Systemd service regenerated for ${server.gameType} server`, {
               serverId: id,
             });
           }
         } catch (error) {
-          logger.error('Failed to regenerate systemd service for The Forest', error as Error, {
+          logger.error(`Failed to regenerate systemd service for ${server.gameType}`, error as Error, {
             serverId: id,
           });
           // Nem dobunk hibát, mert a konfiguráció már frissítve lett
@@ -392,6 +410,25 @@ function getDefaultConfig(gameType: string, maxPlayers: number): any {
       enableVAC: 'on',
       // IP, port, slot NEM változtatható (csomaghoz kötött)
     },
+    SATISFACTORY: {
+      ServerName: 'Satisfactory Server',
+      ServerPassword: '',
+      AdminPassword: 'changeme123',
+      MaxPlayers: maxPlayers,
+      GamePort: 15777,
+      BeaconPort: 15000,
+      QueryPort: 7777,
+      Autopause: false,
+      AutoSaveOnDisconnect: true,
+      AutoSaveInterval: 5,
+      NetworkQuality: 3,
+      FriendlyFire: false,
+      AutoArmor: true,
+      EnableCheats: false,
+      GamePhase: 1,
+      StartingPhase: 1,
+      SkipTutorial: false,
+    },
   };
 
   return defaults[gameType] || {};
@@ -481,6 +518,30 @@ inittype=${config.inittype || 'Continue'}
 enableVAC=${config.enableVAC || 'on'}
 
 # Note: IP, port, slot are fixed and cannot be changed (package-bound)
+`;
+    
+    case 'SATISFACTORY':
+      // Satisfactory konfiguráció - GameUserSettings.ini formátum
+      return `[/Script/Engine.GameSession]
+MaxPlayers=${config.MaxPlayers || 4}
+
+[/Script/FactoryGame.FGServerSubsystem]
+ServerName="${config.ServerName || 'Satisfactory Server'}"
+ServerPassword="${config.ServerPassword || ''}"
+AdminPassword="${config.AdminPassword || 'changeme123'}"
+GamePort=${config.GamePort || 15777}
+BeaconPort=${config.BeaconPort || 15000}
+QueryPort=${config.QueryPort || 7777}
+Autopause=${config.Autopause !== undefined ? config.Autopause : false}
+AutoSaveOnDisconnect=${config.AutoSaveOnDisconnect !== undefined ? config.AutoSaveOnDisconnect : true}
+AutoSaveInterval=${config.AutoSaveInterval || 5}
+NetworkQuality=${config.NetworkQuality || 3}
+FriendlyFire=${config.FriendlyFire !== undefined ? config.FriendlyFire : false}
+AutoArmor=${config.AutoArmor !== undefined ? config.AutoArmor : true}
+EnableCheats=${config.EnableCheats !== undefined ? config.EnableCheats : false}
+GamePhase=${config.GamePhase || 1}
+StartingPhase=${config.StartingPhase || 1}
+SkipTutorial=${config.SkipTutorial !== undefined ? config.SkipTutorial : false}
 `;
     
     default:
