@@ -1,17 +1,22 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { rateLimitMiddleware } from '@/lib/rate-limit';
+import { isMaintenanceMode } from '@/lib/maintenance';
+import { getToken } from 'next-auth/jwt';
+import { UserRole } from '@prisma/client';
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+  
   // API route-ok rate limit ellenőrzése
-  if (request.nextUrl.pathname.startsWith('/api/')) {
+  if (pathname.startsWith('/api/')) {
     // Admin API-k esetén szigorúbb limit
-    if (request.nextUrl.pathname.startsWith('/api/admin/')) {
+    if (pathname.startsWith('/api/admin/')) {
       const result = rateLimitMiddleware(50, 60 * 1000)(request);
       if (result) return result;
     }
     // Agent API-k esetén közepes limit
-    else if (request.nextUrl.pathname.startsWith('/api/agent/')) {
+    else if (pathname.startsWith('/api/agent/')) {
       const result = rateLimitMiddleware(200, 60 * 1000)(request);
       if (result) return result;
     }
@@ -23,7 +28,7 @@ export function middleware(request: NextRequest) {
   }
 
   // CORS headers hozzáadása API kérésekhez
-  if (request.nextUrl.pathname.startsWith('/api/')) {
+  if (pathname.startsWith('/api/')) {
     const response = NextResponse.next();
     
     // CORS origin korlátozása biztonsági okokból
@@ -39,8 +44,8 @@ export function middleware(request: NextRequest) {
       : allowedOrigins[0] || '*';
     
     // Webhook és agent API-k esetén szigorúbb CORS
-    if (request.nextUrl.pathname.startsWith('/api/webhooks/') || 
-        request.nextUrl.pathname.startsWith('/api/agent/')) {
+    if (pathname.startsWith('/api/webhooks/') || 
+        pathname.startsWith('/api/agent/')) {
       // Webhook/agent API-k csak specifikus origin-öket fogadnak el
       if (origin && !allowedOrigins.includes(origin)) {
         return new NextResponse('Forbidden', { status: 403 });
@@ -60,11 +65,81 @@ export function middleware(request: NextRequest) {
     return response;
   }
 
+  // Karbantartási mód ellenőrzése (csak nem API és nem statikus fájlok esetén)
+  // Kivételek: API, Next.js belső fájlok, statikus fájlok
+  const isApiRoute = pathname.startsWith('/api/');
+  const isNextInternal = pathname.startsWith('/_next/') || pathname.startsWith('/_vercel/');
+  const isStaticFile = pathname.match(/\.(ico|png|jpg|jpeg|svg|gif|webp|css|js|woff|woff2|ttf|eot|json|xml|txt)$/);
+  
+  if (!isApiRoute && !isNextInternal && !isStaticFile) {
+    // Kivételek: login, maintenance, auth oldalak
+    const isLoginPage = pathname.includes('/login');
+    const isMaintenancePage = pathname.includes('/maintenance');
+    const isAuthPage = pathname.includes('/auth/');
+    
+    // Csak akkor ellenőrizzük, ha nem login, maintenance vagy auth oldal
+    if (!isLoginPage && !isMaintenancePage && !isAuthPage) {
+      try {
+        const maintenance = await isMaintenanceMode();
+        
+        if (maintenance) {
+          // Token ellenőrzése (admin esetén engedélyezzük)
+          let isAdmin = false;
+          try {
+            const token = await getToken({ 
+              req: request, 
+              secret: process.env.NEXTAUTH_SECRET 
+            });
+            isAdmin = token && (token.role === UserRole.ADMIN || token.role === 'ADMIN');
+          } catch (tokenError) {
+            // Token hiba esetén nem admin
+            isAdmin = false;
+          }
+          
+          // Ha admin, engedélyezzük a hozzáférést
+          if (isAdmin) {
+            return NextResponse.next();
+          }
+          
+          // Ha nem admin, átirányítjuk a karbantartási oldalra
+          const validLocales = ['hu', 'en'];
+          let locale = 'hu';
+          
+          // Próbáljuk meg kinyerni a locale-t az útvonalból
+          const pathParts = pathname.split('/').filter(Boolean);
+          if (pathParts.length > 0 && validLocales.includes(pathParts[0])) {
+            locale = pathParts[0];
+          }
+          
+          // Ha root path, akkor is átirányítjuk
+          if (pathname === '/') {
+            locale = 'hu';
+          }
+          
+          const maintenanceUrl = new URL(`/${locale}/maintenance`, request.url);
+          return NextResponse.redirect(maintenanceUrl);
+        }
+      } catch (error) {
+        // Hiba esetén logoljuk, de folytatjuk
+        console.error('Maintenance check error:', error);
+      }
+    }
+  }
+
   return NextResponse.next();
 }
 
 export const config = {
   matcher: [
-    '/api/:path*',
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - static files (images, fonts, etc.)
+     */
+    '/',
+    '/((?!api|_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|woff|woff2|ttf|eot|json|xml|txt)$).*)',
   ],
 };

@@ -29,9 +29,23 @@ interface PricingPlan {
   features?: any;
 }
 
+interface GamePackage {
+  id: string;
+  gameType: string;
+  name: string;
+  price: number;
+  currency: string;
+  interval: string;
+  slot: number;
+  cpuCores: number;
+  ram: number;
+  discountPrice: number | null;
+}
+
 interface ServerOrderFormProps {
   plans: PricingPlan[];
   selectedPlan: PricingPlan | null;
+  selectedGamePackage?: GamePackage | null;
   locale: string;
 }
 
@@ -55,7 +69,7 @@ const gameTypes = {
   OTHER: { label: 'Egyéb', icon: '🎮', description: 'Egyéb játék' },
 };
 
-export function ServerOrderForm({ plans, selectedPlan, locale }: ServerOrderFormProps) {
+export function ServerOrderForm({ plans, selectedPlan, selectedGamePackage, locale }: ServerOrderFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
@@ -70,8 +84,8 @@ export function ServerOrderForm({ plans, selectedPlan, locale }: ServerOrderForm
     resolver: zodResolver(serverOrderSchema),
     defaultValues: {
       planId: selectedPlan?.id || '',
-      maxPlayers: 10,
-      gameType: (searchParams?.get('game') as any) || '',
+      maxPlayers: selectedGamePackage?.slot || 10,
+      gameType: (searchParams?.get('gameType') as any) || selectedGamePackage?.gameType || (searchParams?.get('game') as any) || '',
     },
   });
 
@@ -80,21 +94,30 @@ export function ServerOrderForm({ plans, selectedPlan, locale }: ServerOrderForm
   const currentPlan = plans.find((p) => p.id === selectedPlanId) || selectedPlan;
 
   useEffect(() => {
-    const gameParam = searchParams?.get('game');
+    const gameParam = searchParams?.get('gameType') || searchParams?.get('game');
     if (gameParam && Object.keys(gameTypes).includes(gameParam)) {
       setValue('gameType', gameParam as any);
     }
-  }, [searchParams, setValue]);
+    if (selectedGamePackage) {
+      setValue('gameType', selectedGamePackage.gameType as any);
+      setValue('maxPlayers', selectedGamePackage.slot);
+    }
+  }, [searchParams, setValue, selectedGamePackage]);
 
   const onSubmit = async (data: ServerOrderFormData) => {
     setIsLoading(true);
     try {
+      const orderData = {
+        ...data,
+        gamePackageId: selectedGamePackage?.id,
+      };
+      
       const response = await fetch(`/api/servers/order`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(orderData),
       });
 
       const result = await response.json();

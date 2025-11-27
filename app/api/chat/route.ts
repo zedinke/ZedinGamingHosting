@@ -160,13 +160,20 @@ export async function POST(request: NextRequest) {
       // Ellenőrzi és beállítja az Ollama-t, ha szükséges
       const ollamaReady = await ensureOllamaReady();
       if (!ollamaReady) {
+        console.warn('Ollama nem elérhető, alapértelmezett válasz küldése');
         aiResponse =
-          'Sajnálom, az AI szolgáltatás jelenleg nem elérhető. Kérlek, próbáld újra később, vagy vedd fel velünk a kapcsolatot a támogatási rendszeren keresztül.';
+          'Sajnálom, az AI szolgáltatás jelenleg nem elérhető. Kérlek, próbáld újra később, vagy vedd fel velünk a kapcsolatot a támogatási rendszeren keresztül.\n\nEllenőrizd, hogy:\n- Az Ollama szolgáltatás fut-e (docker-compose up -d ollama)\n- A modell letöltve van-e (ollama pull llama3.2:3b)';
       } else {
-        aiResponse = await getAIResponse(
-          [...previousMessages, { role: 'user', content: message }],
-          fullContext
-        );
+        try {
+          aiResponse = await getAIResponse(
+            [...previousMessages, { role: 'user', content: message }],
+            fullContext
+          );
+        } catch (aiError: any) {
+          console.error('AI válasz generálási hiba:', aiError);
+          aiResponse =
+            'Sajnálom, hiba történt a válasz generálása során. Kérlek, próbáld újra később.';
+        }
       }
     } catch (error) {
       console.error('AI válasz generálási hiba:', error);
@@ -193,10 +200,13 @@ export async function POST(request: NextRequest) {
       conversationId: conversation.id,
       message: assistantMessage,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Chat error:', error);
     return NextResponse.json(
-      { error: 'Hiba történt a chat művelet során' },
+      { 
+        error: error.message || 'Hiba történt a chat művelet során',
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      },
       { status: 500 }
     );
   }

@@ -13,13 +13,19 @@ export async function ensureOllamaReady(): Promise<boolean> {
     });
     
     if (!response.ok) {
+      console.warn(`Ollama API nem elérhető: ${response.status} ${response.statusText}`);
       return false;
     }
 
     // Ellenőrzi, hogy a modell letöltve van-e
     const data = await response.json();
     const hasModel = data.models?.some(
-      (m: any) => m.name === OLLAMA_MODEL || m.name.startsWith(`${OLLAMA_MODEL}:`)
+      (m: any) => {
+        const modelName = m.name || '';
+        return modelName === OLLAMA_MODEL || 
+               modelName.startsWith(`${OLLAMA_MODEL}:`) ||
+               modelName.includes(OLLAMA_MODEL);
+      }
     );
 
     if (!hasModel) {
@@ -39,16 +45,20 @@ export async function ensureOllamaReady(): Promise<boolean> {
         if (pullResponse.ok) {
           console.log(`✅ Ollama modell letöltve: ${OLLAMA_MODEL}`);
           return true;
+        } else {
+          const errorText = await pullResponse.text();
+          console.error(`Modell letöltési hiba: ${pullResponse.status} - ${errorText}`);
+          return false;
         }
-      } catch (error) {
-        console.error('Hiba a modell letöltése során:', error);
+      } catch (error: any) {
+        console.error('Hiba a modell letöltése során:', error.message || error);
         return false;
       }
     }
 
     return true;
-  } catch (error) {
-    console.error('Ollama elérhetőségi hiba:', error);
+  } catch (error: any) {
+    console.error('Ollama elérhetőségi hiba:', error.message || error);
     return false;
   }
 }

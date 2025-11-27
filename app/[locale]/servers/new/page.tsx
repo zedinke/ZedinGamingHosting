@@ -11,10 +11,17 @@ export default async function NewServerPage({
   searchParams,
 }: {
   params: { locale: string };
-  searchParams: { plan?: string; game?: string };
+  searchParams: { plan?: string; game?: string; package?: string; gameType?: string };
 }) {
   await requireAuth();
   const t = getTranslations(locale, 'common');
+
+  // Game package ellenőrzése
+  const selectedGamePackage = searchParams.package
+    ? await prisma.gamePackage.findUnique({
+        where: { id: searchParams.package },
+      })
+    : null;
 
   const selectedPlan = searchParams.plan
     ? await prisma.pricingPlan.findUnique({

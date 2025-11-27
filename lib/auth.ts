@@ -41,6 +41,14 @@ export const authOptions: NextAuthOptions = {
           throw new Error('Kérjük, erősítsd meg az email címedet');
         }
 
+        // Karbantartási mód ellenőrzése
+        const { isMaintenanceMode } = await import('./maintenance');
+        const maintenance = await isMaintenanceMode();
+        
+        if (maintenance && user.role !== 'ADMIN') {
+          throw new Error('Jelenleg karbantartás alatt vagyunk. Csak adminisztrátorok jelentkezhetnek be.');
+        }
+
         return {
           id: user.id,
           email: user.email,

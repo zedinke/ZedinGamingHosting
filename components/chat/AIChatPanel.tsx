@@ -65,91 +65,127 @@ export function AIChatPanel({ isOpen, onClose }: AIChatPanelProps) {
     setInput('');
     setIsLoading(true);
 
-    // Streaming válasz kezelése
-    const useStreaming = true; // Streaming bekapcsolva
+    // Streaming válasz kezelése - először próbáljuk a streaming-et, ha nem működik, fallback normál válaszra
+    const useStreaming = true;
 
     try {
       if (useStreaming) {
-        // Streaming válasz
-        const response = await fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            conversationId,
-            message: userInput,
-            stream: true,
-          }),
-        });
+        try {
+          // Streaming válasz
+          const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              conversationId,
+              message: userInput,
+              stream: true,
+            }),
+          });
 
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || 'Hiba történt');
-        }
+          if (!response.ok) {
+            // Ha streaming nem működik, próbáljuk a normál választ
+            throw new Error('Streaming nem elérhető');
+          }
 
-        // Streaming válasz feldolgozása
-        const reader = response.body?.getReader();
-        const decoder = new TextDecoder();
+          // Ellenőrizzük, hogy text/event-stream-e
+          const contentType = response.headers.get('content-type');
+          if (!contentType?.includes('text/event-stream')) {
+            // Ha nem SSE, próbáljuk JSON-ként olvasni
+            const data = await response.json();
+            if (data.error) {
+              throw new Error(data.error);
+            }
+            // Normál válasz formátum
+            setConversationId(data.conversationId);
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: data.message.id,
+                role: 'ASSISTANT',
+                content: data.message.content,
+                createdAt: new Date(data.message.createdAt),
+              },
+            ]);
+            return;
+          }
 
-        if (!reader) {
-          throw new Error('Nem sikerült olvasni a stream-et');
-        }
+          // Streaming válasz feldolgozása
+          const reader = response.body?.getReader();
+          const decoder = new TextDecoder();
 
-        // Üres assistant üzenet létrehozása
-        const assistantMessageId = Date.now().toString();
-        let fullContent = '';
+          if (!reader) {
+            throw new Error('Nem sikerült olvasni a stream-et');
+          }
 
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: assistantMessageId,
-            role: 'ASSISTANT',
-            content: '',
-            createdAt: new Date(),
-          },
-        ]);
+          // Üres assistant üzenet létrehozása
+          const assistantMessageId = Date.now().toString();
+          let fullContent = '';
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: assistantMessageId,
+              role: 'ASSISTANT',
+              content: '',
+              createdAt: new Date(),
+            },
+          ]);
 
-          const chunk = decoder.decode(value);
-          const lines = chunk.split('\n').filter((line) => line.trim());
+          let streamDone = false;
+          while (!streamDone) {
+            const { done, value } = await reader.read();
+            if (done) {
+              streamDone = true;
+              break;
+            }
 
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              try {
-                const data = JSON.parse(line.slice(6));
-                if (data.content) {
-                  fullContent += data.content;
-                  // Frissítjük az üzenetet
-                  setMessages((prev) =>
-                    prev.map((msg) =>
-                      msg.id === assistantMessageId
-                        ? { ...msg, content: fullContent }
-                        : msg
-                    )
-                  );
-                }
-                if (data.conversationId) {
-                  setConversationId(data.conversationId);
-                }
-                if (data.done) {
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split('\n').filter((line) => line.trim());
+
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                try {
+                  const data = JSON.parse(line.slice(6));
+                  if (data.content) {
+                    fullContent += data.content;
+                    // Frissítjük az üzenetet
+                    setMessages((prev) =>
+                      prev.map((msg) =>
+                        msg.id === assistantMessageId
+                          ? { ...msg, content: fullContent }
+                          : msg
+                      )
+                    );
+                  }
                   if (data.conversationId) {
                     setConversationId(data.conversationId);
                   }
-                  break;
+                  if (data.done) {
+                    if (data.conversationId) {
+                      setConversationId(data.conversationId);
+                    }
+                    streamDone = true;
+                    break;
+                  }
+                  if (data.error) {
+                    throw new Error(data.error);
+                  }
+                } catch (e) {
+                  // JSON parse hiba, folytatjuk
+                  console.warn('JSON parse hiba:', e);
                 }
-                if (data.error) {
-                  throw new Error(data.error);
-                }
-              } catch (e) {
-                // JSON parse hiba, folytatjuk
               }
             }
           }
+        } catch (streamError: any) {
+          // Ha streaming nem működik, fallback normál válaszra
+          console.warn('Streaming hiba, fallback normál válaszra:', streamError);
+          // Folytatjuk a normál válasszal - ne dobjunk hibát, csak folytassuk
         }
-      } else {
-        // Normál válasz (nem streaming)
+      }
+
+      // Normál válasz (nem streaming vagy fallback streaming hiba esetén)
+      if (!useStreaming || (useStreaming && messages[messages.length - 1]?.role === 'USER')) {
         const response = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -166,20 +202,51 @@ export function AIChatPanel({ isOpen, onClose }: AIChatPanelProps) {
           throw new Error(data.error || 'Hiba történt');
         }
 
+        // Ha már van assistant üzenet (streaming-ből), cseréljük le
+        const existingAssistantIndex = messages.findIndex(m => m.role === 'ASSISTANT' && !m.content);
+        if (existingAssistantIndex !== -1) {
+          setMessages((prev) =>
+            prev.map((msg, idx) =>
+              idx === existingAssistantIndex
+                ? {
+                    id: data.message.id,
+                    role: 'ASSISTANT',
+                    content: data.message.content,
+                    createdAt: new Date(data.message.createdAt),
+                  }
+                : msg
+            )
+          );
+        } else {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: data.message.id,
+              role: 'ASSISTANT',
+              content: data.message.content,
+              createdAt: new Date(data.message.createdAt),
+            },
+          ]);
+        }
+
         setConversationId(data.conversationId);
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: data.message.id,
-            role: 'ASSISTANT',
-            content: data.message.content,
-            createdAt: new Date(data.message.createdAt),
-          },
-        ]);
       }
     } catch (error: any) {
+      console.error('Chat hiba:', error);
       toast.error(error.message || 'Hiba történt a válasz generálása során');
-      setMessages((prev) => prev.slice(0, -1)); // Visszavonjuk a felhasználó üzenetét
+      // Csak akkor vonjuk vissza, ha még nincs assistant üzenet
+      setMessages((prev) => {
+        const lastMessage = prev[prev.length - 1];
+        if (lastMessage && lastMessage.role === 'USER') {
+          return prev.slice(0, -1);
+        }
+        // Ha van üres assistant üzenet, töröljük azt is
+        const emptyAssistant = prev.findIndex(m => m.role === 'ASSISTANT' && !m.content);
+        if (emptyAssistant !== -1) {
+          return prev.filter((_, idx) => idx !== emptyAssistant);
+        }
+        return prev;
+      });
     } finally {
       setIsLoading(false);
     }

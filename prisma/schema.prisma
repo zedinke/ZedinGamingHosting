@@ -472,6 +472,29 @@ model PricingPlan {
   @@map("pricing_plans")
 }
 
+// Játék csomagok
+model GamePackage {
+  id            String   @id @default(cuid())
+  gameType      GameType
+  name          String   // Csomag neve
+  description   String?  @db.Text
+  price         Float
+  currency      String   @default("HUF")
+  interval      String   @default("month") // month, year
+  image         String?  // Kép URL
+  slot          Int      // Fix slot szám
+  cpuCores      Int      // Fix CPU vCore szám
+  ram           Int      // Fix RAM mennyiség GB-ban
+  discountPrice Float?   // Akciós ár (opcionális)
+  isActive      Boolean  @default(true) // Ha aktív, akkor megjelenik és rendelhető
+  order         Int      @default(0) // Rendezési sorrend
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("game_packages")
+  @@index([gameType, isActive])
+}
+
 // CMS - Testimonials
 model Testimonial {
   id        String   @id @default(cuid())

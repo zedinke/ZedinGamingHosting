@@ -74,6 +74,13 @@ export default async function AdminCMSPage({
       icon: '🎮',
       color: 'bg-orange-500',
     },
+    {
+      title: 'Játék Csomagok',
+      description: 'Játékokhoz tartozó csomagok kezelése',
+      href: `/${locale}/admin/cms/game-packages`,
+      icon: '📦',
+      color: 'bg-emerald-500',
+    },
   ];
 
   return (
