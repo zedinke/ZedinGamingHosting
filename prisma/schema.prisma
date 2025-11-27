@@ -26,14 +26,15 @@ model User {
   updatedAt        DateTime  @updatedAt
 
   // Kapcsolatok
-  accounts      Account[]
-  sessions      Session[]
-  servers       Server[]
-  invoices      Invoice[]
-  tickets       SupportTicket[]
-  subscriptions Subscription[]
-  auditLogs     AuditLog[]
-  notifications Notification[]
+  accounts          Account[]
+  sessions          Session[]
+  servers           Server[]
+  invoices          Invoice[]
+  tickets           SupportTicket[]
+  subscriptions     Subscription[]
+  auditLogs         AuditLog[]
+  notifications     Notification[]
+  chatConversations ChatConversation[]
 
   @@map("users")
 }
@@ -752,4 +753,36 @@ enum TaskStatus {
   COMPLETED
   FAILED
   CANCELLED
+}
+
+// AI Chat konverzációk
+model ChatConversation {
+  id        String       @id @default(cuid())
+  userId    String
+  title     String?      // Automatikusan generált vagy felhasználó által megadott
+  messages  ChatMessage[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("chat_conversations")
+}
+
+model ChatMessage {
+  id             String           @id @default(cuid())
+  conversationId String
+  role           ChatMessageRole   // USER vagy ASSISTANT
+  content        String            @db.Text
+  metadata       Json?             // További információk (pl. használt dokumentumok)
+  createdAt      DateTime          @default(now())
+
+  conversation ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@map("chat_messages")
+}
+
+enum ChatMessageRole {
+  USER
+  ASSISTANT
 }

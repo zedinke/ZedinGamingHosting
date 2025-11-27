@@ -58,6 +58,13 @@ Teljes körű gaming szerver hosting platform CMS képességekkel, felhasználó
 - **Performance Monitoring**: Teljesítmény metrikák, health checks
 - **Audit Logs**: Rendszer események naplózása
 
+### 🤖 AI Chat Támogatás
+- **Helyben futó LLM**: Ollama integráció magyar nyelvű válaszokhoz
+- **Automatikus telepítés**: Nincs szükség manuális beállításra
+- **Hostingra specializált**: Gaming szerver hosting kérdésekben segít
+- **Jobb oldali chat panel**: Minden oldalon elérhető (csak bejelentkezett felhasználóknak)
+- **Konverzációk mentése**: Minden beszélgetés elmentődik
+
 ### 🔧 Fejlett Rendszerek
 - **Error Handling**: Központi hibakezelő rendszer strukturált hibakezeléssel
 - **Performance Monitoring**: Teljesítmény metrikák gyűjtése és elemzése

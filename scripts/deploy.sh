@@ -30,6 +30,9 @@ npm run db:generate
 echo -e "${YELLOW}🗄️  Adatbázis migrációk...${NC}"
 npm run db:push
 
+echo -e "${YELLOW}🤖 Ollama beállítás...${NC}"
+npm run setup:ollama || echo -e "${YELLOW}⚠️  Ollama beállítás kihagyva (opcionális)${NC}"
+
 echo -e "${YELLOW}🏗️  Production build...${NC}"
 npm run build
 
