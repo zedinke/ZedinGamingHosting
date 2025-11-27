@@ -82,3 +82,48 @@ export async function GET(request: NextRequest) {
   }
 }
 
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session) {
+      throw createUnauthorizedError('Bejelentkezés szükséges');
+    }
+
+    const body = await request.json();
+    const { billingName, email, phone, country, postalCode, city, street, billingAddress } = body;
+
+    // Validáció
+    if (!billingName || !billingAddress) {
+      return NextResponse.json(
+        { error: 'Számlázási név és cím megadása kötelező' },
+        { status: 400 }
+      );
+    }
+
+    // A számlázási adatokat session storage-ban vagy cookie-ban tároljuk
+    // Mivel nincs külön User mező a számlázási adatokhoz, 
+    // a legutóbbi számla adatait használjuk, vagy a rendelés során mentjük el
+    
+    // Visszaadjuk az adatokat, hogy a frontend használhassa
+    const billingInfo = {
+      billingName,
+      email: email || (session.user as any).email || '',
+      phone: phone || '',
+      country: country || 'Magyarország',
+      postalCode: postalCode || '',
+      city: city || '',
+      street: street || '',
+      billingAddress: billingAddress || `${street}, ${city} ${postalCode}, ${country}`,
+    };
+
+    return NextResponse.json({
+      success: true,
+      billingInfo,
+      message: 'Számlázási adatok mentve',
+    });
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
+

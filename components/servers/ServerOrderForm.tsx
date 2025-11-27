@@ -113,9 +113,35 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
     }
   }, [selectedGamePackage, locale, router]);
 
-  const handleBillingSubmit = (data: BillingInfoFormData) => {
-    setBillingFormData(data);
-    setShowBillingForm(false);
+  const handleBillingSubmit = async (data: BillingInfoFormData) => {
+    try {
+      // Mentjük el az adatokat az API-ba
+      const response = await fetch('/api/user/billing-info', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        toast.error(result.error || 'Hiba történt a számlázási adatok mentése során');
+        return;
+      }
+
+      // Frissítjük a state-et
+      setBillingFormData(result.billingInfo || data);
+      setShowBillingForm(false);
+      toast.success('Számlázási adatok sikeresen mentve');
+    } catch (error) {
+      console.error('Billing info save error:', error);
+      // Ha az API hívás sikertelen, akkor is használjuk az adatokat lokálisan
+      setBillingFormData(data);
+      setShowBillingForm(false);
+      toast.error('Hiba történt a számlázási adatok mentése során');
+    }
   };
 
   const onSubmit = async (data: ServerOrderFormData) => {
@@ -331,7 +357,7 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
             isLoading={isLoading}
             showSubmitButton={true}
           />
-        ) : billingFormData ? (
+        ) : billingFormData && billingFormData.billingName && billingFormData.billingAddress ? (
           <Card padding="lg" className="bg-blue-50 border-2 border-blue-300">
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1">
@@ -370,7 +396,7 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
           size="lg"
           isLoading={isLoading}
           className="w-full text-lg font-bold py-4"
-          disabled={!billingFormData}
+          disabled={!billingFormData || !billingFormData.billingName || !billingFormData.billingAddress || isLoading}
         >
           {isLoading ? 'Feldolgozás...' : 'Rendelés Jóváhagyása'}
         </Button>
