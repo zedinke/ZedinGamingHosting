@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ServerStatus, GameType } from '@prisma/client';
 import toast from 'react-hot-toast';
 import { UserServerConfigEditor } from './UserServerConfigEditor';
+import { UserServerConfigFileEditor } from './UserServerConfigFileEditor';
 import { ServerSavesManager } from './ServerSavesManager';
 
 interface Server {
@@ -40,7 +41,7 @@ interface UserServerDetailProps {
 export function UserServerDetail({ server, locale }: UserServerDetailProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [serverStatus, setServerStatus] = useState(server.status);
-  const [activeTab, setActiveTab] = useState<'info' | 'config'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'config' | 'config-file'>('info');
 
   const handleServerAction = async (action: string) => {
     setIsLoading(true);
@@ -135,6 +136,16 @@ export function UserServerDetail({ server, locale }: UserServerDetailProps) {
               }`}
             >
               Beállítások
+            </button>
+            <button
+              onClick={() => setActiveTab('config-file')}
+              className={`px-4 py-3 border-b-2 font-medium transition-colors ${
+                activeTab === 'config-file'
+                  ? 'border-primary-600 text-primary-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Konfigurációs Fájl
             </button>
           </div>
         </div>
@@ -354,6 +365,18 @@ export function UserServerDetail({ server, locale }: UserServerDetailProps) {
               gameType={server.gameType}
             />
           )}
+        </div>
+      )}
+
+      {activeTab === 'config-file' && (
+        <div className="space-y-6">
+          <UserServerConfigFileEditor
+            serverId={server.id}
+            gameType={server.gameType}
+            ipAddress={server.ipAddress}
+            port={server.port}
+            maxPlayers={server.maxPlayers}
+          />
         </div>
       )}
     </div>
