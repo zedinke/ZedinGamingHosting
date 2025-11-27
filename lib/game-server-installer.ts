@@ -957,10 +957,53 @@ export async function createSystemdServiceForServer(
   const workingDir = paths?.serverPath || `/opt/servers/${serverId}`;
   const execDir = paths?.isARK && paths.sharedPath ? paths.sharedPath : workingDir;
 
+  // Ha a játék Wine-t használ (pl. The Forest), létrehozunk egy wrapper scriptet
+  let finalStartCommand = startCommand;
+  let useWrapperScript = false;
+  
+  if (gameType === 'THE_FOREST' || startCommand.includes('wine') || startCommand.includes('xvfb-run')) {
+    useWrapperScript = true;
+    // Wrapper script létrehozása, ami először telepíti az Xvfb-t, Wine-t, Winbind-et, majd futtatja a szervert
+    const wrapperScript = `#!/bin/bash
+set -e
+cd ${execDir}
+
+# Xvfb, Wine, Winbind telepítése, ha nincs
+if ! command -v xvfb-run >/dev/null 2>&1; then
+  echo "Xvfb telepítése..."
+  export DEBIAN_FRONTEND=noninteractive
+  apt-get update -qq >/dev/null 2>&1
+  apt-get install -y xvfb wine-stable winbind >/dev/null 2>&1 || {
+    echo "HIBA: Xvfb/Wine/Winbind telepítése sikertelen" >&2
+    exit 1
+  }
+fi
+
+# Szerver futtatása
+${startCommand.replace(/"/g, '\\"')}
+`;
+
+    const wrapperScriptBase64 = Buffer.from(wrapperScript).toString('base64');
+    const wrapperScriptPath = `${execDir}/start-server.sh`;
+    
+    // Wrapper script létrehozása
+    await executeSSHCommand(
+      {
+        host: machine.ipAddress,
+        port: machine.sshPort,
+        user: machine.sshUser,
+        keyPath: machine.sshKeyPath || undefined,
+      },
+      `echo '${wrapperScriptBase64}' | base64 -d > ${wrapperScriptPath} && chmod +x ${wrapperScriptPath} && chown root:root ${wrapperScriptPath}`
+    );
+    
+    finalStartCommand = wrapperScriptPath;
+  }
+
   // Escape speciális karakterek a startCommand-ban systemd-hez
   // Systemd service fájlokban az ExecStart sorban escape-elni kell a $ karaktereket
   // Fontos: az ExecStart sorban nem lehet sortörés, minden egy sorban kell legyen
-  const escapedStartCommand = startCommand
+  const escapedStartCommand = finalStartCommand
     .replace(/\$/g, '\\$')
     .replace(/"/g, '\\"')
     .replace(/\n/g, ' ') // Új sorok eltávolítása
@@ -977,7 +1020,7 @@ After=network.target
 Type=simple
 User=root
 WorkingDirectory=${execDir}
-ExecStart=/bin/bash -c "cd ${execDir} && ${escapedStartCommand}"
+ExecStart=${escapedStartCommand}
 Restart=always
 RestartSec=10
 StandardOutput=journal
