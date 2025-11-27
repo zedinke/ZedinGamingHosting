@@ -69,7 +69,16 @@ mkdir -p "$SERVER_DIR/FactoryGame/Saved/Config/LinuxServer"
 chmod -R 755 "$SERVER_DIR/FactoryGame/Saved/Config/LinuxServer"
 chown -R root:root "$SERVER_DIR/FactoryGame/Saved/Config/LinuxServer"
 
-chown -R root:root "$SERVER_DIR"
-chmod -R 755 "$SERVER_DIR"
-`;
+# Szerver felhasználó beállítása (ha létezik)
+SERVER_USER="satisfactory"
+if id "$SERVER_USER" &>/dev/null; then
+    chown -R $SERVER_USER:$SERVER_USER "$SERVER_DIR"
+    echo "Fájlok tulajdonosa átállítva: $SERVER_USER"
+else
+    chown -R root:root "$SERVER_DIR"
+fi
 
+chmod -R 755 "$SERVER_DIR"
+
+echo "Satisfactory szerver telepítése sikeresen befejezve."
+`;
