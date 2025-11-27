@@ -63,11 +63,12 @@ export async function PUT(
       return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 403 });
     }
 
+    const { id } = await params;
     const body = await request.json();
     const data = homepageSectionSchema.parse(body);
 
     const section = await prisma.homepageSection.update({
-      where: { id: id },
+      where: { id },
       data: {
         type: data.type,
         title: data.title || null,
@@ -108,8 +109,9 @@ export async function DELETE(
       return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 403 });
     }
 
+    const { id } = await params;
     await prisma.homepageSection.delete({
-      where: { id: id },
+      where: { id },
     });
 
     return NextResponse.json({ success: true });
