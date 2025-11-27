@@ -162,7 +162,17 @@ fi
 
       // Script fájl létrehozása és futtatása
       const scriptPath = `/tmp/install-${isARK ? `ark-shared-${server.userId}` : serverId}.sh`;
-      await executeSSHCommand(
+      const logPath = `/tmp/install-${isARK ? `ark-shared-${server.userId}` : serverId}.log`;
+      
+      logger.info('Creating installation script', {
+        serverId,
+        gameType,
+        scriptPath,
+        logPath,
+      });
+
+      // Script fájl létrehozása
+      const createScriptResult = await executeSSHCommand(
         {
           host: machine.ipAddress,
           port: machine.sshPort,
@@ -172,15 +182,72 @@ fi
         `cat > ${scriptPath} << 'EOF'\n${installScript}\nEOF`
       );
 
-      await executeSSHCommand(
+      if (createScriptResult.exitCode !== 0) {
+        logger.error('Failed to create installation script', new Error(createScriptResult.stderr || 'Unknown error'), {
+          serverId,
+          gameType,
+          scriptPath,
+          stderr: createScriptResult.stderr,
+        });
+        throw new Error(`Nem sikerült létrehozni a telepítési scriptet: ${createScriptResult.stderr}`);
+      }
+
+      // Script futtatása loggal
+      logger.info('Executing installation script', {
+        serverId,
+        gameType,
+        scriptPath,
+      });
+
+      const executeResult = await executeSSHCommand(
         {
           host: machine.ipAddress,
           port: machine.sshPort,
           user: machine.sshUser,
           keyPath: machine.sshKeyPath || undefined,
         },
-        `chmod +x ${scriptPath} && ${scriptPath}`
+        `chmod +x ${scriptPath} && ${scriptPath} > ${logPath} 2>&1; EXIT_CODE=$?; cat ${logPath}; exit $EXIT_CODE`
       );
+
+      if (executeResult.exitCode !== 0) {
+        logger.error('Installation script failed', new Error(executeResult.stderr || executeResult.stdout || 'Unknown error'), {
+          serverId,
+          gameType,
+          scriptPath,
+          logPath,
+          exitCode: executeResult.exitCode,
+          stdout: executeResult.stdout,
+          stderr: executeResult.stderr,
+        });
+        
+        // Próbáljuk meg lekérni a teljes logot
+        try {
+          const logResult = await executeSSHCommand(
+            {
+              host: machine.ipAddress,
+              port: machine.sshPort,
+              user: machine.sshUser,
+              keyPath: machine.sshKeyPath || undefined,
+            },
+            `cat ${logPath} 2>/dev/null || echo "Log file not found"`
+          );
+          logger.error('Installation log', {
+            serverId,
+            gameType,
+            log: logResult.stdout,
+          });
+        } catch (logError) {
+          // Ignore log read errors
+        }
+        
+        throw new Error(`Telepítési script sikertelen (exit code: ${executeResult.exitCode}): ${executeResult.stderr || executeResult.stdout || 'Ismeretlen hiba'}`);
+      }
+
+      logger.info('Installation script completed successfully', {
+        serverId,
+        gameType,
+        scriptPath,
+      });
     }
 
     // Konfigurációs fájl létrehozása
@@ -252,6 +319,34 @@ fi
       sharedPath,
       serverPath,
     });
+
+    // Systemd service engedélyezése és indítása
+    const serviceName = `server-${serverId}`;
+    try {
+      await executeSSHCommand(
+        {
+          host: machine.ipAddress,
+          port: machine.sshPort,
+          user: machine.sshUser,
+          keyPath: machine.sshKeyPath || undefined,
+        },
+        `systemctl enable ${serviceName} && systemctl start ${serviceName}`
+      );
+      logger.info('Game server service started', {
+        serverId,
+        gameType,
+        serviceName,
+      });
+    } catch (serviceError: any) {
+      logger.warn('Failed to start game server service', {
+        serverId,
+        gameType,
+        serviceName,
+        error: serviceError.message,
+      });
+      // Nem dobunk hibát, mert a telepítés sikeres volt, csak az indítás nem sikerült
+      // A felhasználó később manuálisan is elindíthatja
+    }
 
     logger.info('Game server installed successfully', {
       serverId,

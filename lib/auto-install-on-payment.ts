@@ -58,14 +58,19 @@ export async function triggerAutoInstallOnPayment(
       };
     }
 
-    // Ellenőrizzük, hogy van-e már fizetett számla
+    // Ellenőrizzük, hogy van-e már fizetett számla VAGY az előfizetés ACTIVE státuszú
     const hasPaidInvoice = (server.subscription?.invoices?.length ?? 0) > 0 || invoiceId;
+    const isSubscriptionActive = server.subscription?.status === 'ACTIVE';
 
-    if (!hasPaidInvoice) {
-      logger.warn('No paid invoice found for server', { serverId });
+    if (!hasPaidInvoice && !isSubscriptionActive) {
+      logger.warn('No paid invoice or active subscription found for server', { 
+        serverId,
+        subscriptionStatus: server.subscription?.status,
+        hasInvoices: (server.subscription?.invoices?.length ?? 0) > 0,
+      });
       return {
         success: false,
-        error: 'Nincs fizetett számla',
+        error: 'Nincs fizetett számla vagy aktív előfizetés',
       };
     }
 

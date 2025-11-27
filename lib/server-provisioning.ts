@@ -331,35 +331,17 @@ export async function provisionServer(
       });
     }
 
-    // Game szerver automatikus telepítése
-    const plan = await prisma.pricingPlan.findUnique({
-      where: { id: options.planId },
-    });
-
-    const { installGameServer } = await import('./game-server-installer');
-    const installResult = await installGameServer(serverId, options.gameType, {
-      maxPlayers: options.maxPlayers,
-      ram: (plan?.features as any)?.ram || 2048,
-      port: server.port || generatedPort,
-      name: server.name,
-    });
-
-    if (!installResult.success) {
-      console.error('Game server installation failed:', installResult.error);
-      // Szerver státusz frissítése hibára
-      await prisma.server.update({
-        where: { id: serverId },
-        data: { status: 'ERROR' },
-      });
-      return {
-        success: false,
-        error: installResult.error || 'Game szerver telepítési hiba',
-      };
-    }
-
-    // Task végrehajtása háttérben
+    // Task végrehajtása háttérben (ez telepíti a szervert)
+    // A task executor hívja meg az installGameServer-t
     executeTask(task.id).catch((error) => {
       console.error(`Provisioning task ${task.id} végrehajtási hiba:`, error);
+      // Ha a task sikertelen, állítsuk be ERROR státuszt
+      prisma.server.update({
+        where: { id: serverId },
+        data: { status: 'ERROR' },
+      }).catch((updateError) => {
+        console.error('Failed to update server status to ERROR:', updateError);
+      });
     });
 
     // Értesítés küldése
