@@ -970,46 +970,71 @@ cd ${execDir}
 
 # Xvfb, Wine, Winbind telepítése, ha nincs
 if ! command -v xvfb-run >/dev/null 2>&1; then
-  echo "Xvfb telepítése..." >&2
+  echo "Xvfb telepítése..."
   export DEBIAN_FRONTEND=noninteractive
   
-  # Apt-get update
-  apt-get update -qq 2>&1
+  # Apt-get update (hibaüzenetekkel)
+  echo "apt-get update futtatása..."
+  apt-get update 2>&1
   UPDATE_EXIT=$?
   if [ $UPDATE_EXIT -ne 0 ]; then
-    echo "FIGYELMEZTETÉS: apt-get update sikertelen (exit code: $UPDATE_EXIT), de folytatjuk..." >&2
+    echo "FIGYELMEZTETÉS: apt-get update sikertelen (exit code: $UPDATE_EXIT), de folytatjuk..."
+  else
+    echo "apt-get update sikeres"
   fi
   
-  # Xvfb telepítése
+  # Xvfb telepítése (hibaüzenetekkel)
+  echo "Xvfb telepítése..."
   apt-get install -y xvfb 2>&1
   XVFB_EXIT=$?
   if [ $XVFB_EXIT -ne 0 ]; then
-    echo "HIBA: Xvfb telepítése sikertelen (exit code: $XVFB_EXIT)" >&2
-    exit 1
+    echo "HIBA: Xvfb telepítése sikertelen (exit code: $XVFB_EXIT)"
+    echo "Próbáljuk meg a xvfb csomagot telepíteni..."
+    apt-get install -y xvfb 2>&1
+    XVFB_EXIT=$?
+    if [ $XVFB_EXIT -ne 0 ]; then
+      echo "HIBA: Xvfb telepítése még mindig sikertelen (exit code: $XVFB_EXIT)"
+      exit 1
+    fi
   fi
+  echo "Xvfb telepítése sikeres"
   
-  # Wine telepítése
+  # Wine telepítése (hibaüzenetekkel)
+  echo "Wine telepítése..."
   apt-get install -y wine-stable 2>&1
   WINE_EXIT=$?
   if [ $WINE_EXIT -ne 0 ]; then
-    echo "HIBA: Wine telepítése sikertelen (exit code: $WINE_EXIT)" >&2
-    exit 1
+    echo "HIBA: Wine telepítése sikertelen (exit code: $WINE_EXIT)"
+    echo "Próbáljuk meg a wine csomagot telepíteni..."
+    apt-get install -y wine 2>&1
+    WINE_EXIT=$?
+    if [ $WINE_EXIT -ne 0 ]; then
+      echo "HIBA: Wine telepítése még mindig sikertelen (exit code: $WINE_EXIT)"
+      exit 1
+    fi
   fi
+  echo "Wine telepítése sikeres"
   
-  # Winbind telepítése
+  # Winbind telepítése (hibaüzenetekkel)
+  echo "Winbind telepítése..."
   apt-get install -y winbind 2>&1
   WINBIND_EXIT=$?
   if [ $WINBIND_EXIT -ne 0 ]; then
-    echo "FIGYELMEZTETÉS: Winbind telepítése sikertelen (exit code: $WINBIND_EXIT), de folytatjuk..." >&2
+    echo "FIGYELMEZTETÉS: Winbind telepítése sikertelen (exit code: $WINBIND_EXIT), de folytatjuk..."
+  else
+    echo "Winbind telepítése sikeres"
   fi
   
   # Ellenőrzés, hogy az xvfb-run most már elérhető-e
   if ! command -v xvfb-run >/dev/null 2>&1; then
-    echo "HIBA: xvfb-run még mindig nem található a telepítés után" >&2
+    echo "HIBA: xvfb-run még mindig nem található a telepítés után"
+    echo "Keresés xvfb-run után:"
+    which xvfb-run 2>&1 || find /usr -name xvfb-run 2>&1 | head -5
     exit 1
   fi
   
-  echo "Xvfb, Wine, Winbind telepítése sikeres" >&2
+  echo "Xvfb, Wine, Winbind telepítése sikeres"
+  echo "xvfb-run elérhető: $(which xvfb-run)"
 fi
 
 # Szerver futtatása
