@@ -1210,7 +1210,7 @@ export async function createSystemdServiceForServer(
             user: machine.sshUser,
             keyPath: machine.sshKeyPath || undefined,
           },
-          `test -f ${execDir}/${binary} && echo "found:${binary}" || (test -f ${execDir}/FactoryServer.sh && echo "found:FactoryServer.sh" || (test -f ${execDir}/FactoryGameServer && echo "found:FactoryGameServer" || (test -f ${execDir}/FactoryServer && echo "found:FactoryServer" || echo "notfound"))))`
+          `(test -f ${execDir}/FactoryGameServer && echo "found:FactoryGameServer") || (test -f ${execDir}/FactoryServer.sh && echo "found:FactoryServer.sh") || (test -f ${execDir}/FactoryServer && echo "found:FactoryServer") || (test -f ${execDir}/${binary} && echo "found:${binary}") || echo "notfound"`
         );
         
         const result = checkBinary.stdout?.trim();
