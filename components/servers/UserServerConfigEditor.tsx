@@ -140,7 +140,7 @@ export function UserServerConfigEditor({
       serverpassword: 'Szerver Jelszó',
       serverplayers: 'Max Játékosok',
       serverautosaveinterval: 'Autosave Intervallum (perc)',
-      difficulty: 'Nehézség',
+      // difficulty már definiálva van (Minecraft résznél)
       inittype: 'Init Típus',
       enableVAC: 'VAC Engedélyezve',
     };
