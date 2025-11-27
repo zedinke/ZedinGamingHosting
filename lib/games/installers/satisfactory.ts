@@ -70,16 +70,36 @@ chmod -R 755 "$SERVER_DIR/FactoryGame/Saved/Config/LinuxServer"
 chown -R root:root "$SERVER_DIR/FactoryGame/Saved/Config/LinuxServer"
 
 # Bináris fájl executable jogok beállítása
-if [ -f "$SERVER_DIR/FactoryGame/Binaries/Linux/FactoryGameServer" ]; then
-  chmod +x "$SERVER_DIR/FactoryGame/Binaries/Linux/FactoryGameServer"
-  echo "FactoryGameServer executable jogok beállítva"
-elif [ -f "$SERVER_DIR/FactoryGame/Binaries/Linux/FactoryGameServer.sh" ]; then
-  chmod +x "$SERVER_DIR/FactoryGame/Binaries/Linux/FactoryGameServer.sh"
-  echo "FactoryGameServer.sh executable jogok beállítva"
-else
-  echo "FIGYELMEZTETÉS: FactoryGameServer bináris nem található a várt helyen" >&2
+# Satisfactory-nél több lehetséges bináris fájl lehet
+BINARY_FOUND=false
+
+# Próbáljuk a különböző lehetséges bináris fájlokat
+for binary in "FactoryServer.sh" "FactoryGameServer" "FactoryServer" "FactoryServer-Linux-Shipping"; do
+  if [ -f "$SERVER_DIR/FactoryGame/Binaries/Linux/$binary" ]; then
+    chmod +x "$SERVER_DIR/FactoryGame/Binaries/Linux/$binary"
+    echo "$binary executable jogok beállítva"
+    BINARY_FOUND=true
+    break
+  fi
+done
+
+# Ha a Binaries/Linux könyvtárban nincs, próbáljuk a FactoryGame gyökerét
+if [ "$BINARY_FOUND" = "false" ]; then
+  for binary in "FactoryServer.sh" "FactoryGameServer" "FactoryServer"; do
+    if [ -f "$SERVER_DIR/FactoryGame/$binary" ]; then
+      chmod +x "$SERVER_DIR/FactoryGame/$binary"
+      echo "$binary executable jogok beállítva (FactoryGame gyökér)"
+      BINARY_FOUND=true
+      break
+    fi
+  done
+fi
+
+# Ha még mindig nem található, keresés és hibaüzenet
+if [ "$BINARY_FOUND" = "false" ]; then
+  echo "FIGYELMEZTETÉS: Satisfactory bináris nem található a várt helyen" >&2
   echo "Keresés a FactoryGame könyvtárban..." >&2
-  find "$SERVER_DIR/FactoryGame" -name "*FactoryGameServer*" -type f 2>/dev/null || echo "Nem található FactoryGameServer fájl" >&2
+  find "$SERVER_DIR/FactoryGame" -type f \( -name "*Factory*Server*" -o -name "*Server*.sh" \) 2>/dev/null | head -10 || echo "Nem található bináris fájl" >&2
 fi
 
 # Szerver felhasználó beállítása (ha létezik)

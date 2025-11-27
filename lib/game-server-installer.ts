@@ -1183,17 +1183,36 @@ export async function createSystemdServiceForServer(
   if (startCommand.trim().startsWith('./')) {
     // Kinyerjük a bináris nevét és argumentumait
     const parts = startCommand.trim().split(/\s+/);
-    const binary = parts[0].replace('./', '');
+    let binary = parts[0].replace('./', '');
     const args = parts.slice(1).join(' ');
+    
+    // Satisfactory esetén ellenőrizzük, hogy a bináris létezik-e, ha nem, akkor próbáljuk a másik verziókat
+    if (gameType === 'SATISFACTORY') {
+      try {
+        // Ellenőrizzük, hogy melyik bináris létezik
+        const checkBinary = await executeSSHCommand(
+          {
+            host: machine.ipAddress,
+            port: machine.sshPort,
+            user: machine.sshUser,
+            keyPath: machine.sshKeyPath || undefined,
+          },
+          `test -f ${execDir}/${binary} && echo "found:${binary}" || (test -f ${execDir}/FactoryServer.sh && echo "found:FactoryServer.sh" || (test -f ${execDir}/FactoryGameServer && echo "found:FactoryGameServer" || (test -f ${execDir}/FactoryServer && echo "found:FactoryServer" || echo "notfound"))))`
+        );
+        
+        const result = checkBinary.stdout?.trim();
+        if (result && result.startsWith('found:')) {
+          binary = result.replace('found:', '');
+        }
+      } catch (error) {
+        // Ha nem sikerül ellenőrizni, használjuk az eredeti binárist
+        // A telepítő script majd beállítja az executable jogokat
+      }
+    }
+    
     // Abszolút útvonalra konvertáljuk
     const fullBinaryPath = `${execDir}/${binary}`;
     startCommand = `${fullBinaryPath}${args ? ' ' + args : ''}`.trim();
-    
-    // Satisfactory esetén ellenőrizzük, hogy a bináris létezik-e, ha nem, akkor próbáljuk a .sh verziót
-    if (gameType === 'SATISFACTORY' && binary === 'FactoryGameServer') {
-      // A bináris ellenőrzése SSH-n keresztül (csak ha van machine info)
-      // Ha nincs, akkor a telepítő script majd beállítja az executable jogokat
-    }
   }
 
   // The Forest esetén ellenőrizzük, hogy Linux vagy Windows bináris van-e
