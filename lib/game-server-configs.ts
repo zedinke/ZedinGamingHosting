@@ -815,7 +815,8 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         EXIT_CODE=$?
         
         # Várunk egy kicsit, hogy a fájlok biztosan leírásra kerüljenek
-        sleep 5
+        # A SteamCMD néha időt vesz igénybe, hogy a fájlokat a megfelelő helyre mozgassa
+        sleep 10
         
         # Keresés a bináris után - több helyen is
         SERVER_FILE=""
@@ -825,9 +826,9 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         echo "SERVER_DIR: $SERVER_DIR"
         if [ -d "$SERVER_DIR/steamapps" ]; then
           echo "steamapps/ könyvtár tartalma:"
-          find "$SERVER_DIR/steamapps" -type d -maxdepth 3 2>/dev/null | head -20
-          echo "steamapps/ fájlok:"
-          find "$SERVER_DIR/steamapps" -type f -name "*Forest*" -o -name "*Dedicated*" -o -name "*.x86_64" 2>/dev/null | head -20
+          find "$SERVER_DIR/steamapps" -type d -maxdepth 4 2>/dev/null | head -30
+          echo "steamapps/ fájlok (összes .x86_64 és Forest/Dedicated):"
+          find "$SERVER_DIR/steamapps" -type f \( -name "*.x86_64" -o -name "*Forest*" -o -name "*Dedicated*" \) 2>/dev/null | head -30
         fi
         
         # 1. Közvetlenül a SERVER_DIR-ben
@@ -836,14 +837,30 @@ export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = 
         # 2. linux64/ könyvtárban
         elif [ -f "$SERVER_DIR/linux64/TheForestDedicatedServer.x86_64" ]; then
           SERVER_FILE="$SERVER_DIR/linux64/TheForestDedicatedServer.x86_64"
-        # 3. steamapps/common/ könyvtárban - több lehetséges név
+        # 3. steamapps/temp/ könyvtárban (ideiglenes telepítés)
+        elif [ -f "$SERVER_DIR/steamapps/temp/556450/TheForestDedicatedServer.x86_64" ]; then
+          SERVER_FILE="$SERVER_DIR/steamapps/temp/556450/TheForestDedicatedServer.x86_64"
+        elif [ -d "$SERVER_DIR/steamapps/temp/556450" ]; then
+          SERVER_FILE=$(find "$SERVER_DIR/steamapps/temp/556450" -name "TheForestDedicatedServer.x86_64" -type f 2>/dev/null | head -1)
+          if [ -z "$SERVER_FILE" ]; then
+            SERVER_FILE=$(find "$SERVER_DIR/steamapps/temp/556450" -name "*Forest*Dedicated*" -type f -executable 2>/dev/null | head -1)
+          fi
+        # 4. steamapps/downloading/ könyvtárban (letöltés alatt)
+        elif [ -f "$SERVER_DIR/steamapps/downloading/556450/TheForestDedicatedServer.x86_64" ]; then
+          SERVER_FILE="$SERVER_DIR/steamapps/downloading/556450/TheForestDedicatedServer.x86_64"
+        elif [ -d "$SERVER_DIR/steamapps/downloading/556450" ]; then
+          SERVER_FILE=$(find "$SERVER_DIR/steamapps/downloading/556450" -name "TheForestDedicatedServer.x86_64" -type f 2>/dev/null | head -1)
+          if [ -z "$SERVER_FILE" ]; then
+            SERVER_FILE=$(find "$SERVER_DIR/steamapps/downloading/556450" -name "*Forest*Dedicated*" -type f -executable 2>/dev/null | head -1)
+          fi
+        # 5. steamapps/common/ könyvtárban - több lehetséges név
         elif [ -f "$SERVER_DIR/steamapps/common/The Forest Dedicated Server/TheForestDedicatedServer.x86_64" ]; then
           SERVER_FILE="$SERVER_DIR/steamapps/common/The Forest Dedicated Server/TheForestDedicatedServer.x86_64"
         elif [ -f "$SERVER_DIR/steamapps/common/TheForestDedicatedServer/TheForestDedicatedServer.x86_64" ]; then
           SERVER_FILE="$SERVER_DIR/steamapps/common/TheForestDedicatedServer/TheForestDedicatedServer.x86_64"
         elif [ -f "$SERVER_DIR/steamapps/common/TheForestDedicatedServer/TheForestDedicatedServer" ]; then
           SERVER_FILE="$SERVER_DIR/steamapps/common/TheForestDedicatedServer/TheForestDedicatedServer"
-        # 4. Keresés a teljes könyvtárban - több lehetséges név
+        # 6. Keresés a teljes könyvtárban - több lehetséges név
         else
           SERVER_FILE=$(find "$SERVER_DIR" -name "TheForestDedicatedServer.x86_64" -type f 2>/dev/null | head -1)
           if [ -z "$SERVER_FILE" ]; then
