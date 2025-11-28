@@ -337,21 +337,118 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              {selectedGamePackage.pricePerSlot ? (
+              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <p className="text-xs font-bold text-gray-900 mb-2 uppercase">Slot</p>
+                <div className="relative">
+                  <select
+                    value={additionalSlots}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value) || 0;
+                      setAdditionalSlots(value);
+                    }}
+                    className="w-full px-3 py-2 border-2 border-primary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-primary-600 bg-white text-xl font-bold appearance-none cursor-pointer hover:border-primary-400 transition-colors"
+                  >
+                    {Array.from({ length: MAX_SLOTS - selectedGamePackage.slot + 1 }, (_, i) => i).map((value) => (
+                      <option key={value} value={value}>
+                        {selectedGamePackage.slot + value}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                    <svg className="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+                {additionalSlots > 0 && selectedGamePackage.pricePerSlot && (
+                  <p className="text-xs text-green-600 font-semibold mt-1">
+                    +{formatPrice(additionalSlots * selectedGamePackage.pricePerSlot, selectedGamePackage.currency)}/hó
+                  </p>
+                )}
+              </div>
+              ) : (
               <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                 <p className="text-xs font-bold text-gray-900 mb-1 uppercase">Slot</p>
-                <p className="text-3xl font-bold text-primary-600">{selectedGamePackage.slot + additionalSlots}</p>
-                <p className="text-xs text-gray-800 font-medium mt-1">{additionalSlots > 0 && <span className="text-green-600">(+{additionalSlots})</span>}</p>
+                <p className="text-3xl font-bold text-primary-600">{selectedGamePackage.slot}</p>
               </div>
+              )}
+              
+              {upgradePrices && upgradePrices.pricePerVCpu > 0 ? (
+              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <p className="text-xs font-bold text-gray-900 mb-2 uppercase">CPU</p>
+                <div className="relative">
+                  <select
+                    value={additionalVCpu}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value) || 0;
+                      setAdditionalVCpu(value);
+                    }}
+                    className="w-full px-3 py-2 border-2 border-primary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-primary-600 bg-white text-xl font-bold appearance-none cursor-pointer hover:border-primary-400 transition-colors"
+                  >
+                    {Array.from({ length: MAX_VCPU - selectedGamePackage.cpuCores + 1 }, (_, i) => i).map((value) => (
+                      <option key={value} value={value}>
+                        {selectedGamePackage.cpuCores + value} vCore
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                    <svg className="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+                {additionalVCpu > 0 && upgradePrices && (
+                  <p className="text-xs text-green-600 font-semibold mt-1">
+                    +{formatPrice(additionalVCpu * upgradePrices.pricePerVCpu, upgradePrices.currency)}/hó
+                  </p>
+                )}
+              </div>
+              ) : (
               <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                 <p className="text-xs font-bold text-gray-900 mb-1 uppercase">CPU</p>
-                <p className="text-3xl font-bold text-primary-600">{selectedGamePackage.cpuCores + additionalVCpu}</p>
-                <p className="text-xs text-gray-800 font-medium mt-1">vCore {additionalVCpu > 0 && <span className="text-green-600">(+{additionalVCpu})</span>}</p>
+                <p className="text-3xl font-bold text-primary-600">{selectedGamePackage.cpuCores}</p>
+                <p className="text-xs text-gray-800 font-medium mt-1">vCore</p>
               </div>
+              )}
+              
+              {upgradePrices && upgradePrices.pricePerRamGB > 0 ? (
+              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <p className="text-xs font-bold text-gray-900 mb-2 uppercase">RAM</p>
+                <div className="relative">
+                  <select
+                    value={additionalRamGB}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value) || 0;
+                      setAdditionalRamGB(value);
+                    }}
+                    className="w-full px-3 py-2 border-2 border-primary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-primary-600 bg-white text-xl font-bold appearance-none cursor-pointer hover:border-primary-400 transition-colors"
+                  >
+                    {Array.from({ length: MAX_RAM_GB - selectedGamePackage.ram + 1 }, (_, i) => i).map((value) => (
+                      <option key={value} value={value}>
+                        {selectedGamePackage.ram + value} GB
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                    <svg className="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+                {additionalRamGB > 0 && upgradePrices && (
+                  <p className="text-xs text-green-600 font-semibold mt-1">
+                    +{formatPrice(additionalRamGB * upgradePrices.pricePerRamGB, upgradePrices.currency)}/hó
+                  </p>
+                )}
+              </div>
+              ) : (
               <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                 <p className="text-xs font-bold text-gray-900 mb-1 uppercase">RAM</p>
-                <p className="text-3xl font-bold text-primary-600">{selectedGamePackage.ram + additionalRamGB}</p>
-                <p className="text-xs text-gray-800 font-medium mt-1">GB {additionalRamGB > 0 && <span className="text-green-600">(+{additionalRamGB})</span>}</p>
+                <p className="text-3xl font-bold text-primary-600">{selectedGamePackage.ram}</p>
+                <p className="text-xs text-gray-800 font-medium mt-1">GB</p>
               </div>
+              )}
               <div className="bg-emerald-50 rounded-lg p-4 border-2 border-emerald-400">
                 <p className="text-xs font-bold text-gray-900 mb-1 uppercase">Ár</p>
                 <p className="text-2xl font-bold text-emerald-700">
@@ -418,109 +515,6 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
                 <p className="text-red-600 text-sm mt-1 font-semibold">{errors.name.message}</p>
               )}
             </div>
-
-            {/* Erőforrás bővítés */}
-            {((upgradePrices && (upgradePrices.pricePerVCpu > 0 || upgradePrices.pricePerRamGB > 0)) || selectedGamePackage.pricePerSlot) && (
-            <div className="border-t pt-5 mt-5">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Erőforrás Bővítés (Opcionális)</h3>
-              <p className="text-sm text-gray-600 mb-4">
-                Bővítsd a szervered erőforrásait a GamePackage alapértelmezett értékei felett.
-              </p>
-              
-              <div className="grid md:grid-cols-3 gap-4">
-                {upgradePrices && upgradePrices.pricePerVCpu > 0 && (
-                <div>
-                  <label htmlFor="additionalVCpu" className="block text-sm font-medium text-gray-900 mb-2">
-                    További vCPU (jelenleg: {selectedGamePackage.cpuCores} vCPU, max: {MAX_VCPU})
-                  </label>
-                  <input
-                    type="number"
-                    id="additionalVCpu"
-                    min="0"
-                    max={MAX_VCPU - selectedGamePackage.cpuCores}
-                    value={additionalVCpu}
-                    onChange={(e) => {
-                      const value = Math.max(0, Math.min(MAX_VCPU - selectedGamePackage.cpuCores, parseInt(e.target.value) || 0));
-                      setAdditionalVCpu(value);
-                    }}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white text-base font-medium"
-                    placeholder="0"
-                  />
-                  {upgradePrices && additionalVCpu > 0 && (
-                    <p className="text-xs text-gray-600 mt-1">
-                      +{formatPrice(additionalVCpu * upgradePrices.pricePerVCpu, upgradePrices.currency)}/hó
-                    </p>
-                  )}
-                </div>
-                )}
-
-                {upgradePrices && upgradePrices.pricePerRamGB > 0 && (
-                <div>
-                  <label htmlFor="additionalRamGB" className="block text-sm font-medium text-gray-900 mb-2">
-                    További RAM GB (jelenleg: {selectedGamePackage.ram} GB, max: {MAX_RAM_GB} GB)
-                  </label>
-                  <input
-                    type="number"
-                    id="additionalRamGB"
-                    min="0"
-                    max={MAX_RAM_GB - selectedGamePackage.ram}
-                    value={additionalRamGB}
-                    onChange={(e) => {
-                      const value = Math.max(0, Math.min(MAX_RAM_GB - selectedGamePackage.ram, parseInt(e.target.value) || 0));
-                      setAdditionalRamGB(value);
-                    }}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white text-base font-medium"
-                    placeholder="0"
-                  />
-                  {upgradePrices && additionalRamGB > 0 && (
-                    <p className="text-xs text-gray-600 mt-1">
-                      +{formatPrice(additionalRamGB * upgradePrices.pricePerRamGB, upgradePrices.currency)}/hó
-                    </p>
-                  )}
-                </div>
-                )}
-
-                {selectedGamePackage.pricePerSlot && (
-                <div>
-                  <label htmlFor="additionalSlots" className="block text-sm font-medium text-gray-900 mb-2">
-                    További Slot (jelenleg: {selectedGamePackage.slot}, max: {MAX_SLOTS})
-                  </label>
-                  <input
-                    type="number"
-                    id="additionalSlots"
-                    min="0"
-                    max={MAX_SLOTS - selectedGamePackage.slot}
-                    value={additionalSlots}
-                    onChange={(e) => {
-                      const value = Math.max(0, Math.min(MAX_SLOTS - selectedGamePackage.slot, parseInt(e.target.value) || 0));
-                      setAdditionalSlots(value);
-                    }}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white text-base font-medium"
-                    placeholder="0"
-                  />
-                  {selectedGamePackage.pricePerSlot && additionalSlots > 0 && (
-                    <p className="text-xs text-gray-600 mt-1">
-                      +{formatPrice(additionalSlots * selectedGamePackage.pricePerSlot, selectedGamePackage.currency)}/hó
-                    </p>
-                  )}
-                </div>
-                )}
-              </div>
-
-              {(((additionalVCpu > 0 || additionalRamGB > 0) && upgradePrices) || (additionalSlots > 0 && selectedGamePackage.pricePerSlot)) && (
-                <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-sm font-semibold text-blue-900 mb-1">Bővítési költség:</p>
-                  <p className="text-lg font-bold text-blue-700">
-                    {formatPrice(
-                      (upgradePrices ? (additionalVCpu * upgradePrices.pricePerVCpu + additionalRamGB * upgradePrices.pricePerRamGB) : 0) +
-                      (selectedGamePackage.pricePerSlot && additionalSlots > 0 ? additionalSlots * selectedGamePackage.pricePerSlot : 0),
-                      selectedGamePackage.currency
-                    )}/hó
-                  </p>
-                </div>
-              )}
-            </div>
-            )}
           </div>
         </Card>
 
