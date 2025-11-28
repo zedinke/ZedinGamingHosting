@@ -362,7 +362,7 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
                   </div>
                 </div>
                 {additionalSlots > 0 && selectedGamePackage.pricePerSlot && (
-                  <p className="text-xs text-green-600 font-semibold mt-1">
+                  <p className="text-sm text-green-600 font-bold mt-2">
                     +{formatPrice(additionalSlots * selectedGamePackage.pricePerSlot, selectedGamePackage.currency)}/hó
                   </p>
                 )}
@@ -399,7 +399,7 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
                   </div>
                 </div>
                 {additionalVCpu > 0 && upgradePrices && (
-                  <p className="text-xs text-green-600 font-semibold mt-1">
+                  <p className="text-sm text-green-600 font-bold mt-2">
                     +{formatPrice(additionalVCpu * upgradePrices.pricePerVCpu, upgradePrices.currency)}/hó
                   </p>
                 )}
@@ -437,7 +437,7 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
                   </div>
                 </div>
                 {additionalRamGB > 0 && upgradePrices && (
-                  <p className="text-xs text-green-600 font-semibold mt-1">
+                  <p className="text-sm text-green-600 font-bold mt-2">
                     +{formatPrice(additionalRamGB * upgradePrices.pricePerRamGB, upgradePrices.currency)}/hó
                   </p>
                 )}
