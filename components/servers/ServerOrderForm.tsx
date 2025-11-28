@@ -286,7 +286,7 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
       )}
 
       {/* Game Package Info - Nagyobb, szebb design képpel */}
-      <Card padding="lg" className="bg-gradient-to-br from-emerald-50 to-teal-50 border-2 border-emerald-300 shadow-xl overflow-hidden">
+      <Card padding="lg" className="bg-gradient-to-br from-emerald-50 to-teal-50 border-2 border-emerald-300 shadow-xl">
         <div className="grid md:grid-cols-3 gap-6">
           {/* Kép rész - bal oldal */}
           <div className="md:col-span-1">
@@ -338,16 +338,16 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               {selectedGamePackage.pricePerSlot ? (
-              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 relative z-10">
                 <p className="text-xs font-bold text-gray-900 mb-2 uppercase">Slot</p>
-                <div className="relative">
+                <div className="relative z-20">
                   <select
                     value={additionalSlots}
                     onChange={(e) => {
                       const value = parseInt(e.target.value) || 0;
                       setAdditionalSlots(value);
                     }}
-                    className="w-full px-3 py-2 border-2 border-primary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-primary-600 bg-white text-xl font-bold appearance-none cursor-pointer hover:border-primary-400 transition-colors"
+                    className="w-full px-3 py-2 border-2 border-primary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-primary-600 bg-white text-xl font-bold appearance-none cursor-pointer hover:border-primary-400 transition-colors relative z-30"
                   >
                     {Array.from({ length: MAX_SLOTS - selectedGamePackage.slot + 1 }, (_, i) => i).map((value) => (
                       <option key={value} value={value}>
@@ -375,16 +375,16 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
               )}
               
               {upgradePrices && upgradePrices.pricePerVCpu > 0 ? (
-              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 relative z-10">
                 <p className="text-xs font-bold text-gray-900 mb-2 uppercase">CPU</p>
-                <div className="relative">
+                <div className="relative z-20">
                   <select
                     value={additionalVCpu}
                     onChange={(e) => {
                       const value = parseInt(e.target.value) || 0;
                       setAdditionalVCpu(value);
                     }}
-                    className="w-full px-3 py-2 border-2 border-primary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-primary-600 bg-white text-xl font-bold appearance-none cursor-pointer hover:border-primary-400 transition-colors"
+                    className="w-full px-3 py-2 border-2 border-primary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-primary-600 bg-white text-xl font-bold appearance-none cursor-pointer hover:border-primary-400 transition-colors relative z-30"
                   >
                     {Array.from({ length: MAX_VCPU - selectedGamePackage.cpuCores + 1 }, (_, i) => i).map((value) => (
                       <option key={value} value={value}>
@@ -413,16 +413,16 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
               )}
               
               {upgradePrices && upgradePrices.pricePerRamGB > 0 ? (
-              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 relative z-10">
                 <p className="text-xs font-bold text-gray-900 mb-2 uppercase">RAM</p>
-                <div className="relative">
+                <div className="relative z-20">
                   <select
                     value={additionalRamGB}
                     onChange={(e) => {
                       const value = parseInt(e.target.value) || 0;
                       setAdditionalRamGB(value);
                     }}
-                    className="w-full px-3 py-2 border-2 border-primary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-primary-600 bg-white text-xl font-bold appearance-none cursor-pointer hover:border-primary-400 transition-colors"
+                    className="w-full px-3 py-2 border-2 border-primary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-primary-600 bg-white text-xl font-bold appearance-none cursor-pointer hover:border-primary-400 transition-colors relative z-30"
                   >
                     {Array.from({ length: MAX_RAM_GB - selectedGamePackage.ram + 1 }, (_, i) => i).map((value) => (
                       <option key={value} value={value}>
