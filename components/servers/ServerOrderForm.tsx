@@ -154,6 +154,12 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
     }
   }, [selectedGamePackage, locale, router]);
 
+  // YouTube videó ID kinyerése
+  const videoId = useMemo(() => {
+    if (!selectedGamePackage?.videoUrl) return null;
+    return getYouTubeVideoId(selectedGamePackage.videoUrl);
+  }, [selectedGamePackage?.videoUrl]);
+
   const handleBillingSubmit = async (data: BillingInfoFormData) => {
     setIsLoading(true);
     try {
@@ -255,12 +261,6 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
       maximumFractionDigits: 0,
     }).format(price);
   };
-
-  // YouTube videó ID kinyerése
-  const videoId = useMemo(() => {
-    if (!selectedGamePackage?.videoUrl) return null;
-    return getYouTubeVideoId(selectedGamePackage.videoUrl);
-  }, [selectedGamePackage?.videoUrl]);
 
   if (!selectedGamePackage) {
     return null;
