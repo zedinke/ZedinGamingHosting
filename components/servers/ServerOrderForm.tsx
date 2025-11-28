@@ -261,14 +261,6 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
   }
 
   const videoId = selectedGamePackage.videoUrl ? getYouTubeVideoId(selectedGamePackage.videoUrl) : null;
-  
-  // Debug: ellenőrizzük, hogy van-e videó URL
-  useEffect(() => {
-    if (selectedGamePackage.videoUrl) {
-      console.log('Video URL found:', selectedGamePackage.videoUrl);
-      console.log('Extracted video ID:', videoId);
-    }
-  }, [selectedGamePackage.videoUrl, videoId]);
 
   return (
     <div className="space-y-6">
