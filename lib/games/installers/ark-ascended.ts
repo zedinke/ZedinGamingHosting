@@ -34,6 +34,10 @@ fi
 # ARK Ascended szerver telepítése globális SteamCMD-vel
 echo "Installing ARK: Survival Ascended dedicated server..."
 
+MAX_RETRIES=3
+RETRY_COUNT=0
+INSTALL_SUCCESS=false
+
 while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
   echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
   
@@ -67,9 +71,58 @@ if [ "$INSTALL_SUCCESS" != "true" ]; then
 fi
 
 # Könyvtárak létrehozása
-mkdir -p ShooterGame/Saved/Config/LinuxServer
-mkdir -p ShooterGame/Saved/SavedArks
+mkdir -p "$SERVER_DIR/ShooterGame/Saved/Config/LinuxServer"
+mkdir -p "$SERVER_DIR/ShooterGame/Saved/SavedArks"
 chown -R root:root "$SERVER_DIR"
 chmod -R 755 "$SERVER_DIR"
+
+# Konfigurációs fájlok létrehozása
+echo "Szerver konfiguráció létrehozása..."
+
+# GameUserSettings.ini
+cat > "$SERVER_DIR/ShooterGame/Saved/Config/LinuxServer/GameUserSettings.ini" << EOF
+[/Script/ShooterGame.ShooterGameUserSettings]
+MasterAudioVolume=1.000000
+MusicAudioVolume=1.000000
+SFXAudioVolume=1.000000
+VoiceAudioVolume=1.000000
+UIScaling=1.000000
+UIScaleSlider=1.000000
+bFirstRun=False
+bShowChatbox=True
+
+[SessionSettings]
+SessionName={name}
+Port={port}
+QueryPort={queryPort}
+ServerPassword=
+AdminPassword={adminPassword}
+MaxPlayers={maxPlayers}
+ServerPVE=False
+
+[/Script/ShooterGame.ShooterGameMode]
+ConfigOverrideItemMaxQuantity=(ItemClassString="PrimalItemResource_Amarberry_C",Quantity=100.0)
+EOF
+
+# Game.ini
+cat > "$SERVER_DIR/ShooterGame/Saved/Config/LinuxServer/Game.ini" << EOF
+[/Script/ShooterGame.ShooterGameMode]
+ConfigOverrideItemMaxQuantity=(ItemClassString="PrimalItemResource_Amarberry_C",Quantity=100.0)
+ConfigOverrideItemMaxQuantity=(ItemClassString="PrimalItemResource_Arrow_Stone_C",Quantity=100.0)
+ConfigOverrideItemMaxQuantity=(ItemClassString="PrimalItemResource_Sparkpowder_C",Quantity=1000.0)
+EOF
+
+# Jogosultságok beállítása
+chown -R root:root "$SERVER_DIR"
+chmod -R 755 "$SERVER_DIR"
+
+# Executable jogok beállítása a szerver binárisra
+if [ -f "$SERVER_DIR/ShooterGame/Binaries/Linux/ShooterGameServer" ]; then
+  chmod +x "$SERVER_DIR/ShooterGame/Binaries/Linux/ShooterGameServer"
+fi
+
+echo "=== Installálás kész ==="
+echo "Szerver könyvtár: $SERVER_DIR"
+echo "Konfigurációs fájlok létrehozva"
 `;
 

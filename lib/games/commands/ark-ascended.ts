@@ -3,7 +3,7 @@
  */
 
 export const commands = {
-  startCommand: './ShooterGame/Binaries/Linux/ShooterGameServer TheIsland_WP?listen?Port={port}?QueryPort={queryPort}?ServerAdminPassword={adminPassword}',
+  startCommand: './ShooterGame/Binaries/Linux/ShooterGameServer TheIsland_WP?listen?SessionName="{name}"?Port={port}?QueryPort={queryPort}?ServerPassword=?AdminPassword={adminPassword}?MaxPlayers={maxPlayers} -server -log',
   stopCommand: 'quit',
 };
 

@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { UserServerConfigEditor } from './UserServerConfigEditor';
 import { UserServerConfigFileEditor } from './UserServerConfigFileEditor';
 import { ServerSavesManager } from './ServerSavesManager';
+import { ARKASAServerConfigManager } from './ARKASAServerConfigManager';
 
 interface Server {
   id: string;
@@ -353,17 +354,29 @@ export function UserServerDetail({ server, locale }: UserServerDetailProps) {
 
       {activeTab === 'config' && (
         <div className="space-y-6">
-          <UserServerConfigEditor
-            serverId={server.id}
-            gameType={server.gameType}
-            maxPlayers={server.maxPlayers}
-            initialConfig={server.configuration}
-          />
-          {server.gameType === 'THE_FOREST' && (
-            <ServerSavesManager
+          {server.gameType === 'ARK_ASCENDED' ? (
+            <ARKASAServerConfigManager
               serverId={server.id}
-              gameType={server.gameType}
+              ipAddress={server.ipAddress}
+              port={server.port}
+              queryPort={server.port ? server.port + 1 : 27015}
+              maxPlayers={server.maxPlayers}
             />
+          ) : (
+            <>
+              <UserServerConfigEditor
+                serverId={server.id}
+                gameType={server.gameType}
+                maxPlayers={server.maxPlayers}
+                initialConfig={server.configuration}
+              />
+              {server.gameType === 'THE_FOREST' && (
+                <ServerSavesManager
+                  serverId={server.id}
+                  gameType={server.gameType}
+                />
+              )}
+            </>
           )}
         </div>
       )}
