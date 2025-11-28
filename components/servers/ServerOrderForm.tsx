@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -256,11 +256,15 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
     }).format(price);
   };
 
+  // YouTube videó ID kinyerése
+  const videoId = useMemo(() => {
+    if (!selectedGamePackage?.videoUrl) return null;
+    return getYouTubeVideoId(selectedGamePackage.videoUrl);
+  }, [selectedGamePackage?.videoUrl]);
+
   if (!selectedGamePackage) {
     return null;
   }
-
-  const videoId = selectedGamePackage.videoUrl ? getYouTubeVideoId(selectedGamePackage.videoUrl) : null;
 
   return (
     <div className="space-y-6">
