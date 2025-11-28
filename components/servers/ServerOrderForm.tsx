@@ -84,6 +84,14 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
   const MAX_VCPU = 20;
   const MAX_SLOTS = 50;
 
+  // YouTube videó ID kinyerése
+  const getYouTubeVideoId = (url: string | null): string | null => {
+    if (!url || url.trim() === '') return null;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return match && match[2].length === 11 ? match[2] : null;
+  };
+
   const {
     register,
     handleSubmit,
@@ -251,14 +259,6 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
   if (!selectedGamePackage) {
     return null;
   }
-
-  // YouTube videó ID kinyerése
-  const getYouTubeVideoId = (url: string | null): string | null => {
-    if (!url || url.trim() === '') return null;
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-    const match = url.match(regExp);
-    return match && match[2].length === 11 ? match[2] : null;
-  };
 
   const videoId = selectedGamePackage.videoUrl ? getYouTubeVideoId(selectedGamePackage.videoUrl) : null;
   
