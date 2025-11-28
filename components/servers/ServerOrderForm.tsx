@@ -507,7 +507,7 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
                 )}
               </div>
 
-              {((additionalVCpu > 0 || additionalRamGB > 0) && upgradePrices) || (additionalSlots > 0 && selectedGamePackage.pricePerSlot) ? (
+              {(((additionalVCpu > 0 || additionalRamGB > 0) && upgradePrices) || (additionalSlots > 0 && selectedGamePackage.pricePerSlot)) && (
                 <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                   <p className="text-sm font-semibold text-blue-900 mb-1">Bővítési költség:</p>
                   <p className="text-lg font-bold text-blue-700">
