@@ -426,23 +426,22 @@ export async function provisionServer(
         // Folytatjuk, de logoljuk a hibát
       }
       
-      // Frissítjük a generált portot is, ha változott
-      if (queryPort !== generatedPort) {
-        generatedPort = queryPort;
-      }
+      // Az adatbázisban a port mezőbe a GamePort-ot mentjük (alap port)
+      // A GamePort az alap port, amit a játékosok használnak
+      generatedPort = gamePort; // GamePort = alap port (pl. 7777 vagy 7780)
       
       // BeaconPort és GamePort mentése a configuration JSON-ben
       configurationUpdate = {
-        queryPort: queryPort,
-        gamePort: gamePort,
-        beaconPort: beaconPort,
+        queryPort: queryPort, // ServerQueryPort (pl. 15777 vagy 15780)
+        gamePort: gamePort, // GamePort (alap port, pl. 7777 vagy 7780)
+        beaconPort: beaconPort, // BeaconPort (pl. 15007 vagy 15010)
       };
       
       logger.info('Satisfactory ports generated', {
         serverId,
-        queryPort,
-        gamePort,
-        beaconPort,
+        queryPort, // ServerQueryPort
+        gamePort, // GamePort (alap port)
+        beaconPort, // BeaconPort
         machineId: bestLocation.machineId,
         retries: retryCount,
       });
@@ -459,14 +458,15 @@ export async function provisionServer(
     const currentConfig = serverForConfig?.configuration ? (typeof serverForConfig.configuration === 'string' ? JSON.parse(serverForConfig.configuration as string) : serverForConfig.configuration) : {};
     const updatedConfig = { ...currentConfig, ...configurationUpdate };
     
-    // Satisfactory-nál a queryPort és beaconPort mezőket is mentjük az adatbázisba
+    // Satisfactory-nál a port mezőbe a GamePort-ot mentjük (alap port), 
+    // a queryPort és beaconPort mezőket pedig külön mezőként
     const updateData: any = {
-      port: generatedPort,
+      port: generatedPort, // GamePort (alap port)
     };
     
     if (options.gameType === 'SATISFACTORY' && Object.keys(configurationUpdate).length > 0) {
-      updateData.queryPort = configurationUpdate.queryPort;
-      updateData.beaconPort = configurationUpdate.beaconPort;
+      updateData.queryPort = configurationUpdate.queryPort; // ServerQueryPort
+      updateData.beaconPort = configurationUpdate.beaconPort; // BeaconPort
       updateData.configuration = updatedConfig;
     } else if (Object.keys(configurationUpdate).length > 0) {
       updateData.configuration = updatedConfig;

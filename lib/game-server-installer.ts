@@ -1325,29 +1325,27 @@ export async function createSystemdServiceForServer(
         },
       });
       
-      // Satisfactory port számítások:
-      // QueryPort = a port mezőben tárolt érték (4 számjegyű, alapértelmezett 7777)
-      // GamePort = QueryPort + 10000 (pl. 7777 -> 17777) - csatlakozási port
-      // BeaconPort = QueryPort + 7223 (pl. 7777 -> 15000) - szerver lista port
-      const dbQueryPort = serverWithPorts?.queryPort || serverWithPorts?.port || port || 7777;
-      const dbBeaconPort = serverWithPorts?.beaconPort || (dbQueryPort + 7223);
-      const dbGamePort = dbQueryPort + 10000; // GamePort = QueryPort + 10000
+      // Satisfactory port számítások az adatbázisból:
+      // Az adatbázisban:
+      // - port mező = GamePort (alap port, pl. 7777)
+      // - queryPort mező = ServerQueryPort (GamePort + 8000, pl. 15777)
+      // - beaconPort mező = BeaconPort (GamePort + 7230, pl. 15007)
       
-      // Config-ból is próbáljuk, ha van
-      let configQueryPort = dbQueryPort;
-      let configBeaconPort = dbBeaconPort;
-      let configGamePort = dbGamePort;
+      // Lekérjük az adatbázisból a portokat
+      const dbGamePort = serverWithPorts?.port || port || 7777; // GamePort = port mező
+      const dbQueryPort = serverWithPorts?.queryPort || (dbGamePort + 8000); // ServerQueryPort = queryPort mező
+      const dbBeaconPort = serverWithPorts?.beaconPort || (dbGamePort + 7230); // BeaconPort = beaconPort mező
       
-      if (config.queryPort) {
-        configQueryPort = config.queryPort;
-        configGamePort = config.gamePort || (configQueryPort + 10000);
-        configBeaconPort = config.beaconPort || (configQueryPort + 7223);
+      // Config-ból is próbáljuk, ha van (ha a config-ban vannak, akkor azokat használjuk)
+      let finalGamePort = config.gamePort || dbGamePort;
+      let finalQueryPort = config.queryPort || dbQueryPort;
+      let finalBeaconPort = config.beaconPort || dbBeaconPort;
+      
+      // Ha a config-ban csak egy port van, számoljuk ki a többit
+      if (config.gamePort && !config.queryPort && !config.beaconPort) {
+        finalQueryPort = config.gamePort + 8000;
+        finalBeaconPort = config.gamePort + 7230;
       }
-      
-      // A config-ban lévő értékeket használjuk, ha vannak, különben az adatbázisból jövőket
-      let finalQueryPort = config.queryPort || configQueryPort;
-      let finalGamePort = config.gamePort || configGamePort;
-      let finalBeaconPort = config.beaconPort || configBeaconPort;
       
       // Biztosítjuk, hogy mindhárom port különböző legyen
       // Ha bármelyik port egyezik, újraszámoljuk őket
