@@ -102,6 +102,7 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
     formState: { errors },
     watch,
     setValue,
+    getValues,
   } = useForm<GamePackageFormData>({
     resolver: zodResolver(gamePackageSchema),
     defaultValues: packageData
@@ -142,6 +143,17 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
           order: 0,
         },
   });
+
+  // Biztosítjuk, hogy a gameType értéke be legyen állítva, amikor a játékok betöltődnek
+  useEffect(() => {
+    if (packageData && gameTypes.length > 0 && !loadingGameTypes) {
+      const currentGameType = getValues('gameType');
+      // Ha a jelenlegi érték nem egyezik meg a packageData.gameType-nal, frissítjük
+      if (currentGameType !== packageData.gameType) {
+        setValue('gameType', packageData.gameType);
+      }
+    }
+  }, [gameTypes, loadingGameTypes, packageData, setValue, getValues]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -240,6 +252,7 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
               <select
                 {...register('gameType')}
                 id="gameType"
+                value={watch('gameType') || (packageData?.gameType || '')}
                 disabled={loadingGameTypes}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white disabled:opacity-50 disabled:cursor-not-allowed"
               >
