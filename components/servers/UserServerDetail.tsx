@@ -356,7 +356,13 @@ export function UserServerDetail({ server, locale }: UserServerDetailProps) {
               <dt className="text-gray-700">Port:</dt>
               <dd className="text-gray-900">
                 {server.gameType === 'SATISFACTORY' 
-                  ? (serverData.port || server.port || '-') // Satisfactory-nál a port mező az adatbázisban a QueryPort-ot tartalmazza, de csak akkor jelenik meg, ha van port
+                  ? (serverData.port || server.port) 
+                    ? (serverData.port || server.port) // Satisfactory-nál a port mező az adatbázisban a QueryPort-ot tartalmazza
+                    : (
+                        <span className="text-gray-500 italic text-sm">
+                          A port megjelenik, amint elindítottad a szerveredet és fixen ez is marad
+                        </span>
+                      )
                   : (serverData.port || server.port || '-')}
               </dd>
             </div>
