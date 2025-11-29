@@ -499,7 +499,20 @@ fi
       await appendInstallLog(serverId, 'Konfigurációs fájl generálása...');
     }
     
-    const configContent = generateConfigFile(gameType, config, gameConfig);
+    // Port lekérése az adatbázisból, hogy a helyes portot használjuk
+    const serverFromDb = await prisma.server.findUnique({
+      where: { id: serverId },
+      select: { port: true },
+    });
+    const actualPort = serverFromDb?.port || config.port;
+    
+    // Frissítjük a config objektumot a helyes porttal
+    const configWithPort = {
+      ...config,
+      port: actualPort,
+    };
+    
+    const configContent = generateConfigFile(gameType, configWithPort, gameConfig);
     if (configContent) {
       let configPath = gameConfig.configPath;
       
@@ -546,9 +559,9 @@ fi
       // Satisfactory-nál a Game.ini fájlt is létrehozzuk a port beállítással
       if (gameType === 'SATISFACTORY') {
         const gameIniPath = configPath.replace('GameUserSettings.ini', 'Game.ini');
-        // A port beállítása a Game.ini-ben (az útmutató szerint)
+        // A port beállítása a Game.ini-ben (az útmutató szerint) - az adatbázisból lekérdezett portot használjuk
         const gameIniContent = `[/Script/Engine.GameNetworkManager]
-Port=${config.port || 15777}
+Port=${actualPort || 15777}
 TotalNetBandwidth=20000
 MaxDynamicBandwidth=10000
 MinDynamicBandwidth=1000
@@ -563,7 +576,7 @@ MinDynamicBandwidth=1000
           `sudo -u satis cat > ${gameIniPath} << 'EOF'\n${gameIniContent}\nEOF`
         );
         if (writeProgress) {
-          await appendInstallLog(serverId, `Game.ini fájl létrehozva port beállítással: ${gameIniPath} (Port=${config.port || 15777})`);
+          await appendInstallLog(serverId, `Game.ini fájl létrehozva port beállítással: ${gameIniPath} (Port=${actualPort || 15777})`);
         }
         
         // Jogosultságok beállítása a konfigurációs mappán (sfgames csoport írási jog)

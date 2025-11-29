@@ -262,9 +262,10 @@ export async function PUT(
         });
         
         // Satisfactory esetén frissítjük a Game.ini fájlban a portot is
-        if (server.gameType === 'SATISFACTORY' && configuration?.GamePort) {
+        // MINDIG az adatbázisból lekérdezett portot használjuk, nem a configuration.GamePort-ot
+        if (server.gameType === 'SATISFACTORY' && server.port) {
           const gameIniPath = configPath.replace('GameUserSettings.ini', 'Game.ini');
-          const gamePort = configuration.GamePort || server.port || 15777;
+          const gamePort = server.port; // Az adatbázisból lekérdezett portot használjuk
           const gameIniContent = `[/Script/Engine.GameNetworkManager]
 Port=${gamePort}
 TotalNetBandwidth=20000
