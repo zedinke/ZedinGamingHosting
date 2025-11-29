@@ -240,8 +240,8 @@ export function ServerListCard({ servers, locale }: ServerListCardProps) {
                       {server.gameType}
                     </span>
                     <span>👥 {server.maxPlayers} játékos</span>
-                    {server.ipAddress && (
-                      <span>🌐 {server.ipAddress}:{server.port || '-'}</span>
+                    {server.ipAddress && server.port && (
+                      <span>🌐 {server.ipAddress}:{server.port}</span>
                     )}
                   </div>
                 </div>
