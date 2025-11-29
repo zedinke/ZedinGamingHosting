@@ -76,6 +76,8 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
   const [isVerifying, setIsVerifying] = useState(false);
   const [subscriptionStatus, setSubscriptionStatus] = useState(server.subscription?.status || null);
   const [showInstallProgress, setShowInstallProgress] = useState(false);
+  const [startCommand, setStartCommand] = useState<string | null>(null);
+  const [isLoadingStartCommand, setIsLoadingStartCommand] = useState(false);
 
   const handleServerAction = async (action: string) => {
     setIsLoading(true);
@@ -234,6 +236,53 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
                 </dd>
               </div>
             )}
+            <div>
+              <dt className="text-sm font-medium text-gray-700 mb-1">Indító Parancs</dt>
+              <dd>
+                {!startCommand && !isLoadingStartCommand && (
+                  <button
+                    onClick={async () => {
+                      setIsLoadingStartCommand(true);
+                      try {
+                        const response = await fetch(`/api/admin/servers/${server.id}/start-command`);
+                        const result = await response.json();
+                        if (response.ok && result.success) {
+                          setStartCommand(result.startCommand);
+                        } else {
+                          toast.error(result.error || 'Hiba történt az indító sor lekérése során');
+                        }
+                      } catch (error) {
+                        toast.error('Hiba történt');
+                      } finally {
+                        setIsLoadingStartCommand(false);
+                      }
+                    }}
+                    className="text-primary-600 hover:underline text-sm"
+                  >
+                    Indító parancs megjelenítése
+                  </button>
+                )}
+                {isLoadingStartCommand && (
+                  <span className="text-gray-500 text-sm">Betöltés...</span>
+                )}
+                {startCommand && (
+                  <div className="mt-2">
+                    <code className="block bg-gray-100 p-3 rounded text-xs font-mono text-gray-900 break-all">
+                      {startCommand}
+                    </code>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(startCommand);
+                        toast.success('Indító parancs másolva a vágólapra');
+                      }}
+                      className="mt-2 text-xs text-primary-600 hover:underline"
+                    >
+                      Másolás vágólapra
+                    </button>
+                  </div>
+                )}
+              </dd>
+            </div>
           </dl>
         </div>
 

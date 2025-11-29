@@ -157,6 +157,12 @@ export async function installGameServer(
         error,
       };
     }
+
+    // Ha a szervernek van portja az adatbázisban, azt használjuk (generált port)
+    // Különben a config.port értéket használjuk
+    if (server.port && !config.port) {
+      config.port = server.port;
+    }
     
     if (writeProgress) {
       await writeInstallProgress(serverId, {
