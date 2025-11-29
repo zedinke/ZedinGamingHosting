@@ -380,7 +380,7 @@ export async function provisionServer(
       }
       
       if (!allPortsAvailable) {
-        logger.error('Could not find available ports for Satisfactory server after retries', {
+        logger.error('Could not find available ports for Satisfactory server after retries', new Error('Port allocation failed after retries'), {
           serverId,
           finalQueryPort: queryPort,
           finalGamePort: gamePort,
