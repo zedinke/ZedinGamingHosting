@@ -1154,7 +1154,16 @@ export async function createSystemdServiceForServer(
   const cpuQuota = `${cpuCores * 100}%`;
   // MemoryLimit: RAM limitáció GB-ban (pl. "2G" = 2 GB)
   // A ram értéke MB-ban van, konvertáljuk GB-ba
-  const ramGB = Math.ceil(ram / 1024); // MB -> GB (pl. 2048 MB = 2 GB)
+  // Satisfactory-nál minimum 4 GB RAM kell, mert memóriaigényes
+  let ramGB = Math.ceil(ram / 1024); // MB -> GB (pl. 2048 MB = 2 GB)
+  if (gameType === 'SATISFACTORY' && ramGB < 4) {
+    ramGB = 4; // Satisfactory-nál minimum 4 GB
+    logger.warn(`Satisfactory szerver RAM limit növelve 4 GB-ra (korábbi: ${Math.ceil(ram / 1024)} GB)`, {
+      serverId,
+      originalRam: ram,
+      newRamGB: ramGB,
+    });
+  }
   const memoryLimit = `${ramGB}G`;
   
   // Ellenőrizzük, hogy a gameConfig létezik-e
