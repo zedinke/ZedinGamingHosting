@@ -836,7 +836,7 @@ MinDynamicBandwidth=1000
 /**
  * Konfigurációs fájl generálása
  */
-function generateConfigFile(
+export function generateConfigFile(
   gameType: GameType,
   config: any,
   gameConfig: any
