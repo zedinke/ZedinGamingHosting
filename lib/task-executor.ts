@@ -220,30 +220,36 @@ async function executeProvisionTask(task: any): Promise<any> {
   const server = task.server;
   const agent = task.agent;
 
-  // Szerver státusz frissítése STARTING-re
-  await prisma.server.update({
-    where: { id: task.serverId },
-    data: { status: 'STARTING' },
+  // Szerver státusz frissítése STARTING-re (retry logikával)
+  await withRetry(async () => {
+    await prisma.server.update({
+      where: { id: task.serverId },
+      data: { status: 'STARTING' },
+    });
   });
 
-  // Port generálása, ha nincs
+  // Port generálása, ha nincs (retry logikával)
   let finalPort = server.port;
   if (!server.port) {
     const port = await generateServerPort(server.gameType, agent.machine?.id);
-    await prisma.server.update({
-      where: { id: task.serverId },
-      data: { port },
+    await withRetry(async () => {
+      await prisma.server.update({
+        where: { id: task.serverId },
+        data: { port },
+      });
     });
     finalPort = port;
     // Frissítjük a server objektumot is
     server.port = port;
   }
 
-  // IP cím beállítása, ha nincs
+  // IP cím beállítása, ha nincs (retry logikával)
   if (!server.ipAddress && agent.machine) {
-    await prisma.server.update({
-      where: { id: task.serverId },
-      data: { ipAddress: agent.machine.ipAddress },
+    await withRetry(async () => {
+      await prisma.server.update({
+        where: { id: task.serverId },
+        data: { ipAddress: agent.machine.ipAddress },
+      });
     });
     // Frissítjük a server objektumot is
     server.ipAddress = agent.machine.ipAddress;
