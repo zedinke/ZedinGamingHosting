@@ -356,13 +356,22 @@ export function UserServerDetail({ server, locale }: UserServerDetailProps) {
               <dt className="text-gray-700">Port:</dt>
               <dd className="text-gray-900">
                 {server.gameType === 'SATISFACTORY' 
-                  ? ((serverData.port !== null && serverData.port !== undefined) || (server.port !== null && server.port !== undefined))
-                    ? (serverData.port || server.port) // Satisfactory-nál a port mező az adatbázisban a QueryPort-ot tartalmazza
-                    : (
-                        <span className="text-gray-500 italic text-sm">
-                          A port megjelenik, amint elindítottad a szerveredet és fixen ez is marad
-                        </span>
-                      )
+                  ? (() => {
+                      // Satisfactory-nál csak akkor mutatunk portot, ha a szerver már elindult (ONLINE vagy STARTING)
+                      // Ha nincs port vagy a szerver még nem indult el, akkor a szöveget mutatjuk
+                      const hasPort = (serverData.port !== null && serverData.port !== undefined) || (server.port !== null && server.port !== undefined);
+                      const isStarted = serverStatus === 'ONLINE' || serverStatus === 'STARTING' || server.status === 'ONLINE' || server.status === 'STARTING';
+                      
+                      if (hasPort && isStarted) {
+                        return serverData.port || server.port; // Satisfactory-nál a port mező az adatbázisban a QueryPort-ot tartalmazza
+                      } else {
+                        return (
+                          <span className="text-gray-500 italic text-sm">
+                            A port megjelenik, amint elindítottad a szerveredet és fixen ez is marad
+                          </span>
+                        );
+                      }
+                    })()
                   : (serverData.port || server.port || '-')}
               </dd>
             </div>
