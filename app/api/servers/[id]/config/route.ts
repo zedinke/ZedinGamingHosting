@@ -182,7 +182,8 @@ export async function PUT(
           configPath = `${serverPath}/server.cfg`;
           break;
         case 'SATISFACTORY':
-          configPath = `${serverPath}/FactoryGame/Saved/Config/LinuxServer/GameUserSettings.ini`;
+          // Satisfactory Linux szerver konfigurációs mappa: ~/.config/Epic/FactoryGame/Saved/Config/LinuxServer/
+          configPath = `/home/satis/.config/Epic/FactoryGame/Saved/Config/LinuxServer/GameUserSettings.ini`;
           break;
         default:
           configPath = `${serverPath}/server.cfg`;
@@ -192,6 +193,11 @@ export async function PUT(
       const configContent = convertConfigToGameFormat(server.gameType, configuration);
       
       if (configContent) {
+        // Satisfactory esetén satis felhasználóként írjuk a fájlt
+        const writeCommand = server.gameType === 'SATISFACTORY'
+          ? `sudo -u satis mkdir -p $(dirname ${configPath}) && sudo -u satis cat > ${configPath} << 'CONFIG_EOF'\n${configContent}\nCONFIG_EOF`
+          : `mkdir -p $(dirname ${configPath}) && cat > ${configPath} << 'CONFIG_EOF'\n${configContent}\nCONFIG_EOF`;
+        
         await executeSSHCommand(
           {
             host: machine.ipAddress,
@@ -199,7 +205,7 @@ export async function PUT(
             user: machine.sshUser,
             keyPath: machine.sshKeyPath || undefined,
           },
-          `mkdir -p $(dirname ${configPath}) && cat > ${configPath} << 'CONFIG_EOF'\n${configContent}\nCONFIG_EOF`
+          writeCommand
         );
 
         logger.info('Server config updated', {
@@ -207,6 +213,34 @@ export async function PUT(
           gameType: server.gameType,
           configPath,
         });
+        
+        // Satisfactory esetén frissítjük a Game.ini fájlban a portot is
+        if (server.gameType === 'SATISFACTORY' && configuration?.GamePort) {
+          const gameIniPath = configPath.replace('GameUserSettings.ini', 'Game.ini');
+          const gamePort = configuration.GamePort || server.port || 15777;
+          const gameIniContent = `[/Script/Engine.GameNetworkManager]
+Port=${gamePort}
+TotalNetBandwidth=20000
+MaxDynamicBandwidth=10000
+MinDynamicBandwidth=1000
+`;
+          
+          await executeSSHCommand(
+            {
+              host: machine.ipAddress,
+              port: machine.sshPort,
+              user: machine.sshUser,
+              keyPath: machine.sshKeyPath || undefined,
+            },
+            `sudo -u satis cat > ${gameIniPath} << 'GAME_INI_EOF'\n${gameIniContent}\nGAME_INI_EOF`
+          );
+          
+          logger.info('Satisfactory Game.ini port updated', {
+            serverId: id,
+            gameIniPath,
+            port: gamePort,
+          });
+        }
       }
 
       // The Forest és Satisfactory esetén újra kell generálni a systemd service-t, hogy a frissített startCommand-ot használja

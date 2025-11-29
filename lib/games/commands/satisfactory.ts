@@ -1,20 +1,18 @@
 /**
- * Satisfactory indító és leállító parancsok
+ * Satisfactory indító és leállító parancsok (Natív Linux szerver)
  * 
- * FONTOS: A Satisfactory-nak NINCS hivatalos Linux szerver verziója!
- * A szerver Windows binárist használ, ami Wine-n keresztül fut.
+ * A Satisfactory-nak van natív Linux szerver verziója, ami FactoryServer.sh scriptet használ.
+ * A script a SteamCMD telepítés során automatikusan letöltődik.
  * 
- * A bináris fájl: FactoryServer.exe (Windows bináris)
- * Elérési út: FactoryGame/Binaries/Win64/FactoryServer.exe
+ * Elérési út: /opt/servers/{serverId}/FactoryServer.sh
  * 
- * A telepítő script létrehoz egy start-server.sh fájlt a Win64 könyvtárban,
- * amit a systemd service használ.
+ * A szerver a Game.ini fájlban beállított portot használja (alapértelmezett: 15777).
+ * A Game.ini fájl: ~/.config/Epic/FactoryGame/Saved/Config/LinuxServer/Game.ini
  */
 
 export const commands = {
-  // A telepítő script létrehozza a start-server.sh fájlt a Win64 könyvtárban
-  // Ez a script kezeli a Wine-t és az xvfb-t
-  startCommand: 'cd FactoryGame/Binaries/Win64 && ./start-server.sh',
+  // Natív Linux szerver, FactoryServer.sh script használata
+  startCommand: './FactoryServer.sh -log -unattended',
   stopCommand: 'quit', // Systemd automatikusan kezeli a leállítást, de a stopCommand mező kötelező
 };
 

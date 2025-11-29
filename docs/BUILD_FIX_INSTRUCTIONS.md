@@ -78,3 +78,4 @@ Ha még mindig hibát kapsz:
    npm install next@latest --save
    ```
 
+

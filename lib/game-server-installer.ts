@@ -522,6 +522,7 @@ fi
       }
       
       // Satisfactory-nál a GameUserSettings.ini fájlt hozzuk létre
+      // A konfigurációs mappa: /home/satis/.config/Epic/FactoryGame/Saved/Config/LinuxServer/
       await executeSSHCommand(
         {
           host: machine.ipAddress,
@@ -529,17 +530,19 @@ fi
           user: machine.sshUser,
           keyPath: machine.sshKeyPath || undefined,
         },
-        `mkdir -p $(dirname ${configPath}) && cat > ${configPath} << 'EOF'\n${configContent}\nEOF`
+        `sudo -u satis mkdir -p $(dirname ${configPath}) && sudo -u satis cat > ${configPath} << 'EOF'\n${configContent}\nEOF`
       );
       
       if (writeProgress) {
         await appendInstallLog(serverId, `Konfigurációs fájl létrehozva: ${configPath}`);
       }
       
-      // Satisfactory-nál a Game.ini fájlt is létrehozzuk (alapértelmezett értékekkel)
+      // Satisfactory-nál a Game.ini fájlt is létrehozzuk a port beállítással
       if (gameType === 'SATISFACTORY') {
         const gameIniPath = configPath.replace('GameUserSettings.ini', 'Game.ini');
+        // A port beállítása a Game.ini-ben (az útmutató szerint)
         const gameIniContent = `[/Script/Engine.GameNetworkManager]
+Port=${port || 15777}
 TotalNetBandwidth=20000
 MaxDynamicBandwidth=10000
 MinDynamicBandwidth=1000
@@ -551,10 +554,25 @@ MinDynamicBandwidth=1000
             user: machine.sshUser,
             keyPath: machine.sshKeyPath || undefined,
           },
-          `cat > ${gameIniPath} << 'EOF'\n${gameIniContent}\nEOF`
+          `sudo -u satis cat > ${gameIniPath} << 'EOF'\n${gameIniContent}\nEOF`
         );
         if (writeProgress) {
-          await appendInstallLog(serverId, `Game.ini fájl létrehozva: ${gameIniPath}`);
+          await appendInstallLog(serverId, `Game.ini fájl létrehozva port beállítással: ${gameIniPath} (Port=${port || 15777})`);
+        }
+        
+        // Jogosultságok beállítása a konfigurációs mappán (sfgames csoport írási jog)
+        const configDir = `$(dirname ${configPath})`;
+        await executeSSHCommand(
+          {
+            host: machine.ipAddress,
+            port: machine.sshPort,
+            user: machine.sshUser,
+            keyPath: machine.sshKeyPath || undefined,
+          },
+          `chown -R satis:sfgames ${configDir} && chmod -R g+w ${configDir} && find ${configDir} -type d -exec chmod g+s {} + || true`
+        );
+        if (writeProgress) {
+          await appendInstallLog(serverId, `Jogosultságok beállítva a konfigurációs mappán: ${configDir}`);
         }
       }
     } else if (gameType === 'THE_FOREST') {
@@ -1187,8 +1205,8 @@ export async function createSystemdServiceForServer(
   
   // Ha a startCommand tartalmazza a "cd" parancsot, akkor eltávolítjuk és módosítjuk a WorkingDirectory-t
   // Systemd-ben nem lehet cd-t használni az ExecStart-ban
-  // KIVÉTEL: Satisfactory esetén (Wine használat) megtartjuk a cd parancsot, mert a wrapper script kezeli
-  if (startCommand.includes('cd ') && startCommand.includes(' && ') && gameType !== 'SATISFACTORY') {
+  // Satisfactory-nál a FactoryServer.sh script a szerver könyvtárban van, nincs szükség cd-re
+  if (startCommand.includes('cd ') && startCommand.includes(' && ')) {
     // Kinyerjük a cd útvonalat
     const cdMatch = startCommand.match(/cd\s+([^\s&]+)/);
     if (cdMatch) {
@@ -1204,20 +1222,6 @@ export async function createSystemdServiceForServer(
     }
   }
   
-  // Satisfactory esetén a cd útvonalat megtartjuk, de az execDir-t is beállítjuk
-  if (gameType === 'SATISFACTORY' && startCommand.includes('cd ') && startCommand.includes(' && ')) {
-    const cdMatch = startCommand.match(/cd\s+([^\s&]+)/);
-    if (cdMatch) {
-      const cdPath = cdMatch[1];
-      // Ha relatív útvonal, akkor hozzáadjuk a workingDir-hez
-      if (!cdPath.startsWith('/')) {
-        execDir = `${workingDir}/${cdPath}`;
-      } else {
-        execDir = cdPath;
-      }
-    }
-  }
-  
   // Systemd-ben nem lehet relatív útvonalat használni az ExecStart-ban
   // Ha a startCommand "./"-tal kezdődik, akkor abszolút útvonalra konvertáljuk
   if (startCommand.trim().startsWith('./')) {
@@ -1226,11 +1230,11 @@ export async function createSystemdServiceForServer(
     let binary = parts[0].replace('./', '');
     const args = parts.slice(1).join(' ');
     
-    // Satisfactory esetén csak Windows binárist keresünk (.exe fájlok)
-    // A telepítő script létrehoz egy start-server.sh fájlt a Win64 könyvtárban
+    // Satisfactory esetén natív Linux FactoryServer.sh scriptet keresünk
+    // A telepítő script SteamCMD-vel letölti a natív Linux szervert
     if (gameType === 'SATISFACTORY') {
       try {
-        // Ellenőrizzük, hogy létezik-e a start-server.sh script a Win64 könyvtárban
+        // Ellenőrizzük, hogy létezik-e a FactoryServer.sh script a szerver könyvtárban
         const checkStartScript = await executeSSHCommand(
           {
             host: machine.ipAddress,
@@ -1238,49 +1242,22 @@ export async function createSystemdServiceForServer(
             user: machine.sshUser,
             keyPath: machine.sshKeyPath || undefined,
           },
-          `test -f ${workingDir}/FactoryGame/Binaries/Win64/start-server.sh && echo "found:${workingDir}/FactoryGame/Binaries/Win64/start-server.sh" || echo "notfound"`
+          `test -f ${workingDir}/FactoryServer.sh && echo "found:${workingDir}/FactoryServer.sh" || echo "notfound"`
         );
         
         const scriptResult = checkStartScript.stdout?.trim();
         if (scriptResult && scriptResult.startsWith('found:')) {
-          // Ha létezik a start-server.sh, azt használjuk
+          // Ha létezik a FactoryServer.sh, azt használjuk
           const scriptPath = scriptResult.replace('found:', '');
-          startCommand = scriptPath;
+          startCommand = `./FactoryServer.sh -log -unattended`;
           binary = null;
-          execDir = `${workingDir}/FactoryGame/Binaries/Win64`;
-          logger.info('Satisfactory start-server.sh script found', {
+          execDir = workingDir;
+          logger.info('Satisfactory FactoryServer.sh script found', {
             serverId,
             scriptPath,
           });
         } else {
-          // Ha nincs start-server.sh, ellenőrizzük, hogy van-e .exe fájl
-          const checkExe = await executeSSHCommand(
-            {
-              host: machine.ipAddress,
-              port: machine.sshPort,
-              user: machine.sshUser,
-              keyPath: machine.sshKeyPath || undefined,
-            },
-            `(
-              (test -f ${workingDir}/FactoryGame/Binaries/Win64/FactoryServer.exe && echo "found:${workingDir}/FactoryGame/Binaries/Win64/FactoryServer.exe") ||
-              (test -f ${workingDir}/FactoryGame/Binaries/Win64/FactoryGameServer.exe && echo "found:${workingDir}/FactoryGame/Binaries/Win64/FactoryGameServer.exe") ||
-              (test -f ${workingDir}/FactoryGame/Binaries/Win64/FactoryServer-Win64-Shipping.exe && echo "found:${workingDir}/FactoryGame/Binaries/Win64/FactoryServer-Win64-Shipping.exe") ||
-              echo "notfound"
-            )`
-          );
-          
-          const exeResult = checkExe.stdout?.trim();
-          if (exeResult && exeResult.startsWith('found:')) {
-            // Ha van .exe fájl, de nincs start-server.sh, akkor a telepítő scriptnek létre kellett volna hoznia
-            // Ebben az esetben hibaüzenetet adunk
-            logger.warn('Satisfactory .exe found but start-server.sh missing', {
-              serverId,
-              exePath: exeResult.replace('found:', ''),
-            });
-            throw new Error(`Satisfactory start-server.sh script not found. Please reinstall the server.`);
-          } else {
-            throw new Error(`Satisfactory Windows binary (.exe) not found for server ${serverId}. Please check installation.`);
-          }
+          throw new Error(`Satisfactory FactoryServer.sh script not found for server ${serverId}. Please check installation.`);
         }
       } catch (error) {
         logger.error('Error checking Satisfactory binary', error as Error, {
@@ -1300,17 +1277,8 @@ export async function createSystemdServiceForServer(
     // Ha binary null, akkor már beállítottuk a startCommand-ot a Satisfactory ellenőrzés során
   }
 
-  // Satisfactory esetén mindig Wine-t használunk, mert nincs Linux szerver verzió
-  if (gameType === 'SATISFACTORY' && gameConfig.requiresWine) {
-    // A startCommand már be van állítva a Satisfactory bináris keresés során
-    // Csak ellenőrizzük, hogy tartalmazza-e a wine parancsot
-    if (!startCommand.includes('wine') && !startCommand.includes('xvfb-run')) {
-      logger.warn('Satisfactory startCommand does not include Wine, but requiresWine is true', {
-        serverId,
-        startCommand,
-      });
-    }
-  }
+  // Satisfactory esetén natív Linux szervert használunk (FactoryServer.sh)
+  // Nincs szükség Wine-re
 
   // The Forest esetén ellenőrizzük, hogy Linux vagy Windows bináris van-e
   let useWineForForest = false;
@@ -1388,7 +1356,7 @@ export async function createSystemdServiceForServer(
   let finalStartCommand = startCommand;
   let useWrapperScript = false;
   
-  if ((gameType === 'THE_FOREST' && useWineForForest) || (gameType === 'SATISFACTORY' && gameConfig.requiresWine) || startCommand.includes('wine') || startCommand.includes('xvfb-run')) {
+  if ((gameType === 'THE_FOREST' && useWineForForest) || startCommand.includes('wine') || startCommand.includes('xvfb-run')) {
     useWrapperScript = true;
     // Escape-eljük a startCommand-ot, hogy biztonságosan beilleszthető legyen a scriptbe
     // A startCommand-ot közvetlenül beillesztjük a scriptbe, escape-eljük az idézőjeleket
@@ -1572,19 +1540,26 @@ bash -c "${escapedStartCommand}"
   // Systemd service fájl tartalom
   // Fontos: minden kulcs=érték pár egy sorban kell legyen, nincs sortörés
   // CPU és RAM limitációk hozzáadása a GamePackage specifikációk alapján
+  // Satisfactory esetén satis felhasználót és sfgames csoportot használunk
+  const serviceUser = gameType === 'SATISFACTORY' ? 'satis' : 'root';
+  const serviceGroup = gameType === 'SATISFACTORY' ? 'sfgames' : undefined;
+  const groupLine = serviceGroup ? `Group=${serviceGroup}\n` : '';
+  
   const serviceContent = `[Unit]
 Description=Game Server ${serverId} (${gameType})
-After=network.target
+Wants=network-online.target
+After=network-online.target
 
 [Service]
 Type=simple
-User=root
-WorkingDirectory=${execDir}
+User=${serviceUser}
+${groupLine}WorkingDirectory=${execDir}
 ${environmentVars}ExecStart=${escapedStartCommand}
-Restart=always
+Restart=on-failure
 RestartSec=10
 StandardOutput=journal
 StandardError=journal
+LimitNOFILE=100000
 # CPU limitáció (100% = 1 CPU core, 200% = 2 CPU core, stb.)
 CPUQuota=${cpuQuota}
 # RAM limitáció (pl. "2G" = 2 GB RAM) - MemoryLimit deprecated, csak MemoryMax

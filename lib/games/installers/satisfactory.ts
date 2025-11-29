@@ -1,5 +1,8 @@
 /**
- * Satisfactory telepítő script
+ * Satisfactory telepítő script (Natív Linux szerver)
+ * 
+ * Ez a script natív Linux szervert telepít, nem Wine-t használ.
+ * A Satisfactory-nak van natív Linux szerver verziója, ami FactoryServer.sh scriptet használ.
  */
 
 export const installScript = `
@@ -7,36 +10,75 @@ export const installScript = `
 set +e
 SERVER_DIR="/opt/servers/{serverId}"
 
-mkdir -p /opt/servers
-chmod 755 /opt/servers
-chown root:root /opt/servers
+# 1. Rendszer előkészítése
+echo "Rendszer előkészítése..."
 
+# 32-bites architektúra engedélyezése (ha még nem volt)
+if ! dpkg --print-architecture | grep -q i386; then
+  echo "32-bites architektúra engedélyezése..."
+  dpkg --add-architecture i386
+  apt-get update
+fi
+
+# SteamCMD telepítése (ha még nincs)
+if ! command -v steamcmd &> /dev/null; then
+  echo "SteamCMD telepítése..."
+  apt-get update
+  apt-get install -y steamcmd
+fi
+
+# 2. Mappák és jogosultságok előkészítése
+echo "Mappák és jogosultságok előkészítése..."
+
+# Szerver felhasználó és csoport létrehozása (ha még nincs)
+SERVER_USER="satis"
+SERVER_GROUP="sfgames"
+
+if ! id "$SERVER_USER" &>/dev/null; then
+  echo "Szerver felhasználó létrehozása: $SERVER_USER"
+  useradd -r -s /bin/bash -m "$SERVER_USER"
+fi
+
+if ! getent group "$SERVER_GROUP" &>/dev/null; then
+  echo "Szerver csoport létrehozása: $SERVER_GROUP"
+  groupadd "$SERVER_GROUP"
+fi
+
+# Felhasználó hozzáadása a csoporthoz
+usermod -a -G "$SERVER_GROUP" "$SERVER_USER" || true
+
+# Szerver mappa létrehozása
 mkdir -p "$SERVER_DIR"
+chown -R $SERVER_USER:$SERVER_GROUP "$SERVER_DIR"
 chmod -R 755 "$SERVER_DIR"
-chown -R root:root "$SERVER_DIR"
+
+# SetGID bit beállítása (így minden újonnan létrehozott fájl örökli a csoportot)
+find "$SERVER_DIR" -type d -exec chmod g+s {} + || true
+
+# Csoport írási jog beállítása
+chmod -R g+w "$SERVER_DIR" || true
 
 cd "$SERVER_DIR"
 
-# Wine telepítése (ha még nincs)
-if ! command -v wine &> /dev/null; then
-  echo "Wine telepítése..."
-  apt-get update
-  apt-get install -y wine wine32 wine64 winetricks xvfb
-fi
-
-# Wine prefix beállítása
-export WINEPREFIX="$SERVER_DIR/wineprefix"
-export WINEARCH=win64
-mkdir -p "$WINEPREFIX"
+# 3. Szerverfájlok letöltése
+echo "Szerverfájlok letöltése..."
 
 STEAM_HOME="/tmp/steamcmd-home-$$"
 mkdir -p "$STEAM_HOME"
-chown -R root:root "$STEAM_HOME"
+chown -R $SERVER_USER:$SERVER_GROUP "$STEAM_HOME"
 chmod -R 755 "$STEAM_HOME"
 
-if [ ! -f /opt/steamcmd/steamcmd.sh ]; then
-  echo "HIBA: SteamCMD nem található: /opt/steamcmd/steamcmd.sh" >&2
+if [ ! -f /usr/games/steamcmd ] && [ ! -f /opt/steamcmd/steamcmd.sh ]; then
+  echo "HIBA: SteamCMD nem található!" >&2
   exit 1
+fi
+
+# SteamCMD parancs meghatározása
+STEAMCMD_CMD=""
+if [ -f /usr/games/steamcmd ]; then
+  STEAMCMD_CMD="/usr/games/steamcmd"
+elif [ -f /opt/steamcmd/steamcmd.sh ]; then
+  STEAMCMD_CMD="/opt/steamcmd/steamcmd.sh"
 fi
 
 MAX_RETRIES=3
@@ -47,19 +89,16 @@ while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
   echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
   
   echo "Installing Satisfactory dedicated server..."
-  HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 1690800 validate +quit
+  # Szerver felhasználóként futtatjuk
+  sudo -u $SERVER_USER HOME="$STEAM_HOME" $STEAMCMD_CMD +force_install_dir "$SERVER_DIR" +login anonymous +app_update 1690800 validate +quit
   EXIT_CODE=$?
   
   # Várunk egy kicsit, hogy a fájlok biztosan leírásra kerüljenek
   sleep 5
   
   # Ellenőrizzük, hogy a telepítés sikeres volt-e
-  # Satisfactory Windows bináris, ezért Win64 könyvtárban keresünk
-  # Ellenőrizzük, hogy van-e Windows bináris
-  if [ -f "$SERVER_DIR/FactoryGame/Binaries/Win64/FactoryServer.exe" ] || \
-     [ -f "$SERVER_DIR/FactoryGame/Binaries/Win64/FactoryGameServer.exe" ] || \
-     [ -f "$SERVER_DIR/FactoryGame/Binaries/Win64/FactoryServer-Win64-Shipping.exe" ] || \
-     [ -d "$SERVER_DIR/FactoryGame/Binaries/Win64" ]; then
+  # Natív Linux szerver, ezért FactoryServer.sh scriptet keresünk
+  if [ -f "$SERVER_DIR/FactoryServer.sh" ]; then
     INSTALL_SUCCESS=true
     break
   fi
@@ -78,144 +117,54 @@ rm -rf "$STEAM_HOME" 2>/dev/null || true
 
 if [ "$INSTALL_SUCCESS" != "true" ]; then
   echo "HIBA: Telepítés nem sikerült $MAX_RETRIES próbálkozás után" >&2
+  echo "Ellenőrzés: FactoryServer.sh fájl létezése..." >&2
+  ls -la "$SERVER_DIR/" 2>/dev/null || true
   exit 1
 fi
 
-# Konfigurációs könyvtárak létrehozása (Windows szerver, ezért WindowsServer)
-mkdir -p "$SERVER_DIR/FactoryGame/Saved/Config/WindowsServer"
-chmod -R 755 "$SERVER_DIR/FactoryGame/Saved/Config/WindowsServer"
-chown -R root:root "$SERVER_DIR/FactoryGame/Saved/Config/WindowsServer"
+# 4. Konfigurációs mappák létrehozása
+echo "Konfigurációs mappák létrehozása..."
 
-# Bináris fájl ellenőrzése (Windows .exe fájl)
-BINARY_FOUND=false
-BINARY_PATH=""
+# Linux szerver konfigurációs mappa
+CONFIG_DIR="/home/$SERVER_USER/.config/Epic/FactoryGame/Saved/Config/LinuxServer"
+sudo -u $SERVER_USER mkdir -p "$CONFIG_DIR"
 
-# Próbáljuk a Windows binárist Win64 könyvtárban
-if [ -f "$SERVER_DIR/FactoryGame/Binaries/Win64/FactoryServer.exe" ]; then
-  echo "FactoryServer.exe található: $SERVER_DIR/FactoryGame/Binaries/Win64/FactoryServer.exe"
-  BINARY_PATH="$SERVER_DIR/FactoryGame/Binaries/Win64/FactoryServer.exe"
-  BINARY_FOUND=true
-elif [ -f "$SERVER_DIR/FactoryGame/Binaries/Win64/FactoryGameServer.exe" ]; then
-  echo "FactoryGameServer.exe található: $SERVER_DIR/FactoryGame/Binaries/Win64/FactoryGameServer.exe"
-  BINARY_PATH="$SERVER_DIR/FactoryGame/Binaries/Win64/FactoryGameServer.exe"
-  BINARY_FOUND=true
-elif [ -f "$SERVER_DIR/FactoryGame/Binaries/Win64/FactoryServer-Win64-Shipping.exe" ]; then
-  echo "FactoryServer-Win64-Shipping.exe található: $SERVER_DIR/FactoryGame/Binaries/Win64/FactoryServer-Win64-Shipping.exe"
-  BINARY_PATH="$SERVER_DIR/FactoryGame/Binaries/Win64/FactoryServer-Win64-Shipping.exe"
-  BINARY_FOUND=true
-fi
+# Jogosultságok beállítása a konfigurációs mappán
+chown -R $SERVER_USER:$SERVER_GROUP "/home/$SERVER_USER/.config"
+chmod -R g+w "/home/$SERVER_USER/.config"
+find "/home/$SERVER_USER/.config" -type d -exec chmod g+s {} + || true
 
-# Ha még mindig nem található, keresés és hibaüzenet
-if [ "$BINARY_FOUND" = "false" ]; then
-  echo "FIGYELMEZTETÉS: Satisfactory Windows bináris nem található a várt helyen" >&2
-  echo "Keresés a FactoryGame könyvtárban..." >&2
-  FOUND_EXE=$(find "$SERVER_DIR/FactoryGame" -type f -name "*Factory*Server*.exe" 2>/dev/null | head -1)
-  if [ -n "$FOUND_EXE" ]; then
-    echo "Talált .exe fájl: $FOUND_EXE" >&2
-    BINARY_PATH="$FOUND_EXE"
-    BINARY_FOUND=true
-  else
-    echo "Nem található .exe fájl" >&2
-    echo "Elérhető fájlok a Win64 könyvtárban:" >&2
-    ls -la "$SERVER_DIR/FactoryGame/Binaries/Win64/" 2>/dev/null || echo "Win64 könyvtár nem létezik" >&2
-  fi
-fi
+# 5. Game.ini fájl létrehozása (alapértelmezett port beállítással)
+echo "Game.ini fájl létrehozása..."
 
-# Wine prefix inicializálása (első futtatáskor)
-if [ ! -d "$WINEPREFIX/drive_c" ]; then
-  echo "Wine prefix inicializálása..."
-  export WINEPREFIX
-  export WINEARCH=win64
-  wineboot --init 2>/dev/null || true
-  # Várunk egy kicsit, hogy a wine prefix létrejöjjön
-  sleep 3
-fi
-
-# Indító script létrehozása a Win64 könyvtárban
-if [ "$BINARY_FOUND" = "true" ] && [ -n "$BINARY_PATH" ]; then
-  BINARY_DIR=$(dirname "$BINARY_PATH")
-  BINARY_NAME=$(basename "$BINARY_PATH")
-  
-  echo "Indító script létrehozása: $BINARY_DIR/start-server.sh"
-  cat > "$BINARY_DIR/start-server.sh" << 'EOFSCRIPT'
-#!/bin/bash
-set +e
-
-# Könyvtár beállítása
-cd "$(dirname "$0")"
-BINARY_DIR="$(pwd)"
-
-# Wine prefix beállítása (szerver könyvtárban)
-SERVER_DIR="$(cd ../../.. && pwd)"
-WINEPREFIX="\${WINEPREFIX:-\$SERVER_DIR/wineprefix}"
-export WINEPREFIX
-export WINEARCH="\${WINEARCH:-win64}"
-
-# Wine parancs meghatározása
-WINE_CMD="wine"
-if command -v wine64 &> /dev/null; then
-  WINE_CMD="wine64"
-fi
-
-# Bináris fájl meghatározása
-if [ -f "FactoryServer.exe" ]; then
-  BINARY="FactoryServer.exe"
-elif [ -f "FactoryGameServer.exe" ]; then
-  BINARY="FactoryGameServer.exe"
-elif [ -f "FactoryServer-Win64-Shipping.exe" ]; then
-  BINARY="FactoryServer-Win64-Shipping.exe"
+GAME_INI="$CONFIG_DIR/Game.ini"
+if [ ! -f "$GAME_INI" ]; then
+  sudo -u $SERVER_USER cat > "$GAME_INI" << 'EOFINI'
+[/Script/Engine.GameNetworkManager]
+Port=15777
+EOFINI
+  echo "Game.ini fájl létrehozva: $GAME_INI"
 else
-  echo "HIBA: Nem található bináris fájl!" >&2
-  echo "Elérhető fájlok:" >&2
-  ls -la *.exe 2>/dev/null || echo "Nincs .exe fájl" >&2
-  exit 1
+  echo "Game.ini fájl már létezik: $GAME_INI"
 fi
 
-# Argumentumok environment változókból (systemd service állítja be)
-PORT="\${PORT:-15777}"
-QUERY_PORT="\${QUERY_PORT:-7777}"
-BEACON_PORT="\${BEACON_PORT:-15000}"
-
-echo "Satisfactory szerver indítása..."
-echo "Könyvtár: $BINARY_DIR"
-echo "Bináris: $BINARY"
-echo "Wine prefix: $WINEPREFIX"
-echo "Port: $PORT"
-echo "Query Port: $QUERY_PORT"
-echo "Beacon Port: $BEACON_PORT"
-
-# Szerver indítása xvfb-run-nal (virtuális display)
-if command -v xvfb-run &> /dev/null; then
-  echo "xvfb-run használata..."
-  xvfb-run -a $WINE_CMD "$BINARY" -log -unattended -multihome=0.0.0.0 -Port=$PORT -BeaconPort=$BEACON_PORT -ServerQueryPort=$QUERY_PORT
-else
-  echo "Wine használata (xvfb-run nélkül)..."
-  $WINE_CMD "$BINARY" -log -unattended -multihome=0.0.0.0 -Port=$PORT -BeaconPort=$BEACON_PORT -ServerQueryPort=$QUERY_PORT
-fi
-EOFSCRIPT
-  
-  chmod +x "$BINARY_DIR/start-server.sh"
-  echo "Indító script létrehozva: $BINARY_DIR/start-server.sh"
-  
-  # Ellenőrizzük, hogy a script létezik és futtatható
-  if [ -x "$BINARY_DIR/start-server.sh" ]; then
-    echo "Indító script sikeresen létrehozva és futtatható"
-  else
-    echo "HIBA: Az indító script nem futtatható!" >&2
-    exit 1
-  fi
+# 6. FactoryServer.sh futtathatóságának biztosítása
+if [ -f "$SERVER_DIR/FactoryServer.sh" ]; then
+  chmod +x "$SERVER_DIR/FactoryServer.sh"
+  chown $SERVER_USER:$SERVER_GROUP "$SERVER_DIR/FactoryServer.sh"
+  echo "FactoryServer.sh futtathatóvá téve"
 fi
 
-# Szerver felhasználó beállítása (ha létezik)
-SERVER_USER="satisfactory"
-if id "$SERVER_USER" &>/dev/null; then
-    chown -R $SERVER_USER:$SERVER_USER "$SERVER_DIR"
-    echo "Fájlok tulajdonosa átállítva: $SERVER_USER"
-else
-    chown -R root:root "$SERVER_DIR"
-fi
+# 7. Jogosultságok végső beállítása
+echo "Jogosultságok végső beállítása..."
 
+chown -R $SERVER_USER:$SERVER_GROUP "$SERVER_DIR"
 chmod -R 755 "$SERVER_DIR"
+find "$SERVER_DIR" -type d -exec chmod g+s {} + || true
+chmod -R g+w "$SERVER_DIR" || true
 
 echo "Satisfactory szerver telepítése sikeresen befejezve."
+echo "Szerver mappa: $SERVER_DIR"
+echo "Konfigurációs mappa: $CONFIG_DIR"
+echo "Indító script: $SERVER_DIR/FactoryServer.sh"
 `;

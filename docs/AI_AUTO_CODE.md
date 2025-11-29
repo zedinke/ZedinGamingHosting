@@ -263,3 +263,4 @@ const { result: fixResult } = await fixResponse.json();
 - [ ] Batch műveletek
 - [ ] Sandbox környezet kód futtatáshoz
 
+

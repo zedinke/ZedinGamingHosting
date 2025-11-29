@@ -225,3 +225,4 @@ node ../../scripts/setup-ai-system.js
 
 **Nincs szükség semmilyen manuális beavatkozásra!** 🎉
 
+
