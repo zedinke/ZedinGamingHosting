@@ -314,7 +314,7 @@ async function executeProvisionTask(task: any): Promise<any> {
 
   // Biztosítjuk, hogy a systemd service ne fusson (ha mégis elindult, leállítjuk)
   const serviceName = `server-${task.serverId}`;
-  const { executeSSHCommand } = await import('./ssh-utils');
+  const { executeSSHCommand } = await import('./ssh-client');
   
   try {
     await executeSSHCommand(
