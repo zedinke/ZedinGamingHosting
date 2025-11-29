@@ -8,6 +8,8 @@ import { sendWebhookEvent } from '@/lib/webhook-sender';
 import { handleApiError, AppError, ErrorCodes, createForbiddenError, createNotFoundError } from '@/lib/error-handler';
 import { withPerformanceMonitoring } from '@/lib/performance-monitor';
 import { logger } from '@/lib/logger';
+import { createNotification } from '@/lib/notifications';
+import { sendServerStatusChangeNotification } from '@/lib/push-notifications';
 
 export const POST = withPerformanceMonitoring(
   async (
@@ -141,6 +143,33 @@ export const POST = withPerformanceMonitoring(
         },
         ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined,
         userAgent: request.headers.get('user-agent') || undefined,
+      });
+
+      // Értesítés létrehozása adatbázisban
+      createNotification(
+        server.userId,
+        'SERVER_STATUS_CHANGE',
+        'Szerver állapot változás',
+        `${server.name} állapota megváltozott: ${server.status} → ${newStatus}`,
+        newStatus === 'ERROR' ? 'high' : 'medium',
+        { serverId: server.id, oldStatus: server.status, newStatus, action }
+      ).catch((error) => {
+        logger.error('Create notification error', error as Error, {
+          serverId: server.id,
+        });
+      });
+
+      // Push notification küldése
+      sendServerStatusChangeNotification(
+        server.userId,
+        server.name,
+        server.status,
+        newStatus,
+        server.id
+      ).catch((error) => {
+        logger.error('Push notification error', error as Error, {
+          serverId: server.id,
+        });
       });
 
       // Webhook esemény küldése

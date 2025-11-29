@@ -43,7 +43,8 @@
     "stripe": "^14.9.0",
     "tailwind-merge": "^2.2.0",
     "zod": "^3.22.4",
-    "puppeteer": "^21.6.1"
+    "puppeteer": "^21.6.1",
+    "firebase-admin": "^12.0.0"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { ServerStatus } from '@prisma/client';
+import { createNotification } from '@/lib/notifications';
+import { sendServerStatusChangeNotification } from '@/lib/push-notifications';
 import { logger } from '@/lib/logger';
 
 export async function POST(
@@ -129,6 +131,29 @@ export async function POST(
         });
       });
     }
+
+    // Értesítés létrehozása adatbázisban
+    createNotification(
+      server.userId,
+      'SERVER_STATUS_CHANGE',
+      'Szerver állapot változás',
+      `${server.name} állapota megváltozott: ${server.status} → ${newStatus}`,
+      newStatus === 'ERROR' ? 'high' : 'medium',
+      { serverId: server.id, oldStatus: server.status, newStatus, action }
+    ).catch((error) => {
+      console.error('Create notification error:', error);
+    });
+
+    // Push notification küldése
+    sendServerStatusChangeNotification(
+      server.userId,
+      server.name,
+      server.status,
+      newStatus,
+      server.id
+    ).catch((error) => {
+      console.error('Push notification error:', error);
+    });
 
     logger.info('Server action completed', {
       serverId: server.id,

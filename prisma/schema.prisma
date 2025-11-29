@@ -35,6 +35,7 @@ model User {
   auditLogs         AuditLog[]
   notifications     Notification[]
   chatConversations ChatConversation[]
+  pushTokens        PushToken[]
 
   @@map("users")
 }
@@ -731,6 +732,24 @@ model Notification {
   @@index([userId, read])
   @@index([userId, createdAt])
   @@map("notifications")
+}
+
+// Push notification tokenek (Firebase Cloud Messaging)
+model PushToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  platform  String   @default("android") // android, ios
+  deviceId  String?  // Eszköz azonosító
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, active])
+  @@index([token])
+  @@map("push_tokens")
 }
 
 enum AgentStatus {
