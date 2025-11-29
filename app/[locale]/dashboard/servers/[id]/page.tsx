@@ -4,8 +4,11 @@ import { requireAuth } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { UserServerDetail } from '@/components/servers/UserServerDetail';
+import { readFile } from 'fs/promises';
+import { join } from 'path';
+import { existsSync } from 'fs';
 
 export default async function ServerDetailPage({
   params: { locale, id },
@@ -31,6 +34,40 @@ export default async function ServerDetailPage({
 
   if (!server || server.userId !== (session?.user as any)?.id) {
     notFound();
+  }
+
+  // Telepítési állapot ellenőrzése
+  function getProgressFilePath(serverId: string): string {
+    return join(process.cwd(), 'logs', 'install', `server-${serverId}.progress.json`);
+  }
+
+  let isInstalled = true;
+  const progressPath = getProgressFilePath(id);
+  
+  if (existsSync(progressPath)) {
+    try {
+      const progressContent = await readFile(progressPath, 'utf-8');
+      const installProgress = JSON.parse(progressContent);
+      
+      if (installProgress.status !== 'completed' && installProgress.status !== 'error') {
+        isInstalled = false;
+      }
+    } catch (error) {
+      // Ha nem lehet beolvasni, akkor ellenőrizzük a machineId-t
+      if (!server.machineId || !server.agentId) {
+        isInstalled = false;
+      }
+    }
+  } else {
+    // Ha nincs progress fájl, ellenőrizzük, hogy van-e machineId és agentId
+    if (!server.machineId || !server.agentId) {
+      isInstalled = false;
+    }
+  }
+
+  // Ha nincs telepítve, redirect a dashboard-ra
+  if (!isInstalled) {
+    redirect(`/${locale}/dashboard`);
   }
 
   return (

@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ServerStatus, GameType } from '@prisma/client';
 import toast from 'react-hot-toast';
+import { useRouter } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
 import { UserServerConfigEditor } from './UserServerConfigEditor';
 import { UserServerConfigFileEditor } from './UserServerConfigFileEditor';
 import { ServerSavesManager } from './ServerSavesManager';
@@ -40,9 +42,51 @@ interface UserServerDetailProps {
 }
 
 export function UserServerDetail({ server, locale }: UserServerDetailProps) {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [serverStatus, setServerStatus] = useState(server.status);
   const [activeTab, setActiveTab] = useState<'info' | 'config' | 'config-file'>('info');
+  const [isInstalled, setIsInstalled] = useState<boolean | null>(null);
+  const [installProgress, setInstallProgress] = useState<any>(null);
+
+  // Telepítési állapot ellenőrzése
+  useEffect(() => {
+    const checkInstallStatus = async () => {
+      try {
+        const response = await fetch(`/api/servers/${server.id}/install-status`);
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+          setIsInstalled(data.isInstalled);
+          setInstallProgress(data.installProgress);
+          
+          // Ha nincs telepítve, redirect a dashboard-ra
+          if (!data.isInstalled) {
+            router.push(`/${locale}/dashboard`);
+          }
+        } else {
+          // Ha nincs telepítve, redirect a dashboard-ra
+          setIsInstalled(false);
+          router.push(`/${locale}/dashboard`);
+        }
+      } catch (error) {
+        console.error('Install status check error:', error);
+        setIsInstalled(false);
+        router.push(`/${locale}/dashboard`);
+      }
+    };
+
+    checkInstallStatus();
+
+    // Automatikus frissítés, ha telepítés folyamatban van
+    const interval = setInterval(() => {
+      if (isInstalled === false || (installProgress && installProgress.status === 'installing')) {
+        checkInstallStatus();
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [server.id, locale, router, isInstalled, installProgress]);
 
   const handleServerAction = async (action: string) => {
     setIsLoading(true);
@@ -111,6 +155,43 @@ export function UserServerDetail({ server, locale }: UserServerDetailProps) {
     };
     return labels[gameType] || gameType;
   };
+
+  // Ha még nem ellenőriztük a telepítési állapotot, vagy nincs telepítve, mutassuk a telepítési üzenetet
+  if (isInstalled === null) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="text-center py-8">
+          <Loader2 className="w-8 h-8 animate-spin text-primary-600 mx-auto mb-4" />
+          <p className="text-gray-600">Telepítési állapot ellenőrzése...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isInstalled === false) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="text-center py-8">
+          <Loader2 className="w-8 h-8 animate-spin text-primary-600 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Szerver telepítés alatt</h2>
+          <p className="text-gray-600 mb-4">
+            {installProgress?.status === 'installing' 
+              ? `Telepítés folyamatban... (${installProgress.progress || 0}%)`
+              : 'A szerver telepítése még nem fejeződött be. Kérjük, várjon...'}
+          </p>
+          {installProgress?.message && (
+            <p className="text-sm text-gray-500 mb-4">{installProgress.message}</p>
+          )}
+          <a
+            href={`/${locale}/dashboard`}
+            className="text-primary-600 hover:text-primary-700 font-medium inline-block"
+          >
+            ← Vissza a dashboard-hoz
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
