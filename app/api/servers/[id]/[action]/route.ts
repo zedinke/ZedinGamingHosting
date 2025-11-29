@@ -138,7 +138,7 @@ export async function POST(
       'SERVER_STATUS_CHANGE',
       'Szerver állapot változás',
       `${server.name} állapota megváltozott: ${server.status} → ${newStatus}`,
-      newStatus === 'ERROR' ? 'high' : 'medium',
+      'medium',
       { serverId: server.id, oldStatus: server.status, newStatus, action }
     ).catch((error) => {
       console.error('Create notification error:', error);

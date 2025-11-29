@@ -151,7 +151,7 @@ export const POST = withPerformanceMonitoring(
         'SERVER_STATUS_CHANGE',
         'Szerver állapot változás',
         `${server.name} állapota megváltozott: ${server.status} → ${newStatus}`,
-        newStatus === 'ERROR' ? 'high' : 'medium',
+        'medium',
         { serverId: server.id, oldStatus: server.status, newStatus, action }
       ).catch((error) => {
         logger.error('Create notification error', error as Error, {
