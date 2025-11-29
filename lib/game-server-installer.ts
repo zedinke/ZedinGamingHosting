@@ -1166,7 +1166,45 @@ export async function createSystemdServiceForServer(
   // Először az adatbázisból lekérdezett portot használjuk, majd a config.port-ot, végül az alapértelmezettet
   const port = serverFromDb?.port || (config.port && typeof config.port === 'number' ? config.port : 25565);
   const maxPlayers = (config.maxPlayers && typeof config.maxPlayers === 'number') ? config.maxPlayers : 10;
-  const ram = (config.ram && typeof config.ram === 'number') ? config.ram : 2048;
+  
+  // RAM érték beállítása - először a config.ram-ot használjuk, majd a server.configuration.ram-ot
+  // A config.ram MB-ban van, de lehet, hogy a server.configuration.ram GB-ban van
+  let ram = (config.ram && typeof config.ram === 'number') ? config.ram : 2048;
+  
+  // Ha a config.ram kisebb, mint 1000, akkor valószínűleg GB-ban van (pl. 12 GB)
+  // Ha nagyobb, mint 1000, akkor valószínűleg MB-ban van (pl. 12288 MB)
+  if (ram < 1000 && !unlimitedRam) {
+    // GB-ban van, konvertáljuk MB-ba
+    ram = ram * 1024;
+    logger.info('RAM érték konvertálva GB-ból MB-ba a systemd service generálásnál', {
+      serverId,
+      originalRamGB: config.ram,
+      ramInMB: ram,
+    });
+  }
+  
+  // Ha a server.configuration.ram létezik és nagyobb, mint a config.ram, akkor azt használjuk
+  if (serverConfig.ram && typeof serverConfig.ram === 'number' && !unlimitedRam) {
+    const configRam = serverConfig.ram;
+    if (configRam < 1000) {
+      // GB-ban van, konvertáljuk MB-ba
+      const configRamInMB = configRam * 1024;
+      if (configRamInMB > ram) {
+        ram = configRamInMB;
+        logger.info('RAM érték frissítve server.configuration-ból', {
+          serverId,
+          originalRamGB: configRam,
+          ramInMB: ram,
+        });
+      }
+    } else {
+      // Már MB-ban van
+      if (configRam > ram) {
+        ram = configRam;
+      }
+    }
+  }
+  
   const cpuCores = (config.cpuCores && typeof config.cpuCores === 'number') ? config.cpuCores : 1;
   // The Forest esetén a szerver nevet a konfigurációból vesszük (servername), ha nincs, akkor a config.name-t használjuk
   let name: string;
@@ -1185,13 +1223,22 @@ export async function createSystemdServiceForServer(
   if (!unlimitedRam) {
     // A ram értéke MB-ban van, konvertáljuk GB-ba
     // Satisfactory-nál minimum 4 GB RAM kell, mert memóriaigényes
-    let ramGB = Math.ceil(ram / 1024); // MB -> GB (pl. 2048 MB = 2 GB)
+    // DE csak akkor állítjuk be a minimumot, ha a csomag RAM értéke kisebb, mint 4 GB
+    let ramGB = Math.ceil(ram / 1024); // MB -> GB (pl. 12288 MB = 12 GB)
     if (gameType === 'SATISFACTORY' && ramGB < 4) {
+      // Csak akkor növeljük 4 GB-ra, ha a csomag RAM értéke kisebb, mint 4 GB
       ramGB = 4; // Satisfactory-nál minimum 4 GB
       logger.warn(`Satisfactory szerver RAM limit növelve 4 GB-ra (korábbi: ${Math.ceil(ram / 1024)} GB)`, {
         serverId,
         originalRam: ram,
         newRamGB: ramGB,
+      });
+    } else {
+      // Ha a csomag RAM értéke 4 GB vagy nagyobb, akkor azt használjuk
+      logger.info('Satisfactory szerver RAM limit a csomag értéke alapján', {
+        serverId,
+        ramMB: ram,
+        ramGB: ramGB,
       });
     }
     memoryLimit = `${ramGB}G`;
