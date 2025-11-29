@@ -674,9 +674,31 @@ MinDynamicBandwidth=1000
       select: { port: true },
     });
     
+    // RAM érték ellenőrzése és konverziója MB-ba, ha szükséges
+    // A server.configuration.ram GB-ban van, de a config.ram MB-ban kell legyen
+    let ramInMB = config.ram;
+    if (server.configuration && (server.configuration as any).ram) {
+      const configRam = (server.configuration as any).ram;
+      // Ha a config.ram kisebb, mint 1000, akkor valószínűleg GB-ban van (pl. 14 GB)
+      // Ha nagyobb, mint 1000, akkor valószínűleg MB-ban van (pl. 14336 MB)
+      if (configRam < 1000) {
+        // GB-ban van, konvertáljuk MB-ba
+        ramInMB = configRam * 1024;
+        logger.info('RAM érték konvertálva GB-ból MB-ba', {
+          serverId,
+          originalRamGB: configRam,
+          ramInMB,
+        });
+      } else {
+        // Már MB-ban van
+        ramInMB = configRam;
+      }
+    }
+    
     const configWithCorrectPort = {
       ...config,
       port: serverFromDbForService?.port || config.port || actualPort,
+      ram: ramInMB, // Biztosítjuk, hogy MB-ban legyen
     };
     
     await createSystemdServiceForServer(serverId, gameType, gameConfig, configWithCorrectPort, machine, {
