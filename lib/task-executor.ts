@@ -472,6 +472,55 @@ async function executeStartTask(task: any): Promise<any> {
       !isActive;
 
     if (isActive) {
+      // Satisfactory esetén ellenőrizzük a logokat, hogy milyen porton fut ténylegesen
+      if (server.gameType === 'SATISFACTORY') {
+        try {
+          // Várunk egy kicsit, hogy a szerver elinduljon és logoljon
+          await new Promise(resolve => setTimeout(resolve, 5000));
+          
+          // Log fájl olvasása (systemd journal vagy log fájl)
+          const logCheck = await executeSSHCommand(
+            {
+              host: machine.ipAddress,
+              port: machine.sshPort,
+              user: machine.sshUser,
+              keyPath: machine.sshKeyPath || undefined,
+            },
+            `journalctl -u ${serviceName} -n 100 --no-pager 2>/dev/null | grep -E "Server API listening on|listening on port|GameNetDriver.*listening on port" | tail -1 || echo ""`
+          );
+          
+          // Port kinyerése a logból (pl. "Server API listening on 0.0.0.0:7780" vagy "listening on port 7780")
+          const portMatch = logCheck.stdout.match(/listening on.*?(\d{4,5})/i) || 
+                           logCheck.stdout.match(/port\s+(\d{4,5})/i);
+          
+          if (portMatch && portMatch[1]) {
+            const actualPort = parseInt(portMatch[1], 10);
+            if (actualPort && actualPort !== server.port) {
+              // Frissítjük az adatbázisban a portot
+              await withRetry(async () => {
+                await prisma.server.update({
+                  where: { id: task.serverId },
+                  data: { port: actualPort },
+                });
+              });
+              
+              logger.info('Satisfactory server port updated from logs', {
+                serverId: task.serverId,
+                oldPort: server.port,
+                newPort: actualPort,
+                logLine: logCheck.stdout.trim(),
+              });
+            }
+          }
+        } catch (portCheckError) {
+          // Nem kritikus hiba, csak logoljuk
+          logger.warn('Could not extract port from Satisfactory server logs', {
+            serverId: task.serverId,
+            error: portCheckError instanceof Error ? portCheckError.message : String(portCheckError),
+          });
+        }
+      }
+      
       // Szerver státusz frissítése ONLINE-ra
       await prisma.server.update({
         where: { id: task.serverId },
