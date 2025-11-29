@@ -25,9 +25,17 @@ $dbType = Read-Host "Adatbázis típus (mysql/postgresql) [mysql]"
 if ([string]::IsNullOrWhiteSpace($dbType)) { $dbType = "mysql" }
 
 $dbHost = Read-Host "Adatbázis szerver IP vagy hostname"
-$dbPort = Read-Host "Adatbázis port [$($dbType -eq 'mysql' ? '3306' : '5432')]"
+
+# Alapértelmezett port meghatározása
+if ($dbType -eq 'mysql') {
+    $defaultPort = '3306'
+} else {
+    $defaultPort = '5432'
+}
+
+$dbPort = Read-Host "Adatbázis port [$defaultPort]"
 if ([string]::IsNullOrWhiteSpace($dbPort)) { 
-    $dbPort = $dbType -eq 'mysql' ? '3306' : '5432' 
+    $dbPort = $defaultPort
 }
 
 $dbUser = Read-Host "Adatbázis felhasználó"
@@ -77,6 +85,9 @@ $ollamaUrl = Read-Host "Ollama URL [http://$dbHost:11434]"
 if ([string]::IsNullOrWhiteSpace($ollamaUrl)) { $ollamaUrl = "http://$dbHost:11434" }
 
 # .env.local fájl létrehozása
+# DATABASE_URL string összeállítása (escape-eljük a speciális karaktereket)
+$databaseUrl = "$dbType" + "://" + $dbUser + ":" + $dbPassPlain + "@" + $dbHost + ":" + $dbPort + "/" + $dbName
+
 $envContent = @"
 # ============================================
 # LOKÁLIS FEJLESZTŐI KÖRNYEZET - ÉLŐ SZERVEREKRE KAPCSOLÓDÁS
@@ -87,7 +98,7 @@ $envContent = @"
 # ============================================
 # ADATBÁZIS - ÉLŐ SZERVER
 # ============================================
-DATABASE_URL="$dbType://$dbUser`:$dbPassPlain@$dbHost`:$dbPort/$dbName"
+DATABASE_URL="$databaseUrl"
 
 # ============================================
 # NEXTAUTH - LOKÁLIS FEJLESZTÉS

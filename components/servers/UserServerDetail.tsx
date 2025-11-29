@@ -48,8 +48,9 @@ export function UserServerDetail({ server, locale }: UserServerDetailProps) {
   const [activeTab, setActiveTab] = useState<'info' | 'config' | 'config-file'>('info');
   const [isInstalled, setIsInstalled] = useState<boolean | null>(null);
   const [installProgress, setInstallProgress] = useState<any>(null);
+  const [serverData, setServerData] = useState<Server>(server);
 
-  // Telepítési állapot ellenőrzése
+  // Telepítési állapot ellenőrzése és szerver adatok frissítése
   useEffect(() => {
     const checkInstallStatus = async () => {
       try {
@@ -63,11 +64,22 @@ export function UserServerDetail({ server, locale }: UserServerDetailProps) {
           // Ha nincs telepítve, redirect a dashboard-ra
           if (!data.isInstalled) {
             router.push(`/${locale}/dashboard`);
+            return;
           }
         } else {
           // Ha nincs telepítve, redirect a dashboard-ra
           setIsInstalled(false);
           router.push(`/${locale}/dashboard`);
+          return;
+        }
+
+        // Szerver adatok frissítése (port, stb.)
+        const serverResponse = await fetch(`/api/servers/${server.id}`);
+        if (serverResponse.ok) {
+          const serverData = await serverResponse.json();
+          if (serverData.server) {
+            setServerData(serverData.server);
+          }
         }
       } catch (error) {
         console.error('Install status check error:', error);
@@ -82,6 +94,16 @@ export function UserServerDetail({ server, locale }: UserServerDetailProps) {
     const interval = setInterval(() => {
       if (isInstalled === false || (installProgress && installProgress.status === 'installing')) {
         checkInstallStatus();
+      } else if (isInstalled === true) {
+        // Ha telepítve van, frissítsük a szerver adatokat (port, stb.)
+        fetch(`/api/servers/${server.id}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.server) {
+              setServerData(data.server);
+            }
+          })
+          .catch(err => console.error('Server data fetch error:', err));
       }
     }, 3000);
 
@@ -266,7 +288,7 @@ export function UserServerDetail({ server, locale }: UserServerDetailProps) {
             </div>
             <div className="flex justify-between">
               <dt className="text-gray-700">Port:</dt>
-              <dd className="text-gray-900">{server.port || '-'}</dd>
+              <dd className="text-gray-900">{serverData.port || server.port || '-'}</dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-gray-700">Max Játékosok:</dt>
@@ -438,9 +460,9 @@ export function UserServerDetail({ server, locale }: UserServerDetailProps) {
           {server.gameType === 'ARK_ASCENDED' ? (
             <ARKASAServerConfigManager
               serverId={server.id}
-              ipAddress={server.ipAddress}
-              port={server.port}
-              queryPort={server.port ? server.port + 1 : 27015}
+              ipAddress={serverData.ipAddress || server.ipAddress}
+              port={serverData.port || server.port}
+              queryPort={(serverData.port || server.port) ? (serverData.port || server.port)! + 1 : 27015}
               maxPlayers={server.maxPlayers}
             />
           ) : (
