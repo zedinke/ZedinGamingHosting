@@ -345,36 +345,41 @@ export async function provisionServer(
       let allPortsAvailable = false;
       
       while (!allPortsAvailable && retryCount < maxRetries) {
-        const gamePortAvailable = await checkPortAvailableOnMachine(bestLocation.machineId, gamePort);
-        const beaconPortAvailable = await checkPortAvailableOnMachine(bestLocation.machineId, beaconPort);
+        // Ellenőrizzük, hogy a portok szabadok-e az adatbázisban ÉS a gépen
+        const queryPortAvailableInDb = await checkSatisfactoryPortInDatabase(queryPort, serverId);
+        const beaconPortAvailableInDb = await checkSatisfactoryPortInDatabase(beaconPort, serverId);
+        const gamePortAvailableInDb = await checkSatisfactoryPortInDatabase(gamePort, serverId);
         
-        if (gamePortAvailable && beaconPortAvailable) {
+        const queryPortAvailableOnMachine = await checkPortAvailableOnMachine(bestLocation.machineId, queryPort);
+        const gamePortAvailableOnMachine = await checkPortAvailableOnMachine(bestLocation.machineId, gamePort);
+        const beaconPortAvailableOnMachine = await checkPortAvailableOnMachine(bestLocation.machineId, beaconPort);
+        
+        // Mindhárom portnak szabadnak kell lennie az adatbázisban ÉS a gépen
+        if (queryPortAvailableInDb && beaconPortAvailableInDb && gamePortAvailableInDb &&
+            queryPortAvailableOnMachine && gamePortAvailableOnMachine && beaconPortAvailableOnMachine) {
           allPortsAvailable = true;
         } else {
           // Ha a GamePort vagy BeaconPort foglalt, újra generáljuk a QueryPort-ot
           retryCount++;
-          // Új QueryPort generálása offset-tel, hogy biztosan új portot kapjunk
-          const baseQueryPort = queryPort || generatedPort;
-          queryPort = baseQueryPort + retryCount; // Offset-tel növeljük
-          
-          // Ellenőrizzük, hogy az új QueryPort is szabad-e
-          const queryPortAvailable = await checkPortAvailableOnMachine(bestLocation.machineId, queryPort);
-          if (!queryPortAvailable) {
-            // Ha az új QueryPort is foglalt, akkor teljesen új portot generálunk
-            queryPort = await generateServerPort(options.gameType, bestLocation.machineId);
-          }
+          // Új QueryPort generálása a generateServerPort függvénnyel, ami már ellenőrzi az adatbázist és a gépen is
+          // Az offset-tel való növelés helyett újra generáljuk, hogy biztosan szabad portot kapjunk
+          queryPort = await generateServerPort(options.gameType, bestLocation.machineId);
           
           gamePort = queryPort + 10000;
           beaconPort = queryPort + 7223;
           
-          logger.warn('GamePort or BeaconPort is not available, regenerating QueryPort', {
+          logger.warn('Port is not available, regenerating QueryPort', {
             serverId,
             retryCount,
             newQueryPort: queryPort,
             newGamePort: gamePort,
             newBeaconPort: beaconPort,
-            gamePortAvailable,
-            beaconPortAvailable,
+            queryPortAvailableInDb,
+            beaconPortAvailableInDb,
+            gamePortAvailableInDb,
+            queryPortAvailableOnMachine,
+            gamePortAvailableOnMachine,
+            beaconPortAvailableOnMachine,
           });
         }
       }
@@ -513,6 +518,41 @@ export async function generateServerPort(
 
   const basePort = defaultPorts[gameType] || 25565;
 
+  // Satisfactory-nál külön ellenőrzés, mert több portot kell ellenőrizni (QueryPort, BeaconPort, GamePort)
+  if (gameType === 'SATISFACTORY') {
+    // Satisfactory-nál ellenőrizzük a QueryPort-ot, BeaconPort-ot és GamePort-ot is
+    for (let offset = 0; offset < 100; offset++) {
+      const queryPort = basePort + offset;
+      const beaconPort = queryPort + 7223;
+      const gamePort = queryPort + 10000;
+      
+      // Ellenőrizzük az adatbázisban, hogy a portok szabadok-e
+      const queryPortAvailableInDb = await checkSatisfactoryPortInDatabase(queryPort);
+      const beaconPortAvailableInDb = await checkSatisfactoryPortInDatabase(beaconPort);
+      const gamePortAvailableInDb = await checkSatisfactoryPortInDatabase(gamePort);
+      
+      // Ha mindhárom port szabad az adatbázisban
+      if (queryPortAvailableInDb && beaconPortAvailableInDb && gamePortAvailableInDb) {
+        // Ha van machineId, ellenőrizzük a gépen is
+        if (machineId) {
+          const queryPortAvailableOnMachine = await checkPortAvailableOnMachine(machineId, queryPort);
+          const beaconPortAvailableOnMachine = await checkPortAvailableOnMachine(machineId, beaconPort);
+          const gamePortAvailableOnMachine = await checkPortAvailableOnMachine(machineId, gamePort);
+          
+          if (queryPortAvailableOnMachine && beaconPortAvailableOnMachine && gamePortAvailableOnMachine) {
+            return queryPort;
+          }
+        } else {
+          return queryPort;
+        }
+      }
+    }
+    
+    // Ha nincs szabad port, visszaadjuk az alapértelmezettet
+    return basePort;
+  }
+
+  // Más játékoknál az egyszerű ellenőrzés
   // Ellenőrizzük, hogy a port szabad-e az adatbázisban
   const existingServer = await prisma.server.findFirst({
     where: {
@@ -562,6 +602,71 @@ export async function generateServerPort(
 
   // Ha nincs szabad port, visszaadjuk az alapértelmezettet
   return basePort;
+}
+
+/**
+ * Ellenőrzi, hogy egy port foglalt-e az adatbázisban Satisfactory szervereknél
+ * Ellenőrzi a port mezőt ÉS a configuration JSON-ben tárolt queryPort, beaconPort és gamePort értékeket is
+ */
+async function checkSatisfactoryPortInDatabase(port: number, excludeServerId?: string): Promise<boolean> {
+  try {
+    // Lekérjük az összes Satisfactory szervert, amely nem OFFLINE
+    const satisfactoryServers = await prisma.server.findMany({
+      where: {
+        gameType: 'SATISFACTORY',
+        status: {
+          not: 'OFFLINE',
+        },
+        ...(excludeServerId ? { id: { not: excludeServerId } } : {}),
+      },
+      select: {
+        id: true,
+        port: true,
+        configuration: true,
+      },
+    });
+
+    // Ellenőrizzük, hogy a port foglalt-e
+    for (const server of satisfactoryServers) {
+      // Ellenőrizzük a port mezőt (QueryPort)
+      if (server.port === port) {
+        return false; // Foglalt
+      }
+
+      // Ellenőrizzük a configuration JSON-ben tárolt portokat
+      if (server.configuration) {
+        try {
+          const config = typeof server.configuration === 'string' 
+            ? JSON.parse(server.configuration) 
+            : server.configuration;
+
+          // QueryPort ellenőrzés
+          if (config.queryPort === port) {
+            return false; // Foglalt
+          }
+
+          // BeaconPort ellenőrzés
+          if (config.beaconPort === port) {
+            return false; // Foglalt
+          }
+
+          // GamePort ellenőrzés
+          if (config.gamePort === port) {
+            return false; // Foglalt
+          }
+        } catch (parseError) {
+          // Ha nem sikerül parse-olni, folytatjuk
+          console.warn('Failed to parse server configuration:', parseError);
+        }
+      }
+    }
+
+    return true; // Szabad
+  } catch (error) {
+    // Hiba esetén biztonságosabb feltételezni, hogy a port foglalt
+    console.error(`Database port check error for port ${port}:`, error);
+    return false;
+  }
 }
 
 /**
