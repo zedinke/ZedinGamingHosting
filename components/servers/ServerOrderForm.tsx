@@ -244,8 +244,8 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
         return;
       }
 
-      toast.success('Szerver rendelés sikeres!');
-      router.push(`/${locale}/dashboard/servers/${result.serverId}`);
+      toast.success('Szerver rendelés sikeres! A szerver telepítése folyamatban van.');
+      router.push(`/${locale}/dashboard`);
     } catch (error) {
       toast.error('Hiba történt');
     } finally {
