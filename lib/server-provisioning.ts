@@ -618,7 +618,7 @@ export async function generateServerPort(
  * Ellenőrzi, hogy egy port foglalt-e az adatbázisban Satisfactory szervereknél
  * Ellenőrzi a port, queryPort, beaconPort mezőket ÉS a configuration JSON-ben tárolt queryPort, beaconPort és gamePort értékeket is
  */
-async function checkSatisfactoryPortInDatabase(port: number, excludeServerId?: string): Promise<boolean> {
+export async function checkSatisfactoryPortInDatabase(port: number, excludeServerId?: string): Promise<boolean> {
   try {
     // Lekérjük az összes Satisfactory szervert, amely nem OFFLINE
     const satisfactoryServers = await prisma.server.findMany({
@@ -694,7 +694,7 @@ async function checkSatisfactoryPortInDatabase(port: number, excludeServerId?: s
 /**
  * Ellenőrzi, hogy a port elérhető-e a gépen (Docker konténerek és egyéb folyamatok figyelembevételével)
  */
-async function checkPortAvailableOnMachine(machineId: string, port: number): Promise<boolean> {
+export async function checkPortAvailableOnMachine(machineId: string, port: number): Promise<boolean> {
   try {
     const machine = await prisma.serverMachine.findUnique({
       where: { id: machineId },

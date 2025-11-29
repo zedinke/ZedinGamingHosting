@@ -466,6 +466,103 @@ async function executeStartTask(task: any): Promise<any> {
         });
       }
       
+      // Satisfactory-nál ellenőrizzük, hogy a portok szabadok-e az adatbázisban és a gépen
+      // Ez biztosítja, hogy ne legyen port ütközés, ha több szerver egyszerre indul
+      if (server.gameType === 'SATISFACTORY' && serverPort) {
+        const { checkSatisfactoryPortInDatabase } = await import('./server-provisioning');
+        const { checkPortAvailableOnMachine } = await import('./server-provisioning');
+        
+        // Lekérjük a queryPort és beaconPort értékeket az adatbázisból
+        const serverWithPorts = await prisma.server.findUnique({
+          where: { id: task.serverId },
+          select: {
+            port: true,
+            queryPort: true,
+            beaconPort: true,
+            configuration: true,
+          },
+        });
+        
+        const queryPort = serverWithPorts?.queryPort || serverPort;
+        const beaconPort = serverWithPorts?.beaconPort || (queryPort + 7223);
+        const gamePort = queryPort + 10000;
+        
+        // Ellenőrizzük, hogy a portok szabadok-e az adatbázisban (kivéve az aktuális szervert)
+        const queryPortAvailableInDb = await checkSatisfactoryPortInDatabase(queryPort, task.serverId);
+        const beaconPortAvailableInDb = await checkSatisfactoryPortInDatabase(beaconPort, task.serverId);
+        const gamePortAvailableInDb = await checkSatisfactoryPortInDatabase(gamePort, task.serverId);
+        
+        // Ellenőrizzük a gépen is
+        const queryPortAvailableOnMachine = await checkPortAvailableOnMachine(machine.id, queryPort);
+        const beaconPortAvailableOnMachine = await checkPortAvailableOnMachine(machine.id, beaconPort);
+        const gamePortAvailableOnMachine = await checkPortAvailableOnMachine(machine.id, gamePort);
+        
+        // Ha bármelyik port foglalt, újra generáljuk a QueryPort-ot
+        if (!queryPortAvailableInDb || !beaconPortAvailableInDb || !gamePortAvailableInDb ||
+            !queryPortAvailableOnMachine || !beaconPortAvailableOnMachine || !gamePortAvailableOnMachine) {
+          
+          logger.warn('Port conflict detected on start, regenerating ports', {
+            serverId: task.serverId,
+            oldQueryPort: queryPort,
+            oldBeaconPort: beaconPort,
+            oldGamePort: gamePort,
+            queryPortAvailableInDb,
+            beaconPortAvailableInDb,
+            gamePortAvailableInDb,
+            queryPortAvailableOnMachine,
+            beaconPortAvailableOnMachine,
+            gamePortAvailableOnMachine,
+          });
+          
+          // Új port generálása
+          const { generateServerPort } = await import('./server-provisioning');
+          const newQueryPort = await generateServerPort(server.gameType, machine.id);
+          const newBeaconPort = newQueryPort + 7223;
+          const newGamePort = newQueryPort + 10000;
+          
+          // Frissítjük az adatbázisban
+          await withRetry(async () => {
+            const serverForConfig = await prisma.server.findUnique({
+              where: { id: task.serverId },
+              select: { configuration: true },
+            });
+            
+            const currentConfig = serverForConfig?.configuration 
+              ? (typeof serverForConfig.configuration === 'string' 
+                  ? JSON.parse(serverForConfig.configuration) 
+                  : serverForConfig.configuration)
+              : {};
+            
+            const updatedConfig = {
+              ...currentConfig,
+              queryPort: newQueryPort,
+              beaconPort: newBeaconPort,
+              gamePort: newGamePort,
+            };
+            
+            await prisma.server.update({
+              where: { id: task.serverId },
+              data: {
+                port: newQueryPort,
+                queryPort: newQueryPort,
+                beaconPort: newBeaconPort,
+                configuration: updatedConfig,
+              },
+            });
+          });
+          
+          // Frissítjük a serverPort változót
+          serverPort = newQueryPort;
+          
+          logger.info('Ports regenerated on start', {
+            serverId: task.serverId,
+            newQueryPort,
+            newBeaconPort,
+            newGamePort,
+          });
+        }
+      }
+      
       // Biztosítjuk, hogy a szükséges mezők létezzenek - a szerver adatbázisból származó adatokat használjuk
       // Ha van GamePackage, akkor az adatait használjuk (ezek a fizikai limitációk)
       const finalConfig = {
