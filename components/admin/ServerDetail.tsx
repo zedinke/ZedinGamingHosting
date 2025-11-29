@@ -190,9 +190,7 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
             <div>
               <dt className="text-sm font-medium text-gray-700 mb-1">Port</dt>
               <dd className="text-gray-900">
-                {server.gameType === 'SATISFACTORY' 
-                  ? '7777' // Satisfactory-nál a QueryPort-ot jelenítjük meg (fix érték)
-                  : (server.port || '-')}
+                {server.port || '-'} {/* Az adatbázisból lekérdezett port (QueryPort Satisfactory-nál) */}
               </dd>
             </div>
             <div>
