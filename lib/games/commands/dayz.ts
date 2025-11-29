@@ -3,7 +3,7 @@
  */
 
 export const commands = {
-  startCommand: 'DayZServer.exe -config=serverDZ.cfg -port=2302',
+  startCommand: './DayZServer -config=serverDZ.cfg -port={port}',
   stopCommand: '#shutdown 300',
   restartCommand: '#restart 300',
   statusCommand: '#monitor',

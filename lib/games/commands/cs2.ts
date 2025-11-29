@@ -3,7 +3,7 @@
  */
 
 export const commands = {
-  startCommand: './srcds_run -game csgo -console -usercon -port 27015 +exec server.cfg',
+  startCommand: './srcds_run -game csgo -console -usercon -port {port} +exec server.cfg',
   stopCommand: 'quit',
   restartCommand: 'changelevel {mapname}',
   statusCommand: 'status',

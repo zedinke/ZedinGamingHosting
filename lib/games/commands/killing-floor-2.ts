@@ -3,7 +3,7 @@
  */
 
 export const commands = {
-  startCommand: './Binaries/Linux/KFGameServer KF-BurningParis?Game=KFGameContent.KFGameInfo_Endless?Difficulty=2?MaxPlayers=6 -Port=7707 -QueryPort=27015',
+  startCommand: './Binaries/Linux/KFGameServer KF-BurningParis?Game=KFGameContent.KFGameInfo_Endless?Difficulty=2?MaxPlayers={maxPlayers} -Port={port} -QueryPort={queryPort}',
   stopCommand: 'quit',
 };
 
