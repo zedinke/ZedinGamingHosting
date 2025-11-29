@@ -11,7 +11,10 @@ async function getFirebaseAdmin() {
 
   try {
     // Dinamikus import - csak futásidőben töltődik be
-    firebaseAdmin = await import('firebase-admin');
+    // String literal használata, hogy a TypeScript ne próbálja type-checkelni
+    const firebaseAdminModule = 'firebase-admin';
+    // @ts-expect-error - firebase-admin opcionális dependency, lehet hogy nincs telepítve build időben
+    firebaseAdmin = await import(firebaseAdminModule);
     
     // Firebase inicializálása, ha még nem történt meg
     if (firebaseAdmin.apps.length === 0) {
