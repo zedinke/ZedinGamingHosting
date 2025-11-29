@@ -110,3 +110,4 @@ Ha még mindig 500-as hiba:
 4. Ha működik manuálisan, akkor a PM2 konfiguráció a probléma.
 
 
+

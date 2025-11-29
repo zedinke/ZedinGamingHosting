@@ -135,6 +135,8 @@ export const GET = withPerformanceMonitoring(
         { status: 500 }
       );
     }
-  }
+  },
+  '/api/servers',
+  'GET'
 );
 
