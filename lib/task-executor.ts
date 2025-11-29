@@ -554,12 +554,59 @@ async function executeStartTask(task: any): Promise<any> {
           // Frissítjük a serverPort változót
           serverPort = newQueryPort;
           
+          // Frissítjük a config objektumot is az új portokkal
+          config.queryPort = newQueryPort;
+          config.beaconPort = newBeaconPort;
+          config.gamePort = newGamePort;
+          config.port = newQueryPort; // QueryPort
+          
           logger.info('Ports regenerated on start', {
             serverId: task.serverId,
             newQueryPort,
             newBeaconPort,
             newGamePort,
           });
+        } else {
+          // Ha nem volt újragenerálás, akkor is biztosítjuk, hogy a config tartalmazza az adatbázisban lévő portokat
+          if (server.gameType === 'SATISFACTORY') {
+            const serverWithPorts = await prisma.server.findUnique({
+              where: { id: task.serverId },
+              select: {
+                port: true,
+                queryPort: true,
+                beaconPort: true,
+                configuration: true,
+              },
+            });
+            
+            if (serverWithPorts) {
+              const queryPort = serverWithPorts.queryPort || serverWithPorts.port || serverPort;
+              const beaconPort = serverWithPorts.beaconPort || (queryPort + 7223);
+              const gamePort = queryPort + 10000;
+              
+              // Frissítjük a config objektumot az adatbázisban lévő portokkal
+              config.queryPort = queryPort;
+              config.beaconPort = beaconPort;
+              config.gamePort = gamePort;
+              config.port = queryPort;
+              
+              // Frissítjük a serverPort változót is
+              if (queryPort && queryPort !== serverPort) {
+                serverPort = queryPort;
+              }
+            }
+          }
+        }
+      } else {
+        // Más játékoknál is biztosítjuk, hogy az adatbázisban lévő portot használjuk
+        const serverFromDb = await prisma.server.findUnique({
+          where: { id: task.serverId },
+          select: { port: true },
+        });
+        
+        if (serverFromDb?.port && serverFromDb.port !== serverPort) {
+          serverPort = serverFromDb.port;
+          config.port = serverFromDb.port;
         }
       }
       
@@ -599,6 +646,68 @@ async function executeStartTask(task: any): Promise<any> {
         sharedPath: task.agent.paths.sharedPath || null,
         serverPath: task.agent.paths.serverPath || `/opt/servers/${server.id}`,
       } : undefined;
+      
+      // Satisfactory-nál az indításkor frissítjük a konfigurációs fájlokat az adatbázisban lévő portokkal
+      // Ez biztosítja, hogy a szerver mindig a helyes portokkal induljon el
+      if (server.gameType === 'SATISFACTORY' && finalConfig.queryPort) {
+        try {
+          const { ALL_GAME_SERVER_CONFIGS } = await import('./game-server-configs');
+          const { executeSSHCommand } = await import('./ssh-client');
+          const { generateConfigFile } = await import('./game-server-installer');
+          
+          const satisGameConfig = ALL_GAME_SERVER_CONFIGS[server.gameType as keyof typeof ALL_GAME_SERVER_CONFIGS];
+          if (satisGameConfig && satisGameConfig.configPath) {
+            // Konfigurációs fájl path
+            let configPath = satisGameConfig.configPath.replace(/{serverId}/g, server.id);
+            
+            // GameUserSettings.ini generálása az új portokkal
+            const configContent = generateConfigFile(server.gameType as any, finalConfig, satisGameConfig);
+            if (configContent) {
+              await executeSSHCommand(
+                {
+                  host: machine.ipAddress,
+                  port: machine.sshPort,
+                  user: machine.sshUser,
+                  keyPath: machine.sshKeyPath || undefined,
+                },
+                `sudo -u satis mkdir -p $(dirname ${configPath}) && sudo -u satis cat > ${configPath} << 'EOF'\n${configContent}\nEOF`
+              );
+            }
+            
+            // Game.ini generálása az új GamePort-tal
+            const gameIniPath = configPath.replace('GameUserSettings.ini', 'Game.ini');
+            const gamePort = finalConfig.gamePort || (finalConfig.queryPort + 10000);
+            const gameIniContent = `[/Script/Engine.GameNetworkManager]
+Port=${gamePort}
+TotalNetBandwidth=20000
+MaxDynamicBandwidth=10000
+MinDynamicBandwidth=1000
+`;
+            await executeSSHCommand(
+              {
+                host: machine.ipAddress,
+                port: machine.sshPort,
+                user: machine.sshUser,
+                keyPath: machine.sshKeyPath || undefined,
+              },
+              `sudo -u satis cat > ${gameIniPath} << 'EOF'\n${gameIniContent}\nEOF`
+            );
+            
+            logger.info('Satisfactory configuration files updated on start with database ports', {
+              serverId: server.id,
+              queryPort: finalConfig.queryPort,
+              beaconPort: finalConfig.beaconPort,
+              gamePort: finalConfig.gamePort || (finalConfig.queryPort + 10000),
+            });
+          }
+        } catch (configUpdateError: any) {
+          logger.warn('Failed to update Satisfactory configuration files on start', {
+            serverId: server.id,
+            error: configUpdateError.message,
+          });
+          // Folytatjuk, mert a szerver még mindig elindítható lesz
+        }
+      }
       
       await createSystemdServiceForServer(
         server.id,
