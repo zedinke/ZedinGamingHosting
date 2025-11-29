@@ -39,10 +39,9 @@ export const GET = withPerformanceMonitoring(
                 email: user.email,
                 name: user.name,
                 image: user.image,
+                role: user.role,
               },
             } as any;
-            (session.user as any).role = user.role;
-            (session.user as any).id = user.id;
           }
         }
       }
@@ -83,7 +82,7 @@ export const GET = withPerformanceMonitoring(
             finalUserId = user.id;
           }
         } catch (error) {
-          logger.error('Error fetching user:', error);
+          logger.error('Error fetching user:', error instanceof Error ? error : new Error(String(error)));
         }
       }
 
@@ -129,7 +128,7 @@ export const GET = withPerformanceMonitoring(
         servers: serializedServers,
       });
     } catch (error) {
-      logger.error('Error fetching servers:', error);
+      logger.error('Error fetching servers:', error instanceof Error ? error : new Error(String(error)));
       return NextResponse.json(
         { error: 'Hiba történt a szerverek lekérése során' },
         { status: 500 }
