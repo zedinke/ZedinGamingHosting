@@ -284,7 +284,7 @@ export function UserServerDetail({ server, locale }: UserServerDetailProps) {
             </div>
             <div className="flex justify-between">
               <dt className="text-gray-700">IP Cím:</dt>
-              <dd className="text-gray-900">{server.ipAddress || 'Nincs hozzárendelve'}</dd>
+              <dd className="text-gray-900">{serverData.ipAddress || server.ipAddress || 'Nincs hozzárendelve'}</dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-gray-700">Port:</dt>
@@ -489,8 +489,8 @@ export function UserServerDetail({ server, locale }: UserServerDetailProps) {
           <UserServerConfigFileEditor
             serverId={server.id}
             gameType={server.gameType}
-            ipAddress={server.ipAddress}
-            port={server.port}
+            ipAddress={serverData.ipAddress || server.ipAddress}
+            port={serverData.port || server.port}
             maxPlayers={server.maxPlayers}
           />
         </div>
