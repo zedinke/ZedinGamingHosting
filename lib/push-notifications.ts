@@ -1,6 +1,7 @@
 import { prisma } from './prisma';
 
 // Firebase Admin SDK dinamikus importálása (opcionális függőség)
+// Dinamikus import használata, hogy a Next.js build során ne próbálja bundle-olni
 let firebaseAdmin: any = null;
 
 async function getFirebaseAdmin() {
@@ -9,6 +10,7 @@ async function getFirebaseAdmin() {
   }
 
   try {
+    // Dinamikus import - csak futásidőben töltődik be
     firebaseAdmin = await import('firebase-admin');
     
     // Firebase inicializálása, ha még nem történt meg

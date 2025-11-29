@@ -48,6 +48,7 @@ const nextConfig = {
         '@aws-sdk/client-s3': 'commonjs @aws-sdk/client-s3',
         '@aws-sdk/s3-request-presigner': 'commonjs @aws-sdk/s3-request-presigner',
         'puppeteer': 'commonjs puppeteer',
+        'firebase-admin': 'commonjs firebase-admin',
       });
     }
     return config;
