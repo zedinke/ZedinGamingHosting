@@ -63,27 +63,41 @@ export default async function DashboardPage({
     dashboardTitle = 'Dashboard';
   }
 
-  // Felhasználó szervereinek lekérése
+  // Felhasználó szervereinek lekérése (subscription és invoice adatokkal)
   let servers: any[] = [];
   try {
     servers = await prisma.server.findMany({
       where: { userId: finalUserId },
       orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        name: true,
-        gameType: true,
-        maxPlayers: true,
-        ipAddress: true,
-        port: true,
-        status: true,
+      include: {
+        subscription: {
+          include: {
+            invoices: {
+              take: 1,
+              orderBy: { createdAt: 'desc' },
+            },
+          },
+        },
       },
     });
     // Konvertáljuk az enum értékeket stringgé
     servers = servers.map(server => ({
-      ...server,
+      id: server.id,
+      name: server.name,
       gameType: String(server.gameType),
+      maxPlayers: server.maxPlayers,
+      ipAddress: server.ipAddress,
+      port: server.port,
       status: String(server.status),
+      subscription: server.subscription ? {
+        id: server.subscription.id,
+        status: String(server.subscription.status),
+        invoices: server.subscription.invoices.map((inv: any) => ({
+          id: inv.id,
+          status: String(inv.status),
+          invoiceNumber: inv.invoiceNumber,
+        })),
+      } : null,
     }));
   } catch (error) {
     console.error('Error fetching servers:', error);

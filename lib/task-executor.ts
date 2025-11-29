@@ -282,7 +282,7 @@ async function executeProvisionTask(task: any): Promise<any> {
       where: { id: task.command.gamePackageId },
     });
     if (gamePackage) {
-      unlimitedRam = gamePackage.unlimitedRam || false;
+      unlimitedRam = (gamePackage as any).unlimitedRam || false;
       if (!unlimitedRam && gamePackage.ram) {
         ram = gamePackage.ram * 1024; // GB -> MB konverzió (pl. 2 GB = 2048 MB)
       }
@@ -312,17 +312,49 @@ async function executeProvisionTask(task: any): Promise<any> {
     throw new Error(installResult.error || 'Game szerver telepítési hiba');
   }
 
-  // Szerver státusz frissítése ONLINE-ra
-  await prisma.server.update({
-    where: { id: task.serverId },
-    data: { status: 'ONLINE' },
-  });
-
-  return {
-    message: 'Szerver sikeresen telepítve és elindítva',
-    ipAddress: agent.machine?.ipAddress,
-    port: server.port,
-  };
+  // Fizetési státusz ellenőrzése - csak akkor indítjuk el, ha kifizetett
+  const { isServerPaid } = await import('./payment-check');
+  const isPaid = await isServerPaid(task.serverId);
+  
+  if (isPaid) {
+    // Szerver státusz frissítése ONLINE-ra, ha kifizetett
+    await withRetry(async () => {
+      await prisma.server.update({
+        where: { id: task.serverId },
+        data: { status: 'ONLINE' },
+      });
+    });
+    
+    logger.info('Server provisioned and started (paid)', {
+      serverId: task.serverId,
+      gameType: server.gameType,
+    });
+    
+    return {
+      message: 'Szerver sikeresen telepítve és elindítva',
+      ipAddress: agent.machine?.ipAddress,
+      port: server.port,
+    };
+  } else {
+    // Ha nincs kifizetve, akkor OFFLINE marad, de telepítve van
+    await withRetry(async () => {
+      await prisma.server.update({
+        where: { id: task.serverId },
+        data: { status: 'OFFLINE' },
+      });
+    });
+    
+    logger.info('Server provisioned but not started (unpaid)', {
+      serverId: task.serverId,
+      gameType: server.gameType,
+    });
+    
+    return {
+      message: 'Szerver sikeresen telepítve, de nincs kifizetve. A szerver csak a fizetés után indítható el.',
+      ipAddress: agent.machine?.ipAddress,
+      port: server.port,
+    };
+  }
 }
 
 /**

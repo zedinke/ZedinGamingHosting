@@ -45,6 +45,17 @@ export async function POST(
       );
     }
 
+    // Fizetési státusz ellenőrzése
+    const { isServerPaid } = await import('@/lib/payment-check');
+    const isPaid = await isServerPaid(id);
+    
+    if (!isPaid) {
+      return NextResponse.json(
+        { error: 'A szerver nincs kifizetve. Kérjük, fizesse ki a számlát a szerver használatához.' },
+        { status: 402 } // 402 Payment Required
+      );
+    }
+
     let newStatus: ServerStatus;
 
     // Művelet végrehajtása

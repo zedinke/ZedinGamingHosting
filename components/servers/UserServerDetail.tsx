@@ -215,6 +215,53 @@ export function UserServerDetail({ server, locale }: UserServerDetailProps) {
     );
   }
 
+  // Fizetési státusz ellenőrzése
+  const isPaid = serverData.subscription && 
+    (serverData.subscription.status === 'ACTIVE' || serverData.subscription.status === 'TRIALING') &&
+    (!serverData.subscription.invoices || serverData.subscription.invoices.length === 0 || 
+     serverData.subscription.invoices[0]?.status === 'PAID');
+
+  // Ha nincs kifizetve, mutassuk a fizetési figyelmeztetést
+  if (!isPaid) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="text-center py-8">
+          <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-3xl">⚠️</span>
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Szerver nincs kifizetve</h2>
+          <p className="text-gray-600 mb-4">
+            A szerver használatához kérjük, fizesse ki a számlát.
+          </p>
+          {serverData.subscription?.invoices && serverData.subscription.invoices.length > 0 && (
+            <div className="mb-4">
+              <p className="text-sm text-gray-500 mb-2">
+                Legutóbbi számla: {serverData.subscription.invoices[0].invoiceNumber}
+              </p>
+              <p className="text-sm text-gray-500">
+                Státusz: <span className="font-semibold">{serverData.subscription.invoices[0].status}</span>
+              </p>
+            </div>
+          )}
+          <a
+            href={`/${locale}/dashboard/billing`}
+            className="inline-block bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 font-medium"
+          >
+            Fizetés
+          </a>
+          <div className="mt-4">
+            <a
+              href={`/${locale}/dashboard`}
+              className="text-primary-600 hover:text-primary-700 font-medium inline-block"
+            >
+              ← Vissza a dashboard-hoz
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Tabs */}

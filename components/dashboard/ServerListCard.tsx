@@ -14,6 +14,15 @@ interface Server {
   ipAddress: string | null;
   port: number | null;
   status: string;
+  subscription?: {
+    id: string;
+    status: string;
+    invoices?: Array<{
+      id: string;
+      status: string;
+      invoiceNumber: string;
+    }>;
+  } | null;
 }
 
 interface ServerInstallStatus {
@@ -195,37 +204,72 @@ export function ServerListCard({ servers, locale }: ServerListCardProps) {
                   </div>
                 </div>
               </div>
-              <div className="flex gap-2 mt-4">
-                {installStatuses[server.id]?.isInstalled ? (
-                  <Link href={`/${locale}/dashboard/servers/${server.id}`} className="flex-1">
-                    <Button variant="outline" size="sm" className="w-full">
-                      <Settings className="w-4 h-4 mr-2" />
-                      Kezelés
-                    </Button>
-                  </Link>
-                ) : (
-                  <div className="flex-1">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="w-full cursor-not-allowed opacity-60"
-                      disabled
-                    >
-                      {installStatuses[server.id]?.installStatus === 'installing' ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Telepítés...
-                        </>
-                      ) : (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2" />
-                          Telepítés
-                        </>
-                      )}
-                    </Button>
+              {/* Fizetési státusz ellenőrzése */}
+              {(() => {
+                const isPaid = server.subscription && 
+                  (server.subscription.status === 'ACTIVE' || server.subscription.status === 'TRIALING') &&
+                  (!server.subscription.invoices || server.subscription.invoices.length === 0 || 
+                   server.subscription.invoices[0]?.status === 'PAID');
+                
+                return (
+                  <div className="flex gap-2 mt-4">
+                    {!isPaid && (
+                      <div className="w-full mb-2">
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm">
+                          <p className="text-yellow-800 font-medium">⚠️ Szerver nincs kifizetve</p>
+                          <Link 
+                            href={`/${locale}/dashboard/billing`}
+                            className="text-yellow-700 hover:text-yellow-900 underline mt-1 inline-block"
+                          >
+                            Fizetés →
+                          </Link>
+                        </div>
+                      </div>
+                    )}
+                    {installStatuses[server.id]?.isInstalled && isPaid ? (
+                      <Link href={`/${locale}/dashboard/servers/${server.id}`} className="flex-1">
+                        <Button variant="outline" size="sm" className="w-full">
+                          <Settings className="w-4 h-4 mr-2" />
+                          Kezelés
+                        </Button>
+                      </Link>
+                    ) : installStatuses[server.id]?.isInstalled && !isPaid ? (
+                      <div className="flex-1">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="w-full cursor-not-allowed opacity-60"
+                          disabled
+                        >
+                          <Settings className="w-4 h-4 mr-2" />
+                          Kezelés (Fizetés szükséges)
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex-1">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="w-full cursor-not-allowed opacity-60"
+                          disabled
+                        >
+                          {installStatuses[server.id]?.installStatus === 'installing' ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Telepítés...
+                            </>
+                          ) : (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2" />
+                              Telepítés
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
+                );
+              })()}
             </div>
           ))}
         </div>

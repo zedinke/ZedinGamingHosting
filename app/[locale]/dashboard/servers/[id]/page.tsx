@@ -36,6 +36,15 @@ export default async function ServerDetailPage({
     notFound();
   }
 
+  // Fizetési státusz ellenőrzése
+  const { isServerPaid } = await import('@/lib/payment-check');
+  const isPaid = await isServerPaid(id);
+  
+  if (!isPaid) {
+    // Ha nincs kifizetve, redirect a dashboard-ra egy üzenettel
+    redirect(`/${locale}/dashboard?error=unpaid`);
+  }
+
   // Telepítési állapot ellenőrzése
   function getProgressFilePath(serverId: string): string {
     return join(process.cwd(), 'logs', 'install', `server-${serverId}.progress.json`);
