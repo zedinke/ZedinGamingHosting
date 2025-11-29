@@ -180,8 +180,8 @@ export function ServerManagement({
                   </span>
                 </td>
                 <td className="p-3 text-sm text-gray-700">
-                  {server.ipAddress && server.port
-                    ? `${server.ipAddress}:${server.port}`
+                  {server.ipAddress
+                    ? `${server.ipAddress}:${server.gameType === 'SATISFACTORY' ? '7777' : (server.port || '-')}`
                     : '-'}
                 </td>
                 <td className="p-3 text-gray-800">{server.maxPlayers}</td>
