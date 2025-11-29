@@ -1596,7 +1596,7 @@ WantedBy=multi-user.target`;
 /**
  * Tűzfal portok automatikus engedélyezése
  */
-async function configureFirewallPorts(
+export async function configureFirewallPorts(
   serverId: string,
   gameType: GameType,
   config: { port: number; [key: string]: any },

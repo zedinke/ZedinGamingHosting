@@ -10,6 +10,8 @@ import { withPerformanceMonitoring } from '@/lib/performance-monitor';
 import { logger } from '@/lib/logger';
 import { createNotification } from '@/lib/notifications';
 import { sendServerStatusChangeNotification } from '@/lib/push-notifications';
+import { configureFirewallPorts } from '@/lib/game-server-installer';
+import { ALL_GAME_SERVER_CONFIGS } from '@/lib/game-server-configs';
 
 export const POST = withPerformanceMonitoring(
   async (
@@ -82,6 +84,65 @@ export const POST = withPerformanceMonitoring(
           newStatus = 'RESTARTING';
           taskType = 'RESTART';
           break;
+
+        case 'configure-firewall':
+          // Tűzfal portok engedélyezése meglévő szerverhez
+          if (!server.machineId) {
+            throw new AppError(
+              ErrorCodes.VALIDATION_ERROR,
+              'A szervernek nincs hozzárendelt gépe',
+              400
+            );
+          }
+
+          const machine = await prisma.serverMachine.findUnique({
+            where: { id: server.machineId },
+          });
+
+          if (!machine) {
+            throw new AppError(
+              ErrorCodes.NOT_FOUND,
+              'A szerver gépe nem található',
+              404
+            );
+          }
+
+          const gameConfig = ALL_GAME_SERVER_CONFIGS[server.gameType];
+          if (!gameConfig) {
+            throw new AppError(
+              ErrorCodes.VALIDATION_ERROR,
+              'Játék konfiguráció nem található',
+              400
+            );
+          }
+
+          await configureFirewallPorts(
+            server.id,
+            server.gameType,
+            { port: server.port || gameConfig.port },
+            machine,
+            gameConfig,
+            false
+          );
+
+          await createAuditLog({
+            userId: (session.user as any).id,
+            action: AuditAction.UPDATE,
+            resourceType: 'Server',
+            resourceId: server.id,
+            details: {
+              action: 'configure-firewall',
+              gameType: server.gameType,
+              port: server.port,
+            },
+            ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined,
+            userAgent: request.headers.get('user-agent') || undefined,
+          });
+
+          return NextResponse.json({
+            success: true,
+            message: 'Tűzfal portok sikeresen engedélyezve',
+          });
 
         default:
           throw new AppError(
