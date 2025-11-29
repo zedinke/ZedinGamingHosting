@@ -95,7 +95,7 @@ export function UserServerDetail({ server, locale }: UserServerDetailProps) {
       if (isInstalled === false || (installProgress && installProgress.status === 'installing')) {
         checkInstallStatus();
       } else if (isInstalled === true) {
-        // Ha telepítve van, frissítsük a szerver adatokat (port, stb.)
+        // Ha telepítve van, frissítsük a szerver adatokat (port, subscription, invoice, stb.)
         fetch(`/api/servers/${server.id}`)
           .then(res => res.json())
           .then(data => {
@@ -109,6 +109,25 @@ export function UserServerDetail({ server, locale }: UserServerDetailProps) {
 
     return () => clearInterval(interval);
   }, [server.id, locale, router, isInstalled, installProgress]);
+  
+  // Fizetési státusz ellenőrzése külön polling-ot is indítunk, hogy gyorsabban frissüljön
+  useEffect(() => {
+    if (!isInstalled || isInstalled === null) return;
+    
+    const paymentCheckInterval = setInterval(() => {
+      // Frissítsük a szerver adatokat, hogy a fizetési státusz is frissüljön
+      fetch(`/api/servers/${server.id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.server) {
+            setServerData(data.server);
+          }
+        })
+        .catch(err => console.error('Payment status check error:', err));
+    }, 5000); // 5 másodpercenként ellenőrizzük a fizetési státuszt
+    
+    return () => clearInterval(paymentCheckInterval);
+  }, [server.id, isInstalled]);
 
   const handleServerAction = async (action: string) => {
     setIsLoading(true);

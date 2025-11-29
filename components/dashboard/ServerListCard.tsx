@@ -40,6 +40,41 @@ interface ServerListCardProps {
 
 export function ServerListCard({ servers, locale }: ServerListCardProps) {
   const [installStatuses, setInstallStatuses] = useState<ServerInstallStatus>({});
+  const [serverData, setServerData] = useState<Server[]>(servers);
+
+  // Szerver adatok frissítése (subscription, invoice státuszokkal)
+  useEffect(() => {
+    const fetchServerData = async () => {
+      const updatedServers: Server[] = [];
+      
+      for (const server of servers) {
+        try {
+          const response = await fetch(`/api/servers/${server.id}`);
+          const data = await response.json();
+          
+          if (response.ok && data.server) {
+            updatedServers.push({
+              ...server,
+              subscription: data.server.subscription,
+            });
+          } else {
+            updatedServers.push(server);
+          }
+        } catch (error) {
+          updatedServers.push(server);
+        }
+      }
+      
+      setServerData(updatedServers);
+    };
+
+    fetchServerData();
+    
+    // Automatikus frissítés 5 másodpercenként
+    const interval = setInterval(fetchServerData, 5000);
+    
+    return () => clearInterval(interval);
+  }, [servers]);
 
   // Telepítési állapotok lekérése
   useEffect(() => {
@@ -180,7 +215,14 @@ export function ServerListCard({ servers, locale }: ServerListCardProps) {
         </div>
       ) : (
         <div className="space-y-4">
-          {servers.map((server) => (
+          {serverData.map((server) => {
+            // Fizetési státusz ellenőrzése
+            const isPaid = server.subscription && 
+              (server.subscription.status === 'ACTIVE' || server.subscription.status === 'TRIALING') &&
+              (!server.subscription.invoices || server.subscription.invoices.length === 0 || 
+               server.subscription.invoices[0]?.status === 'PAID');
+            
+            return (
             <div
               key={server.id}
               className="border border-gray-200 rounded-lg p-4 hover:border-gray-300 hover:shadow-sm transition-all bg-gray-50"
@@ -206,10 +248,6 @@ export function ServerListCard({ servers, locale }: ServerListCardProps) {
               </div>
               {/* Fizetési státusz ellenőrzése */}
               {(() => {
-                const isPaid = server.subscription && 
-                  (server.subscription.status === 'ACTIVE' || server.subscription.status === 'TRIALING') &&
-                  (!server.subscription.invoices || server.subscription.invoices.length === 0 || 
-                   server.subscription.invoices[0]?.status === 'PAID');
                 
                 return (
                   <div className="flex gap-2 mt-4">
@@ -271,7 +309,8 @@ export function ServerListCard({ servers, locale }: ServerListCardProps) {
                 );
               })()}
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
