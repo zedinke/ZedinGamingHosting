@@ -229,33 +229,47 @@ async function executeProvisionTask(task: any): Promise<any> {
   });
 
   // Port generálása és frissítése (retry logikával)
-  // MINDIG generálunk új portot, hogy a ténylegesen kiosztott portot használjuk
-  // Ez biztosítja, hogy ne az alapértelmezett port maradjon az adatbázisban
-  const port = await generateServerPort(server.gameType, agent.machine?.id);
-  await withRetry(async () => {
-    await prisma.server.update({
-      where: { id: task.serverId },
-      data: { port },
+  // Satisfactory-nál NEM generálunk portot a provisioning-nál, csak az első indításnál
+  // Más játékoknál generálunk portot a provisioning-nál
+  let port: number | null = null;
+  let finalPort: number | null = null;
+  
+  if (server.gameType === 'SATISFACTORY') {
+    // Satisfactory-nál ne generáljunk portot, null maradjon
+    // Az első indításnál generálunk portot
+    logger.info('Satisfactory server - port will be generated on first start', {
+      serverId: task.serverId,
+      gameType: server.gameType,
     });
-  });
-  
-  // Ellenőrizzük, hogy a port tényleg frissült az adatbázisban
-  const serverAfterUpdate = await prisma.server.findUnique({
-    where: { id: task.serverId },
-    select: { port: true },
-  });
-  
-  logger.info('Port generated and updated in task executor', {
-    serverId: task.serverId,
-    generatedPort: port,
-    actualPortInDb: serverAfterUpdate?.port,
-    gameType: server.gameType,
-    machineId: agent.machine?.id,
-  });
-  
-  const finalPort = port;
-  // Frissítjük a server objektumot is
-  server.port = port;
+    finalPort = null;
+  } else {
+    // Más játékoknál generálunk portot a provisioning-nál
+    port = await generateServerPort(server.gameType, agent.machine?.id);
+    await withRetry(async () => {
+      await prisma.server.update({
+        where: { id: task.serverId },
+        data: { port },
+      });
+    });
+    
+    // Ellenőrizzük, hogy a port tényleg frissült az adatbázisban
+    const serverAfterUpdate = await prisma.server.findUnique({
+      where: { id: task.serverId },
+      select: { port: true },
+    });
+    
+    logger.info('Port generated and updated in task executor', {
+      serverId: task.serverId,
+      generatedPort: port,
+      actualPortInDb: serverAfterUpdate?.port,
+      gameType: server.gameType,
+      machineId: agent.machine?.id,
+    });
+    
+    finalPort = port;
+    // Frissítjük a server objektumot is
+    server.port = port;
+  }
 
   // IP cím beállítása, ha nincs (retry logikával)
   if (!server.ipAddress && agent.machine) {
@@ -421,10 +435,31 @@ async function executeStartTask(task: any): Promise<any> {
         }
       }
       
+      // Satisfactory-nál az első indításnál generálunk portot, ha nincs
+      let serverPort = config.port || server.port;
+      if (server.gameType === 'SATISFACTORY' && !serverPort) {
+        // Első indítás - generálunk portot
+        const { generateServerPort } = await import('./server-provisioning');
+        serverPort = await generateServerPort(server.gameType, machine.id);
+        
+        // Mentsük el az adatbázisba
+        await withRetry(async () => {
+          await prisma.server.update({
+            where: { id: task.serverId },
+            data: { port: serverPort },
+          });
+        });
+        
+        logger.info('Satisfactory server port generated on first start', {
+          serverId: task.serverId,
+          generatedPort: serverPort,
+        });
+      }
+      
       // Biztosítjuk, hogy a szükséges mezők létezzenek - a szerver adatbázisból származó adatokat használjuk
       // Ha van GamePackage, akkor az adatait használjuk (ezek a fizikai limitációk)
       const finalConfig = {
-        port: config.port || server.port || 25565,
+        port: serverPort || 25565,
         maxPlayers: config.maxPlayers || server.maxPlayers || 10,
         name: config.name || server.name || `Server-${server.id}`,
         ram: gamePackage ? gamePackage.ram : (config.ram || 2048), // GamePackage RAM-ja vagy config RAM-ja
@@ -539,21 +574,41 @@ async function executeStartTask(task: any): Promise<any> {
           
           if (portMatch && portMatch[1]) {
             const actualPort = parseInt(portMatch[1], 10);
-            if (actualPort && actualPort !== server.port) {
-              // Frissítjük az adatbázisban a portot
-              await withRetry(async () => {
-                await prisma.server.update({
-                  where: { id: task.serverId },
-                  data: { port: actualPort },
-                });
+            // Csak akkor frissítjük a portot, ha még nincs port (első indítás) vagy ha eltér
+            // De ha már van port, akkor azt használjuk (nem változtatjuk meg)
+            if (actualPort) {
+              const currentServer = await prisma.server.findUnique({
+                where: { id: task.serverId },
+                select: { port: true },
               });
               
-              logger.info('Satisfactory server port updated from logs', {
-                serverId: task.serverId,
-                oldPort: server.port,
-                newPort: actualPort,
-                logLine: logCheck.stdout.trim(),
-              });
+              // Ha nincs port (első indítás), akkor generálunk egyet és mentjük
+              if (!currentServer?.port) {
+                // Generálunk egy portot, de ellenőrizzük, hogy szabad-e
+                const generatedPort = await generateServerPort(server.gameType, machine.id);
+                
+                // Frissítjük az adatbázisban a portot
+                await withRetry(async () => {
+                  await prisma.server.update({
+                    where: { id: task.serverId },
+                    data: { port: generatedPort },
+                  });
+                });
+                
+                logger.info('Satisfactory server port generated and saved on first start', {
+                  serverId: task.serverId,
+                  generatedPort: generatedPort,
+                  actualPortFromLogs: actualPort,
+                  logLine: logCheck.stdout.trim(),
+                });
+              } else {
+                // Ha már van port, akkor azt használjuk (nem változtatjuk meg)
+                logger.info('Satisfactory server port already exists, keeping existing port', {
+                  serverId: task.serverId,
+                  existingPort: currentServer.port,
+                  actualPortFromLogs: actualPort,
+                });
+              }
             }
           }
         } catch (portCheckError) {
