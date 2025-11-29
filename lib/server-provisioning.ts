@@ -346,21 +346,78 @@ export async function provisionServer(
       let beaconPort = gamePort + 7230;
       
       // Biztosítjuk, hogy a 3 port különböző legyen
-      // Ha valamelyik egyezik, módosítjuk
-      if (gamePort === serverQueryPort || gamePort === beaconPort || serverQueryPort === beaconPort) {
+      // Loop-ban újrageneráljuk a portokat, amíg biztosan különbözőek nem lesznek
+      let maxAdjustmentAttempts = 10;
+      let adjustmentAttempt = 0;
+      
+      while ((gamePort === serverQueryPort || gamePort === beaconPort || serverQueryPort === beaconPort) && adjustmentAttempt < maxAdjustmentAttempts) {
+        adjustmentAttempt++;
+        
         logger.warn('Port conflict detected in port calculation, adjusting', {
           serverId,
+          attempt: adjustmentAttempt,
           gamePort,
           serverQueryPort,
           beaconPort,
         });
-        // Újraszámoljuk a portokat, hogy biztosan különbözőek legyenek
+        
+        // Újraszámoljuk a portokat különböző offset-ekkel
+        // Offset-ek, amik biztosan különbözőek:
+        // - ServerQueryPort = GamePort + 8000
+        // - BeaconPort = GamePort + 7230 (770 különbség a QueryPort-tól, biztosan különböző)
         serverQueryPort = gamePort + 8000;
-        beaconPort = gamePort + 7230;
-        // Ha még mindig ütköznek, akkor más offset-tel módosítjuk
-        if (serverQueryPort === beaconPort) {
-          beaconPort = gamePort + 7500; // Más offset, ha ütköznek
+        
+        // BeaconPort offset-ét módosítjuk, ha ütközik
+        // BeaconPort = GamePort + 7230 (770 különbség a QueryPort-tól)
+        const calculatedBeaconPort = gamePort + 7230;
+        
+        if (calculatedBeaconPort === serverQueryPort || calculatedBeaconPort === gamePort) {
+          // Ha 7230 ütközik, használjunk más offset-et
+          // Próbáljuk különböző offset-eket, amíg nem lesz egyedi
+          beaconPort = gamePort + 7500; // 500 különbség a QueryPort-tól
+          
+          // Ha még mindig ütközik, próbáljunk más offset-et
+          if (beaconPort === serverQueryPort || beaconPort === gamePort) {
+            beaconPort = gamePort + 9000; // Még nagyobb offset
+          }
+        } else {
+          beaconPort = calculatedBeaconPort;
         }
+        
+        // Ha még mindig ütköznek, akkor újra generáljuk a GamePort-ot
+        if (gamePort === serverQueryPort || gamePort === beaconPort || serverQueryPort === beaconPort) {
+          logger.warn('Ports still conflict after offset adjustment, regenerating GamePort', {
+            serverId,
+            gamePort,
+            serverQueryPort,
+            beaconPort,
+            attempt: adjustmentAttempt,
+          });
+          
+          // Új GamePort generálása (egy új, szabad port)
+          const newGamePort = await generateServerPort(options.gameType, bestLocation.machineId);
+          gamePort = newGamePort;
+          serverQueryPort = gamePort + 8000;
+          beaconPort = gamePort + 7230;
+          
+          // Ellenőrizzük, hogy az új portok sem ütköznek-e
+          if (beaconPort === serverQueryPort || beaconPort === gamePort || serverQueryPort === gamePort) {
+            // Ha még mindig ütköznek, módosítjuk a BeaconPort offset-ét
+            beaconPort = gamePort + 7500;
+          }
+        }
+      }
+      
+      // Ha még mindig ütköznek, akkor hibaüzenet
+      if (gamePort === serverQueryPort || gamePort === beaconPort || serverQueryPort === beaconPort) {
+        logger.error('Could not resolve port conflicts after multiple attempts', new Error('Port conflict resolution failed'), {
+          serverId,
+          gamePort,
+          serverQueryPort,
+          beaconPort,
+          attempts: adjustmentAttempt,
+        });
+        throw new Error('Nem sikerült különböző portokat generálni a Satisfactory szerverhez.');
       }
       
       // Az adatbázisban a QueryPort mezőben a ServerQueryPort-ot tároljuk

@@ -1348,32 +1348,98 @@ export async function createSystemdServiceForServer(
       }
       
       // Biztosítjuk, hogy mindhárom port különböző legyen
-      // Ha bármelyik port egyezik, újraszámoljuk őket
-      if (finalGamePort === finalQueryPort || finalGamePort === finalBeaconPort || finalQueryPort === finalBeaconPort) {
+      // Loop-ban újrageneráljuk a portokat, amíg biztosan különbözőek nem lesznek
+      let maxAdjustmentAttempts = 10;
+      let adjustmentAttempt = 0;
+      
+      while ((finalGamePort === finalQueryPort || finalGamePort === finalBeaconPort || finalQueryPort === finalBeaconPort) && adjustmentAttempt < maxAdjustmentAttempts) {
+        adjustmentAttempt++;
+        
         logger.warn('Port conflict detected in Satisfactory ports, recalculating', {
           serverId,
+          attempt: adjustmentAttempt,
           gamePort: finalGamePort,
           queryPort: finalQueryPort,
           beaconPort: finalBeaconPort,
         });
         
-        // Újraszámoljuk a portokat: QueryPort alapján
-        const baseQueryPort = finalQueryPort || 7777;
-        finalGamePort = baseQueryPort + 10000; // GamePort = QueryPort + 10000
-        finalBeaconPort = baseQueryPort + 7223; // BeaconPort = QueryPort + 7223
+        // Az adatbázisból a port mező a GamePort-ot tartalmazza (alap port)
+        // Újraszámoljuk a portokat a GamePort alapján
+        const baseGamePort = finalGamePort || finalQueryPort - 8000 || 7777;
         
-        // Ha még mindig ütköznek, akkor offset-tel módosítjuk
-        if (finalGamePort === finalBeaconPort) {
-          finalBeaconPort = baseQueryPort + 8000; // Ha ütköznek, más offset-tel
+        // Ha a GamePort hiányzik vagy ütközik, újraszámoljuk
+        if (finalGamePort === finalQueryPort || finalGamePort === finalBeaconPort || !finalGamePort) {
+          // GamePort = alap port (adatbázisból vagy számolva)
+          finalGamePort = baseGamePort;
         }
         
-        logger.info('Ports recalculated to ensure uniqueness', {
-          serverId,
-          queryPort: finalQueryPort,
-          gamePort: finalGamePort,
-          beaconPort: finalBeaconPort,
-        });
+        // ServerQueryPort = GamePort + 8000
+        if (finalQueryPort === finalGamePort || finalQueryPort === finalBeaconPort || !finalQueryPort) {
+          finalQueryPort = finalGamePort + 8000;
+        }
+        
+        // BeaconPort = GamePort + 7230 (770 különbség a QueryPort-tól, biztosan különböző)
+        // Ha még mindig ütközik, módosítjuk az offset-et
+        const calculatedBeaconPort = finalGamePort + 7230;
+        if (calculatedBeaconPort === finalQueryPort || calculatedBeaconPort === finalGamePort) {
+          finalBeaconPort = finalGamePort + 7500; // 500 különbség a QueryPort-tól
+        } else {
+          finalBeaconPort = calculatedBeaconPort;
+        }
+        
+        // Ha még mindig ütköznek, akkor más offset-eket próbálunk
+        if (finalGamePort === finalQueryPort || finalGamePort === finalBeaconPort || finalQueryPort === finalBeaconPort) {
+          logger.warn('Ports still conflict after initial recalculation, trying different offsets', {
+            serverId,
+            gamePort: finalGamePort,
+            queryPort: finalQueryPort,
+            beaconPort: finalBeaconPort,
+            attempt: adjustmentAttempt,
+          });
+          
+          // Próbáljuk különböző offset-ekkel
+          // ServerQueryPort = GamePort + 8000 (fix)
+          finalQueryPort = finalGamePort + 8000;
+          
+          // BeaconPort különböző offset-ekkel, amíg nem lesz egyedi
+          const offsetOptions = [7230, 7500, 9000, 10000, 11000]; // Különböző offset opciók
+          for (const offset of offsetOptions) {
+            const testBeaconPort = finalGamePort + offset;
+            if (testBeaconPort !== finalGamePort && testBeaconPort !== finalQueryPort) {
+              finalBeaconPort = testBeaconPort;
+              break; // Találtunk egyedi portot
+            }
+          }
+          
+          // Ha még mindig ütköznek, akkor módosítjuk a GamePort-ot
+          if (finalGamePort === finalQueryPort || finalGamePort === finalBeaconPort || finalQueryPort === finalBeaconPort) {
+            // Új GamePort generálása (egy kis offset-tel)
+            finalGamePort = (finalGamePort + adjustmentAttempt) || 7777;
+            finalQueryPort = finalGamePort + 8000;
+            finalBeaconPort = finalGamePort + 7230;
+          }
+        }
       }
+      
+      // Ha még mindig ütköznek, akkor hibaüzenet
+      if (finalGamePort === finalQueryPort || finalGamePort === finalBeaconPort || finalQueryPort === finalBeaconPort) {
+        logger.error('Could not resolve Satisfactory port conflicts after multiple attempts', new Error('Port conflict resolution failed'), {
+          serverId,
+          gamePort: finalGamePort,
+          queryPort: finalQueryPort,
+          beaconPort: finalBeaconPort,
+          attempts: adjustmentAttempt,
+        });
+        throw new Error('Nem sikerült különböző portokat generálni a Satisfactory szerverhez. Kérjük, ellenőrizze az adatbázisban a portokat.');
+      }
+      
+      logger.info('Ports verified and adjusted to ensure uniqueness', {
+        serverId,
+        queryPort: finalQueryPort,
+        gamePort: finalGamePort,
+        beaconPort: finalBeaconPort,
+        attempts: adjustmentAttempt,
+      });
       
       // A startCommand placeholder-eket cseréljük le
       // -Port={gamePort} -ServerQueryPort={queryPort} -BeaconPort={beaconPort}
