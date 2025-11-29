@@ -331,30 +331,41 @@ export async function provisionServer(
     // Satisfactory-nál a QueryPort, GamePort és BeaconPort generálása
     let configurationUpdate: any = {};
     if (options.gameType === 'SATISFACTORY') {
-      // QueryPort = a generált port (4 számjegyű port, pl. 7777)
-      let queryPort = generatedPort;
-      // GamePort = QueryPort + 10000 (pl. 7777 -> 17777) - csatlakozási port
-      let gamePort = queryPort + 10000;
-      // BeaconPort = QueryPort + 7223 (pl. 7777 -> 15000) - szerver lista port
-      let beaconPort = queryPort + 7223;
+      // Satisfactory port számítások a példa alapján:
+      // QueryPort = a generált port (4 számjegyű port, pl. 7777) - ez az alap port az adatbázisban
+      // GamePort = QueryPort (pl. 7777) - csatlakozási port (a példában 7780)
+      // QueryPort (ServerQueryPort) = GamePort + 8000 (pl. 7780 + 8000 = 15780)
+      // BeaconPort = GamePort + 7230 (pl. 7780 + 7230 = 15010)
+      
+      // Alap QueryPort (ez lesz a GamePort is)
+      let queryPort = generatedPort; // Ez a GamePort lesz (pl. 7777)
+      let gamePort = queryPort; // GamePort = QueryPort (pl. 7777)
+      // ServerQueryPort = GamePort + 8000 (pl. 7777 + 8000 = 15777)
+      let serverQueryPort = gamePort + 8000;
+      // BeaconPort = GamePort + 7230 (pl. 7777 + 7230 = 15007)
+      let beaconPort = gamePort + 7230;
       
       // Biztosítjuk, hogy a 3 port különböző legyen
       // Ha valamelyik egyezik, módosítjuk
-      if (gamePort === queryPort || gamePort === beaconPort || queryPort === beaconPort) {
+      if (gamePort === serverQueryPort || gamePort === beaconPort || serverQueryPort === beaconPort) {
         logger.warn('Port conflict detected in port calculation, adjusting', {
           serverId,
-          queryPort,
           gamePort,
+          serverQueryPort,
           beaconPort,
         });
         // Újraszámoljuk a portokat, hogy biztosan különbözőek legyenek
-        gamePort = queryPort + 10000;
-        beaconPort = queryPort + 7223;
+        serverQueryPort = gamePort + 8000;
+        beaconPort = gamePort + 7230;
         // Ha még mindig ütköznek, akkor más offset-tel módosítjuk
-        if (gamePort === beaconPort) {
-          beaconPort = queryPort + 8000; // Más offset, ha ütköznek
+        if (serverQueryPort === beaconPort) {
+          beaconPort = gamePort + 7500; // Más offset, ha ütköznek
         }
       }
+      
+      // Az adatbázisban a QueryPort mezőben a ServerQueryPort-ot tároljuk
+      // A GamePort-ot külön mezőben vagy a configuration-ban
+      queryPort = serverQueryPort; // Az adatbázisban a QueryPort = ServerQueryPort
       
       // Ellenőrizzük, hogy a GamePort és BeaconPort is szabad-e
       // Ha foglaltak, újra generáljuk a QueryPort-ot, amíg mindhárom port szabad nem lesz
@@ -379,12 +390,15 @@ export async function provisionServer(
         } else {
           // Ha a GamePort vagy BeaconPort foglalt, újra generáljuk a QueryPort-ot
           retryCount++;
-          // Új QueryPort generálása a generateServerPort függvénnyel, ami már ellenőrzi az adatbázist és a gépen is
+          // Új GamePort generálása a generateServerPort függvénnyel, ami már ellenőrzi az adatbázist és a gépen is
           // Az offset-tel való növelés helyett újra generáljuk, hogy biztosan szabad portot kapjunk
-          queryPort = await generateServerPort(options.gameType, bestLocation.machineId);
+          const newGamePort = await generateServerPort(options.gameType, bestLocation.machineId);
           
-          gamePort = queryPort + 10000;
-          beaconPort = queryPort + 7223;
+          // GamePort alapján számoljuk a QueryPort és BeaconPort értékeket
+          gamePort = newGamePort;
+          serverQueryPort = gamePort + 8000;
+          beaconPort = gamePort + 7230;
+          queryPort = serverQueryPort; // QueryPort = ServerQueryPort az adatbázisban
           
           logger.warn('Port is not available, regenerating QueryPort', {
             serverId,
@@ -650,8 +664,6 @@ export async function checkSatisfactoryPortInDatabase(port: number, excludeServe
       select: {
         id: true,
         port: true,
-        queryPort: true,
-        beaconPort: true,
         configuration: true,
       },
     });
@@ -663,14 +675,16 @@ export async function checkSatisfactoryPortInDatabase(port: number, excludeServe
         return false; // Foglalt
       }
 
-      // Ellenőrizzük a queryPort mezőt (ha van)
-      if (server.queryPort === port) {
-        return false; // Foglalt
-      }
-
-      // Ellenőrizzük a beaconPort mezőt (ha van)
-      if (server.beaconPort === port) {
-        return false; // Foglalt
+      // Ellenőrizzük a queryPort és beaconPort mezőket a configuration JSON-ból
+      if (server.configuration) {
+        try {
+          const config = typeof server.configuration === 'string' ? JSON.parse(server.configuration) : server.configuration;
+          if (config.queryPort === port || config.beaconPort === port || config.gamePort === port) {
+            return false; // Foglalt
+          }
+        } catch (parseError) {
+          console.warn('Failed to parse server configuration:', parseError);
+        }
       }
 
       // Ellenőrizzük a configuration JSON-ben tárolt portokat (backward compatibility)
