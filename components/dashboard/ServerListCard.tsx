@@ -1,9 +1,10 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Server, Play, Square, RefreshCw, Settings } from 'lucide-react';
+import { Server, Play, Square, RefreshCw, Settings, Loader2 } from 'lucide-react';
 
 interface Server {
   id: string;
@@ -15,12 +16,94 @@ interface Server {
   status: string;
 }
 
+interface ServerInstallStatus {
+  [serverId: string]: {
+    installStatus: 'not_installed' | 'installing' | 'completed' | 'error';
+    installProgress: any;
+    isInstalled: boolean;
+  };
+}
+
 interface ServerListCardProps {
   servers: Server[];
   locale: string;
 }
 
 export function ServerListCard({ servers, locale }: ServerListCardProps) {
+  const [installStatuses, setInstallStatuses] = useState<ServerInstallStatus>({});
+
+  // Telepítési állapotok lekérése
+  useEffect(() => {
+    const fetchInstallStatuses = async () => {
+      const statuses: ServerInstallStatus = {};
+      
+      for (const server of servers) {
+        try {
+          const response = await fetch(`/api/servers/${server.id}/install-status`);
+          const data = await response.json();
+          
+          if (response.ok && data.success) {
+            statuses[server.id] = {
+              installStatus: data.installStatus,
+              installProgress: data.installProgress,
+              isInstalled: data.isInstalled,
+            };
+          } else {
+            // Ha nincs telepítve, akkor not_installed
+            statuses[server.id] = {
+              installStatus: 'not_installed',
+              installProgress: null,
+              isInstalled: false,
+            };
+          }
+        } catch (error) {
+          statuses[server.id] = {
+            installStatus: 'not_installed',
+            installProgress: null,
+            isInstalled: false,
+          };
+        }
+      }
+      
+      setInstallStatuses(statuses);
+    };
+
+    fetchInstallStatuses();
+
+    // Automatikus frissítés minden 3 másodpercben, ha van telepítés folyamatban
+    let intervalId: NodeJS.Timeout | null = null;
+    
+    const startPolling = () => {
+      intervalId = setInterval(() => {
+        fetchInstallStatuses().then(() => {
+          // Ellenőrizzük, hogy van-e még telepítés folyamatban
+          setInstallStatuses((prev) => {
+            const hasInstalling = Object.values(prev).some(
+              (status) => status.installStatus === 'installing'
+            );
+            
+            // Ha nincs telepítés folyamatban, akkor nem kell tovább frissíteni
+            if (!hasInstalling && intervalId) {
+              clearInterval(intervalId);
+              intervalId = null;
+            }
+            
+            return prev;
+          });
+        });
+      }, 3000);
+    };
+
+    // Kezdetben mindig indítjuk a polling-ot
+    startPolling();
+
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [servers]);
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'ONLINE':
@@ -33,6 +116,29 @@ export function ServerListCard({ servers, locale }: ServerListCardProps) {
         return <Badge variant="warning">Leállítás...</Badge>;
       default:
         return <Badge variant="default">{status}</Badge>;
+    }
+  };
+
+  const getInstallStatusBadge = (serverId: string) => {
+    const status = installStatuses[serverId];
+    if (!status) {
+      return null;
+    }
+
+    switch (status.installStatus) {
+      case 'installing':
+        return (
+          <Badge variant="warning" className="flex items-center gap-1">
+            <Loader2 className="w-3 h-3 animate-spin" />
+            Telepítés...
+          </Badge>
+        );
+      case 'error':
+        return <Badge variant="error">Telepítési hiba</Badge>;
+      case 'not_installed':
+        return <Badge variant="default">Telepítés szükséges</Badge>;
+      default:
+        return null;
     }
   };
 
@@ -75,6 +181,7 @@ export function ServerListCard({ servers, locale }: ServerListCardProps) {
                   <div className="flex items-center gap-3 mb-2">
                     <h3 className="font-semibold text-lg text-gray-900">{server.name}</h3>
                     {getStatusBadge(server.status)}
+                    {getInstallStatusBadge(server.id)}
                   </div>
                   <div className="flex flex-wrap gap-4 text-sm text-gray-600">
                     <span className="flex items-center gap-1">
@@ -89,12 +196,35 @@ export function ServerListCard({ servers, locale }: ServerListCardProps) {
                 </div>
               </div>
               <div className="flex gap-2 mt-4">
-                <Link href={`/${locale}/dashboard/servers/${server.id}`} className="flex-1">
-                  <Button variant="outline" size="sm" className="w-full">
-                    <Settings className="w-4 h-4 mr-2" />
-                    Kezelés
-                  </Button>
-                </Link>
+                {installStatuses[server.id]?.isInstalled ? (
+                  <Link href={`/${locale}/dashboard/servers/${server.id}`} className="flex-1">
+                    <Button variant="outline" size="sm" className="w-full">
+                      <Settings className="w-4 h-4 mr-2" />
+                      Kezelés
+                    </Button>
+                  </Link>
+                ) : (
+                  <div className="flex-1">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full cursor-not-allowed opacity-60"
+                      disabled
+                    >
+                      {installStatuses[server.id]?.installStatus === 'installing' ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Telepítés...
+                        </>
+                      ) : (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2" />
+                          Telepítés
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           ))}
