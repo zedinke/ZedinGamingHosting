@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma';
+import { prisma, withRetry, ensureConnection } from '@/lib/prisma';
 import { TaskStatus, TaskType, ServerStatus, GameType } from '@prisma/client';
 import { generateServerPort } from './server-provisioning';
 import { logger } from './logger';
@@ -38,13 +38,15 @@ export async function executeTask(taskId: string): Promise<void> {
     serverId: task.serverId,
   });
 
-  // Task státusz frissítése RUNNING-re
-  await prisma.task.update({
-    where: { id: taskId },
-    data: {
-      status: 'RUNNING',
-      startedAt: new Date(),
-    },
+  // Task státusz frissítése RUNNING-re (retry logikával)
+  await withRetry(async () => {
+    await prisma.task.update({
+      where: { id: taskId },
+      data: {
+        status: 'RUNNING',
+        startedAt: new Date(),
+      },
+    });
   });
 
   try {
@@ -84,14 +86,16 @@ export async function executeTask(taskId: string): Promise<void> {
         );
     }
 
-    // Task sikeresen befejezve
-    await prisma.task.update({
-      where: { id: taskId },
-      data: {
-        status: 'COMPLETED',
-        completedAt: new Date(),
-        result,
-      },
+    // Task sikeresen befejezve (retry logikával)
+    await withRetry(async () => {
+      await prisma.task.update({
+        where: { id: taskId },
+        data: {
+          status: 'COMPLETED',
+          completedAt: new Date(),
+          result,
+        },
+      });
     });
 
     // Webhook esemény küldése (sikeres feladatoknál is)
@@ -145,14 +149,16 @@ export async function executeTask(taskId: string): Promise<void> {
       });
     }
   } catch (error: any) {
-    // Task hibával befejezve
-    await prisma.task.update({
-      where: { id: taskId },
-      data: {
-        status: 'FAILED',
-        completedAt: new Date(),
-        error: error.message,
-      },
+    // Task hibával befejezve (retry logikával)
+    await withRetry(async () => {
+      await prisma.task.update({
+        where: { id: taskId },
+        data: {
+          status: 'FAILED',
+          completedAt: new Date(),
+          error: error.message,
+        },
+      });
     });
 
     // Ha szerver művelet volt, állítsuk be ERROR státuszt
