@@ -503,14 +503,30 @@ fi
     // Port lekérése az adatbázisból, hogy a helyes portot használjuk
     const serverFromDb = await prisma.server.findUnique({
       where: { id: serverId },
-      select: { port: true },
+      select: { port: true, configuration: true },
     });
     const actualPort = serverFromDb?.port || config.port;
     
-    // Frissítjük a config objektumot a helyes porttal
+    // Configuration JSON feldolgozása (Satisfactory-nál tartalmazza a GamePort-ot és BeaconPort-ot)
+    let serverConfiguration: any = {};
+    if (serverFromDb?.configuration) {
+      try {
+        serverConfiguration = typeof serverFromDb.configuration === 'string' 
+          ? JSON.parse(serverFromDb.configuration) 
+          : serverFromDb.configuration;
+      } catch (e) {
+        // Ha nem sikerül parse-olni, akkor üres objektum
+        serverConfiguration = {};
+      }
+    }
+    
+    // Frissítjük a config objektumot a helyes porttal és a configuration adatokkal
     const configWithPort = {
       ...config,
       port: actualPort,
+      // Satisfactory-nál a GamePort és BeaconPort a configuration JSON-ből jön
+      ...(gameType === 'SATISFACTORY' && serverConfiguration.gamePort ? { gamePort: serverConfiguration.gamePort } : {}),
+      ...(gameType === 'SATISFACTORY' && serverConfiguration.beaconPort ? { beaconPort: serverConfiguration.beaconPort } : {}),
     };
     
     const configContent = generateConfigFile(gameType, configWithPort, gameConfig);
@@ -564,7 +580,8 @@ fi
         // A Game.ini fájlban a GamePort-ot kell beállítani, ami QueryPort + 10000
         // Példa: QueryPort 7777 -> GamePort 15777, QueryPort 7778 -> GamePort 15778
         const queryPort = actualPort || 7777; // QueryPort az adatbázisból (4 számjegyű port)
-        const gamePort = queryPort + 10000; // GamePort számítása (QueryPort + 10000)
+        // GamePort a configuration JSON-ből vagy számítva (QueryPort + 10000)
+        const gamePort = serverConfiguration.gamePort || queryPort + 10000;
         const gameIniContent = `[/Script/Engine.GameNetworkManager]
 Port=${gamePort}
 TotalNetBandwidth=20000
@@ -1001,10 +1018,13 @@ saveFolderPath=./savefilesserver/
     case 'SATISFACTORY':
       // Satisfactory szerver konfigurációs fájl (GameUserSettings.ini)
       // A port paraméter a QueryPort-ot tartalmazza (4 számjegyű port, alapértelmezett 7777)
-      // A GamePort-ot számítjuk: QueryPort + 10000
+      // A GamePort-ot és BeaconPort-ot számítjuk vagy a configuration-ből veszük
       const queryPortSatisfactory = port || 7777; // QueryPort az adatbázisból (4 számjegyű port)
-      const gamePort = queryPortSatisfactory + 10000; // GamePort számítása (QueryPort + 10000)
-      const beaconPort = 15000;
+      
+      // BeaconPort és GamePort a configuration JSON-ből vagy számítva
+      // Ha van a configuration-ben, akkor azt használjuk (provisioning során generált)
+      const beaconPort = config.beaconPort || queryPortSatisfactory + 7223; // BeaconPort = QueryPort + 7223 (alapértelmezett 15000 = 7777 + 7223)
+      const gamePort = config.gamePort || queryPortSatisfactory + 10000; // GamePort = QueryPort + 10000 (alapértelmezett 17777 = 7777 + 10000)
       return `[/Script/Engine.GameSession]
 MaxPlayers=${maxPlayers}
 

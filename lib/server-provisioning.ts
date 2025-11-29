@@ -326,13 +326,108 @@ export async function provisionServer(
 
     // Port generálása (ellenőrzi a Docker konténereket és egyéb folyamatokat is)
     // MINDIG generálunk új portot, hogy a ténylegesen kiosztott portot használjuk
-    const generatedPort = await generateServerPort(options.gameType, bestLocation.machineId);
+    let generatedPort = await generateServerPort(options.gameType, bestLocation.machineId);
+    
+    // Satisfactory-nál a QueryPort, GamePort és BeaconPort generálása
+    let configurationUpdate: any = {};
+    if (options.gameType === 'SATISFACTORY') {
+      // QueryPort = a generált port (4 számjegyű port, pl. 7777)
+      let queryPort = generatedPort;
+      // GamePort = QueryPort + 10000 (pl. 7777 -> 17777)
+      let gamePort = queryPort + 10000;
+      // BeaconPort = QueryPort + 7223 (pl. 7777 -> 15000)
+      let beaconPort = queryPort + 7223;
+      
+      // Ellenőrizzük, hogy a GamePort és BeaconPort is szabad-e
+      // Ha foglaltak, újra generáljuk a QueryPort-ot, amíg mindhárom port szabad nem lesz
+      let maxRetries = 10;
+      let retryCount = 0;
+      let allPortsAvailable = false;
+      
+      while (!allPortsAvailable && retryCount < maxRetries) {
+        const gamePortAvailable = await checkPortAvailableOnMachine(bestLocation.machineId, gamePort);
+        const beaconPortAvailable = await checkPortAvailableOnMachine(bestLocation.machineId, beaconPort);
+        
+        if (gamePortAvailable && beaconPortAvailable) {
+          allPortsAvailable = true;
+        } else {
+          // Ha a GamePort vagy BeaconPort foglalt, újra generáljuk a QueryPort-ot
+          retryCount++;
+          // Új QueryPort generálása offset-tel, hogy biztosan új portot kapjunk
+          const baseQueryPort = queryPort || generatedPort;
+          queryPort = baseQueryPort + retryCount; // Offset-tel növeljük
+          
+          // Ellenőrizzük, hogy az új QueryPort is szabad-e
+          const queryPortAvailable = await checkPortAvailableOnMachine(bestLocation.machineId, queryPort);
+          if (!queryPortAvailable) {
+            // Ha az új QueryPort is foglalt, akkor teljesen új portot generálunk
+            queryPort = await generateServerPort(options.gameType, bestLocation.machineId);
+          }
+          
+          gamePort = queryPort + 10000;
+          beaconPort = queryPort + 7223;
+          
+          logger.warn('GamePort or BeaconPort is not available, regenerating QueryPort', {
+            serverId,
+            retryCount,
+            newQueryPort: queryPort,
+            newGamePort: gamePort,
+            newBeaconPort: beaconPort,
+            gamePortAvailable,
+            beaconPortAvailable,
+          });
+        }
+      }
+      
+      if (!allPortsAvailable) {
+        logger.error('Could not find available ports for Satisfactory server after retries', {
+          serverId,
+          finalQueryPort: queryPort,
+          finalGamePort: gamePort,
+          finalBeaconPort: beaconPort,
+        });
+        // Folytatjuk, de logoljuk a hibát
+      }
+      
+      // Frissítjük a generált portot is, ha változott
+      if (queryPort !== generatedPort) {
+        generatedPort = queryPort;
+      }
+      
+      // BeaconPort és GamePort mentése a configuration JSON-ben
+      configurationUpdate = {
+        queryPort: queryPort,
+        gamePort: gamePort,
+        beaconPort: beaconPort,
+      };
+      
+      logger.info('Satisfactory ports generated', {
+        serverId,
+        queryPort,
+        gamePort,
+        beaconPort,
+        machineId: bestLocation.machineId,
+        retries: retryCount,
+      });
+    }
     
     // MINDIG frissítjük a portot, hogy a ténylegesen kiosztott portot használjuk
     // Ez biztosítja, hogy ne az alapértelmezett port maradjon az adatbázisban
+    // A configuration-t is frissítjük, ha van Satisfactory-nál
+    const server = await prisma.server.findUnique({
+      where: { id: serverId },
+      select: { configuration: true },
+    });
+    
+    const currentConfig = server?.configuration ? (typeof server.configuration === 'string' ? JSON.parse(server.configuration as string) : server.configuration) : {};
+    const updatedConfig = { ...currentConfig, ...configurationUpdate };
+    
     const updatedServer = await prisma.server.update({
       where: { id: serverId },
-      data: { port: generatedPort },
+      data: {
+        port: generatedPort,
+        ...(Object.keys(configurationUpdate).length > 0 ? { configuration: updatedConfig } : {}),
+      },
     });
     
     // Log, hogy lássuk, hogy a port frissült
@@ -342,6 +437,7 @@ export async function provisionServer(
       gameType: options.gameType,
       machineId: bestLocation.machineId,
       actualPortInDb: updatedServer.port,
+      configuration: Object.keys(configurationUpdate).length > 0 ? configurationUpdate : undefined,
     });
 
     // Task végrehajtása háttérben (ez telepíti a szervert)
