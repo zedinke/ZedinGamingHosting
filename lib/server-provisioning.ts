@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { GameType, ServerStatus } from '@prisma/client';
 import { executeTask } from './task-executor';
+import { logger } from '@/lib/logger';
 
 interface ProvisioningOptions {
   gameType: GameType;
