@@ -560,9 +560,13 @@ fi
       // Satisfactory-nál a Game.ini fájlt is létrehozzuk a port beállítással
       if (gameType === 'SATISFACTORY') {
         const gameIniPath = configPath.replace('GameUserSettings.ini', 'Game.ini');
-        // A port beállítása a Game.ini-ben (az útmutató szerint) - az adatbázisból lekérdezett portot használjuk
+        // A port mező a QueryPort-ot tartalmazza (4 számjegyű port, alapértelmezett 7777)
+        // A Game.ini fájlban a GamePort-ot kell beállítani, ami QueryPort + 10000
+        // Példa: QueryPort 7777 -> GamePort 15777, QueryPort 7778 -> GamePort 15778
+        const queryPort = actualPort || 7777; // QueryPort az adatbázisból (4 számjegyű port)
+        const gamePort = queryPort + 10000; // GamePort számítása (QueryPort + 10000)
         const gameIniContent = `[/Script/Engine.GameNetworkManager]
-Port=${actualPort || 15777}
+Port=${gamePort}
 TotalNetBandwidth=20000
 MaxDynamicBandwidth=10000
 MinDynamicBandwidth=1000
@@ -577,7 +581,7 @@ MinDynamicBandwidth=1000
           `sudo -u satis cat > ${gameIniPath} << 'EOF'\n${gameIniContent}\nEOF`
         );
         if (writeProgress) {
-          await appendInstallLog(serverId, `Game.ini fájl létrehozva port beállítással: ${gameIniPath} (Port=${actualPort || 15777})`);
+          await appendInstallLog(serverId, `Game.ini fájl létrehozva port beállítással: ${gameIniPath} (QueryPort=${queryPort}, GamePort=${gamePort})`);
         }
         
         // Jogosultságok beállítása a konfigurációs mappán (sfgames csoport írási jog)
@@ -996,10 +1000,11 @@ saveFolderPath=./savefilesserver/
 
     case 'SATISFACTORY':
       // Satisfactory szerver konfigurációs fájl (GameUserSettings.ini)
-      // A Game.ini fájl alapértelmezett értékekkel működik, de a GameUserSettings.ini tartalmazza a legtöbb beállítást
-      const gamePort = port || 15777;
+      // A port paraméter a QueryPort-ot tartalmazza (4 számjegyű port, alapértelmezett 7777)
+      // A GamePort-ot számítjuk: QueryPort + 10000
+      const queryPortSatisfactory = port || 7777; // QueryPort az adatbázisból (4 számjegyű port)
+      const gamePort = queryPortSatisfactory + 10000; // GamePort számítása (QueryPort + 10000)
       const beaconPort = 15000;
-      const queryPortSatisfactory = gameConfig.queryPort || 7777;
       return `[/Script/Engine.GameSession]
 MaxPlayers=${maxPlayers}
 

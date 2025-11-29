@@ -393,6 +393,7 @@ export async function generateServerPort(
   machineId?: string
 ): Promise<number> {
   // Alapértelmezett portok játék típusonként
+  // Satisfactory-nál a port mező a QueryPort-ot tartalmazza (4 számjegyű port, alapértelmezett 7777)
   const defaultPorts: Partial<Record<GameType, number>> = {
     MINECRAFT: 25565,
     ARK_EVOLVED: 7777,
@@ -410,7 +411,7 @@ export async function generateServerPort(
     GROUNDED: 7777,
     V_RISING: 9876,
     DONT_STARVE_TOGETHER: 10999,
-    SATISFACTORY: 15777, // GamePort (BeaconPort=15000, QueryPort=7777)
+    SATISFACTORY: 7777, // QueryPort (4 számjegyű port, alapértelmezett 7777)
     OTHER: 25565,
   };
 
@@ -490,8 +491,26 @@ async function checkPortAvailableOnMachine(machineId: string, port: number): Pro
     const { executeSSHCommand } = await import('./ssh-client');
 
     // Ellenőrizzük a portot SSH-n keresztül
-    // Használjuk a `ss` vagy `netstat` parancsot (ss előnyben, mert gyorsabb)
-    const checkCommand = `ss -tuln | grep -q ":${port} " || netstat -tuln 2>/dev/null | grep -q ":${port} " || echo "available"`;
+    // Ellenőrizzük a natív folyamatokat, Docker konténereket és egyéb szervereket is
+    // Az ss/netstat már tartalmazza a Docker konténerek portjait is, ha publish-elve vannak
+    const checkCommand = `(
+      # Natív folyamatok és Docker konténerek ellenőrzése (ss vagy netstat)
+      # A Docker konténerek portjai is megjelennek itt, ha publish-elve vannak
+      if (ss -tuln 2>/dev/null || netstat -tuln 2>/dev/null) | grep -q ":${port} "; then
+        exit 1
+      fi
+      
+      # További ellenőrzés: Docker konténerek port mappingjének explicit ellenőrzése
+      # (ha a konténer portja nincs publish-elve, akkor nem jelenik meg az ss-ben)
+      if command -v docker >/dev/null 2>&1; then
+        if docker ps --format '{{.Ports}}' 2>/dev/null | grep -qE ":[0-9]+->.*:${port}/|:${port}->"; then
+          exit 1
+        fi
+      fi
+      
+      # Ha ide érünk, akkor a port szabad
+      echo "available"
+    )`;
 
     const result = await executeSSHCommand(
       {
@@ -505,7 +524,7 @@ async function checkPortAvailableOnMachine(machineId: string, port: number): Pro
 
     // Ha a parancs "available"-t ad vissza, akkor a port szabad
     // Ha nem, akkor foglalt (vagy hiba történt, ebben az esetben biztonságosabb feltételezni hogy foglalt)
-    return result.stdout?.trim().includes('available') || result.exitCode !== 0;
+    return result.stdout?.trim().includes('available') || false;
   } catch (error) {
     // Hiba esetén biztonságosabb feltételezni, hogy a port foglalt
     console.error(`Port ellenőrzési hiba a ${machineId} gépen a ${port} porthoz:`, error);

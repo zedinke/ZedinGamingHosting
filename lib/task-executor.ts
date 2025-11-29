@@ -229,21 +229,29 @@ async function executeProvisionTask(task: any): Promise<any> {
   });
 
   // Port generálása és frissítése (retry logikával)
-  // Satisfactory-nál NEM generálunk portot a provisioning-nál, csak az első indításnál
-  // Más játékoknál generálunk portot a provisioning-nál
+  // Satisfactory-nál is generálunk portot a provisioning során, hogy már a telepítés alatt is lássa a felhasználó
+  // A port a QueryPort-ot tartalmazza (4 számjegyű port, alapértelmezett 7777)
   let port: number | null = null;
   let finalPort: number | null = null;
   
-  if (server.gameType === 'SATISFACTORY') {
-    // Satisfactory-nál ne generáljunk portot, null maradjon
-    // Az első indításnál generálunk portot
-    logger.info('Satisfactory server - port will be generated on first start', {
+  // Az adatbázisból ellenőrizzük, hogy van-e már generált port (provisioning során generálódhatott)
+  const serverWithPort = await prisma.server.findUnique({
+    where: { id: task.serverId },
+    select: { port: true },
+  });
+  
+  if (serverWithPort?.port) {
+    // Ha már van port az adatbázisban (provisioning során generálódott), azt használjuk
+    port = serverWithPort.port;
+    finalPort = port;
+    server.port = port;
+    logger.info('Port already exists in database, using existing port', {
       serverId: task.serverId,
+      existingPort: port,
       gameType: server.gameType,
     });
-    finalPort = null;
   } else {
-    // Más játékoknál generálunk portot a provisioning-nál
+    // Ha nincs port, generálunk egyet (ez biztosítja, hogy mindig legyen port)
     port = await generateServerPort(server.gameType, agent.machine?.id);
     await withRetry(async () => {
       await prisma.server.update({
@@ -435,10 +443,11 @@ async function executeStartTask(task: any): Promise<any> {
         }
       }
       
-      // Satisfactory-nál az első indításnál generálunk portot, ha nincs
-      let serverPort = config.port || server.port;
-      if (server.gameType === 'SATISFACTORY' && !serverPort) {
-        // Első indítás - generálunk portot
+      // Port lekérése - a port már a provisioning során generálódik és az adatbázisban van
+      // Ha nincs port az adatbázisban (ritka eset), akkor generálunk egyet
+      let serverPort = server.port || config.port;
+      if (!serverPort) {
+        // Ha mégsem lenne port (nem várt eset), generálunk egyet
         const { generateServerPort } = await import('./server-provisioning');
         serverPort = await generateServerPort(server.gameType, machine.id);
         
@@ -450,9 +459,10 @@ async function executeStartTask(task: any): Promise<any> {
           });
         });
         
-        logger.info('Satisfactory server port generated on first start', {
+        logger.warn('Server port was missing, generated on start', {
           serverId: task.serverId,
           generatedPort: serverPort,
+          gameType: server.gameType,
         });
       }
       
@@ -551,75 +561,6 @@ async function executeStartTask(task: any): Promise<any> {
       !isActive;
 
     if (isActive) {
-      // Satisfactory esetén ellenőrizzük a logokat, hogy milyen porton fut ténylegesen
-      if (server.gameType === 'SATISFACTORY') {
-        try {
-          // Várunk egy kicsit, hogy a szerver elinduljon és logoljon
-          await new Promise(resolve => setTimeout(resolve, 5000));
-          
-          // Log fájl olvasása (systemd journal vagy log fájl)
-          const logCheck = await executeSSHCommand(
-            {
-              host: machine.ipAddress,
-              port: machine.sshPort,
-              user: machine.sshUser,
-              keyPath: machine.sshKeyPath || undefined,
-            },
-            `journalctl -u ${serviceName} -n 100 --no-pager 2>/dev/null | grep -E "Server API listening on|listening on port|GameNetDriver.*listening on port" | tail -1 || echo ""`
-          );
-          
-          // Port kinyerése a logból (pl. "Server API listening on 0.0.0.0:7780" vagy "listening on port 7780")
-          const portMatch = logCheck.stdout.match(/listening on.*?(\d{4,5})/i) || 
-                           logCheck.stdout.match(/port\s+(\d{4,5})/i);
-          
-          if (portMatch && portMatch[1]) {
-            const actualPort = parseInt(portMatch[1], 10);
-            // Csak akkor frissítjük a portot, ha még nincs port (első indítás) vagy ha eltér
-            // De ha már van port, akkor azt használjuk (nem változtatjuk meg)
-            if (actualPort) {
-              const currentServer = await prisma.server.findUnique({
-                where: { id: task.serverId },
-                select: { port: true },
-              });
-              
-              // Ha nincs port (első indítás), akkor generálunk egyet és mentjük
-              if (!currentServer?.port) {
-                // Generálunk egy portot, de ellenőrizzük, hogy szabad-e
-                const generatedPort = await generateServerPort(server.gameType, machine.id);
-                
-                // Frissítjük az adatbázisban a portot
-                await withRetry(async () => {
-                  await prisma.server.update({
-                    where: { id: task.serverId },
-                    data: { port: generatedPort },
-                  });
-                });
-                
-                logger.info('Satisfactory server port generated and saved on first start', {
-                  serverId: task.serverId,
-                  generatedPort: generatedPort,
-                  actualPortFromLogs: actualPort,
-                  logLine: logCheck.stdout.trim(),
-                });
-              } else {
-                // Ha már van port, akkor azt használjuk (nem változtatjuk meg)
-                logger.info('Satisfactory server port already exists, keeping existing port', {
-                  serverId: task.serverId,
-                  existingPort: currentServer.port,
-                  actualPortFromLogs: actualPort,
-                });
-              }
-            }
-          }
-        } catch (portCheckError) {
-          // Nem kritikus hiba, csak logoljuk
-          logger.warn('Could not extract port from Satisfactory server logs', {
-            serverId: task.serverId,
-            error: portCheckError instanceof Error ? portCheckError.message : String(portCheckError),
-          });
-        }
-      }
-      
       // Szerver státusz frissítése ONLINE-ra
       await prisma.server.update({
         where: { id: task.serverId },
