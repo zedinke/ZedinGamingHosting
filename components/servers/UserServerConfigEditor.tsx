@@ -9,6 +9,7 @@ interface UserServerConfigEditorProps {
   gameType: GameType;
   maxPlayers: number;
   initialConfig?: any;
+  readonlyFields?: string[];
 }
 
 export function UserServerConfigEditor({
@@ -16,11 +17,13 @@ export function UserServerConfigEditor({
   gameType,
   maxPlayers,
   initialConfig,
+  readonlyFields = [],
 }: UserServerConfigEditorProps) {
   const [config, setConfig] = useState<any>(initialConfig || {});
   const [defaults, setDefaults] = useState<any>({});
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [readonlyFieldsList, setReadonlyFieldsList] = useState<string[]>(readonlyFields || []);
 
   useEffect(() => {
     loadConfig();
@@ -39,6 +42,10 @@ export function UserServerConfigEditor({
 
       setConfig(data.config || {});
       setDefaults(data.defaults || {});
+      // Readonly mezők beállítása
+      if (data.readonlyFields) {
+        setReadonlyFieldsList(data.readonlyFields);
+      }
     } catch (error) {
       toast.error('Hiba történt a konfiguráció betöltése során');
     } finally {
@@ -267,11 +274,15 @@ export function UserServerConfigEditor({
         {Object.entries(defaults).map(([key, defaultValue]) => {
           const fieldType = getFieldType(key, defaultValue);
           const label = getFieldLabel(key);
+          const isReadonly = readonlyFieldsList.includes(key);
 
           return (
             <div key={key}>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 {label}
+                {isReadonly && (
+                  <span className="ml-2 text-xs text-gray-500">(Nem módosítható)</span>
+                )}
               </label>
               {fieldType === 'boolean' ? (
                 <label className="flex items-center">
@@ -279,6 +290,7 @@ export function UserServerConfigEditor({
                     type="checkbox"
                     checked={config[key] ?? defaultValue}
                     onChange={(e) => updateConfig(key, e.target.checked)}
+                    disabled={isReadonly}
                     className="rounded"
                   />
                   <span className="ml-2 text-sm text-gray-600">
@@ -289,7 +301,8 @@ export function UserServerConfigEditor({
                 <select
                   value={config[key] ?? defaultValue}
                   onChange={(e) => updateConfig(key, e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white"
+                  disabled={isReadonly}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
                 >
                   {getSelectOptions(key).map((option) => (
                     <option key={option.value} value={option.value}>
@@ -302,14 +315,16 @@ export function UserServerConfigEditor({
                   type="number"
                   value={config[key] ?? defaultValue}
                   onChange={(e) => updateConfig(key, parseFloat(e.target.value) || 0)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white"
+                  disabled={isReadonly}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
               ) : (
                 <input
                   type={key.toLowerCase().includes('password') ? 'password' : 'text'}
                   value={config[key] ?? defaultValue}
                   onChange={(e) => updateConfig(key, e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-400"
+                  disabled={isReadonly}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-400 disabled:bg-gray-100 disabled:cursor-not-allowed"
                   placeholder={label}
                 />
               )}

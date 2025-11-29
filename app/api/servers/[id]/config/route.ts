@@ -32,6 +32,7 @@ export async function GET(
         gameType: true,
         configuration: true,
         maxPlayers: true,
+        port: true,
       },
     });
 
@@ -59,10 +60,39 @@ export async function GET(
       defaults.servername = config.servername;
     }
 
+    // Satisfactory esetén a tényleges portokat használjuk (amiket a rendszer generált)
+    if (server.gameType === 'SATISFACTORY') {
+      const { ALL_GAME_SERVER_CONFIGS } = await import('@/lib/game-server-configs');
+      const gameConfig = ALL_GAME_SERVER_CONFIGS[server.gameType];
+      if (gameConfig && server.port) {
+        // A tényleges portokat beállítjuk - ezeket a rendszer generálta
+        const actualGamePort = server.port;
+        const actualBeaconPort = gameConfig.beaconPort || 15000;
+        const actualQueryPort = gameConfig.queryPort || 7777;
+        
+        // A defaults-ben a tényleges portokat használjuk
+        defaults.GamePort = actualGamePort;
+        defaults.BeaconPort = actualBeaconPort;
+        defaults.QueryPort = actualQueryPort;
+        
+        // A config-ban is frissítjük a tényleges portokat
+        config.GamePort = actualGamePort;
+        config.BeaconPort = actualBeaconPort;
+        config.QueryPort = actualQueryPort;
+      }
+      // MaxPlayers nem módosítható - a tényleges értéket használjuk
+      defaults.MaxPlayers = server.maxPlayers;
+      config.MaxPlayers = server.maxPlayers;
+    }
+
     return NextResponse.json({
       success: true,
       config: config,
       defaults: defaults,
+      // Mezők, amiket nem lehet módosítani
+      readonlyFields: server.gameType === 'SATISFACTORY' 
+        ? ['GamePort', 'BeaconPort', 'QueryPort', 'MaxPlayers']
+        : [],
     });
   } catch (error) {
     logger.error('Get server config error', error as Error, {
@@ -93,7 +123,7 @@ export async function PUT(
     const { id } = params;
     const userId = (session.user as any).id;
     const body = await request.json();
-    const { configuration } = body;
+    let { configuration } = body;
 
     const server = await prisma.server.findUnique({
       where: { id },
@@ -119,6 +149,23 @@ export async function PUT(
         { error: 'Nincs jogosultság' },
         { status: 403 }
       );
+    }
+
+    // Readonly mezők ellenőrzése - nem engedélyezzük a módosításukat
+    const readonlyFields: string[] = [];
+    if (server.gameType === 'SATISFACTORY') {
+      readonlyFields.push('GamePort', 'BeaconPort', 'QueryPort', 'MaxPlayers');
+    }
+    
+    // Ha readonly mezőket próbálnak módosítani, eltávolítjuk őket
+    if (readonlyFields.length > 0 && configuration) {
+      const currentConfig = (server.configuration as any) || {};
+      readonlyFields.forEach((field) => {
+        // Visszaállítjuk az eredeti értékeket
+        if (configuration[field] !== undefined && configuration[field] !== currentConfig[field]) {
+          configuration[field] = currentConfig[field] || server.port || (field === 'MaxPlayers' ? server.maxPlayers : undefined);
+        }
+      });
     }
 
     // The Forest esetén a szerver nevet is frissítjük, ha változott
