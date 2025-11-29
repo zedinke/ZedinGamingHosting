@@ -1249,7 +1249,8 @@ export async function createSystemdServiceForServer(
         if (scriptResult && scriptResult.startsWith('found:')) {
           // Ha létezik a FactoryServer.sh, azt használjuk
           const scriptPath = scriptResult.replace('found:', '');
-          startCommand = `./FactoryServer.sh -log -unattended`;
+          // Abszolút útvonalat használunk systemd-hez
+          startCommand = `${scriptPath} -log -unattended`;
           binary = null;
           execDir = workingDir;
           logger.info('Satisfactory FactoryServer.sh script found', {
