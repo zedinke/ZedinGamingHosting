@@ -329,9 +329,18 @@ export async function provisionServer(
     
     // MINDIG frissítjük a portot, hogy a ténylegesen kiosztott portot használjuk
     // Ez biztosítja, hogy ne az alapértelmezett port maradjon az adatbázisban
-    await prisma.server.update({
+    const updatedServer = await prisma.server.update({
       where: { id: serverId },
       data: { port: generatedPort },
+    });
+    
+    // Log, hogy lássuk, hogy a port frissült
+    logger.info('Port generated and updated in database', {
+      serverId,
+      generatedPort,
+      gameType: options.gameType,
+      machineId: bestLocation.machineId,
+      actualPortInDb: updatedServer.port,
     });
 
     // Task végrehajtása háttérben (ez telepíti a szervert)
