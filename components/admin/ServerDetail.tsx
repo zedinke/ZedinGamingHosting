@@ -91,10 +91,20 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
         return;
       }
 
-      toast.success('Művelet sikeresen végrehajtva');
-      setServerStatus(result.status);
-      // Oldal frissítése
-      window.location.reload();
+      // Tűzfal konfigurálás esetén külön üzenet
+      if (action === 'configure-firewall') {
+        toast.success(result.message || 'Tűzfal portok sikeresen engedélyezve');
+      } else {
+        toast.success('Művelet sikeresen végrehajtva');
+        if (result.status) {
+          setServerStatus(result.status);
+        }
+      }
+      
+      // Oldal frissítése (kivéve tűzfal konfigurálás, mert az nem változtatja meg a státuszt)
+      if (action !== 'configure-firewall') {
+        window.location.reload();
+      }
     } catch (error) {
       toast.error('Hiba történt');
     } finally {
@@ -251,6 +261,14 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
               className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Újraindítás
+            </button>
+            <button
+              onClick={() => handleServerAction('configure-firewall')}
+              disabled={isLoading || !server.machineId}
+              className="w-full bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              title={!server.machineId ? 'A szervernek nincs hozzárendelt gépe' : 'Tűzfal portok engedélyezése'}
+            >
+              🔥 Tűzfal Portok Engedélyezése
             </button>
             <div className="pt-4 border-t border-gray-200 mt-4 space-y-2">
               <button
