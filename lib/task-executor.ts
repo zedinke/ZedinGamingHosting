@@ -238,6 +238,21 @@ async function executeProvisionTask(task: any): Promise<any> {
       data: { port },
     });
   });
+  
+  // Ellenőrizzük, hogy a port tényleg frissült az adatbázisban
+  const serverAfterUpdate = await prisma.server.findUnique({
+    where: { id: task.serverId },
+    select: { port: true },
+  });
+  
+  logger.info('Port generated and updated in task executor', {
+    serverId: task.serverId,
+    generatedPort: port,
+    actualPortInDb: serverAfterUpdate?.port,
+    gameType: server.gameType,
+    machineId: agent.machine?.id,
+  });
+  
   const finalPort = port;
   // Frissítjük a server objektumot is
   server.port = port;
