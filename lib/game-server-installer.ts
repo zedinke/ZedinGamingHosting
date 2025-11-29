@@ -542,7 +542,7 @@ fi
         const gameIniPath = configPath.replace('GameUserSettings.ini', 'Game.ini');
         // A port beállítása a Game.ini-ben (az útmutató szerint)
         const gameIniContent = `[/Script/Engine.GameNetworkManager]
-Port=${port || 15777}
+Port=${config.port || 15777}
 TotalNetBandwidth=20000
 MaxDynamicBandwidth=10000
 MinDynamicBandwidth=1000
@@ -557,7 +557,7 @@ MinDynamicBandwidth=1000
           `sudo -u satis cat > ${gameIniPath} << 'EOF'\n${gameIniContent}\nEOF`
         );
         if (writeProgress) {
-          await appendInstallLog(serverId, `Game.ini fájl létrehozva port beállítással: ${gameIniPath} (Port=${port || 15777})`);
+          await appendInstallLog(serverId, `Game.ini fájl létrehozva port beállítással: ${gameIniPath} (Port=${config.port || 15777})`);
         }
         
         // Jogosultságok beállítása a konfigurációs mappán (sfgames csoport írási jog)
