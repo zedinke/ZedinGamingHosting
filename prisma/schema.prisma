@@ -486,7 +486,8 @@ model GamePackage {
   videoUrl      String? // YouTube videó URL (opcionális)
   slot          Int // Fix slot szám
   cpuCores      Int // Fix CPU vCore szám
-  ram           Int // Fix RAM mennyiség GB-ban
+  ram           Int // Fix RAM mennyiség GB-ban (ha unlimitedRam = false)
+  unlimitedRam  Boolean  @default(false) // Ha true, akkor korlátlan RAM (csak CPU limit van)
   discountPrice Float? // Akciós ár (opcionális)
   pricePerSlot  Float? // Slot bővítés ára (játékonként külön beállítható)
   isActive      Boolean  @default(true) // Ha aktív, akkor megjelenik és rendelhető

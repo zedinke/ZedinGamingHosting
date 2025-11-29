@@ -115,7 +115,8 @@ export const POST = withPerformanceMonitoring(
         configuration: {
           slot: gamePackage.slot + additionalSlotsValue,
           cpuCores: gamePackage.cpuCores + additionalVCpuValue,
-          ram: gamePackage.ram + additionalRamGBValue,
+          ram: gamePackage.unlimitedRam ? null : (gamePackage.ram + additionalRamGBValue),
+          unlimitedRam: gamePackage.unlimitedRam || false,
           gamePackageId: gamePackage.id,
           baseSlot: gamePackage.slot,
           baseCpuCores: gamePackage.cpuCores,

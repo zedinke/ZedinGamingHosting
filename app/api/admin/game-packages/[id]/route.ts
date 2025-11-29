@@ -68,11 +68,20 @@ export async function PUT(
       slot,
       cpuCores,
       ram,
+      unlimitedRam,
       discountPrice,
       pricePerSlot,
       isActive,
       order,
     } = body;
+
+    // Validáció: ha nincs korlátlan RAM, akkor ram kötelező
+    if (unlimitedRam === false && (!ram || ram < 1)) {
+      return NextResponse.json(
+        { error: 'RAM mennyiség megadása kötelező, ha nincs korlátlan RAM' },
+        { status: 400 }
+      );
+    }
 
     const updateData: any = {};
 
@@ -86,7 +95,17 @@ export async function PUT(
     if (videoUrl !== undefined) updateData.videoUrl = videoUrl || null;
     if (slot !== undefined) updateData.slot = parseInt(slot);
     if (cpuCores !== undefined) updateData.cpuCores = parseInt(cpuCores);
-    if (ram !== undefined) updateData.ram = parseInt(ram);
+    if (unlimitedRam !== undefined) {
+      updateData.unlimitedRam = Boolean(unlimitedRam);
+      // Ha korlátlan RAM, akkor ram = 0
+      if (unlimitedRam) {
+        updateData.ram = 0;
+      } else if (ram !== undefined) {
+        updateData.ram = parseInt(ram);
+      }
+    } else if (ram !== undefined) {
+      updateData.ram = parseInt(ram);
+    }
     if (discountPrice !== undefined) {
       updateData.discountPrice = discountPrice ? parseFloat(discountPrice) : null;
     }

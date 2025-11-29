@@ -274,6 +274,7 @@ async function executeProvisionTask(task: any): Promise<any> {
   
   // GamePackage vagy PricingPlan adatok lekérése
   let ram = 2048; // Alapértelmezett RAM (MB)
+  let unlimitedRam = false;
   let gamePackage = null;
   
   if (task.command?.gamePackageId) {
@@ -281,7 +282,10 @@ async function executeProvisionTask(task: any): Promise<any> {
       where: { id: task.command.gamePackageId },
     });
     if (gamePackage) {
-      ram = gamePackage.ram * 1024; // GB -> MB konverzió (pl. 2 GB = 2048 MB)
+      unlimitedRam = gamePackage.unlimitedRam || false;
+      if (!unlimitedRam && gamePackage.ram) {
+        ram = gamePackage.ram * 1024; // GB -> MB konverzió (pl. 2 GB = 2048 MB)
+      }
     }
   } else if (task.command?.planId) {
     const plan = await prisma.pricingPlan.findUnique({
@@ -296,7 +300,8 @@ async function executeProvisionTask(task: any): Promise<any> {
   // Az installGameServer az adatbázisból lekérdezi a portot, ezért fontos, hogy már frissítve legyen
   const installResult = await installGameServer(task.serverId, server.gameType, {
     maxPlayers: server.maxPlayers,
-    ram: ram, // MB-ban
+    ram: unlimitedRam ? 0 : ram, // MB-ban (0 ha korlátlan)
+    unlimitedRam: unlimitedRam,
     port: finalPort || 25565, // A generált portot használjuk (bár az installGameServer az adatbázisból olvassa)
     name: server.name,
   }, {

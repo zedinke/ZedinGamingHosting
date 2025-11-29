@@ -81,6 +81,7 @@ export async function installGameServer(
     ram: number;
     port: number;
     name: string;
+    unlimitedRam?: boolean; // Ha true, akkor korlátlan RAM
     world?: string;
     password?: string;
     adminPassword?: string;
@@ -1154,8 +1155,12 @@ export async function createSystemdServiceForServer(
   // Ez biztosítja, hogy a generált port mindig használatban legyen
   const serverFromDb = await prisma.server.findUnique({
     where: { id: serverId },
-    select: { port: true },
+    select: { port: true, configuration: true },
   });
+  
+  // Ellenőrizzük, hogy korlátlan RAM-e a csomag
+  const serverConfig = (serverFromDb?.configuration as any) || {};
+  const unlimitedRam = serverConfig.unlimitedRam || config.unlimitedRam || false;
   
   // Alapértelmezett értékek beállítása, ha hiányoznak
   // Először az adatbázisból lekérdezett portot használjuk, majd a config.port-ot, végül az alapértelmezettet
@@ -1175,18 +1180,27 @@ export async function createSystemdServiceForServer(
   // CPUQuota: 100% = 1 CPU core, 200% = 2 CPU core, stb.
   const cpuQuota = `${cpuCores * 100}%`;
   // MemoryLimit: RAM limitáció GB-ban (pl. "2G" = 2 GB)
-  // A ram értéke MB-ban van, konvertáljuk GB-ba
-  // Satisfactory-nál minimum 4 GB RAM kell, mert memóriaigényes
-  let ramGB = Math.ceil(ram / 1024); // MB -> GB (pl. 2048 MB = 2 GB)
-  if (gameType === 'SATISFACTORY' && ramGB < 4) {
-    ramGB = 4; // Satisfactory-nál minimum 4 GB
-    logger.warn(`Satisfactory szerver RAM limit növelve 4 GB-ra (korábbi: ${Math.ceil(ram / 1024)} GB)`, {
+  // Ha korlátlan RAM, akkor nincs MemoryMax beállítás
+  let memoryLimit: string | null = null;
+  if (!unlimitedRam) {
+    // A ram értéke MB-ban van, konvertáljuk GB-ba
+    // Satisfactory-nál minimum 4 GB RAM kell, mert memóriaigényes
+    let ramGB = Math.ceil(ram / 1024); // MB -> GB (pl. 2048 MB = 2 GB)
+    if (gameType === 'SATISFACTORY' && ramGB < 4) {
+      ramGB = 4; // Satisfactory-nál minimum 4 GB
+      logger.warn(`Satisfactory szerver RAM limit növelve 4 GB-ra (korábbi: ${Math.ceil(ram / 1024)} GB)`, {
+        serverId,
+        originalRam: ram,
+        newRamGB: ramGB,
+      });
+    }
+    memoryLimit = `${ramGB}G`;
+  } else {
+    logger.info('Korlátlan RAM beállítva, MemoryMax nincs beállítva', {
       serverId,
-      originalRam: ram,
-      newRamGB: ramGB,
+      gameType,
     });
   }
-  const memoryLimit = `${ramGB}G`;
   
   // Ellenőrizzük, hogy a gameConfig létezik-e
   if (!gameConfig || typeof gameConfig !== 'object') {
@@ -1636,8 +1650,8 @@ StandardError=journal
 LimitNOFILE=100000
 # CPU limitáció (100% = 1 CPU core, 200% = 2 CPU core, stb.)
 CPUQuota=${cpuQuota}
-# RAM limitáció (pl. "2G" = 2 GB RAM) - MemoryLimit deprecated, csak MemoryMax
-MemoryMax=${memoryLimit}
+${memoryLimit ? `# RAM limitáció (pl. "2G" = 2 GB RAM) - MemoryLimit deprecated, csak MemoryMax
+MemoryMax=${memoryLimit}` : '# Korlátlan RAM - MemoryMax nincs beállítva'}
 # További erőforrás limitációk
 TasksMax=1000
 

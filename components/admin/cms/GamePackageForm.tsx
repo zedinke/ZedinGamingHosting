@@ -20,11 +20,21 @@ const gamePackageSchema = z.object({
   videoUrl: z.string().url('Érvényes YouTube URL megadása kötelező').optional().or(z.literal('')),
   slot: z.number().int().min(1, 'Slot szám megadása kötelező'),
   cpuCores: z.number().int().min(1, 'CPU vCore szám megadása kötelező'),
-  ram: z.number().int().min(1, 'RAM mennyiség megadása kötelező'),
+  ram: z.number().int().min(1, 'RAM mennyiség megadása kötelező').optional(),
+  unlimitedRam: z.boolean(),
   discountPrice: z.number().min(0).optional().nullable(),
   pricePerSlot: z.number().min(0).optional().nullable(),
   isActive: z.boolean(),
   order: z.number().int().min(0),
+}).refine((data) => {
+  // Ha unlimitedRam = false, akkor ram kötelező
+  if (!data.unlimitedRam && (!data.ram || data.ram < 1)) {
+    return false;
+  }
+  return true;
+}, {
+  message: 'RAM mennyiség megadása kötelező, ha nincs korlátlan RAM',
+  path: ['ram'],
 });
 
 type GamePackageFormData = z.infer<typeof gamePackageSchema>;
@@ -42,6 +52,7 @@ interface GamePackage {
   slot: number;
   cpuCores: number;
   ram: number;
+  unlimitedRam: boolean;
   discountPrice: number | null;
   pricePerSlot: number | null;
   isActive: boolean;
@@ -106,6 +117,7 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
           slot: packageData.slot,
           cpuCores: packageData.cpuCores,
           ram: packageData.ram,
+          unlimitedRam: packageData.unlimitedRam || false,
           discountPrice: packageData.discountPrice,
           pricePerSlot: packageData.pricePerSlot,
           isActive: packageData.isActive,
@@ -123,6 +135,7 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
           slot: 10,
           cpuCores: 2,
           ram: 4,
+          unlimitedRam: false,
           discountPrice: null,
           pricePerSlot: null,
           isActive: true,
@@ -384,19 +397,37 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
 
             <div>
               <label htmlFor="ram" className="block text-sm font-semibold text-gray-900 mb-1">
-                Fix RAM mennyiség (GB) *
+                Fix RAM mennyiség (GB) {!watch('unlimitedRam') && '*'}
               </label>
               <input
                 {...register('ram', { valueAsNumber: true })}
                 type="number"
                 id="ram"
                 min="1"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white"
+                disabled={watch('unlimitedRam')}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100"
               />
               {errors.ram && (
                 <p className="text-red-500 text-sm mt-1">{errors.ram.message}</p>
               )}
             </div>
+          </div>
+          
+          <div className="mt-4">
+            <div className="flex items-center">
+              <input
+                {...register('unlimitedRam')}
+                type="checkbox"
+                id="unlimitedRam"
+                className="w-5 h-5 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+              />
+              <label htmlFor="unlimitedRam" className="ml-2 text-sm font-semibold text-gray-900">
+                Korlátlan RAM (csak CPU limit van)
+              </label>
+            </div>
+            <p className="text-xs text-gray-600 mt-1 ml-7">
+              Ha be van jelölve, a szerver korlátlan RAM-ot használhat. Csak a CPU limit lesz alkalmazva.
+            </p>
           </div>
         </div>
 

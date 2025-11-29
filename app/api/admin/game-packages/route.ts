@@ -65,6 +65,7 @@ export async function POST(request: NextRequest) {
       slot,
       cpuCores,
       ram,
+      unlimitedRam = false,
       discountPrice,
       pricePerSlot,
       isActive = true,
@@ -72,9 +73,17 @@ export async function POST(request: NextRequest) {
     } = body;
 
     // Validáció
-    if (!gameType || !name || !price || !slot || !cpuCores || !ram) {
+    if (!gameType || !name || !price || !slot || !cpuCores) {
       return NextResponse.json(
         { error: 'Minden kötelező mező kitöltése szükséges' },
+        { status: 400 }
+      );
+    }
+
+    // Ha nincs korlátlan RAM, akkor ram kötelező
+    if (!unlimitedRam && (!ram || ram < 1)) {
+      return NextResponse.json(
+        { error: 'RAM mennyiség megadása kötelező, ha nincs korlátlan RAM' },
         { status: 400 }
       );
     }
@@ -91,7 +100,8 @@ export async function POST(request: NextRequest) {
         videoUrl: videoUrl || null,
         slot: parseInt(slot),
         cpuCores: parseInt(cpuCores),
-        ram: parseInt(ram),
+        ram: unlimitedRam ? 0 : parseInt(ram), // Ha korlátlan RAM, akkor 0
+        unlimitedRam: Boolean(unlimitedRam),
         discountPrice: discountPrice ? parseFloat(discountPrice) : null,
         pricePerSlot: pricePerSlot ? parseFloat(pricePerSlot) : null,
         isActive,
