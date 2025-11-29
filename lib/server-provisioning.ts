@@ -333,10 +333,28 @@ export async function provisionServer(
     if (options.gameType === 'SATISFACTORY') {
       // QueryPort = a generált port (4 számjegyű port, pl. 7777)
       let queryPort = generatedPort;
-      // GamePort = QueryPort + 10000 (pl. 7777 -> 17777)
+      // GamePort = QueryPort + 10000 (pl. 7777 -> 17777) - csatlakozási port
       let gamePort = queryPort + 10000;
-      // BeaconPort = QueryPort + 7223 (pl. 7777 -> 15000)
+      // BeaconPort = QueryPort + 7223 (pl. 7777 -> 15000) - szerver lista port
       let beaconPort = queryPort + 7223;
+      
+      // Biztosítjuk, hogy a 3 port különböző legyen
+      // Ha valamelyik egyezik, módosítjuk
+      if (gamePort === queryPort || gamePort === beaconPort || queryPort === beaconPort) {
+        logger.warn('Port conflict detected in port calculation, adjusting', {
+          serverId,
+          queryPort,
+          gamePort,
+          beaconPort,
+        });
+        // Újraszámoljuk a portokat, hogy biztosan különbözőek legyenek
+        gamePort = queryPort + 10000;
+        beaconPort = queryPort + 7223;
+        // Ha még mindig ütköznek, akkor más offset-tel módosítjuk
+        if (gamePort === beaconPort) {
+          beaconPort = queryPort + 8000; // Más offset, ha ütköznek
+        }
+      }
       
       // Ellenőrizzük, hogy a GamePort és BeaconPort is szabad-e
       // Ha foglaltak, újra generáljuk a QueryPort-ot, amíg mindhárom port szabad nem lesz

@@ -1312,14 +1312,86 @@ export async function createSystemdServiceForServer(
     const beaconPort = gameConfig.beaconPort || (gameConfig.queryPort ? gameConfig.queryPort + 1 : port + 2);
     const queryPort = gameConfig.queryPort || port + 1;
     
-    // Satisfactory esetén a start-server.sh script environment változókat használ
+    // Satisfactory esetén a portokat külön kell kezelni
     if (gameType === 'SATISFACTORY') {
-      // A startCommand már tartalmazza a script útvonalát, csak a placeholder-eket cseréljük
+      // Lekérjük a portokat az adatbázisból vagy a config-ból
+      const serverWithPorts = await prisma.server.findUnique({
+        where: { id: serverId },
+        select: {
+          port: true,
+          queryPort: true,
+          beaconPort: true,
+          configuration: true,
+        },
+      });
+      
+      // Satisfactory port számítások:
+      // QueryPort = a port mezőben tárolt érték (4 számjegyű, alapértelmezett 7777)
+      // GamePort = QueryPort + 10000 (pl. 7777 -> 17777) - csatlakozási port
+      // BeaconPort = QueryPort + 7223 (pl. 7777 -> 15000) - szerver lista port
+      const dbQueryPort = serverWithPorts?.queryPort || serverWithPorts?.port || port || 7777;
+      const dbBeaconPort = serverWithPorts?.beaconPort || (dbQueryPort + 7223);
+      const dbGamePort = dbQueryPort + 10000; // GamePort = QueryPort + 10000
+      
+      // Config-ból is próbáljuk, ha van
+      let configQueryPort = dbQueryPort;
+      let configBeaconPort = dbBeaconPort;
+      let configGamePort = dbGamePort;
+      
+      if (config.queryPort) {
+        configQueryPort = config.queryPort;
+        configGamePort = config.gamePort || (configQueryPort + 10000);
+        configBeaconPort = config.beaconPort || (configQueryPort + 7223);
+      }
+      
+      // A config-ban lévő értékeket használjuk, ha vannak, különben az adatbázisból jövőket
+      let finalQueryPort = config.queryPort || configQueryPort;
+      let finalGamePort = config.gamePort || configGamePort;
+      let finalBeaconPort = config.beaconPort || configBeaconPort;
+      
+      // Biztosítjuk, hogy mindhárom port különböző legyen
+      // Ha bármelyik port egyezik, újraszámoljuk őket
+      if (finalGamePort === finalQueryPort || finalGamePort === finalBeaconPort || finalQueryPort === finalBeaconPort) {
+        logger.warn('Port conflict detected in Satisfactory ports, recalculating', {
+          serverId,
+          gamePort: finalGamePort,
+          queryPort: finalQueryPort,
+          beaconPort: finalBeaconPort,
+        });
+        
+        // Újraszámoljuk a portokat: QueryPort alapján
+        const baseQueryPort = finalQueryPort || 7777;
+        finalGamePort = baseQueryPort + 10000; // GamePort = QueryPort + 10000
+        finalBeaconPort = baseQueryPort + 7223; // BeaconPort = QueryPort + 7223
+        
+        // Ha még mindig ütköznek, akkor offset-tel módosítjuk
+        if (finalGamePort === finalBeaconPort) {
+          finalBeaconPort = baseQueryPort + 8000; // Ha ütköznek, más offset-tel
+        }
+        
+        logger.info('Ports recalculated to ensure uniqueness', {
+          serverId,
+          queryPort: finalQueryPort,
+          gamePort: finalGamePort,
+          beaconPort: finalBeaconPort,
+        });
+      }
+      
+      // A startCommand placeholder-eket cseréljük le
+      // -Port={gamePort} -ServerQueryPort={queryPort} -BeaconPort={beaconPort}
       startCommand = startCommand
-        .replace(/{port}/g, port.toString())
-        .replace(/{queryPort}/g, queryPort.toString())
-        .replace(/{beaconPort}/g, beaconPort.toString());
-      // A többi placeholder nem releváns a Satisfactory-nál
+        .replace(/{gamePort}/g, finalGamePort.toString())
+        .replace(/{queryPort}/g, finalQueryPort.toString())
+        .replace(/{beaconPort}/g, finalBeaconPort.toString())
+        .replace(/{port}/g, finalQueryPort.toString()); // {port} is QueryPort-t jelent (backward compatibility)
+      
+      logger.info('Satisfactory start command generated with ports', {
+        serverId,
+        gamePort: finalGamePort,
+        queryPort: finalQueryPort,
+        beaconPort: finalBeaconPort,
+        startCommand,
+      });
     } else {
       startCommand = startCommand
         .replace(/{port}/g, port.toString())
