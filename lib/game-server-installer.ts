@@ -667,7 +667,19 @@ MinDynamicBandwidth=1000
       await appendInstallLog(serverId, 'Systemd service létrehozása...');
     }
     
-    await createSystemdServiceForServer(serverId, gameType, gameConfig, config, machine, {
+    // Port frissítése a config-ban az adatbázisból lekérdezett porttal
+    // Ez biztosítja, hogy a generált port mindig használatban legyen
+    const serverFromDbForService = await prisma.server.findUnique({
+      where: { id: serverId },
+      select: { port: true },
+    });
+    
+    const configWithCorrectPort = {
+      ...config,
+      port: serverFromDbForService?.port || config.port || actualPort,
+    };
+    
+    await createSystemdServiceForServer(serverId, gameType, gameConfig, configWithCorrectPort, machine, {
       isARK,
       sharedPath,
       serverPath,
@@ -1116,8 +1128,16 @@ export async function createSystemdServiceForServer(
     throw new Error(`Config objektum hiányzik vagy érvénytelen: ${JSON.stringify(config)}`);
   }
   
+  // Port lekérése az adatbázisból, hogy a helyes portot használjuk
+  // Ez biztosítja, hogy a generált port mindig használatban legyen
+  const serverFromDb = await prisma.server.findUnique({
+    where: { id: serverId },
+    select: { port: true },
+  });
+  
   // Alapértelmezett értékek beállítása, ha hiányoznak
-  const port = (config.port && typeof config.port === 'number') ? config.port : 25565;
+  // Először az adatbázisból lekérdezett portot használjuk, majd a config.port-ot, végül az alapértelmezettet
+  const port = serverFromDb?.port || (config.port && typeof config.port === 'number' ? config.port : 25565);
   const maxPlayers = (config.maxPlayers && typeof config.maxPlayers === 'number') ? config.maxPlayers : 10;
   const ram = (config.ram && typeof config.ram === 'number') ? config.ram : 2048;
   const cpuCores = (config.cpuCores && typeof config.cpuCores === 'number') ? config.cpuCores : 1;

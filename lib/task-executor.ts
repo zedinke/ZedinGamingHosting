@@ -292,11 +292,15 @@ async function executeProvisionTask(task: any): Promise<any> {
     }
   }
 
+  // Biztosítjuk, hogy a port az adatbázisban frissítve legyen az installGameServer hívás előtt
+  // Az installGameServer az adatbázisból lekérdezi a portot, ezért fontos, hogy már frissítve legyen
   const installResult = await installGameServer(task.serverId, server.gameType, {
     maxPlayers: server.maxPlayers,
     ram: ram, // MB-ban
-    port: finalPort || 25565, // A generált portot használjuk
+    port: finalPort || 25565, // A generált portot használjuk (bár az installGameServer az adatbázisból olvassa)
     name: server.name,
+  }, {
+    writeProgress: true, // Progress fájlok írása
   });
 
   if (!installResult.success) {
