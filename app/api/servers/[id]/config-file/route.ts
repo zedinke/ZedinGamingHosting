@@ -93,13 +93,18 @@ export async function GET(
         `cat "${configPath}" 2>/dev/null || echo ""`
       );
 
+      // Satisfactory-nál a QueryPort-ot (7777) jelenítjük meg a védett értékek között
+      const displayPort = server.gameType === 'SATISFACTORY' 
+        ? (gameConfig.queryPort || 7777)
+        : (server.port || 0);
+
       return NextResponse.json({
         success: true,
         content: fileContent.stdout || '',
         configPath,
         protectedFields: {
           ipAddress: server.ipAddress || '',
-          port: server.port || 0,
+          port: displayPort,
           maxPlayers: server.maxPlayers,
         },
       });
@@ -111,13 +116,18 @@ export async function GET(
         error: (error as Error).message,
       });
 
+      // Satisfactory-nál a QueryPort-ot (7777) jelenítjük meg a védett értékek között
+      const displayPort = server.gameType === 'SATISFACTORY' 
+        ? (gameConfig.queryPort || 7777)
+        : (server.port || 0);
+
       return NextResponse.json({
         success: true,
         content: '',
         configPath,
         protectedFields: {
           ipAddress: server.ipAddress || '',
-          port: server.port || 0,
+          port: displayPort,
           maxPlayers: server.maxPlayers,
         },
       });
@@ -228,8 +238,8 @@ export async function PUT(
     );
 
     // Konfigurációs fájl írása SSH-n keresztül
-    // Escape-elve a tartalmat a heredoc számára
-    const escapedContent = content
+    // Escape-elve a tartalmat a heredoc számára (a protectedContent-et használjuk!)
+    const escapedContent = protectedContent
       .replace(/\\/g, '\\\\')
       .replace(/\$/g, '\\$')
       .replace(/`/g, '\\`');
@@ -250,9 +260,49 @@ export async function PUT(
       configPath,
     });
 
+    // Ha a szerver online, újraindítjuk, hogy a változtatások érvénybe lépjenek
+    if (server.status === 'ONLINE' && server.agentId) {
+      try {
+        // Task létrehozása az újraindításhoz
+        const task = await prisma.task.create({
+          data: {
+            agentId: server.agentId,
+            serverId: id,
+            type: 'RESTART',
+            status: 'PENDING',
+            command: {
+              action: 'restart',
+              serverId: id,
+            },
+          },
+        });
+
+        // Task végrehajtása háttérben
+        const { executeTask } = await import('@/lib/task-executor');
+        executeTask(task.id).catch((error) => {
+          logger.error(`Task ${task.id} végrehajtási hiba`, error as Error, {
+            taskId: task.id,
+            serverId: id,
+          });
+        });
+
+        logger.info('Server restart task created after config file update', {
+          serverId: id,
+          taskId: task.id,
+        });
+      } catch (restartError) {
+        logger.error('Failed to create restart task after config update', restartError as Error, {
+          serverId: id,
+        });
+        // Nem dobunk hibát, mert a konfigurációs fájl mentése sikeres volt
+      }
+    }
+
     return NextResponse.json({
       success: true,
-      message: 'Konfigurációs fájl sikeresen mentve',
+      message: server.status === 'ONLINE' 
+        ? 'Konfigurációs fájl sikeresen mentve. A szerver újraindításra kerül a változtatások érvénybe léptetéséhez.'
+        : 'Konfigurációs fájl sikeresen mentve. A szerver újraindítása szükséges a változtatások érvénybe léptetéséhez.',
     });
   } catch (error) {
     logger.error('Update config file error', error as Error, {
@@ -352,10 +402,14 @@ function protectConfigFields(
       break;
 
     case 'SATISFACTORY':
-      // GamePort védelem
+      // GamePort, QueryPort és BeaconPort védelem
       if (port) {
         protectedContent = protectedContent.replace(/GamePort=\d+/g, `GamePort=${port}`);
       }
+      // QueryPort mindig 7777 (fix érték)
+      protectedContent = protectedContent.replace(/QueryPort=\d+/g, `QueryPort=7777`);
+      // BeaconPort mindig 15000 (fix érték)
+      protectedContent = protectedContent.replace(/BeaconPort=\d+/g, `BeaconPort=15000`);
       protectedContent = protectedContent.replace(/MaxPlayers=\d+/g, `MaxPlayers=${maxPlayers}`);
       break;
 
