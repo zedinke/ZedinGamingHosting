@@ -719,6 +719,8 @@ MinDynamicBandwidth=1000
         await appendInstallLog(serverId, `Systemd service engedélyezése és indítása: ${serviceName}`);
       }
       
+      // Csak engedélyezzük a service-t, de ne indítsuk el automatikusan
+      // A felhasználó majd manuálisan indíthatja el
       await executeSSHCommand(
         {
           host: machine.ipAddress,
@@ -726,11 +728,22 @@ MinDynamicBandwidth=1000
           user: machine.sshUser,
           keyPath: machine.sshKeyPath || undefined,
         },
-        `systemctl enable ${serviceName} && systemctl start ${serviceName}`
+        `systemctl enable ${serviceName}`
+      );
+      
+      // Ha mégis elindult, leállítjuk
+      await executeSSHCommand(
+        {
+          host: machine.ipAddress,
+          port: machine.sshPort,
+          user: machine.sshUser,
+          keyPath: machine.sshKeyPath || undefined,
+        },
+        `systemctl stop ${serviceName} 2>/dev/null || true`
       );
       
       if (writeProgress) {
-        await appendInstallLog(serverId, 'Systemd service sikeresen elindítva');
+        await appendInstallLog(serverId, 'Systemd service létrehozva és engedélyezve (nem indult el automatikusan)');
       }
       
       // Tűzfal portok engedélyezése

@@ -312,49 +312,52 @@ async function executeProvisionTask(task: any): Promise<any> {
     throw new Error(installResult.error || 'Game szerver telepítési hiba');
   }
 
-  // Fizetési státusz ellenőrzése - csak akkor indítjuk el, ha kifizetett
-  const { isServerPaid } = await import('./payment-check');
-  const isPaid = await isServerPaid(task.serverId);
+  // Biztosítjuk, hogy a systemd service ne fusson (ha mégis elindult, leállítjuk)
+  const serviceName = `server-${task.serverId}`;
+  const { executeSSHCommand } = await import('./ssh-utils');
   
-  if (isPaid) {
-    // Szerver státusz frissítése ONLINE-ra, ha kifizetett
-    await withRetry(async () => {
-      await prisma.server.update({
-        where: { id: task.serverId },
-        data: { status: 'ONLINE' },
-      });
-    });
+  try {
+    await executeSSHCommand(
+      {
+        host: agent.machine?.ipAddress || '',
+        port: agent.machine?.sshPort || 22,
+        user: agent.machine?.sshUser || 'root',
+        keyPath: agent.machine?.sshKeyPath || undefined,
+      },
+      `systemctl stop ${serviceName} 2>/dev/null || true`
+    );
     
-    logger.info('Server provisioned and started (paid)', {
+    logger.info('Systemd service stopped after provisioning', {
       serverId: task.serverId,
-      gameType: server.gameType,
+      serviceName,
     });
-    
-    return {
-      message: 'Szerver sikeresen telepítve és elindítva',
-      ipAddress: agent.machine?.ipAddress,
-      port: server.port,
-    };
-  } else {
-    // Ha nincs kifizetve, akkor OFFLINE marad, de telepítve van
-    await withRetry(async () => {
-      await prisma.server.update({
-        where: { id: task.serverId },
-        data: { status: 'OFFLINE' },
-      });
-    });
-    
-    logger.info('Server provisioned but not started (unpaid)', {
+  } catch (error) {
+    // Nem kritikus hiba, ha nem sikerül leállítani
+    logger.warn('Could not stop systemd service after provisioning', {
       serverId: task.serverId,
-      gameType: server.gameType,
+      serviceName,
+      error: error instanceof Error ? error.message : String(error),
     });
-    
-    return {
-      message: 'Szerver sikeresen telepítve, de nincs kifizetve. A szerver csak a fizetés után indítható el.',
-      ipAddress: agent.machine?.ipAddress,
-      port: server.port,
-    };
   }
+
+  // Mindig OFFLINE-ra állítjuk a szervert - a felhasználó majd manuálisan indíthatja el
+  await withRetry(async () => {
+    await prisma.server.update({
+      where: { id: task.serverId },
+      data: { status: 'OFFLINE' },
+    });
+  });
+  
+  logger.info('Server provisioned but not started (user must start manually)', {
+    serverId: task.serverId,
+    gameType: server.gameType,
+  });
+  
+  return {
+    message: 'Szerver sikeresen telepítve. A szerver OFFLINE állapotban van, a felhasználó manuálisan indíthatja el.',
+    ipAddress: agent.machine?.ipAddress,
+    port: server.port,
+  };
 }
 
 /**
