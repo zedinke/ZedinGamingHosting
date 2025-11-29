@@ -679,6 +679,9 @@ MinDynamicBandwidth=1000
         await appendInstallLog(serverId, 'Systemd service sikeresen elindítva');
       }
       
+      // Tűzfal portok engedélyezése
+      await configureFirewallPorts(serverId, gameType, config, machine, gameConfig, writeProgress);
+      
       logger.info('Game server service started', {
         serverId,
         gameType,
@@ -1588,4 +1591,127 @@ WantedBy=multi-user.target`;
     serverId,
     gameType,
   });
+}
+
+/**
+ * Tűzfal portok automatikus engedélyezése
+ */
+async function configureFirewallPorts(
+  serverId: string,
+  gameType: GameType,
+  config: { port: number; [key: string]: any },
+  machine: any,
+  gameConfig: any,
+  writeProgress?: boolean
+): Promise<void> {
+  try {
+    const portsToOpen: Array<{ port: number; protocol: 'tcp' | 'udp' }> = [];
+    
+    // Alap port (játék típusonként TCP vagy UDP)
+    const basePort = config.port;
+    const baseProtocol = gameConfig.portProtocol || 'udp'; // Alapértelmezetten UDP a legtöbb játéknál
+    
+    portsToOpen.push({ port: basePort, protocol: baseProtocol as 'tcp' | 'udp' });
+    
+    // További portok (queryPort, beaconPort, stb.)
+    if (gameConfig.queryPort) {
+      portsToOpen.push({ port: gameConfig.queryPort, protocol: 'udp' });
+    }
+    
+    if (gameConfig.beaconPort) {
+      portsToOpen.push({ port: gameConfig.beaconPort, protocol: 'udp' });
+    }
+    
+    // Additional ports a konfigurációból
+    if (gameConfig.additionalPorts && Array.isArray(gameConfig.additionalPorts)) {
+      for (const additionalPort of gameConfig.additionalPorts) {
+        if (typeof additionalPort === 'number') {
+          portsToOpen.push({ port: additionalPort, protocol: 'udp' });
+        }
+      }
+    }
+    
+    if (portsToOpen.length === 0) {
+      return; // Nincs port, amit megnyitnánk
+    }
+    
+    if (writeProgress) {
+      await appendInstallLog(serverId, `Tűzfal portok engedélyezése: ${portsToOpen.map(p => `${p.port}/${p.protocol}`).join(', ')}`);
+    }
+    
+    // UFW vagy iptables használata
+    // Először ellenőrizzük, hogy UFW van-e telepítve és aktív
+    const checkUfwCommand = `command -v ufw >/dev/null 2>&1 && ufw status | grep -q "Status: active" && echo "ufw_active" || echo "ufw_inactive"`;
+    const ufwCheck = await executeSSHCommand(
+      {
+        host: machine.ipAddress,
+        port: machine.sshPort,
+        user: machine.sshUser,
+        keyPath: machine.sshKeyPath || undefined,
+      },
+      checkUfwCommand
+    );
+    
+    const useUfw = ufwCheck.stdout?.trim() === 'ufw_active';
+    
+    if (useUfw) {
+      // UFW használata
+      for (const { port, protocol } of portsToOpen) {
+        try {
+          await executeSSHCommand(
+            {
+              host: machine.ipAddress,
+              port: machine.sshPort,
+              user: machine.sshUser,
+              keyPath: machine.sshKeyPath || undefined,
+            },
+            `sudo ufw allow ${port}/${protocol} comment "Game server ${serverId} (${gameType})" 2>&1 || echo "UFW rule may already exist"`
+          );
+          
+          if (writeProgress) {
+            await appendInstallLog(serverId, `Port engedélyezve: ${port}/${protocol.toUpperCase()}`);
+          }
+        } catch (portError: any) {
+          logger.warn('Failed to open firewall port', {
+            serverId,
+            port,
+            protocol,
+            error: portError.message,
+          });
+          if (writeProgress) {
+            await appendInstallLog(serverId, `FIGYELMEZETÉS: Port engedélyezése sikertelen: ${port}/${protocol} - ${portError.message}`);
+          }
+        }
+      }
+    } else {
+      // Ha nincs UFW, próbáljuk meg iptables-t használni (root jogosultság szükséges)
+      // Megjegyzés: iptables esetén a szabályok nem maradnak meg újraindítás után, ezért ajánlott UFW-t használni
+      logger.info('UFW not active, skipping firewall configuration', {
+        serverId,
+        gameType,
+      });
+      
+      if (writeProgress) {
+        await appendInstallLog(serverId, 'FIGYELMEZETÉS: UFW nincs aktív, tűzfal portok nem lettek automatikusan engedélyezve. Kérjük, manuálisan engedélyezd a portokat.');
+      }
+    }
+    
+    logger.info('Firewall ports configured', {
+      serverId,
+      gameType,
+      ports: portsToOpen,
+      useUfw,
+    });
+  } catch (error: any) {
+    // Nem dobunk hibát, mert a tűzfal konfiguráció nem kritikus a telepítéshez
+    logger.warn('Failed to configure firewall ports', {
+      serverId,
+      gameType,
+      error: error.message,
+    });
+    
+    if (writeProgress) {
+      await appendInstallLog(serverId, `FIGYELMEZETÉS: Tűzfal portok automatikus engedélyezése sikertelen: ${error.message}. Kérjük, manuálisan engedélyezd a portokat.`);
+    }
+  }
 }
