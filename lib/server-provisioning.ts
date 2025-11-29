@@ -324,15 +324,15 @@ export async function provisionServer(
     });
 
     // Port generálása (ellenőrzi a Docker konténereket és egyéb folyamatokat is)
+    // MINDIG generálunk új portot, hogy a ténylegesen kiosztott portot használjuk
     const generatedPort = await generateServerPort(options.gameType, bestLocation.machineId);
     
-    // Ha a szervernek még nincs portja, beállítjuk
-    if (!server.port) {
-      await prisma.server.update({
-        where: { id: serverId },
-        data: { port: generatedPort },
-      });
-    }
+    // MINDIG frissítjük a portot, hogy a ténylegesen kiosztott portot használjuk
+    // Ez biztosítja, hogy ne az alapértelmezett port maradjon az adatbázisban
+    await prisma.server.update({
+      where: { id: serverId },
+      data: { port: generatedPort },
+    });
 
     // Task végrehajtása háttérben (ez telepíti a szervert)
     // A task executor hívja meg az installGameServer-t

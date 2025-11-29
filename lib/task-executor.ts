@@ -228,20 +228,19 @@ async function executeProvisionTask(task: any): Promise<any> {
     });
   });
 
-  // Port generálása, ha nincs (retry logikával)
-  let finalPort = server.port;
-  if (!server.port) {
-    const port = await generateServerPort(server.gameType, agent.machine?.id);
-    await withRetry(async () => {
-      await prisma.server.update({
-        where: { id: task.serverId },
-        data: { port },
-      });
+  // Port generálása és frissítése (retry logikával)
+  // MINDIG generálunk új portot, hogy a ténylegesen kiosztott portot használjuk
+  // Ez biztosítja, hogy ne az alapértelmezett port maradjon az adatbázisban
+  const port = await generateServerPort(server.gameType, agent.machine?.id);
+  await withRetry(async () => {
+    await prisma.server.update({
+      where: { id: task.serverId },
+      data: { port },
     });
-    finalPort = port;
-    // Frissítjük a server objektumot is
-    server.port = port;
-  }
+  });
+  const finalPort = port;
+  // Frissítjük a server objektumot is
+  server.port = port;
 
   // IP cím beállítása, ha nincs (retry logikával)
   if (!server.ipAddress && agent.machine) {

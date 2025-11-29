@@ -98,9 +98,9 @@ export const POST = withPerformanceMonitoring(
         maxPlayers: finalMaxPlayers,
       });
 
-    // Port generálása
-    const { generateServerPort } = await import('@/lib/server-provisioning');
-    const port = await generateServerPort(gameType as GameType);
+    // Port generálása - NEM generálunk portot itt, mert még nincs machineId
+    // A port generálás a provisioning során történik, amikor már van machineId
+    // Ez biztosítja, hogy a ténylegesen kiosztott portot használjuk
 
     // Szerver létrehozása
     const server = await prisma.server.create({
@@ -110,7 +110,7 @@ export const POST = withPerformanceMonitoring(
         gameType: gameType as GameType,
         maxPlayers: finalMaxPlayers,
         status: 'OFFLINE',
-        port,
+        port: null, // Port generálás a provisioning során történik
         // Game package specifikációk mentése a konfigurációba (bővített értékekkel)
         configuration: {
           slot: gamePackage.slot + additionalSlotsValue,
