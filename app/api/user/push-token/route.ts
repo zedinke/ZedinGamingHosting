@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { handleApiError } from '@/lib/error-handler';
 
 // POST - FCM token regisztrálása
 export async function POST(request: NextRequest) {
@@ -52,7 +51,10 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Register push token error:', error);
-    return handleApiError(error as Error, 'Push token regisztrálási hiba');
+    return NextResponse.json(
+      { error: 'Push token regisztrálási hiba' },
+      { status: 500 }
+    );
   }
 }
 
@@ -96,7 +98,10 @@ export async function DELETE(request: NextRequest) {
     });
   } catch (error) {
     console.error('Delete push token error:', error);
-    return handleApiError(error as Error, 'Push token törlési hiba');
+    return NextResponse.json(
+      { error: 'Push token törlési hiba' },
+      { status: 500 }
+    );
   }
 }
 
