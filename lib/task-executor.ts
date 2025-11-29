@@ -221,12 +221,16 @@ async function executeProvisionTask(task: any): Promise<any> {
   });
 
   // Port generálása, ha nincs
+  let finalPort = server.port;
   if (!server.port) {
-    const port = await generateServerPort(server.gameType);
+    const port = await generateServerPort(server.gameType, agent.machine?.id);
     await prisma.server.update({
       where: { id: task.serverId },
       data: { port },
     });
+    finalPort = port;
+    // Frissítjük a server objektumot is
+    server.port = port;
   }
 
   // IP cím beállítása, ha nincs
@@ -235,6 +239,8 @@ async function executeProvisionTask(task: any): Promise<any> {
       where: { id: task.serverId },
       data: { ipAddress: agent.machine.ipAddress },
     });
+    // Frissítjük a server objektumot is
+    server.ipAddress = agent.machine.ipAddress;
   }
 
   // Game szerver telepítése (ha még nem történt meg)
@@ -263,7 +269,7 @@ async function executeProvisionTask(task: any): Promise<any> {
   const installResult = await installGameServer(task.serverId, server.gameType, {
     maxPlayers: server.maxPlayers,
     ram: ram, // MB-ban
-    port: server.port || 25565,
+    port: finalPort || 25565, // A generált portot használjuk
     name: server.name,
   });
 
