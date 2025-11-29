@@ -288,7 +288,11 @@ export function UserServerDetail({ server, locale }: UserServerDetailProps) {
             </div>
             <div className="flex justify-between">
               <dt className="text-gray-700">Port:</dt>
-              <dd className="text-gray-900">{serverData.port || server.port || '-'}</dd>
+              <dd className="text-gray-900">
+                {server.gameType === 'SATISFACTORY' 
+                  ? '7777' // Satisfactory-nál a QueryPort-ot jelenítjük meg (fix érték)
+                  : (serverData.port || server.port || '-')}
+              </dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-gray-700">Max Játékosok:</dt>
