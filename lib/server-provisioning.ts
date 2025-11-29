@@ -414,12 +414,12 @@ export async function provisionServer(
     // MINDIG frissítjük a portot, hogy a ténylegesen kiosztott portot használjuk
     // Ez biztosítja, hogy ne az alapértelmezett port maradjon az adatbázisban
     // A configuration-t is frissítjük, ha van Satisfactory-nál
-    const server = await prisma.server.findUnique({
+    const serverForConfig = await prisma.server.findUnique({
       where: { id: serverId },
       select: { configuration: true },
     });
     
-    const currentConfig = server?.configuration ? (typeof server.configuration === 'string' ? JSON.parse(server.configuration as string) : server.configuration) : {};
+    const currentConfig = serverForConfig?.configuration ? (typeof serverForConfig.configuration === 'string' ? JSON.parse(serverForConfig.configuration as string) : serverForConfig.configuration) : {};
     const updatedConfig = { ...currentConfig, ...configurationUpdate };
     
     const updatedServer = await prisma.server.update({
