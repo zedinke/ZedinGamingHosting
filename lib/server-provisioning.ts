@@ -427,12 +427,22 @@ export async function provisionServer(
     const currentConfig = serverForConfig?.configuration ? (typeof serverForConfig.configuration === 'string' ? JSON.parse(serverForConfig.configuration as string) : serverForConfig.configuration) : {};
     const updatedConfig = { ...currentConfig, ...configurationUpdate };
     
+    // Satisfactory-nál a queryPort és beaconPort mezőket is mentjük az adatbázisba
+    const updateData: any = {
+      port: generatedPort,
+    };
+    
+    if (options.gameType === 'SATISFACTORY' && Object.keys(configurationUpdate).length > 0) {
+      updateData.queryPort = configurationUpdate.queryPort;
+      updateData.beaconPort = configurationUpdate.beaconPort;
+      updateData.configuration = updatedConfig;
+    } else if (Object.keys(configurationUpdate).length > 0) {
+      updateData.configuration = updatedConfig;
+    }
+    
     const updatedServer = await prisma.server.update({
       where: { id: serverId },
-      data: {
-        port: generatedPort,
-        ...(Object.keys(configurationUpdate).length > 0 ? { configuration: updatedConfig } : {}),
-      },
+      data: updateData,
     });
     
     // Log, hogy lássuk, hogy a port frissült
@@ -606,7 +616,7 @@ export async function generateServerPort(
 
 /**
  * Ellenőrzi, hogy egy port foglalt-e az adatbázisban Satisfactory szervereknél
- * Ellenőrzi a port mezőt ÉS a configuration JSON-ben tárolt queryPort, beaconPort és gamePort értékeket is
+ * Ellenőrzi a port, queryPort, beaconPort mezőket ÉS a configuration JSON-ben tárolt queryPort, beaconPort és gamePort értékeket is
  */
 async function checkSatisfactoryPortInDatabase(port: number, excludeServerId?: string): Promise<boolean> {
   try {
@@ -622,6 +632,8 @@ async function checkSatisfactoryPortInDatabase(port: number, excludeServerId?: s
       select: {
         id: true,
         port: true,
+        queryPort: true,
+        beaconPort: true,
         configuration: true,
       },
     });
@@ -633,7 +645,17 @@ async function checkSatisfactoryPortInDatabase(port: number, excludeServerId?: s
         return false; // Foglalt
       }
 
-      // Ellenőrizzük a configuration JSON-ben tárolt portokat
+      // Ellenőrizzük a queryPort mezőt (ha van)
+      if (server.queryPort === port) {
+        return false; // Foglalt
+      }
+
+      // Ellenőrizzük a beaconPort mezőt (ha van)
+      if (server.beaconPort === port) {
+        return false; // Foglalt
+      }
+
+      // Ellenőrizzük a configuration JSON-ben tárolt portokat (backward compatibility)
       if (server.configuration) {
         try {
           const config = typeof server.configuration === 'string' 

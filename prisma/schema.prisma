@@ -108,7 +108,9 @@ model Server {
   name          String
   status        ServerStatus @default(OFFLINE)
   ipAddress     String?
-  port          Int?
+  port          Int? // Alap port (QueryPort Satisfactory-nál)
+  queryPort     Int? // QueryPort (Satisfactory-nál és más játékoknál)
+  beaconPort    Int? // BeaconPort (Satisfactory-nál)
   maxPlayers    Int          @default(10)
   configuration Json? // Szerver konfiguráció JSON formátumban
   resourceUsage Json? // CPU, RAM, Disk használat
@@ -741,7 +743,7 @@ model PushToken {
   userId    String
   token     String   @unique
   platform  String   @default("android") // android, ios
-  deviceId  String?  // Eszköz azonosító
+  deviceId  String? // Eszköz azonosító
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
