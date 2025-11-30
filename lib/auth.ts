@@ -6,6 +6,44 @@ import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import { prisma } from './prisma';
 import bcrypt from 'bcryptjs';
 
+// Helper függvény az OAuth provider-ek dinamikus létrehozásához
+function getOAuthProviders() {
+  const providers: any[] = [];
+
+  // Google Provider - csak ha a környezeti változók be vannak állítva
+  const googleClientId = process.env.GOOGLE_CLIENT_ID;
+  const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  if (googleClientId && googleClientSecret && googleClientId.trim() !== '' && googleClientSecret.trim() !== '') {
+    providers.push(
+      GoogleProvider({
+        clientId: googleClientId,
+        clientSecret: googleClientSecret,
+        authorization: {
+          params: {
+            prompt: 'consent',
+            access_type: 'offline',
+            response_type: 'code',
+          },
+        },
+      })
+    );
+  }
+
+  // Discord Provider - csak ha a környezeti változók be vannak állítva
+  const discordClientId = process.env.DISCORD_CLIENT_ID;
+  const discordClientSecret = process.env.DISCORD_CLIENT_SECRET;
+  if (discordClientId && discordClientSecret && discordClientId.trim() !== '' && discordClientSecret.trim() !== '') {
+    providers.push(
+      DiscordProvider({
+        clientId: discordClientId,
+        clientSecret: discordClientSecret,
+      })
+    );
+  }
+
+  return providers;
+}
+
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
@@ -58,21 +96,7 @@ export const authOptions: NextAuthOptions = {
         };
       },
     }),
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || '',
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
-      authorization: {
-        params: {
-          prompt: 'consent',
-          access_type: 'offline',
-          response_type: 'code',
-        },
-      },
-    }),
-    DiscordProvider({
-      clientId: process.env.DISCORD_CLIENT_ID || '',
-      clientSecret: process.env.DISCORD_CLIENT_SECRET || '',
-    }),
+    ...getOAuthProviders(),
   ],
   callbacks: {
     async signIn({ user, account, profile }) {
