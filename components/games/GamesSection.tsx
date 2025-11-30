@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { GamePackageCard } from './GamePackageCard';
+import { PremiumPackageCard } from './PremiumPackageCard';
 import { GamePackageModal } from './GamePackageModal';
 import { GameType } from '@prisma/client';
 import toast from 'react-hot-toast';
@@ -41,22 +42,55 @@ interface GameGroup {
   packages: GamePackage[];
 }
 
+interface PremiumPackage {
+  id: string;
+  nameHu: string;
+  nameEn: string;
+  descriptionHu: string | null;
+  descriptionEn: string | null;
+  price: number;
+  currency: string;
+  interval: string;
+  discountPrice: number | null;
+  image: string | null;
+  videoUrl: string | null;
+  cpuCores: number;
+  ram: number;
+  games: Array<{
+    gameType: GameType;
+    displayName: string;
+    image: string | null;
+    videoUrl: string | null;
+    description: string | null;
+  }>;
+}
+
 export function GamesSection({ locale }: GamesSectionProps) {
   const router = useRouter();
   const { data: session } = useSession();
   const [packages, setPackages] = useState<GamePackage[]>([]);
+  const [premiumPackages, setPremiumPackages] = useState<PremiumPackage[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedGame, setSelectedGame] = useState<GameGroup | null>(null);
 
   useEffect(() => {
     const fetchPackages = async () => {
       try {
-        const response = await fetch('/api/game-packages');
-        if (!response.ok) {
+        const [packagesResponse, premiumResponse] = await Promise.all([
+          fetch('/api/game-packages'),
+          fetch('/api/premium-packages'),
+        ]);
+
+        if (!packagesResponse.ok) {
           throw new Error('Hiba a csomagok lekérése során');
         }
-        const data = await response.json();
-        setPackages(data.packages || []);
+        const packagesData = await packagesResponse.json();
+        setPackages(packagesData.packages || []);
+
+        if (premiumResponse.ok) {
+          const premiumData = await premiumResponse.json();
+          setPremiumPackages(premiumData.packages || []);
+        }
       } catch (error) {
         console.error('Error fetching packages:', error);
         toast.error('Hiba történt a csomagok betöltése során');
@@ -118,6 +152,17 @@ export function GamesSection({ locale }: GamesSectionProps) {
     router.push(`/${locale}/servers/new?package=${pkg.id}&gameType=${pkg.gameType}`);
   };
 
+  const handlePremiumPackageSelect = (pkg: PremiumPackage) => {
+    if (!session) {
+      router.push(`/${locale}/login?redirect=/${locale}/servers/new?premiumPackage=${pkg.id}`);
+      toast.error('Bejelentkezés szükséges');
+      return;
+    }
+
+    // Átirányítás a szerver létrehozás oldalra
+    router.push(`/${locale}/servers/new?premiumPackage=${pkg.id}`);
+  };
+
   const handleGameClick = (gameGroup: GameGroup) => {
     if (gameGroup.packages.length === 1) {
       // Ha csak egy csomag van, közvetlenül kiválasztjuk
@@ -147,8 +192,38 @@ export function GamesSection({ locale }: GamesSectionProps) {
 
   return (
     <>
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {gameGroups.map((gameGroup) => {
+      {/* Premium Csomagok Kategória */}
+      {premiumPackages.length > 0 && (
+        <div className="mb-12">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+              ⭐ Premium Csomagok
+            </h2>
+            <p className="text-gray-600">
+              Több játékot tartalmazó prémium csomagok - egyszerre csak egy játék futhat
+            </p>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {premiumPackages.map((pkg) => (
+              <PremiumPackageCard
+                key={pkg.id}
+                package={pkg}
+                locale={locale}
+                onSelect={handlePremiumPackageSelect}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Normál Játék Csomagok */}
+      <div>
+        <div className="mb-6">
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">Játék Csomagok</h2>
+          <p className="text-gray-600">Válassz egy játékot és csomagot</p>
+        </div>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {gameGroups.map((gameGroup) => {
           // Ha csak egy csomag van, azt jelenítjük meg
           if (gameGroup.packages.length === 1) {
             return (
@@ -179,6 +254,7 @@ export function GamesSection({ locale }: GamesSectionProps) {
             </div>
           );
         })}
+        </div>
       </div>
 
       {/* Modal több csomag esetén */}

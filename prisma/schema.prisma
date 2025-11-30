@@ -120,6 +120,7 @@ model Server {
   resourceUsage Json? // CPU, RAM, Disk használat
   machineId     String? // Melyik gépen fut
   agentId       String? // Melyik agent kezeli
+  premiumPackageId String? // Ha premium csomagból van, akkor a csomag ID-ja
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
@@ -127,8 +128,10 @@ model Server {
   subscription Subscription?
   machine      ServerMachine? @relation(fields: [machineId], references: [id], onDelete: SetNull)
   agent        Agent?         @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  premiumPackage PremiumPackage? @relation(fields: [premiumPackageId], references: [id], onDelete: SetNull)
   tasks        Task[]
 
+  @@index([premiumPackageId])
   @@map("servers")
 }
 
@@ -346,9 +349,20 @@ model Coupon {
   validFrom     DateTime
   validUntil    DateTime
   isActive      Boolean      @default(true)
+  
+  // Kupon alkalmazhatósága
+  applicableToGamePackages   Boolean @default(true) // Alkalmazható-e normál játék csomagokra
+  applicableToPremiumPackages Boolean @default(true) // Alkalmazható-e premium csomagokra
+  
+  // Specifikus csomagok (ha null, akkor minden csomagra érvényes)
+  premiumPackageId String? // Ha megadva, csak erre a premium csomagra érvényes
+  
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
+  premiumPackage PremiumPackage? @relation(fields: [premiumPackageId], references: [id], onDelete: SetNull)
+
+  @@index([premiumPackageId])
   @@map("coupons")
 }
 
@@ -508,6 +522,56 @@ model GamePackage {
 
   @@index([gameType, isActive])
   @@map("game_packages")
+}
+
+// Premium csomagok - több játék egy csomagban
+model PremiumPackage {
+  id            String   @id @default(cuid())
+  nameHu        String // Csomag neve magyarul
+  nameEn        String // Csomag neve angolul
+  descriptionHu String? @db.Text // Leírás magyarul
+  descriptionEn String? @db.Text // Leírás angolul
+  price         Float // Komplett csomag ára
+  currency      String   @default("HUF")
+  interval      String   @default("month") // month, year
+  discountPrice Float? // Akciós ár (opcionális)
+  isActive      Boolean  @default(true) // Ha aktív, akkor megjelenik és rendelhető
+  order         Int      @default(0) // Rendezési sorrend
+  
+  // Automatikusan számított erőforrás limitek (a legnagyobb gépigényű játékhoz igazítva)
+  cpuCores      Int // Automatikusan számított a játékok közül a legnagyobb
+  ram           Int // Automatikusan számított a játékok közül a legnagyobb
+  
+  // Kép és videó (opcionális, ha nincs megadva, akkor a játékok képeit használjuk)
+  image         String? // Fő kép URL
+  videoUrl      String? // YouTube videó URL (opcionális)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  games         PremiumPackageGame[]
+  servers       Server[]
+  coupons       Coupon[]
+
+  @@index([isActive])
+  @@map("premium_packages")
+}
+
+// Premium csomag és játék kapcsolat (many-to-many)
+model PremiumPackageGame {
+  id                String   @id @default(cuid())
+  premiumPackageId  String
+  gameType          GameType
+  
+  // Játék specifikus információk a csomagban
+  order             Int      @default(0) // Sorrend a csomagban
+  
+  premiumPackage    PremiumPackage @relation(fields: [premiumPackageId], references: [id], onDelete: Cascade)
+
+  @@unique([premiumPackageId, gameType])
+  @@index([premiumPackageId])
+  @@index([gameType])
+  @@map("premium_package_games")
 }
 
 // CMS - Testimonials

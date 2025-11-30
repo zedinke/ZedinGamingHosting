@@ -28,6 +28,13 @@ export async function POST(
     // Szerver keresése
     const server = await prisma.server.findUnique({
       where: { id },
+      include: {
+        premiumPackage: {
+          include: {
+            games: true,
+          },
+        },
+      },
     });
 
     if (!server) {
@@ -67,6 +74,32 @@ export async function POST(
             { status: 400 }
           );
         }
+
+        // Premium csomag ellenőrzése: egyszerre csak 1 játék futhat
+        if (server.premiumPackageId) {
+          const runningServers = await prisma.server.findMany({
+            where: {
+              userId: server.userId,
+              premiumPackageId: server.premiumPackageId,
+              id: { not: server.id },
+              status: {
+                in: ['ONLINE', 'STARTING', 'RESTARTING'],
+              },
+            },
+          });
+
+          if (runningServers.length > 0) {
+            return NextResponse.json(
+              {
+                error: 'Premium csomagoknál egyszerre csak egy játék futhat. Kérjük, állítsa le a futó szervert először.',
+                runningServerId: runningServers[0].id,
+                runningServerName: runningServers[0].name,
+              },
+              { status: 400 }
+            );
+          }
+        }
+
         newStatus = 'STARTING';
         break;
 

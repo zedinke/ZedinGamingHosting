@@ -17,106 +17,138 @@ export const POST = withPerformanceMonitoring(
       }
 
       const body = await request.json();
-      const { name, gameType, gamePackageId, billingInfo, additionalVCpu, additionalRamGB, additionalSlots } = body;
+      const { name, gameType, gamePackageId, premiumPackageId, billingInfo, additionalVCpu, additionalRamGB, additionalSlots } = body;
 
-      // Validáció
-      if (!name || !gameType) {
-        throw createValidationError('form', 'Név és játék típus megadása kötelező');
+      // Validáció - vagy gamePackageId vagy premiumPackageId kell
+      if (!gamePackageId && !premiumPackageId) {
+        throw createValidationError('form', 'Játék csomag vagy Premium csomag megadása kötelező');
       }
 
-      if (!gamePackageId) {
-        throw createValidationError('form', 'Játék csomag megadása kötelező');
+      if (gamePackageId && premiumPackageId) {
+        throw createValidationError('form', 'Csak egy csomag típus választható');
+      }
+
+      // Premium csomag esetén nem kell gameType kezdetben
+      if (gamePackageId && !gameType) {
+        throw createValidationError('form', 'Játék típus megadása kötelező normál csomag esetén');
+      }
+
+      if (!name) {
+        throw createValidationError('form', 'Név megadása kötelező');
       }
 
       if (!billingInfo || !billingInfo.billingName || !billingInfo.billingAddress) {
         throw createValidationError('form', 'Számlázási adatok megadása kötelező');
       }
 
-      // Game package ellenőrzése
-      const gamePackage = await prisma.gamePackage.findUnique({
-        where: { id: gamePackageId },
-      });
+      // Premium csomag vagy normál csomag kezelése
+      let premiumPackage = null;
+      let gamePackage = null;
+      let finalPrice = 0;
+      let finalCurrency = 'HUF';
+      let finalMaxPlayers = 10;
+      let finalGameType: GameType | null = null;
+      let serverConfig: any = {};
 
-      if (!gamePackage || !gamePackage.isActive) {
-        throw new AppError(
-          ErrorCodes.VALIDATION_ERROR,
-          'Érvénytelen vagy inaktív játék csomag',
-          400
-        );
+      if (premiumPackageId) {
+        // Premium csomag kezelése
+        premiumPackage = await prisma.premiumPackage.findUnique({
+          where: { id: premiumPackageId },
+          include: {
+            games: {
+              orderBy: {
+                order: 'asc',
+              },
+            },
+          },
+        });
+
+        if (!premiumPackage || !premiumPackage.isActive) {
+          throw new AppError(
+            ErrorCodes.VALIDATION_ERROR,
+            'Érvénytelen vagy inaktív premium csomag',
+            400
+          );
+        }
+
+        finalPrice = premiumPackage.discountPrice || premiumPackage.price;
+        finalCurrency = premiumPackage.currency;
+        finalMaxPlayers = 10; // Alapértelmezett, mert még nincs kiválasztott játék
+        serverConfig = {
+          premiumPackageId: premiumPackage.id,
+          cpuCores: premiumPackage.cpuCores,
+          ram: premiumPackage.ram,
+          availableGames: premiumPackage.games.map((g) => g.gameType),
+        };
+      } else if (gamePackageId) {
+        // Normál csomag kezelése
+        gamePackage = await prisma.gamePackage.findUnique({
+          where: { id: gamePackageId },
+        });
+
+        if (!gamePackage || !gamePackage.isActive) {
+          throw new AppError(
+            ErrorCodes.VALIDATION_ERROR,
+            'Érvénytelen vagy inaktív játék csomag',
+            400
+          );
+        }
+
+        finalGameType = gameType as GameType;
       }
 
-      const additionalVCpuValue = additionalVCpu || 0;
-      const additionalRamGBValue = additionalRamGB || 0;
-      const additionalSlotsValue = additionalSlots || 0;
-      
-      // Maximum értékek validálása
-      const MAX_RAM_GB = 30;
-      const MAX_VCPU = 20;
-      const MAX_SLOTS = 50;
-      
-      if (gamePackage.ram + additionalRamGBValue > MAX_RAM_GB) {
-        throw createValidationError('form', `A RAM nem lehet nagyobb ${MAX_RAM_GB} GB-nál`);
-      }
-      if (gamePackage.cpuCores + additionalVCpuValue > MAX_VCPU) {
-        throw createValidationError('form', `A vCPU nem lehet nagyobb ${MAX_VCPU}-nál`);
-      }
-      // Unlimited slot kezelése
-      const baseSlot = gamePackage.unlimitedSlot ? 20 : (gamePackage.slot || 0);
-      
-      if (!gamePackage.unlimitedSlot && gamePackage.slot && (gamePackage.slot + additionalSlotsValue) > MAX_SLOTS) {
-        throw createValidationError('form', `A slot szám nem lehet nagyobb ${MAX_SLOTS}-nál`);
-      }
-
-      // Ha unlimited slot, akkor 20 slot az indítósorban (nem lehet bővíteni)
-      const finalMaxPlayers = gamePackage.unlimitedSlot ? 20 : (baseSlot + additionalSlotsValue);
-      const basePrice = gamePackage.discountPrice || gamePackage.price;
-      const finalCurrency = gamePackage.currency;
-
-      // Bővítési árak lekérése és költség számítása
+      // Premium csomagoknál nincs bővítés, normál csomagoknál van
       let upgradeCost = 0;
       let slotUpgradeCost = 0;
 
-      if (additionalVCpuValue > 0 || additionalRamGBValue > 0) {
-        const [pricePerVCpuSetting, pricePerRamGBSetting] = await Promise.all([
-          prisma.setting.findUnique({ where: { key: 'resource_upgrade_price_per_vcpu' } }),
-          prisma.setting.findUnique({ where: { key: 'resource_upgrade_price_per_ram_gb' } }),
-        ]);
+      if (gamePackage) {
+        const additionalVCpuValue = additionalVCpu || 0;
+        const additionalRamGBValue = additionalRamGB || 0;
+        const additionalSlotsValue = additionalSlots || 0;
+        
+        // Maximum értékek validálása
+        const MAX_RAM_GB = 30;
+        const MAX_VCPU = 20;
+        const MAX_SLOTS = 50;
+        
+        if (gamePackage.ram + additionalRamGBValue > MAX_RAM_GB) {
+          throw createValidationError('form', `A RAM nem lehet nagyobb ${MAX_RAM_GB} GB-nál`);
+        }
+        if (gamePackage.cpuCores + additionalVCpuValue > MAX_VCPU) {
+          throw createValidationError('form', `A vCPU nem lehet nagyobb ${MAX_VCPU}-nál`);
+        }
+        // Unlimited slot kezelése
+        const baseSlot = gamePackage.unlimitedSlot ? 20 : (gamePackage.slot || 0);
+        
+        if (!gamePackage.unlimitedSlot && gamePackage.slot && (gamePackage.slot + additionalSlotsValue) > MAX_SLOTS) {
+          throw createValidationError('form', `A slot szám nem lehet nagyobb ${MAX_SLOTS}-nál`);
+        }
 
-        const pricePerVCpu = pricePerVCpuSetting ? parseFloat(pricePerVCpuSetting.value) : 0;
-        const pricePerRamGB = pricePerRamGBSetting ? parseFloat(pricePerRamGBSetting.value) : 0;
+        // Ha unlimited slot, akkor 20 slot az indítósorban (nem lehet bővíteni)
+        finalMaxPlayers = gamePackage.unlimitedSlot ? 20 : (baseSlot + additionalSlotsValue);
 
-        upgradeCost = (additionalVCpuValue * pricePerVCpu) + (additionalRamGBValue * pricePerRamGB);
-      }
+        // Bővítési árak lekérése és költség számítása
+        if (additionalVCpuValue > 0 || additionalRamGBValue > 0) {
+          const [pricePerVCpuSetting, pricePerRamGBSetting] = await Promise.all([
+            prisma.setting.findUnique({ where: { key: 'resource_upgrade_price_per_vcpu' } }),
+            prisma.setting.findUnique({ where: { key: 'resource_upgrade_price_per_ram_gb' } }),
+          ]);
 
-      // Slot bővítési költség számítása
-      if (additionalSlotsValue > 0 && gamePackage.pricePerSlot) {
-        slotUpgradeCost = additionalSlotsValue * gamePackage.pricePerSlot;
-      }
+          const pricePerVCpu = pricePerVCpuSetting ? parseFloat(pricePerVCpuSetting.value) : 0;
+          const pricePerRamGB = pricePerRamGBSetting ? parseFloat(pricePerRamGBSetting.value) : 0;
 
-      const finalPrice = basePrice + upgradeCost + slotUpgradeCost;
+          upgradeCost = (additionalVCpuValue * pricePerVCpu) + (additionalRamGBValue * pricePerRamGB);
+        }
 
-      logger.info('Server order request', {
-        userId: (session.user as any).id,
-        gameType,
-        gamePackageId,
-        maxPlayers: finalMaxPlayers,
-      });
+        // Slot bővítési költség számítása
+        if (additionalSlotsValue > 0 && gamePackage.pricePerSlot) {
+          slotUpgradeCost = additionalSlotsValue * gamePackage.pricePerSlot;
+        }
 
-    // Port generálása - NEM generálunk portot itt, mert még nincs machineId
-    // A port generálás a provisioning során történik, amikor már van machineId
-    // Ez biztosítja, hogy a ténylegesen kiosztott portot használjuk
+        finalPrice = (gamePackage.discountPrice || gamePackage.price) + upgradeCost + slotUpgradeCost;
+        finalCurrency = gamePackage.currency;
 
-    // Szerver létrehozása
-    const server = await prisma.server.create({
-      data: {
-        userId: (session.user as any).id,
-        name,
-        gameType: gameType as GameType,
-        maxPlayers: finalMaxPlayers,
-        status: 'OFFLINE',
-        port: null, // Port generálás a provisioning során történik
-        // Game package specifikációk mentése a konfigurációba (bővített értékekkel)
-        configuration: {
+        serverConfig = {
           slot: gamePackage.unlimitedSlot ? 20 : ((gamePackage.slot || 0) + additionalSlotsValue),
           unlimitedSlot: gamePackage.unlimitedSlot || false,
           cpuCores: gamePackage.cpuCores + additionalVCpuValue,
@@ -131,16 +163,42 @@ export const POST = withPerformanceMonitoring(
           additionalRamGB: additionalRamGBValue,
           upgradeCost: upgradeCost,
           slotUpgradeCost: slotUpgradeCost,
-        },
+        };
+      }
+
+      logger.info('Server order request', {
+        userId: (session.user as any).id,
+        gameType: finalGameType,
+        gamePackageId,
+        premiumPackageId,
+        maxPlayers: finalMaxPlayers,
+      });
+
+    // Port generálása - NEM generálunk portot itt, mert még nincs machineId
+    // A port generálás a provisioning során történik, amikor már van machineId
+    // Ez biztosítja, hogy a ténylegesen kiosztott portot használjuk
+
+    // Szerver létrehozása
+    const server = await prisma.server.create({
+      data: {
+        userId: (session.user as any).id,
+        name,
+        gameType: finalGameType || 'OTHER', // Premium csomagnál OTHER, majd később változik
+        maxPlayers: finalMaxPlayers,
+        status: 'OFFLINE',
+        port: null, // Port generálás a provisioning során történik
+        premiumPackageId: premiumPackage?.id || null,
+        configuration: serverConfig,
       },
     });
 
-    // Szerver provisioning háttérben - GamePackage adataival
+    // Szerver provisioning háttérben
     const { provisionServer } = await import('@/lib/server-provisioning');
     provisionServer(server.id, {
-      gameType: gameType as GameType,
+      gameType: finalGameType || 'OTHER',
       maxPlayers: finalMaxPlayers,
-      gamePackageId: gamePackage.id,
+      gamePackageId: gamePackage?.id,
+      premiumPackageId: premiumPackage?.id,
       }).catch((error) => {
         logger.error('Server provisioning error', error as Error, {
           serverId: server.id,
@@ -170,17 +228,33 @@ export const POST = withPerformanceMonitoring(
     const invoiceNumber = `INV-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     
     // Számla tételek összeállítása
-    const invoiceItems: any[] = [
-      {
+    const invoiceItems: any[] = [];
+    
+    if (premiumPackage) {
+      // Locale meghatározása (alapértelmezetten 'hu')
+      const userLocale = (session.user as any).locale || 'hu';
+      invoiceItems.push({
+        description: `${userLocale === 'hu' ? premiumPackage.nameHu : premiumPackage.nameEn} - Premium Csomag`,
+        quantity: 1,
+        unitPrice: premiumPackage.discountPrice || premiumPackage.price,
+        total: premiumPackage.discountPrice || premiumPackage.price,
+      });
+    } else if (gamePackage) {
+      const basePrice = gamePackage.discountPrice || gamePackage.price;
+      invoiceItems.push({
         description: `${gamePackage.name} - ${gameType}`,
         quantity: 1,
         unitPrice: basePrice,
         total: basePrice,
-      },
-    ];
+      });
+    }
 
-    // Bővítési tételek hozzáadása
-    if (upgradeCost > 0) {
+    // Bővítési tételek hozzáadása (csak normál csomagoknál)
+    if (gamePackage && upgradeCost > 0) {
+      const additionalVCpuValue = additionalVCpu || 0;
+      const additionalRamGBValue = additionalRamGB || 0;
+      const additionalSlotsValue = additionalSlots || 0;
+
       const [pricePerVCpuSetting, pricePerRamGBSetting] = await Promise.all([
         prisma.setting.findUnique({ where: { key: 'resource_upgrade_price_per_vcpu' } }),
         prisma.setting.findUnique({ where: { key: 'resource_upgrade_price_per_ram_gb' } }),
@@ -205,16 +279,16 @@ export const POST = withPerformanceMonitoring(
           total: additionalRamGBValue * pricePerRamGB,
         });
       }
-    }
 
-    // Slot bővítési tétel hozzáadása
-    if (slotUpgradeCost > 0 && gamePackage.pricePerSlot) {
-      invoiceItems.push({
-        description: `Slot bővítés: +${additionalSlotsValue} slot`,
-        quantity: additionalSlotsValue,
-        unitPrice: gamePackage.pricePerSlot,
-        total: slotUpgradeCost,
-      });
+      // Slot bővítési tétel hozzáadása
+      if (slotUpgradeCost > 0 && gamePackage.pricePerSlot) {
+        invoiceItems.push({
+          description: `Slot bővítés: +${additionalSlotsValue} slot`,
+          quantity: additionalSlotsValue,
+          unitPrice: gamePackage.pricePerSlot,
+          total: slotUpgradeCost,
+        });
+      }
     }
 
     const invoice = await prisma.invoice.create({

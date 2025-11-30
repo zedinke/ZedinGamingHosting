@@ -81,6 +81,13 @@ export default async function AdminCMSPage({
       icon: '📦',
       color: 'bg-emerald-500',
     },
+    {
+      title: 'Premium Csomagok',
+      description: 'Több játékot tartalmazó premium csomagok kezelése',
+      href: `/${locale}/admin/cms/premium-packages`,
+      icon: '⭐',
+      color: 'bg-yellow-500',
+    },
   ];
 
   return (
