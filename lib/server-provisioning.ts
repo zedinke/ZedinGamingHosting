@@ -328,6 +328,11 @@ export async function provisionServer(
     // MINDIG generálunk új portot, hogy a ténylegesen kiosztott portot használjuk
     let generatedPort = await generateServerPort(options.gameType, bestLocation.machineId);
     
+    // 7 Days to Die port változók (a blokkon kívül, hogy később is elérhetők legyenek)
+    let queryPort7dtd: number | undefined;
+    let telnetPort7dtd: number | undefined;
+    let webMapPort7dtd: number | undefined;
+    
     // Satisfactory-nál a QueryPort, GamePort és BeaconPort generálása
     let configurationUpdate: any = {};
     if (options.gameType === 'SATISFACTORY') {
@@ -767,6 +772,11 @@ export async function provisionServer(
       // Az adatbázisban a port mezőbe a GamePort-ot mentjük (alap port)
       generatedPort = gamePort; // GamePort = alap port
       
+      // Port változók elmentése a blokkon kívülre, hogy később is elérhetők legyenek
+      queryPort7dtd = queryPort;
+      telnetPort7dtd = telnetPort;
+      webMapPort7dtd = webMapPort;
+      
       // QueryPort, TelnetPort és WebMapPort mentése az adatbázisba (mint a többi játéknál)
       // A configuration JSON-ba nem kell menteni, mert az adatbázis mezőkben vannak
       configurationUpdate = {};
@@ -816,9 +826,15 @@ export async function provisionServer(
       updateData.configuration = updatedConfig;
     } else if (options.gameType === 'SEVEN_DAYS_TO_DIE') {
       // 7 Days to Die: portok az adatbázis mezőkben (mint a többi játéknál)
-      updateData.queryPort = queryPort; // QueryPort (GamePort + 1)
-      updateData.telnetPort = telnetPort; // TelnetPort (GamePort + 2)
-      updateData.webMapPort = webMapPort; // WebMapPort (GamePort + 3)
+      if (queryPort7dtd !== undefined) {
+        updateData.queryPort = queryPort7dtd; // QueryPort (GamePort + 1)
+      }
+      if (telnetPort7dtd !== undefined) {
+        updateData.telnetPort = telnetPort7dtd; // TelnetPort (GamePort + 2)
+      }
+      if (webMapPort7dtd !== undefined) {
+        updateData.webMapPort = webMapPort7dtd; // WebMapPort (GamePort + 3)
+      }
       if (Object.keys(configurationUpdate).length > 0) {
         updateData.configuration = updatedConfig;
       }
