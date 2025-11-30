@@ -88,7 +88,8 @@ export function PremiumPackageForm({ locale, package_: existingPackage }: Premiu
       })
       .catch((error) => {
         console.error('Error loading game configs:', error);
-        toast.error('Hiba a játékok betöltése során: ' + error.message);
+        const errorMessage = error?.message || (typeof error === 'string' ? error : 'Hiba a játékok betöltése során');
+        toast.error(errorMessage);
         setGameConfigs([]);
       });
   }, []);
@@ -155,14 +156,25 @@ export function PremiumPackageForm({ locale, package_: existingPackage }: Premiu
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Hiba történt');
+        const errorData = await response.json();
+        // Az API válasz formátuma: { success: false, error: { code, message, details } }
+        const errorMessage = errorData?.error?.message || errorData?.error || errorData?.message || (typeof errorData === 'string' ? errorData : 'Hiba történt');
+        throw new Error(errorMessage);
       }
 
       toast.success(existingPackage ? 'Csomag frissítve' : 'Csomag létrehozva');
       router.push(`/${locale}/admin/cms/premium-packages`);
     } catch (error: any) {
-      const errorMessage = error?.message || (typeof error === 'string' ? error : 'Hiba történt');
+      let errorMessage = 'Hiba történt';
+      if (error?.message) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      } else if (error?.error) {
+        errorMessage = error.error;
+      } else if (error?.toString) {
+        errorMessage = error.toString();
+      }
       toast.error(errorMessage);
     } finally {
       setLoading(false);
