@@ -5,6 +5,52 @@
 export const installScript = `
 #!/bin/bash
 set +e
+
+# --- BEÁLLÍTÁSOK ---
+# Felhasználó neve (pl. forest{serverId})
+SZERVER_USER="forest{serverId}"
+# Szerver neve
+SZERVER_NEVE="{name}"
+# Admin jelszó
+ADMIN_JELSZO="{adminPassword}"
+# PORTOK (adatbázisból jönnek, placeholder-ek)
+PORT_GAME={port}        # serverPort
+PORT_QUERY={queryPort}  # serverSteamPort
+PORT_STEAM={steamPeerPort}  # serverGamePort
+
+# --- 1. RENDSZER ELŐKÉSZÍTÉSE ---
+echo "--- Rendszer és Wine ellenőrzése... ---"
+export DEBIAN_FRONTEND=noninteractive
+apt-get update -qq >/dev/null 2>&1 || true
+
+# Wine, Xvfb és 32-bites támogatás telepítése (ha még nem lenne)
+dpkg --add-architecture i386 2>/dev/null || true
+apt-get update -qq >/dev/null 2>&1 || true
+apt-get install -y wine wine64 xvfb libwine:i386 steamcmd >/dev/null 2>&1 || {
+  echo "FIGYELMEZTETÉS: Nem sikerült telepíteni a Wine/Xvfb csomagokat automatikusan" >&2
+  echo "Kérem telepítse manuálisan: apt-get install -y wine wine64 xvfb libwine:i386 steamcmd" >&2
+}
+
+# --- 2. FELHASZNÁLÓ ÉS CSOPORT LÉTREHOZÁSA ---
+echo "--- Felhasználó ($SZERVER_USER) létrehozása... ---"
+# Ellenőrizzük, hogy létezik-e már a felhasználó
+if ! id "$SZERVER_USER" &>/dev/null; then
+  # Létrehozzuk a felhasználót jelszó kérése nélkül
+  adduser --disabled-password --gecos "" "$SZERVER_USER" 2>/dev/null || {
+    echo "FIGYELMEZTETÉS: Nem sikerült létrehozni a felhasználót: $SZERVER_USER" >&2
+  }
+  
+  # Hozzáadjuk a közös csoporthoz (SFTP hozzáférés miatt), ha létezik
+  if getent group sfgames >/dev/null 2>&1; then
+    usermod -aG sfgames "$SZERVER_USER" 2>/dev/null || true
+  fi
+else
+  echo "Felhasználó ($SZERVER_USER) már létezik"
+fi
+
+# --- 3. MAPPÁK ÉS JOGOSULTSÁGOK ---
+echo "--- Mappák előkészítése... ---"
+HOMEPATH="/home/$SZERVER_USER"
 SERVER_DIR="/opt/servers/{serverId}"
 
 mkdir -p /opt/servers
@@ -15,16 +61,17 @@ mkdir -p "$SERVER_DIR"
 chmod -R 755 "$SERVER_DIR"
 chown -R root:root "$SERVER_DIR"
 
-cd "$SERVER_DIR"
+# Jogosultságok beállítása, hogy a felhasználó is írhasd
+if getent group sfgames >/dev/null 2>&1; then
+  chown -R "$SZERVER_USER:sfgames" "$SERVER_DIR" 2>/dev/null || chown -R root:root "$SERVER_DIR"
+  chmod -R g+w "$SERVER_DIR" 2>/dev/null || true
+  # SetGID bit beállítása (új fájlok öröklik a csoportot)
+  find "$SERVER_DIR" -type d -exec chmod g+s {} + 2>/dev/null || true
+else
+  chown -R "$SZERVER_USER:$SZERVER_USER" "$SERVER_DIR" 2>/dev/null || chown -R root:root "$SERVER_DIR"
+fi
 
-# Telepítjük a szükséges csomagokat (Wine, Winbind, Xvfb) - az útmutató szerint
-echo "Szükséges csomagok telepítése (Wine, Winbind, Xvfb)..."
-export DEBIAN_FRONTEND=noninteractive
-apt-get update -qq >/dev/null 2>&1 || true
-apt-get install -y wine-stable winbind xvfb >/dev/null 2>&1 || {
-  echo "FIGYELMEZTETÉS: Nem sikerült telepíteni a Wine/Winbind/Xvfb csomagokat automatikusan" >&2
-  echo "Kérem telepítse manuálisan: apt-get install -y wine-stable winbind xvfb" >&2
-}
+cd "$SERVER_DIR"
 
 STEAM_HOME="/tmp/steamcmd-home-$$"
 mkdir -p "$STEAM_HOME"
@@ -48,9 +95,8 @@ while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
   chmod -R 755 "$SERVER_DIR"
   
   echo "Installing The Forest dedicated server..."
-  # Először próbáljuk meg a Linux natív verziót
-  # Ha nincs, akkor a Windows verziót Wine-on keresztül
-  HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 556450 validate +quit
+  # Windows verzió letöltése (Wine-on keresztül futtatjuk)
+  HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +@sSteamCmdForcePlatformType windows +force_install_dir "$SERVER_DIR" +login anonymous +app_update 556450 validate +quit
   EXIT_CODE=$?
   
   # Ideiglenes Steam home könyvtár törlése
@@ -168,5 +214,63 @@ if [ "$USE_WINE" = "true" ]; then
 else
   echo "The Forest szerver sikeresen telepítve (Linux natív verzió): $SERVER_FILE (méret: $FILE_SIZE bytes)"
 fi
+
+# --- 5. KONFIGURÁCIÓS FÁJL LÉTREHOZÁSA ---
+echo "--- Server.cfg generálása... ---"
+# Windows-os útvonal formátum a Wine-hoz
+WIN_SAVE_PATH="Z:\\\\home\\\\$SZERVER_USER\\\\server\\\\saves"
+# Linux útvonal
+LINUX_SAVE_PATH="$SERVER_DIR/saves"
+
+# Save könyvtár létrehozása
+mkdir -p "$LINUX_SAVE_PATH"
+chmod 755 "$LINUX_SAVE_PATH"
+if getent group sfgames >/dev/null 2>&1; then
+  chown -R "$SZERVER_USER:sfgames" "$LINUX_SAVE_PATH" 2>/dev/null || chown -R root:root "$LINUX_SAVE_PATH"
+else
+  chown -R "$SZERVER_USER:$SZERVER_USER" "$LINUX_SAVE_PATH" 2>/dev/null || chown -R root:root "$LINUX_SAVE_PATH"
+fi
+
+# Létrehozzuk a config fájlt a portokkal
+cat > "$SERVER_DIR/server.cfg" <<EOF
+// Dedicated Server Settings
+serverName $SZERVER_NEVE
+serverPassword {password}
+serverPasswordAdmin $ADMIN_JELSZO
+serverIP 0.0.0.0
+serverPort $PORT_GAME
+serverSteamPort $PORT_QUERY
+serverGamePort $PORT_STEAM
+maxPlayers {maxPlayers}
+difficulty {difficulty}
+initType {inittype}
+slot {slot}
+showLogs off
+serverContact email@example.com
+EOF
+
+chmod 644 "$SERVER_DIR/server.cfg"
+if getent group sfgames >/dev/null 2>&1; then
+  chown "$SZERVER_USER:sfgames" "$SERVER_DIR/server.cfg" 2>/dev/null || chown root:root "$SERVER_DIR/server.cfg"
+else
+  chown "$SZERVER_USER:$SZERVER_USER" "$SERVER_DIR/server.cfg" 2>/dev/null || chown root:root "$SERVER_DIR/server.cfg"
+fi
+
+echo "Server.cfg létrehozva: $SERVER_DIR/server.cfg"
+echo "Portok: Game=$PORT_GAME, Query=$PORT_QUERY, Steam=$PORT_STEAM"
+
+# --- 6. JOGOSULTSÁGOK VÉGSŐ JAVÍTÁSA ---
+echo "--- Jogosultságok fixálása az SFTP hozzáféréshez... ---"
+if getent group sfgames >/dev/null 2>&1; then
+  chown -R "$SZERVER_USER:sfgames" "$HOMEPATH" 2>/dev/null || true
+  chmod -R g+w "$HOMEPATH" 2>/dev/null || true
+fi
+
+echo "=================================================="
+echo "TELEPÍTÉS KÉSZ!"
+echo "A szerver ($SZERVER_NEVE) telepítve."
+echo "Felhasználó: $SZERVER_USER"
+echo "Portok: Game=$PORT_GAME, Query=$PORT_QUERY, Steam=$PORT_STEAM"
+echo "=================================================="
 `;
 

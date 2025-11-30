@@ -297,22 +297,60 @@ fi
       }
       
       // Placeholder-ek cseréje - biztosítjuk, hogy a config mezők létezzenek
-      const port = config.port || 25565;
-      const maxPlayers = config.maxPlayers || 10;
-      const ram = config.ram || 2048;
-      const name = config.name || `Server-${serverId}`;
-      const queryPort = gameConfig.queryPort || port + 1;
+      // The Forest esetén az adatbázisból kinyerjük az összes portot
+      let port = config.port || 25565;
+      let queryPort = gameConfig.queryPort || port + 1;
+      let steamPeerPort: number | undefined;
       
-      installScript = installScript
-        .replace(/{serverId}/g, serverId)
-        .replace(/{port}/g, port.toString())
-        .replace(/{maxPlayers}/g, maxPlayers.toString())
-        .replace(/{ram}/g, ram.toString())
-        .replace(/{name}/g, name)
-        .replace(/{world}/g, config.world || 'Dedicated')
-        .replace(/{password}/g, config.password || '')
-        .replace(/{adminPassword}/g, config.adminPassword || 'changeme')
-        .replace(/{queryPort}/g, queryPort.toString());
+      // The Forest esetén az adatbázisból kinyerjük a portokat
+      if (gameType === 'THE_FOREST') {
+        const serverWithPorts = await prisma.server.findUnique({
+          where: { id: serverId },
+          select: { port: true, queryPort: true, steamPeerPort: true, configuration: true },
+        });
+        
+        // Portok az adatbázisból
+        port = serverWithPorts?.port || config.port || 27015;
+        queryPort = serverWithPorts?.queryPort || (port + 1);
+        steamPeerPort = serverWithPorts?.steamPeerPort || (queryPort + 1);
+        
+        // Konfigurációs értékek a configuration-ből
+        const serverConfig = serverWithPorts?.configuration ? (typeof serverWithPorts.configuration === 'string' ? JSON.parse(serverWithPorts.configuration) : serverWithPorts.configuration) : {};
+        const difficulty = serverConfig.difficulty || 'Normal';
+        const inittype = serverConfig.inittype || serverConfig.initType || 'Continue';
+        const slot = serverConfig.slot || 3;
+        
+        installScript = installScript
+          .replace(/{serverId}/g, serverId)
+          .replace(/{port}/g, port.toString())
+          .replace(/{queryPort}/g, queryPort.toString())
+          .replace(/{steamPeerPort}/g, steamPeerPort.toString())
+          .replace(/{maxPlayers}/g, (config.maxPlayers || 10).toString())
+          .replace(/{ram}/g, (config.ram || 2048).toString())
+          .replace(/{name}/g, config.name || `Server-${serverId}`)
+          .replace(/{world}/g, config.world || 'Dedicated')
+          .replace(/{password}/g, config.password || '')
+          .replace(/{adminPassword}/g, config.adminPassword || 'changeme')
+          .replace(/{difficulty}/g, difficulty)
+          .replace(/{inittype}/g, inittype)
+          .replace(/{slot}/g, slot.toString());
+      } else {
+        // Más játékoknál az eredeti logika
+        const maxPlayers = config.maxPlayers || 10;
+        const ram = config.ram || 2048;
+        const name = config.name || `Server-${serverId}`;
+        
+        installScript = installScript
+          .replace(/{serverId}/g, serverId)
+          .replace(/{port}/g, port.toString())
+          .replace(/{maxPlayers}/g, maxPlayers.toString())
+          .replace(/{ram}/g, ram.toString())
+          .replace(/{name}/g, name)
+          .replace(/{world}/g, config.world || 'Dedicated')
+          .replace(/{password}/g, config.password || '')
+          .replace(/{adminPassword}/g, config.adminPassword || 'changeme')
+          .replace(/{queryPort}/g, queryPort.toString());
+      }
 
       // Script fájl létrehozása és futtatása
       const scriptPath = `/tmp/install-${isARK ? `ark-shared-${server.userId}` : serverId}.sh`;
@@ -1715,7 +1753,17 @@ export async function createSystemdServiceForServer(
           const forestQueryPort = finalQueryPort || (gameConfig.queryPort || port + 1);
           const forestSteamPeerPort = finalSteamPeerPort || (forestQueryPort + 1);
           
+          // The Forest specifikus konfigurációs értékek
+          const serverConfig = config.configuration ? (typeof config.configuration === 'string' ? JSON.parse(config.configuration) : config.configuration) : {};
+          const serverautosaveinterval = serverConfig.serverautosaveinterval || serverConfig.serverAutoSaveInterval || 15;
+          const difficulty = serverConfig.difficulty || config.difficulty || 'Normal';
+          const inittype = serverConfig.inittype || serverConfig.initType || config.inittype || 'Continue';
+          const enableVAC = serverConfig.enableVAC || 'on';
+          const slot = serverConfig.slot || config.slot || 3;
+          const serverip = machine?.ipAddress || '0.0.0.0';
+          
           startCommand = startCommand
+            .replace(/{serverId}/g, serverId)
             .replace(/{port}/g, forestPort.toString())
             .replace(/{maxPlayers}/g, maxPlayers.toString())
             .replace(/{ram}/g, ram.toString())
@@ -1725,7 +1773,13 @@ export async function createSystemdServiceForServer(
             .replace(/{adminPassword}/g, config.adminPassword || 'changeme')
             .replace(/{queryPort}/g, forestQueryPort.toString())
             .replace(/{steamPeerPort}/g, forestSteamPeerPort.toString())
-            .replace(/{map}/g, config.map || 'TheIsland');
+            .replace(/{map}/g, config.map || 'TheIsland')
+            .replace(/{serverautosaveinterval}/g, serverautosaveinterval.toString())
+            .replace(/{difficulty}/g, difficulty)
+            .replace(/{inittype}/g, inittype)
+            .replace(/{enableVAC}/g, enableVAC)
+            .replace(/{slot}/g, slot.toString())
+            .replace(/{serverip}/g, serverip);
         }
       }
     } catch (error) {
@@ -1738,7 +1792,17 @@ export async function createSystemdServiceForServer(
         const forestQueryPort = finalQueryPort || (gameConfig.queryPort || port + 1);
         const forestSteamPeerPort = finalSteamPeerPort || (forestQueryPort + 1);
         
+        // The Forest specifikus konfigurációs értékek
+        const serverConfig = config.configuration ? (typeof config.configuration === 'string' ? JSON.parse(config.configuration) : config.configuration) : {};
+        const serverautosaveinterval = serverConfig.serverautosaveinterval || serverConfig.serverAutoSaveInterval || 15;
+        const difficulty = serverConfig.difficulty || config.difficulty || 'Normal';
+        const inittype = serverConfig.inittype || serverConfig.initType || config.inittype || 'Continue';
+        const enableVAC = serverConfig.enableVAC || 'on';
+        const slot = serverConfig.slot || config.slot || 3;
+        const serverip = machine?.ipAddress || '0.0.0.0';
+        
         startCommand = startCommand
+          .replace(/{serverId}/g, serverId)
           .replace(/{port}/g, forestPort.toString())
           .replace(/{maxPlayers}/g, maxPlayers.toString())
           .replace(/{ram}/g, ram.toString())
@@ -1748,22 +1812,13 @@ export async function createSystemdServiceForServer(
           .replace(/{adminPassword}/g, config.adminPassword || 'changeme')
           .replace(/{queryPort}/g, forestQueryPort.toString())
           .replace(/{steamPeerPort}/g, forestSteamPeerPort.toString())
-          .replace(/{map}/g, config.map || 'TheIsland');
-        
-        // The Forest specifikus placeholder-ek (Windows verzió)
-        if (gameType === 'THE_FOREST') {
-          // IP cím meghatározása (machine IP vagy 0.0.0.0, ha nincs)
-          const serverIp = machine?.ipAddress || '0.0.0.0';
-          
-          startCommand = startCommand
-            .replace(/{serverautosaveinterval}/g, (config.serverautosaveinterval || 15).toString())
-            .replace(/{difficulty}/g, config.difficulty || 'Normal')
-            .replace(/{inittype}/g, config.inittype || 'Continue')
-            .replace(/{enableVAC}/g, config.enableVAC || 'on')
-            .replace(/{slot}/g, (config.slot || 3).toString())
-            // IP cím (Wine hálózati hiba elkerülése)
-            .replace(/{serverip}/g, serverIp);
-        }
+          .replace(/{map}/g, config.map || 'TheIsland')
+          .replace(/{serverautosaveinterval}/g, serverautosaveinterval.toString())
+          .replace(/{difficulty}/g, difficulty)
+          .replace(/{inittype}/g, inittype)
+          .replace(/{enableVAC}/g, enableVAC)
+          .replace(/{slot}/g, slot.toString())
+          .replace(/{serverip}/g, serverip);
       }
     }
   }
@@ -1968,6 +2023,11 @@ bash -c "${escapedStartCommand}"
     // A felhasználó neve a serverId alapján generálódik (pl. seven2, seven3...)
     // A telepítő script létrehozza a felhasználót: seven{serverId}
     serviceUser = `seven${serverId}`;
+    serviceGroup = 'sfgames';
+  } else if (gameType === 'THE_FOREST') {
+    // A felhasználó neve a serverId alapján generálódik (pl. forest2, forest3...)
+    // A telepítő script létrehozza a felhasználót: forest{serverId}
+    serviceUser = `forest${serverId}`;
     serviceGroup = 'sfgames';
   }
   
