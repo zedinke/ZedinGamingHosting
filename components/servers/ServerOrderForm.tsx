@@ -343,29 +343,37 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              {selectedGamePackage.pricePerSlot ? (
+              {selectedGamePackage.pricePerSlot && !selectedGamePackage.unlimitedSlot ? (
               <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 relative z-10">
                 <p className="text-xs font-bold text-gray-900 mb-2 uppercase">Slot</p>
                 <div className="relative z-20">
-                  <select
-                    value={additionalSlots}
-                    onChange={(e) => {
-                      const value = parseInt(e.target.value) || 0;
-                      setAdditionalSlots(value);
-                    }}
-                    className="w-full px-3 py-2 border-2 border-primary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-primary-600 bg-white text-xl font-bold appearance-none cursor-pointer hover:border-primary-400 transition-colors relative z-30"
-                  >
-                    {Array.from({ length: MAX_SLOTS - selectedGamePackage.slot + 1 }, (_, i) => i).map((value) => (
-                      <option key={value} value={value}>
-                        {selectedGamePackage.slot + value}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                    <svg className="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </div>
+                  {selectedGamePackage.slot !== null ? (
+                    <>
+                      <select
+                        value={additionalSlots}
+                        onChange={(e) => {
+                          const value = parseInt(e.target.value) || 0;
+                          setAdditionalSlots(value);
+                        }}
+                        className="w-full px-3 py-2 border-2 border-primary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-primary-600 bg-white text-xl font-bold appearance-none cursor-pointer hover:border-primary-400 transition-colors relative z-30"
+                      >
+                        {Array.from({ length: MAX_SLOTS - selectedGamePackage.slot + 1 }, (_, i) => i).map((value) => (
+                          <option key={value} value={value}>
+                            {selectedGamePackage.slot! + value}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                        <svg className="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg bg-gray-100 text-gray-600 text-xl font-bold text-center">
+                      N/A
+                    </div>
+                  )}
                 </div>
                 {additionalSlots > 0 && selectedGamePackage.pricePerSlot && (
                   <p className="text-sm text-green-600 font-bold mt-2">
@@ -376,7 +384,9 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
               ) : (
               <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                 <p className="text-xs font-bold text-gray-900 mb-1 uppercase">Slot</p>
-                <p className="text-3xl font-bold text-primary-600">{selectedGamePackage.slot}</p>
+                <p className="text-3xl font-bold text-primary-600">
+                  {selectedGamePackage.unlimitedSlot ? '∞' : (selectedGamePackage.slot || '-')}
+                </p>
               </div>
               )}
               
