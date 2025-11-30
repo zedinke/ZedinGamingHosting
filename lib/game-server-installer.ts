@@ -1484,6 +1484,20 @@ export async function createSystemdServiceForServer(
         }
       }
       
+      // 7 Days to Die esetén telnetPort és webMapPort a configuration JSON-ből
+      let finalTelnetPort: number | undefined;
+      if (gameType === 'SEVEN_DAYS_TO_DIE') {
+        // TelnetPort = GamePort + 2
+        // WebMapPort = GamePort + 3
+        // A telnetPort és webMapPort a configuration JSON-ben van tárolva
+        const serverConfig = serverWithPorts?.configuration ? (typeof serverWithPorts.configuration === 'string' ? JSON.parse(serverWithPorts.configuration) : serverWithPorts.configuration) : {};
+        finalTelnetPort = serverConfig.telnetPort;
+        // Ha nincs a configuration-ben, számoljuk ki
+        if (!finalTelnetPort && finalPort) {
+          finalTelnetPort = finalPort + 2; // TelnetPort = GamePort + 2
+        }
+      }
+      
       // Placeholder-ek cseréje az adatbázisból kinyert portokkal
       startCommand = startCommand
         .replace(/{port}/g, finalPort.toString())
@@ -1506,12 +1520,18 @@ export async function createSystemdServiceForServer(
         startCommand = startCommand.replace(/{rustPlusPort}/g, finalRustPlusPort.toString());
       }
       
+      // 7 Days to Die esetén telnetPort placeholder (ha van a startCommand-ban)
+      if (gameType === 'SEVEN_DAYS_TO_DIE' && finalTelnetPort) {
+        startCommand = startCommand.replace(/{telnetPort}/g, finalTelnetPort.toString());
+      }
+      
       logger.info(`${gameType} start command generated with ports from database`, {
         serverId,
         port: finalPort,
         queryPort: finalQueryPort,
         steamPeerPort: finalSteamPeerPort,
         rustPlusPort: finalRustPlusPort,
+        telnetPort: finalTelnetPort,
         startCommand,
       });
     }
@@ -1605,12 +1625,17 @@ export async function createSystemdServiceForServer(
           // Ha létezik a FactoryServer.sh, azt használjuk
           const scriptPath = scriptResult.replace('found:', '');
           // Abszolút útvonalat használunk systemd-hez
-          startCommand = `${scriptPath} -log -unattended`;
+          // Fontos: a startCommand már tartalmazza a portokat (GamePort, QueryPort, BeaconPort),
+          // csak az útvonalat cseréljük le, ne írjuk felül az egész parancsot
+          // A startCommand formátuma: ./FactoryServer.sh -Port={gamePort} -ServerQueryPort={queryPort} -BeaconPort={beaconPort} -log -unattended
+          // Csak a "./FactoryServer.sh" részt cseréljük le az abszolút útvonalra
+          startCommand = startCommand.replace(/\.\/FactoryServer\.sh/, scriptPath);
           binary = null;
           execDir = workingDir;
-          logger.info('Satisfactory FactoryServer.sh script found', {
+          logger.info('Satisfactory FactoryServer.sh script found, port arguments preserved', {
             serverId,
             scriptPath,
+            startCommand,
           });
         } else {
           throw new Error(`Satisfactory FactoryServer.sh script not found for server ${serverId}. Please check installation.`);
@@ -1626,9 +1651,19 @@ export async function createSystemdServiceForServer(
     }
     
     // Abszolút útvonalra konvertáljuk (csak ha még nem állítottuk be)
+    // Fontos: az args már tartalmazza az összes argumentumot, beleértve a portokat is az adatbázisból
     if (binary) {
       const fullBinaryPath = `${execDir}/${binary}`;
+      // Az args már tartalmazza a portokat (pl. -server.port 28015 -server.queryport 28016)
+      // Csak az útvonalat cseréljük le, az argumentumok (beleértve a portokat) megmaradnak
       startCommand = `${fullBinaryPath}${args ? ' ' + args : ''}`.trim();
+      logger.info(`${gameType} start command converted to absolute path, ports preserved`, {
+        serverId,
+        binary,
+        fullBinaryPath,
+        args,
+        startCommand,
+      });
     }
     // Ha binary null, akkor már beállítottuk a startCommand-ot a Satisfactory ellenőrzés során
   }
@@ -1896,9 +1931,21 @@ bash -c "${escapedStartCommand}"
   // Systemd service fájl tartalom
   // Fontos: minden kulcs=érték pár egy sorban kell legyen, nincs sortörés
   // CPU és RAM limitációk hozzáadása a GamePackage specifikációk alapján
-  // Satisfactory esetén satis felhasználót és sfgames csoportot használunk
-  const serviceUser = gameType === 'SATISFACTORY' ? 'satis' : 'root';
-  const serviceGroup = gameType === 'SATISFACTORY' ? 'sfgames' : undefined;
+  // Satisfactory és 7 Days to Die esetén külön felhasználót és sfgames csoportot használunk
+  // 7 Days to Die-nál a felhasználó neve: seven{serverId} (pl. seven2, seven3...)
+  let serviceUser = 'root';
+  let serviceGroup: string | undefined = undefined;
+  
+  if (gameType === 'SATISFACTORY') {
+    serviceUser = 'satis';
+    serviceGroup = 'sfgames';
+  } else if (gameType === 'SEVEN_DAYS_TO_DIE') {
+    // A felhasználó neve a serverId alapján generálódik (pl. seven2, seven3...)
+    // A telepítő script létrehozza a felhasználót: seven{serverId}
+    serviceUser = `seven${serverId}`;
+    serviceGroup = 'sfgames';
+  }
+  
   const groupLine = serviceGroup ? `Group=${serviceGroup}\n` : '';
   
   const serviceContent = `[Unit]

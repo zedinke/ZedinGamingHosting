@@ -683,6 +683,106 @@ export async function provisionServer(
         machineId: bestLocation.machineId,
         retries: retryCount,
       });
+    } else if (options.gameType === 'SEVEN_DAYS_TO_DIE') {
+      // 7 Days to Die port számítások:
+      // GamePort = alap port (automatikusan keresni üres portot, alapértelmezett 26900)
+      // QueryPort = GamePort + 1 (Steam Query, UDP)
+      // TelnetPort = GamePort + 2 (RCON, TCP)
+      // WebMapPort = GamePort + 3 (WebMap, TCP)
+      // Összesen: 4 port (pl. 26900, 26901, 26902, 26903)
+      
+      // Alap port generálása
+      let gamePort = generatedPort; // GamePort = alap port
+      // QueryPort = GamePort + 1
+      let queryPort = gamePort + 1;
+      // TelnetPort = GamePort + 2
+      let telnetPort = gamePort + 2;
+      // WebMapPort = GamePort + 3
+      let webMapPort = gamePort + 3;
+      
+      // Ellenőrizzük, hogy mind a négy port szabad-e
+      // Ha foglaltak, újra generáljuk a portot, amíg mind a négy port szabad nem lesz
+      let maxRetries = 10;
+      let retryCount = 0;
+      let allPortsAvailable = false;
+      
+      while (!allPortsAvailable && retryCount < maxRetries) {
+        // Ellenőrizzük, hogy a portok szabadok-e az adatbázisban ÉS a gépen
+        const gamePortAvailableInDb = await checkMultiPortInDatabase(gamePort, options.gameType, serverId);
+        const queryPortAvailableInDb = await checkMultiPortInDatabase(queryPort, options.gameType, serverId);
+        const telnetPortAvailableInDb = await checkMultiPortInDatabase(telnetPort, options.gameType, serverId);
+        const webMapPortAvailableInDb = await checkMultiPortInDatabase(webMapPort, options.gameType, serverId);
+        
+        const gamePortAvailableOnMachine = await checkPortAvailableOnMachine(bestLocation.machineId, gamePort);
+        const queryPortAvailableOnMachine = await checkPortAvailableOnMachine(bestLocation.machineId, queryPort);
+        const telnetPortAvailableOnMachine = await checkPortAvailableOnMachine(bestLocation.machineId, telnetPort);
+        const webMapPortAvailableOnMachine = await checkPortAvailableOnMachine(bestLocation.machineId, webMapPort);
+        
+        // Mind a négy portnak szabadnak kell lennie az adatbázisban ÉS a gépen
+        if (gamePortAvailableInDb && queryPortAvailableInDb && telnetPortAvailableInDb && webMapPortAvailableInDb &&
+            gamePortAvailableOnMachine && queryPortAvailableOnMachine && telnetPortAvailableOnMachine && webMapPortAvailableOnMachine) {
+          allPortsAvailable = true;
+        } else {
+          // Ha valamelyik port foglalt, újra generáljuk a portot
+          retryCount++;
+          // Új port generálása a generateServerPort függvénnyel, ami már ellenőrzi az adatbázist és a gépen is
+          const newPort = await generateServerPort(options.gameType, bestLocation.machineId);
+          
+          // Port alapján számoljuk a QueryPort, TelnetPort és WebMapPort értékét
+          gamePort = newPort;
+          queryPort = gamePort + 1; // QueryPort = GamePort + 1
+          telnetPort = gamePort + 2; // TelnetPort = GamePort + 2
+          webMapPort = gamePort + 3; // WebMapPort = GamePort + 3
+          
+          logger.warn('Port is not available, regenerating port', {
+            serverId,
+            retryCount,
+            newPort: gamePort,
+            newQueryPort: queryPort,
+            newTelnetPort: telnetPort,
+            newWebMapPort: webMapPort,
+            gamePortAvailableInDb,
+            queryPortAvailableInDb,
+            telnetPortAvailableInDb,
+            webMapPortAvailableInDb,
+            gamePortAvailableOnMachine,
+            queryPortAvailableOnMachine,
+            telnetPortAvailableOnMachine,
+            webMapPortAvailableOnMachine,
+          });
+        }
+      }
+      
+      if (!allPortsAvailable) {
+        logger.error(`Could not find available ports for ${options.gameType} server after retries`, new Error('Port allocation failed after retries'), {
+          serverId,
+          finalPort: gamePort,
+          finalQueryPort: queryPort,
+          finalTelnetPort: telnetPort,
+          finalWebMapPort: webMapPort,
+        });
+        // Folytatjuk, de logoljuk a hibát
+      }
+      
+      // Az adatbázisban a port mezőbe a GamePort-ot mentjük (alap port)
+      generatedPort = gamePort; // GamePort = alap port
+      
+      // QueryPort, TelnetPort és WebMapPort mentése a configuration JSON-ben
+      configurationUpdate = {
+        queryPort: queryPort, // QueryPort (GamePort + 1)
+        telnetPort: telnetPort, // TelnetPort (GamePort + 2)
+        webMapPort: webMapPort, // WebMapPort (GamePort + 3)
+      };
+      
+      logger.info(`${options.gameType} ports generated`, {
+        serverId,
+        port: gamePort, // GamePort (alap port)
+        queryPort, // QueryPort (GamePort + 1)
+        telnetPort, // TelnetPort (GamePort + 2)
+        webMapPort, // WebMapPort (GamePort + 3)
+        machineId: bestLocation.machineId,
+        retries: retryCount,
+      });
     }
     
     // MINDIG frissítjük a portot, hogy a ténylegesen kiosztott portot használjuk
@@ -717,6 +817,10 @@ export async function provisionServer(
       updateData.queryPort = configurationUpdate.queryPort; // QueryPort (Port + 1)
       updateData.rustPlusPort = configurationUpdate.rustPlusPort; // RustPlusPort (Port + 67)
       updateData.configuration = updatedConfig;
+    } else if (options.gameType === 'SEVEN_DAYS_TO_DIE' && Object.keys(configurationUpdate).length > 0) {
+      updateData.queryPort = configurationUpdate.queryPort; // QueryPort (GamePort + 1)
+      updateData.configuration = updatedConfig;
+      // TelnetPort és WebMapPort csak a configuration JSON-ben van tárolva
     } else if (Object.keys(configurationUpdate).length > 0) {
       updateData.configuration = updatedConfig;
     }
@@ -957,6 +1061,48 @@ export async function generateServerPort(
     return basePort;
   }
 
+  // 7 Days to Die esetén négy portot kell ellenőrizni (GamePort, QueryPort, TelnetPort, WebMapPort)
+  if (gameType === 'SEVEN_DAYS_TO_DIE') {
+    // Port számítások:
+    // - GamePort = alap port (pl. 26900)
+    // - QueryPort = GamePort + 1 (pl. 26901)
+    // - TelnetPort = GamePort + 2 (pl. 26902)
+    // - WebMapPort = GamePort + 3 (pl. 26903)
+    // A generateServerPort a GamePort-ot adja vissza (alap port)
+    for (let offset = 0; offset < 100; offset++) {
+      const gamePort = basePort + offset; // GamePort = alap port
+      const queryPort = gamePort + 1; // QueryPort = GamePort + 1
+      const telnetPort = gamePort + 2; // TelnetPort = GamePort + 2
+      const webMapPort = gamePort + 3; // WebMapPort = GamePort + 3
+      
+      // Ellenőrizzük az adatbázisban, hogy a portok szabadok-e
+      const gamePortAvailableInDb = await checkMultiPortInDatabase(gamePort, gameType);
+      const queryPortAvailableInDb = await checkMultiPortInDatabase(queryPort, gameType);
+      const telnetPortAvailableInDb = await checkMultiPortInDatabase(telnetPort, gameType);
+      const webMapPortAvailableInDb = await checkMultiPortInDatabase(webMapPort, gameType);
+      
+      // Ha mind a négy port szabad az adatbázisban
+      if (gamePortAvailableInDb && queryPortAvailableInDb && telnetPortAvailableInDb && webMapPortAvailableInDb) {
+        // Ha van machineId, ellenőrizzük a gépen is
+        if (machineId) {
+          const gamePortAvailableOnMachine = await checkPortAvailableOnMachine(machineId, gamePort);
+          const queryPortAvailableOnMachine = await checkPortAvailableOnMachine(machineId, queryPort);
+          const telnetPortAvailableOnMachine = await checkPortAvailableOnMachine(machineId, telnetPort);
+          const webMapPortAvailableOnMachine = await checkPortAvailableOnMachine(machineId, webMapPort);
+          
+          if (gamePortAvailableOnMachine && queryPortAvailableOnMachine && telnetPortAvailableOnMachine && webMapPortAvailableOnMachine) {
+            return gamePort; // Visszaadjuk a GamePort-ot (alap port)
+          }
+        } else {
+          return gamePort; // Visszaadjuk a GamePort-ot (alap port)
+        }
+      }
+    }
+    
+    // Ha nincs szabad port, visszaadjuk az alapértelmezettet
+    return basePort;
+  }
+
   // Más játékoknál az egyszerű ellenőrzés
   // Ellenőrizzük, hogy a port szabad-e az adatbázisban
   const existingServer = await prisma.server.findFirst({
@@ -1062,12 +1208,27 @@ export async function checkMultiPortInDatabase(port: number, gameType: GameType,
         }
       }
 
+      // 7 Days to Die-nál ellenőrizzük a telnetPort és webMapPort mezőket is (configuration JSON-ben)
+      if (gameType === 'SEVEN_DAYS_TO_DIE') {
+        // A telnetPort és webMapPort csak a configuration JSON-ben van tárolva
+        if (server.configuration) {
+          try {
+            const config = typeof server.configuration === 'string' ? JSON.parse(server.configuration) : server.configuration;
+            if (config.telnetPort === port || config.webMapPort === port) {
+              return false; // Foglalt
+            }
+          } catch (parseError) {
+            console.warn('Failed to parse server configuration:', parseError);
+          }
+        }
+      }
+
       // Ellenőrizzük a portokat a configuration JSON-ból is (backward compatibility)
       if (server.configuration) {
         try {
           const config = typeof server.configuration === 'string' ? JSON.parse(server.configuration) : server.configuration;
           if (config.queryPort === port || config.beaconPort === port || config.gamePort === port || config.port === port ||
-              config.steamPeerPort === port || config.rustPlusPort === port) {
+              config.steamPeerPort === port || config.rustPlusPort === port || config.telnetPort === port || config.webMapPort === port) {
             return false; // Foglalt
           }
         } catch (parseError) {
