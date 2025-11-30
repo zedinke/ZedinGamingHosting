@@ -3,7 +3,7 @@
  */
 
 export const commands = {
-  startCommand: 'java -Xmx2048m -jar ProjectZomboid64.jar',
+  startCommand: 'java -Xmx2048m -jar ProjectZomboid64.jar -port {port}',
   stopCommand: 'serverstop',
   restartCommand: 'serverrestart',
   statusCommand: 'info',

@@ -3,7 +3,7 @@
  */
 
 export const commands = {
-  startCommand: './ConanSandboxServer.sh -log',
+  startCommand: './ConanSandboxServer.sh -Port={port} -QueryPort={queryPort} -log',
   stopCommand: 'Quit',
   restartCommand: 'RestartServer',
   statusCommand: 'info',

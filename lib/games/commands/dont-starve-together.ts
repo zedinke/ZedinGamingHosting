@@ -3,7 +3,7 @@
  */
 
 export const commands = {
-  startCommand: './dontstarve_dedicated_server_nullrenderer -console -persistent_storage_root ~/.klei -persistent_storage_mod_root ~/.klei/DoNotStarveTogether',
+  startCommand: './dontstarve_dedicated_server_nullrenderer -console -port {port} -persistent_storage_root ~/.klei -persistent_storage_mod_root ~/.klei/DoNotStarveTogether',
   stopCommand: 'stop',
   restartCommand: 'restart',
   statusCommand: 'status',

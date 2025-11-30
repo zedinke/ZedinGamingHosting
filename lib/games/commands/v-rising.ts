@@ -3,7 +3,7 @@
  */
 
 export const commands = {
-  startCommand: './VRisingServer.exe',
+  startCommand: './VRisingServer.exe -serverName "{name}" -port {port}',
   stopCommand: 'stop',
   restartCommand: 'restart',
   statusCommand: 'status',

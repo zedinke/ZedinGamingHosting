@@ -3,7 +3,7 @@
  */
 
 export const commands = {
-  startCommand: './SonsOfTheForest.sh -dedicated',
+  startCommand: './SonsOfTheForest.sh -dedicated -port {port} -queryPort {queryPort}',
   stopCommand: 'stop',
   restartCommand: 'restart',
   statusCommand: 'status',

@@ -3,7 +3,7 @@
  */
 
 export const commands = {
-  startCommand: './GroundedServer.sh -Windowed=False',
+  startCommand: './GroundedServer.sh -Windowed=False -port {port} -queryPort {queryPort}',
   stopCommand: 'quit',
   restartCommand: 'restart',
   statusCommand: 'status',
