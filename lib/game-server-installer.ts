@@ -13,6 +13,7 @@ import { logger } from './logger';
 import { writeFile, appendFile, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
 import { join } from 'path';
+import { GAME_INSTALLERS } from './games/installers';
 
 // Progress fájl elérési út
 function getProgressFilePath(serverId: string): string {
@@ -258,7 +259,8 @@ export async function installGameServer(
 
     // Telepítési script generálása (csak ha nem ARK, vagy ha még nincs telepítve)
     if (!isARK || !(await checkARKSharedInstallation(server.userId, machine.id, gameType, machine))) {
-      let installScript = gameConfig.installScript;
+      // Ha a gameConfig.installScript üres, betöltjük a GAME_INSTALLERS-ből
+      let installScript = gameConfig.installScript || GAME_INSTALLERS[gameType] || '';
       
       // SteamCMD elérési út beállítása (globális SteamCMD használata)
       const globalSteamCMD = '/opt/steamcmd/steamcmd.sh';

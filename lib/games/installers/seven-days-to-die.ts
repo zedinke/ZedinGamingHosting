@@ -83,7 +83,20 @@ install_server() {
     while [ $retry_count -lt $MAX_RETRIES ]; do
         log "SteamCMD futtatása (próbálkozás $((retry_count + 1))/$MAX_RETRIES)..."
         
-        sudo -u "$SERVER_USER" HOME="$STEAM_HOME" steamcmd \
+        # SteamCMD parancs meghatározása
+        STEAMCMD_CMD=""
+        if [ -f /opt/steamcmd/steamcmd.sh ]; then
+            STEAMCMD_CMD="/opt/steamcmd/steamcmd.sh"
+        elif [ -f /usr/games/steamcmd ]; then
+            STEAMCMD_CMD="/usr/games/steamcmd"
+        elif command -v steamcmd &> /dev/null; then
+            STEAMCMD_CMD="steamcmd"
+        else
+            log "HIBA: SteamCMD nem található!" >&2
+            exit 1
+        fi
+        
+        sudo -u "$SERVER_USER" HOME="$STEAM_HOME" $STEAMCMD_CMD \
             +force_install_dir "$SERVER_DIR" \
             +login anonymous \
             +app_update "$STEAM_APP_ID" validate \

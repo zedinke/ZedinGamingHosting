@@ -6,7 +6,7 @@ import { GameServerConfig } from '../types';
 import { commands } from '../commands/seven-days-to-die';
 
 export const config: GameServerConfig = {
-  steamAppId: 251570,
+  steamAppId: 294420, // 7 Days to Die Dedicated Server AppID
   requiresSteamCMD: true,
   installScript: '', // Telepítő script külön fájlban
   configPath: '/opt/servers/{serverId}/serverconfig.xml',
