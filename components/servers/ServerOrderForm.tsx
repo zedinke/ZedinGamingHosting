@@ -49,8 +49,32 @@ interface GamePackage {
   videoUrl: string | null;
 }
 
+interface PremiumPackage {
+  id: string;
+  nameHu: string;
+  nameEn: string;
+  descriptionHu: string | null;
+  descriptionEn: string | null;
+  price: number;
+  currency: string;
+  interval: string;
+  discountPrice: number | null;
+  image: string | null;
+  videoUrl: string | null;
+  cpuCores: number;
+  ram: number;
+  games: Array<{
+    gameType: string;
+    displayName: string;
+    image: string | null;
+    videoUrl: string | null;
+    description: string | null;
+  }>;
+}
+
 interface ServerOrderFormProps {
-  selectedGamePackage: GamePackage | null;
+  selectedGamePackage?: GamePackage | null;
+  selectedPremiumPackage?: PremiumPackage | null;
   locale: string;
 }
 
@@ -74,7 +98,7 @@ const gameTypeLabels: Record<string, string> = {
   OTHER: 'Egyéb',
 };
 
-export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderFormProps) {
+export function ServerOrderForm({ selectedGamePackage, selectedPremiumPackage, locale }: ServerOrderFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [billingInfo, setBillingInfo] = useState<BillingInfoFormData | null>(null);
@@ -152,19 +176,20 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
     fetchUpgradePrices();
   }, []);
 
-  // Ha nincs GamePackage, akkor redirect
+  // Ha nincs package, akkor redirect
   useEffect(() => {
-    if (!selectedGamePackage) {
-      toast.error('Nincs kiválasztott játék csomag');
+    if (!selectedGamePackage && !selectedPremiumPackage) {
+      toast.error('Nincs kiválasztott csomag');
       router.push(`/${locale}/games`);
     }
-  }, [selectedGamePackage, locale, router]);
+  }, [selectedGamePackage, selectedPremiumPackage, locale, router]);
 
   // YouTube videó ID kinyerése
   const videoId = useMemo(() => {
-    if (!selectedGamePackage?.videoUrl) return null;
-    return getYouTubeVideoId(selectedGamePackage.videoUrl);
-  }, [selectedGamePackage?.videoUrl]);
+    const videoUrl = selectedPremiumPackage?.videoUrl || selectedGamePackage?.videoUrl;
+    if (!videoUrl) return null;
+    return getYouTubeVideoId(videoUrl);
+  }, [selectedPremiumPackage?.videoUrl, selectedGamePackage?.videoUrl]);
 
   const handleBillingSubmit = async (data: BillingInfoFormData) => {
     setIsLoading(true);
@@ -212,8 +237,8 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
   };
 
   const onSubmit = async (data: ServerOrderFormData) => {
-    if (!selectedGamePackage) {
-      toast.error('Nincs kiválasztott játék csomag');
+    if (!selectedGamePackage && !selectedPremiumPackage) {
+      toast.error('Nincs kiválasztott csomag');
       return;
     }
 
@@ -225,15 +250,20 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
 
     setIsLoading(true);
     try {
-      const orderData = {
+      const orderData: any = {
         name: data.name,
-        gameType: selectedGamePackage.gameType,
-        gamePackageId: selectedGamePackage.id,
         billingInfo: billingFormData,
         additionalVCpu: additionalVCpu || 0,
         additionalRamGB: additionalRamGB || 0,
         additionalSlots: additionalSlots || 0,
       };
+
+      if (selectedPremiumPackage) {
+        orderData.premiumPackageId = selectedPremiumPackage.id;
+      } else if (selectedGamePackage) {
+        orderData.gameType = selectedGamePackage.gameType;
+        orderData.gamePackageId = selectedGamePackage.id;
+      }
       
       const response = await fetch(`/api/servers/order`, {
         method: 'POST',
@@ -268,9 +298,58 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
     }).format(price);
   };
 
-  if (!selectedGamePackage) {
+  // Használjuk a megfelelő package-t
+  const activePackage = selectedPremiumPackage || selectedGamePackage;
+  
+  if (!activePackage) {
     return null;
   }
+
+  // Premium package esetén más megjelenítés
+  const isPremiumPackage = !!selectedPremiumPackage;
+
+  // Helper függvények a package adatokhoz
+  const getPackageName = () => {
+    if (selectedPremiumPackage) {
+      return locale === 'hu' ? selectedPremiumPackage.nameHu : selectedPremiumPackage.nameEn;
+    }
+    return selectedGamePackage?.nameHu || selectedGamePackage?.nameEn || selectedGamePackage?.name || '';
+  };
+
+  const getPackageDescription = () => {
+    if (selectedPremiumPackage) {
+      return locale === 'hu' ? selectedPremiumPackage.descriptionHu : selectedPremiumPackage.descriptionEn;
+    }
+    return selectedGamePackage?.descriptionHu || selectedGamePackage?.descriptionEn || selectedGamePackage?.description || null;
+  };
+
+  const getPackageImage = () => {
+    return selectedPremiumPackage?.image || selectedGamePackage?.image || null;
+  };
+
+  const getPackagePrice = () => {
+    return selectedPremiumPackage?.price || selectedGamePackage?.price || 0;
+  };
+
+  const getPackageDiscountPrice = () => {
+    return selectedPremiumPackage?.discountPrice || selectedGamePackage?.discountPrice || null;
+  };
+
+  const getPackageCurrency = () => {
+    return selectedPremiumPackage?.currency || selectedGamePackage?.currency || 'HUF';
+  };
+
+  const getPackageInterval = () => {
+    return selectedPremiumPackage?.interval || selectedGamePackage?.interval || 'month';
+  };
+
+  const getPackageCpuCores = () => {
+    return selectedPremiumPackage?.cpuCores || selectedGamePackage?.cpuCores || 2;
+  };
+
+  const getPackageRam = () => {
+    return selectedPremiumPackage?.ram || selectedGamePackage?.ram || 4;
+  };
 
   return (
     <div className="space-y-6">
@@ -297,10 +376,10 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
           {/* Kép rész - bal oldal */}
           <div className="md:col-span-1">
             <div className="relative h-64 md:h-full rounded-lg overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
-              {selectedGamePackage.image ? (
+              {getPackageImage() ? (
                 <img
-                  src={selectedGamePackage.image}
-                  alt={selectedGamePackage.name}
+                  src={getPackageImage()!}
+                  alt={getPackageName()}
                   className="w-full h-full object-cover"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
@@ -312,14 +391,19 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
                   }}
                 />
               ) : null}
-              <div className="image-placeholder absolute inset-0 w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-100 to-primary-200" style={{ display: selectedGamePackage.image ? 'none' : 'flex' }}>
+              <div className="image-placeholder absolute inset-0 w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-100 to-primary-200" style={{ display: getPackageImage() ? 'none' : 'flex' }}>
                 <span className="text-6xl font-bold text-primary-600">
-                  {gameTypeLabels[selectedGamePackage.gameType]?.charAt(0) || '?'}
+                  {isPremiumPackage ? '⭐' : (selectedGamePackage ? (gameTypeLabels[selectedGamePackage.gameType]?.charAt(0) || '?') : '?')}
                 </span>
               </div>
-              {selectedGamePackage.discountPrice && (
+              {getPackageDiscountPrice() && (
                 <div className="absolute top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg z-10">
                   Akció
+                </div>
+              )}
+              {isPremiumPackage && (
+                <div className="absolute top-4 left-4 bg-gradient-to-r from-yellow-400 to-yellow-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg z-10">
+                  ⭐ Premium
                 </div>
               )}
             </div>
@@ -331,66 +415,86 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
               <div>
                 <h3 className="text-3xl font-bold mb-2 text-gray-900 flex items-center gap-2">
                   <Check className="w-6 h-6 text-emerald-600" />
-                  {selectedGamePackage.name}
+                  {getPackageName()}
                 </h3>
-                <p className="text-lg font-bold text-gray-900 mb-2">
-                  {gameTypeLabels[selectedGamePackage.gameType] || selectedGamePackage.gameType}
-                </p>
-                {selectedGamePackage.description && (
-                  <p className="text-base text-gray-800 font-medium mb-4">{selectedGamePackage.description}</p>
+                {!isPremiumPackage && selectedGamePackage && (
+                  <p className="text-lg font-bold text-gray-900 mb-2">
+                    {gameTypeLabels[selectedGamePackage.gameType] || selectedGamePackage.gameType}
+                  </p>
+                )}
+                {isPremiumPackage && selectedPremiumPackage && (
+                  <p className="text-lg font-bold text-gray-900 mb-2">
+                    {selectedPremiumPackage.games.length} {locale === 'hu' ? 'Játék' : 'Games'}
+                  </p>
+                )}
+                {getPackageDescription() && (
+                  <p className="text-base text-gray-800 font-medium mb-4">{getPackageDescription()}</p>
                 )}
               </div>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              {selectedGamePackage.pricePerSlot && !selectedGamePackage.unlimitedSlot ? (
-              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 relative z-10">
-                <p className="text-xs font-bold text-gray-900 mb-2 uppercase">Slot</p>
-                <div className="relative z-20">
-                  {selectedGamePackage.slot !== null ? (
-                    <>
-                      <select
-                        value={additionalSlots}
-                        onChange={(e) => {
-                          const value = parseInt(e.target.value) || 0;
-                          setAdditionalSlots(value);
-                        }}
-                        className="w-full px-3 py-2 border-2 border-primary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-primary-600 bg-white text-xl font-bold appearance-none cursor-pointer hover:border-primary-400 transition-colors relative z-30"
-                      >
-                        {Array.from({ length: MAX_SLOTS - selectedGamePackage.slot + 1 }, (_, i) => i).map((value) => (
-                          <option key={value} value={value}>
-                            {selectedGamePackage.slot! + value}
-                          </option>
-                        ))}
-                      </select>
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                        <svg className="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
+              {/* Slot - csak game package esetén */}
+              {!isPremiumPackage && selectedGamePackage && (
+                <>
+                  {selectedGamePackage.pricePerSlot && !selectedGamePackage.unlimitedSlot ? (
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 relative z-10">
+                      <p className="text-xs font-bold text-gray-900 mb-2 uppercase">Slot</p>
+                      <div className="relative z-20">
+                        {selectedGamePackage.slot !== null ? (
+                          <>
+                            <select
+                              value={additionalSlots}
+                              onChange={(e) => {
+                                const value = parseInt(e.target.value) || 0;
+                                setAdditionalSlots(value);
+                              }}
+                              className="w-full px-3 py-2 border-2 border-primary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-primary-600 bg-white text-xl font-bold appearance-none cursor-pointer hover:border-primary-400 transition-colors relative z-30"
+                            >
+                              {Array.from({ length: MAX_SLOTS - selectedGamePackage.slot + 1 }, (_, i) => i).map((value) => (
+                                <option key={value} value={value}>
+                                  {selectedGamePackage.slot! + value}
+                                </option>
+                              ))}
+                            </select>
+                            <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                              <svg className="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg bg-gray-100 text-gray-600 text-xl font-bold text-center">
+                            N/A
+                          </div>
+                        )}
                       </div>
-                    </>
+                      {additionalSlots > 0 && selectedGamePackage.pricePerSlot && (
+                        <p className="text-sm text-green-600 font-bold mt-2">
+                          +{formatPrice(additionalSlots * selectedGamePackage.pricePerSlot, selectedGamePackage.currency)}/hó
+                        </p>
+                      )}
+                    </div>
                   ) : (
-                    <div className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg bg-gray-100 text-gray-600 text-xl font-bold text-center">
-                      N/A
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <p className="text-xs font-bold text-gray-900 mb-1 uppercase">Slot</p>
+                      <p className="text-3xl font-bold text-primary-600">
+                        {selectedGamePackage.unlimitedSlot ? '∞' : (selectedGamePackage.slot || '-')}
+                      </p>
                     </div>
                   )}
-                </div>
-                {additionalSlots > 0 && selectedGamePackage.pricePerSlot && (
-                  <p className="text-sm text-green-600 font-bold mt-2">
-                    +{formatPrice(additionalSlots * selectedGamePackage.pricePerSlot, selectedGamePackage.currency)}/hó
-                  </p>
-                )}
-              </div>
-              ) : (
-              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                <p className="text-xs font-bold text-gray-900 mb-1 uppercase">Slot</p>
-                <p className="text-3xl font-bold text-primary-600">
-                  {selectedGamePackage.unlimitedSlot ? '∞' : (selectedGamePackage.slot || '-')}
-                </p>
-              </div>
+                </>
               )}
               
-              {upgradePrices && upgradePrices.pricePerVCpu > 0 ? (
+              {/* Premium package esetén játékok száma */}
+              {isPremiumPackage && selectedPremiumPackage && (
+                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                  <p className="text-xs font-bold text-gray-900 mb-1 uppercase">{locale === 'hu' ? 'Játékok' : 'Games'}</p>
+                  <p className="text-3xl font-bold text-primary-600">{selectedPremiumPackage.games.length}</p>
+                </div>
+              )}
+              
+              {upgradePrices && upgradePrices.pricePerVCpu > 0 && !isPremiumPackage ? (
               <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 relative z-10">
                 <p className="text-xs font-bold text-gray-900 mb-2 uppercase">CPU</p>
                 <div className="relative z-20">
@@ -402,9 +506,9 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
                     }}
                     className="w-full px-3 py-2 border-2 border-primary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-primary-600 bg-white text-xl font-bold appearance-none cursor-pointer hover:border-primary-400 transition-colors relative z-30"
                   >
-                    {Array.from({ length: MAX_VCPU - selectedGamePackage.cpuCores + 1 }, (_, i) => i).map((value) => (
+                    {Array.from({ length: MAX_VCPU - getPackageCpuCores() + 1 }, (_, i) => i).map((value) => (
                       <option key={value} value={value}>
-                        {selectedGamePackage.cpuCores + value} vCore
+                        {getPackageCpuCores() + value} vCore
                       </option>
                     ))}
                   </select>
@@ -423,12 +527,12 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
               ) : (
               <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                 <p className="text-xs font-bold text-gray-900 mb-1 uppercase">CPU</p>
-                <p className="text-3xl font-bold text-primary-600">{selectedGamePackage.cpuCores}</p>
+                <p className="text-3xl font-bold text-primary-600">{getPackageCpuCores()}</p>
                 <p className="text-xs text-gray-800 font-medium mt-1">vCore</p>
               </div>
               )}
               
-              {upgradePrices && upgradePrices.pricePerRamGB > 0 ? (
+              {upgradePrices && upgradePrices.pricePerRamGB > 0 && !isPremiumPackage ? (
               <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 relative z-10">
                 <p className="text-xs font-bold text-gray-900 mb-2 uppercase">RAM</p>
                 <div className="relative z-20">
@@ -440,9 +544,9 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
                     }}
                     className="w-full px-3 py-2 border-2 border-primary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-primary-600 bg-white text-xl font-bold appearance-none cursor-pointer hover:border-primary-400 transition-colors relative z-30"
                   >
-                    {Array.from({ length: MAX_RAM_GB - selectedGamePackage.ram + 1 }, (_, i) => i).map((value) => (
+                    {Array.from({ length: MAX_RAM_GB - getPackageRam() + 1 }, (_, i) => i).map((value) => (
                       <option key={value} value={value}>
-                        {selectedGamePackage.ram + value} GB
+                        {getPackageRam() + value} GB
                       </option>
                     ))}
                   </select>
@@ -461,7 +565,7 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
               ) : (
               <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                 <p className="text-xs font-bold text-gray-900 mb-1 uppercase">RAM</p>
-                <p className="text-3xl font-bold text-primary-600">{selectedGamePackage.ram}</p>
+                <p className="text-3xl font-bold text-primary-600">{getPackageRam()}</p>
                 <p className="text-xs text-gray-800 font-medium mt-1">GB</p>
               </div>
               )}
@@ -469,24 +573,24 @@ export function ServerOrderForm({ selectedGamePackage, locale }: ServerOrderForm
                 <p className="text-xs font-bold text-gray-900 mb-1 uppercase">Ár</p>
                 <p className="text-2xl font-bold text-emerald-700">
                   {formatPrice(
-                    (selectedGamePackage.discountPrice || selectedGamePackage.price) + 
-                    (upgradePrices ? (additionalVCpu * upgradePrices.pricePerVCpu + additionalRamGB * upgradePrices.pricePerRamGB) : 0) +
-                    (selectedGamePackage.pricePerSlot && additionalSlots > 0 ? additionalSlots * selectedGamePackage.pricePerSlot : 0),
-                    selectedGamePackage.currency
+                    (getPackageDiscountPrice() || getPackagePrice()) + 
+                    (upgradePrices && !isPremiumPackage ? (additionalVCpu * upgradePrices.pricePerVCpu + additionalRamGB * upgradePrices.pricePerRamGB) : 0) +
+                    (!isPremiumPackage && selectedGamePackage?.pricePerSlot && additionalSlots > 0 ? additionalSlots * selectedGamePackage.pricePerSlot : 0),
+                    getPackageCurrency()
                   )}
                 </p>
-                <p className="text-xs text-gray-900 font-semibold mt-1">/{selectedGamePackage.interval === 'month' ? 'hó' : 'év'}</p>
-                {selectedGamePackage.discountPrice && (
+                <p className="text-xs text-gray-900 font-semibold mt-1">/{getPackageInterval() === 'month' ? 'hó' : 'év'}</p>
+                {getPackageDiscountPrice() && (
                   <p className="text-xs text-gray-800 line-through mt-1 font-semibold">
-                    {formatPrice(selectedGamePackage.price, selectedGamePackage.currency)}
+                    {formatPrice(getPackagePrice(), getPackageCurrency())}
                   </p>
                 )}
-                {((additionalVCpu > 0 || additionalRamGB > 0) && upgradePrices) || (additionalSlots > 0 && selectedGamePackage.pricePerSlot) ? (
+                {!isPremiumPackage && ((additionalVCpu > 0 || additionalRamGB > 0) && upgradePrices) || (additionalSlots > 0 && selectedGamePackage?.pricePerSlot) ? (
                   <p className="text-xs text-green-700 font-semibold mt-1">
                     +{formatPrice(
                       (upgradePrices ? (additionalVCpu * upgradePrices.pricePerVCpu + additionalRamGB * upgradePrices.pricePerRamGB) : 0) +
-                      (selectedGamePackage.pricePerSlot && additionalSlots > 0 ? additionalSlots * selectedGamePackage.pricePerSlot : 0),
-                      selectedGamePackage.currency
+                      (selectedGamePackage?.pricePerSlot && additionalSlots > 0 ? additionalSlots * selectedGamePackage.pricePerSlot : 0),
+                      getPackageCurrency()
                     )} bővítés
                   </p>
                 ) : null}

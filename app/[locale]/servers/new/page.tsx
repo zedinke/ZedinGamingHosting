@@ -11,16 +11,60 @@ export default async function NewServerPage({
   searchParams,
 }: {
   params: { locale: string };
-  searchParams: { plan?: string; game?: string; package?: string; gameType?: string };
+  searchParams: { plan?: string; game?: string; package?: string; gameType?: string; premiumPackage?: string };
 }) {
   await requireAuth();
   const t = getTranslations(locale, 'common');
 
-  // Game package ellenőrzése - kötelező
-  if (!searchParams.package) {
+  // Premium package vagy game package ellenőrzése - legalább egy kötelező
+  if (!searchParams.package && !searchParams.premiumPackage) {
     redirect(`/${locale}/games`);
   }
 
+  // Premium package kezelése
+  if (searchParams.premiumPackage) {
+    const selectedPremiumPackage = await prisma.premiumPackage.findUnique({
+      where: { id: searchParams.premiumPackage },
+      include: {
+        games: {
+          orderBy: {
+            order: 'asc',
+          },
+        },
+      },
+    });
+
+    if (!selectedPremiumPackage || !selectedPremiumPackage.isActive) {
+      redirect(`/${locale}/games`);
+    }
+
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navigation locale={locale} />
+        <main className="container mx-auto px-4 py-16">
+          <div className="max-w-4xl mx-auto">
+            {/* Hero Section */}
+            <div className="text-center mb-12">
+              <h1 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900">
+                Új Szerver Rendelése
+              </h1>
+              <p className="text-xl text-gray-800 font-medium">
+                Töltsd ki az alábbi űrlapot és szervered percek alatt készen áll
+              </p>
+            </div>
+
+            <ServerOrderForm
+              selectedPremiumPackage={selectedPremiumPackage}
+              locale={locale}
+            />
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Game package kezelése (eredeti logika)
   const selectedGamePackage = await prisma.gamePackage.findUnique({
     where: { id: searchParams.package },
   });
