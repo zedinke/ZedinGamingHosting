@@ -13,37 +13,41 @@ export async function GET(request: NextRequest) {
       throw createUnauthorizedError('Admin jogosultság szükséges');
     }
 
-    // Visszaadjuk az összes aktív GameConfig-et, amiknek van aktív GamePackage-je
-    // Premium csomagokhoz is szükségünk van játékokra, ezért csak azokat adjuk vissza, amiknek van aktív csomagja
-    // Ez biztosítja, hogy csak azok a játékok jelenjenek meg, amik valóban elérhetők
-    const configs = await prisma.gameConfig.findMany({
+    // Először lekérjük az összes aktív GamePackage-t, hogy lássuk, milyen gameType-okhoz van aktív csomag
+    const activePackages = await prisma.gamePackage.findMany({
       where: {
         isActive: true,
+      },
+      select: {
+        gameType: true,
+      },
+      distinct: ['gameType'],
+    });
+
+    // Kinyerjük a gameType-okat
+    const activeGameTypes = activePackages.map((pkg) => pkg.gameType);
+
+    // Ha nincs aktív csomag, üres listát adunk vissza
+    if (activeGameTypes.length === 0) {
+      return NextResponse.json({ configs: [] });
+    }
+
+    // Lekérjük az összes GameConfig-et, amiknek van aktív GamePackage-je
+    // Nem szűrünk isActive-re, mert lehet, hogy a GameConfig inaktív, de van aktív GamePackage
+    const configs = await prisma.gameConfig.findMany({
+      where: {
+        gameType: {
+          in: activeGameTypes,
+        },
       },
       orderBy: {
         displayName: 'asc',
       },
     });
 
-    // Ellenőrizzük, hogy van-e aktív GamePackage minden játékhoz
-    const configsWithActivePackages = await Promise.all(
-      configs.map(async (config) => {
-        const activePackage = await prisma.gamePackage.findFirst({
-          where: {
-            gameType: config.gameType,
-            isActive: true,
-          },
-        });
-        // Visszaadjuk a config-ot, ha van aktív csomagja
-        return activePackage ? config : null;
-      })
-    );
-
-    // Csak azokat a játékokat adjuk vissza, amiknek van aktív csomagja
-    const filteredConfigs = configsWithActivePackages.filter((config): config is typeof configs[0] => config !== null);
-
-    return NextResponse.json({ configs: filteredConfigs });
+    return NextResponse.json({ configs });
   } catch (error: any) {
+    console.error('Error in /api/admin/game-configs:', error);
     return handleApiError(error);
   }
 }
