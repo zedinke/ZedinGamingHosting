@@ -83,49 +83,96 @@ install_server() {
     chown -R "$SERVER_USER:$SERVER_GROUP" "$STEAM_HOME"
     chmod -R 755 "$STEAM_HOME"
     
+    # SteamCMD parancs meghatározása
+    STEAMCMD_CMD=""
+    if [ -f /opt/steamcmd/steamcmd.sh ]; then
+        STEAMCMD_CMD="/opt/steamcmd/steamcmd.sh"
+        log "SteamCMD található: /opt/steamcmd/steamcmd.sh"
+    elif [ -f /usr/games/steamcmd ]; then
+        STEAMCMD_CMD="/usr/games/steamcmd"
+        log "SteamCMD található: /usr/games/steamcmd"
+    elif command -v steamcmd &> /dev/null; then
+        STEAMCMD_CMD="steamcmd"
+        log "SteamCMD található: steamcmd (PATH-ban)"
+    else
+        log "HIBA: SteamCMD nem található!" >&2
+        log "Keresett helyek: /opt/steamcmd/steamcmd.sh, /usr/games/steamcmd, PATH" >&2
+        exit 1
+    fi
+    
     local retry_count=0
     local install_success=false
     
     while [ $retry_count -lt $MAX_RETRIES ]; do
         log "SteamCMD futtatása (próbálkozás $((retry_count + 1))/$MAX_RETRIES)..."
+        log "Telepítési mappa: $SERVER_DIR"
+        log "Steam App ID: $STEAM_APP_ID"
         
-        # SteamCMD parancs meghatározása
-        STEAMCMD_CMD=""
-        if [ -f /opt/steamcmd/steamcmd.sh ]; then
-            STEAMCMD_CMD="/opt/steamcmd/steamcmd.sh"
-        elif [ -f /usr/games/steamcmd ]; then
-            STEAMCMD_CMD="/usr/games/steamcmd"
-        elif command -v steamcmd &> /dev/null; then
-            STEAMCMD_CMD="steamcmd"
-        else
-            log "HIBA: SteamCMD nem található!" >&2
-            exit 1
-        fi
-        
+        # SteamCMD futtatása részletes logolással
         sudo -u "$SERVER_USER" HOME="$STEAM_HOME" $STEAMCMD_CMD \
             +force_install_dir "$SERVER_DIR" \
             +login anonymous \
             +app_update "$STEAM_APP_ID" validate \
-            +quit
+            +quit 2>&1 | tee -a /tmp/steamcmd-$$.log
         
         local exit_code=$?
+        log "SteamCMD exit code: $exit_code"
         
+        # Ellenőrizzük a SteamCMD logot
+        if [ -f /tmp/steamcmd-$$.log ]; then
+            log "SteamCMD log tartalma:"
+            tail -20 /tmp/steamcmd-$$.log | while read line; do
+                log "  $line"
+            done
+        fi
+        
+        # Ellenőrizzük több helyen is a fájlokat
+        local server_exe_found=false
+        
+        # 1. Közvetlenül a SERVER_DIR-ben
         if [ -f "$SERVER_DIR/7DaysToDieServer.x86_64" ]; then
+            log "7DaysToDieServer.x86_64 található: $SERVER_DIR/7DaysToDieServer.x86_64"
+            server_exe_found=true
+        fi
+        
+        # 2. SteamApps mappában
+        if [ -f "$SERVER_DIR/steamapps/common/7 Days To Die Dedicated Server/7DaysToDieServer.x86_64" ]; then
+            log "7DaysToDieServer.x86_64 található: $SERVER_DIR/steamapps/common/7 Days To Die Dedicated Server/"
+            # Másoljuk át a fájlt a SERVER_DIR-be
+            cp "$SERVER_DIR/steamapps/common/7 Days To Die Dedicated Server/7DaysToDieServer.x86_64" "$SERVER_DIR/" 2>/dev/null || true
+            server_exe_found=true
+        fi
+        
+        # 3. Ellenőrizzük a mappa tartalmát
+        log "SERVER_DIR tartalma:"
+        ls -la "$SERVER_DIR" 2>/dev/null | while read line; do
+            log "  $line"
+        done || log "  (nem sikerült listázni)"
+        
+        if [ "$server_exe_found" = "true" ]; then
             install_success=true
             break
         fi
         
-        log "SteamCMD exit code: $exit_code"
+        log "7DaysToDieServer.x86_64 nem található, újrapróbálkozás..."
         ((retry_count++))
-        sleep 15
+        if [ $retry_count -lt $MAX_RETRIES ]; then
+            sleep 15
+        fi
     done
     
     rm -rf "$STEAM_HOME" 2>/dev/null || true
+    rm -f /tmp/steamcmd-$$.log 2>/dev/null || true
     
     if [ "$install_success" != "true" ]; then
-        log "HIBA: Telepítés nem sikerült $MAX_RETRIES próbálkozás után"
+        log "HIBA: Telepítés nem sikerült $MAX_RETRIES próbálkozás után" >&2
+        log "Ellenőrzött helyek:" >&2
+        log "  - $SERVER_DIR/7DaysToDieServer.x86_64" >&2
+        log "  - $SERVER_DIR/steamapps/common/7 Days To Die Dedicated Server/7DaysToDieServer.x86_64" >&2
         exit 1
     fi
+    
+    log "Telepítés sikeres!"
 }
 
 # Szerver executable jogosultságok
