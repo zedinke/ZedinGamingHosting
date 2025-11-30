@@ -172,8 +172,116 @@ export async function GET(
         .replace(/{name}/g, config.name)
         .replace(/{queryPort}/g, queryPort.toString())
         .replace(/{rustPlusPort}/g, rustPlusPort.toString());
+    } else if (server.gameType === 'SEVEN_DAYS_TO_DIE') {
+      // 7 Days to Die: port és telnetPort az adatbázisból
+      const port = serverWithPorts?.port || config.port || 26900;
+      const serverConfig = serverWithPorts?.configuration ? (typeof serverWithPorts.configuration === 'string' ? JSON.parse(serverWithPorts.configuration) : serverWithPorts.configuration) : {};
+      const telnetPort = serverConfig.telnetPort || (port + 2);
+      
+      startCommand = startCommand
+        .replace(/{port}/g, port.toString())
+        .replace(/{telnetPort}/g, telnetPort.toString())
+        .replace(/{name}/g, config.name)
+        .replace(/{maxPlayers}/g, config.maxPlayers.toString());
+    } else if (server.gameType === 'PALWORLD') {
+      // Palworld: port az adatbázisból
+      const port = serverWithPorts?.port || config.port || 8211;
+      
+      startCommand = startCommand
+        .replace(/{port}/g, port.toString())
+        .replace(/{maxPlayers}/g, config.maxPlayers.toString());
+    } else if (server.gameType === 'ENSHROUDED') {
+      // Enshrouded: port az adatbázisból
+      const port = serverWithPorts?.port || config.port || 15636;
+      
+      startCommand = startCommand
+        .replace(/{port}/g, port.toString())
+        .replace(/{ServerName}/g, config.name);
+    } else if (server.gameType === 'ARK_EVOLVED' || server.gameType === 'ARK_ASCENDED') {
+      // ARK: port és queryPort az adatbázisból
+      const port = serverWithPorts?.port || config.port || 7777;
+      const queryPort = serverWithPorts?.queryPort || (port + 1);
+      
+      startCommand = startCommand
+        .replace(/{port}/g, port.toString())
+        .replace(/{queryPort}/g, queryPort.toString())
+        .replace(/{adminPassword}/g, config.adminPassword)
+        .replace(/{name}/g, config.name)
+        .replace(/{maxPlayers}/g, config.maxPlayers.toString());
+    } else if (server.gameType === 'CONAN_EXILES') {
+      // Conan Exiles: port és queryPort az adatbázisból
+      const port = serverWithPorts?.port || config.port || 7777;
+      const queryPort = serverWithPorts?.queryPort || (port + 1);
+      
+      startCommand = startCommand
+        .replace(/{port}/g, port.toString())
+        .replace(/{queryPort}/g, queryPort.toString());
+    } else if (server.gameType === 'DAYZ') {
+      // DayZ: port az adatbázisból
+      const port = serverWithPorts?.port || config.port || 2302;
+      
+      startCommand = startCommand
+        .replace(/{port}/g, port.toString());
+    } else if (server.gameType === 'CS2') {
+      // CS2: port az adatbázisból
+      const port = serverWithPorts?.port || config.port || 27015;
+      
+      startCommand = startCommand
+        .replace(/{port}/g, port.toString());
+    } else if (server.gameType === 'KILLING_FLOOR_2') {
+      // Killing Floor 2: port és queryPort az adatbázisból
+      const port = serverWithPorts?.port || config.port || 7777;
+      const queryPort = serverWithPorts?.queryPort || (port + 1);
+      
+      startCommand = startCommand
+        .replace(/{port}/g, port.toString())
+        .replace(/{queryPort}/g, queryPort.toString())
+        .replace(/{maxPlayers}/g, config.maxPlayers.toString());
+    } else if (server.gameType === 'TERRARIA') {
+      // Terraria: port az adatbázisból
+      const port = serverWithPorts?.port || config.port || 7777;
+      
+      startCommand = startCommand
+        .replace(/{port}/g, port.toString())
+        .replace(/{world}/g, config.world)
+        .replace(/{maxPlayers}/g, config.maxPlayers.toString());
+    } else if (server.gameType === 'V_RISING') {
+      // V Rising: port az adatbázisból
+      const port = serverWithPorts?.port || config.port || 27015;
+      
+      startCommand = startCommand
+        .replace(/{port}/g, port.toString())
+        .replace(/{name}/g, config.name);
+    } else if (server.gameType === 'GROUNDED') {
+      // Grounded: port és queryPort az adatbázisból
+      const port = serverWithPorts?.port || config.port || 7777;
+      const queryPort = serverWithPorts?.queryPort || (port + 1);
+      
+      startCommand = startCommand
+        .replace(/{port}/g, port.toString())
+        .replace(/{queryPort}/g, queryPort.toString());
+    } else if (server.gameType === 'SONS_OF_THE_FOREST') {
+      // Sons of the Forest: port és queryPort az adatbázisból
+      const port = serverWithPorts?.port || config.port || 8766;
+      const queryPort = serverWithPorts?.queryPort || (port + 1);
+      
+      startCommand = startCommand
+        .replace(/{port}/g, port.toString())
+        .replace(/{queryPort}/g, queryPort.toString());
+    } else if (server.gameType === 'PROJECT_ZOMBOID') {
+      // Project Zomboid: port az adatbázisból
+      const port = serverWithPorts?.port || config.port || 16261;
+      
+      startCommand = startCommand
+        .replace(/{port}/g, port.toString());
+    } else if (server.gameType === 'DONT_STARVE_TOGETHER') {
+      // Don't Starve Together: port az adatbázisból
+      const port = serverWithPorts?.port || config.port || 10999;
+      
+      startCommand = startCommand
+        .replace(/{port}/g, port.toString());
     } else {
-      // Más játékok: alapértelmezett logika
+      // Más játékok: alapértelmezett logika, de az adatbázisból kinyert portokat használjuk
       const port = serverWithPorts?.port || config.port;
       const queryPort = serverWithPorts?.queryPort || (gameConfig.queryPort || port + 1);
       const beaconPort = serverWithPorts?.beaconPort || (gameConfig.beaconPort || (gameConfig.queryPort ? gameConfig.queryPort + 1 : port + 2));
@@ -213,6 +321,41 @@ export async function GET(
       responseConfig.port = serverWithPorts?.port || config.port || 28015;
       responseConfig.queryPort = serverWithPorts?.queryPort || (responseConfig.port + 1);
       responseConfig.rustPlusPort = (serverWithPorts as any)?.rustPlusPort || (responseConfig.port + 67);
+    } else if (server.gameType === 'SEVEN_DAYS_TO_DIE') {
+      const serverConfig = serverWithPorts?.configuration ? (typeof serverWithPorts.configuration === 'string' ? JSON.parse(serverWithPorts.configuration) : serverWithPorts.configuration) : {};
+      responseConfig.port = serverWithPorts?.port || config.port || 26900;
+      responseConfig.telnetPort = serverConfig.telnetPort || (responseConfig.port + 2);
+    } else if (server.gameType === 'PALWORLD') {
+      responseConfig.port = serverWithPorts?.port || config.port || 8211;
+    } else if (server.gameType === 'ENSHROUDED') {
+      responseConfig.port = serverWithPorts?.port || config.port || 15636;
+    } else if (server.gameType === 'ARK_EVOLVED' || server.gameType === 'ARK_ASCENDED') {
+      responseConfig.port = serverWithPorts?.port || config.port || 7777;
+      responseConfig.queryPort = serverWithPorts?.queryPort || (responseConfig.port + 1);
+    } else if (server.gameType === 'CONAN_EXILES') {
+      responseConfig.port = serverWithPorts?.port || config.port || 7777;
+      responseConfig.queryPort = serverWithPorts?.queryPort || (responseConfig.port + 1);
+    } else if (server.gameType === 'DAYZ') {
+      responseConfig.port = serverWithPorts?.port || config.port || 2302;
+    } else if (server.gameType === 'CS2') {
+      responseConfig.port = serverWithPorts?.port || config.port || 27015;
+    } else if (server.gameType === 'KILLING_FLOOR_2') {
+      responseConfig.port = serverWithPorts?.port || config.port || 7777;
+      responseConfig.queryPort = serverWithPorts?.queryPort || (responseConfig.port + 1);
+    } else if (server.gameType === 'TERRARIA') {
+      responseConfig.port = serverWithPorts?.port || config.port || 7777;
+    } else if (server.gameType === 'V_RISING') {
+      responseConfig.port = serverWithPorts?.port || config.port || 27015;
+    } else if (server.gameType === 'GROUNDED') {
+      responseConfig.port = serverWithPorts?.port || config.port || 7777;
+      responseConfig.queryPort = serverWithPorts?.queryPort || (responseConfig.port + 1);
+    } else if (server.gameType === 'SONS_OF_THE_FOREST') {
+      responseConfig.port = serverWithPorts?.port || config.port || 8766;
+      responseConfig.queryPort = serverWithPorts?.queryPort || (responseConfig.port + 1);
+    } else if (server.gameType === 'PROJECT_ZOMBOID') {
+      responseConfig.port = serverWithPorts?.port || config.port || 16261;
+    } else if (server.gameType === 'DONT_STARVE_TOGETHER') {
+      responseConfig.port = serverWithPorts?.port || config.port || 10999;
     } else {
       responseConfig.queryPort = serverWithPorts?.queryPort || (gameConfig.queryPort || config.port + 1);
       responseConfig.beaconPort = serverWithPorts?.beaconPort || (gameConfig.beaconPort || (gameConfig.queryPort ? gameConfig.queryPort + 1 : config.port + 2));

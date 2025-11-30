@@ -1299,16 +1299,31 @@ export async function createSystemdServiceForServer(
   
   let startCommand = gameConfig.startCommand;
   
+  // Változók definiálása az összes játékhoz (The Forest Windows verzióhoz is szükséges)
+  // Ezeket az else blokkon kívül definiáljuk, hogy a The Forest Windows verzió kezelése is elérje
+  let finalPort = port;
+  let finalQueryPort = gameConfig.queryPort || port + 1;
+  let finalSteamPeerPort: number | undefined;
+  let finalRustPlusPort: number | undefined;
+  
   // ARK-nál a közös fájlokat használjuk, de az instance könyvtárban dolgozunk
   if (paths?.isARK && paths.sharedPath) {
     // ARK start command a közös binárist használja, de az instance Saved könyvtárát
+    // Fontos: az ARK-nál is az adatbázisból kinyert portokat használjuk
+    const serverWithPortsARK = await prisma.server.findUnique({
+      where: { id: serverId },
+    });
+    const serverWithPortsARKTyped = serverWithPortsARK as any;
+    
     const map = config.map || 'TheIsland';
-    const queryPort = gameConfig.queryPort || port + 1;
+    const arkPort = serverWithPortsARK?.port || port;
+    const arkQueryPort = serverWithPortsARKTyped?.queryPort || (gameConfig.queryPort || arkPort + 1);
     const adminPassword = config.adminPassword || 'changeme';
     
-    startCommand = `cd ${paths.sharedPath} && ./ShooterGame/Binaries/Linux/ShooterGameServer ${map}?listen?Port=${port}?QueryPort=${queryPort}?ServerAdminPassword=${adminPassword} -servergamelog -servergamelogincludetribelogs -NoBattlEye -UseBattlEye -clusterid=${config.clusterId || ''} -ClusterDirOverride=${paths.serverPath}/ShooterGame/Saved`;
+    startCommand = `cd ${paths.sharedPath} && ./ShooterGame/Binaries/Linux/ShooterGameServer ${map}?listen?Port=${arkPort}?QueryPort=${arkQueryPort}?ServerAdminPassword=${adminPassword} -servergamelog -servergamelogincludetribelogs -NoBattlEye -UseBattlEye -clusterid=${config.clusterId || ''} -ClusterDirOverride=${paths.serverPath}/ShooterGame/Saved`;
   } else {
     // Normál játékok
+    // A változók már definiálva vannak az else blokkon kívül
     const beaconPort = gameConfig.beaconPort || (gameConfig.queryPort ? gameConfig.queryPort + 1 : port + 2);
     const queryPort = gameConfig.queryPort || port + 1;
     
@@ -1317,13 +1332,8 @@ export async function createSystemdServiceForServer(
       // Lekérjük a portokat az adatbázisból vagy a config-ból
       const serverWithPorts = await prisma.server.findUnique({
         where: { id: serverId },
-        select: {
-          port: true,
-          queryPort: true,
-          beaconPort: true,
-          configuration: true,
-        },
       });
+      const serverWithPortsTyped = serverWithPorts as any;
       
       // Satisfactory port számítások az adatbázisból (új logika):
       // Az adatbázisban:
@@ -1333,8 +1343,8 @@ export async function createSystemdServiceForServer(
       
       // Lekérjük az adatbázisból a portokat
       const dbGamePort = serverWithPorts?.port || port || 7777; // GamePort = port mező
-      const dbQueryPort = serverWithPorts?.queryPort || (dbGamePort + 2); // QueryPort = queryPort mező (GamePort + 2)
-      const dbBeaconPort = serverWithPorts?.beaconPort || (dbQueryPort + 2); // BeaconPort = beaconPort mező (QueryPort + 2)
+      const dbQueryPort = serverWithPortsTyped?.queryPort || (dbGamePort + 2); // QueryPort = queryPort mező (GamePort + 2)
+      const dbBeaconPort = serverWithPortsTyped?.beaconPort || (dbQueryPort + 2); // BeaconPort = beaconPort mező (QueryPort + 2)
       
       // Config-ból is próbáljuk, ha van (ha a config-ban vannak, akkor azokat használjuk)
       let finalGamePort = config.gamePort || dbGamePort;
@@ -1441,27 +1451,18 @@ export async function createSystemdServiceForServer(
       });
     } else {
       // Más játékoknál (Valheim, The Forest, Rust, stb.) is az adatbázisból kinyerjük a portokat
-      let finalPort = port;
-      let finalQueryPort = queryPort;
-      let finalSteamPeerPort: number | undefined;
-      let finalRustPlusPort: number | undefined;
+      // A változók már definiálva vannak az else blokk elején
       
       // Lekérjük a portokat az adatbázisból
       const serverWithPorts = await prisma.server.findUnique({
         where: { id: serverId },
-        select: {
-          port: true,
-          queryPort: true,
-          steamPeerPort: true,
-          rustPlusPort: true,
-          configuration: true,
-        },
       });
+      const serverWithPortsTyped = serverWithPorts as any;
       
       // Az adatbázisból kinyert portok használata
       if (serverWithPorts) {
         finalPort = serverWithPorts.port || port;
-        finalQueryPort = serverWithPorts.queryPort || queryPort;
+        finalQueryPort = serverWithPortsTyped?.queryPort || queryPort;
         
         // The Forest esetén steamPeerPort
         if (gameType === 'THE_FOREST') {
@@ -1563,6 +1564,13 @@ export async function createSystemdServiceForServer(
       // IP cím meghatározása (machine IP vagy 0.0.0.0, ha nincs)
       const serverIp = machine?.ipAddress || '0.0.0.0';
       
+      // SteamPeerPort az adatbázisból (ha már kinyertük korábban, akkor azt használjuk)
+      // Ha nincs, akkor számoljuk ki (QueryPort + 1)
+      let steamPeerPortForForest = finalSteamPeerPort;
+      if (!steamPeerPortForForest && finalQueryPort) {
+        steamPeerPortForForest = finalQueryPort + 1;
+      }
+      
       startCommand = startCommand
         .replace(/{serverautosaveinterval}/g, (config.serverautosaveinterval || 15).toString())
         .replace(/{difficulty}/g, config.difficulty || 'Normal')
@@ -1571,7 +1579,12 @@ export async function createSystemdServiceForServer(
         // Slot fix érték (csomaghoz kötött, nem változtatható)
         .replace(/{slot}/g, (config.slot || 3).toString())
         // IP cím (Wine hálózati hiba elkerülése)
-        .replace(/{serverip}/g, serverIp);
+        .replace(/{serverip}/g, serverIp)
+        // SteamPeerPort az adatbázisból (Windows verzióhoz)
+        // Ha nincs az adatbázisban, számoljuk ki (QueryPort + 1)
+        // Ha nincs QueryPort sem, akkor Port + 2
+        const steamPeerPortValue = steamPeerPortForForest || (finalQueryPort ? (finalQueryPort + 1) : (finalPort ? (finalPort + 2) : (port ? (port + 2) : 8766)));
+        startCommand = startCommand.replace(/{steamPeerPort}/g, steamPeerPortValue.toString());
     }
   }
 
@@ -1695,17 +1708,24 @@ export async function createSystemdServiceForServer(
       } else {
         useWineForForest = true;
         // Windows bináris esetén használjuk a startCommandWindows-ot
+        // Fontos: az adatbázisból kinyert portokat használjuk
         if (gameConfig.startCommandWindows) {
           startCommand = gameConfig.startCommandWindows;
+          // Az adatbázisból kinyert portokat használjuk (már korábban kinyertük)
+          const forestPort = finalPort || port;
+          const forestQueryPort = finalQueryPort || (gameConfig.queryPort || port + 1);
+          const forestSteamPeerPort = finalSteamPeerPort || (forestQueryPort + 1);
+          
           startCommand = startCommand
-            .replace(/{port}/g, port.toString())
+            .replace(/{port}/g, forestPort.toString())
             .replace(/{maxPlayers}/g, maxPlayers.toString())
             .replace(/{ram}/g, ram.toString())
             .replace(/{name}/g, name)
             .replace(/{world}/g, config.world || 'Dedicated')
             .replace(/{password}/g, config.password || '')
             .replace(/{adminPassword}/g, config.adminPassword || 'changeme')
-            .replace(/{queryPort}/g, (gameConfig.queryPort || port + 1).toString())
+            .replace(/{queryPort}/g, forestQueryPort.toString())
+            .replace(/{steamPeerPort}/g, forestSteamPeerPort.toString())
             .replace(/{map}/g, config.map || 'TheIsland');
         }
       }
@@ -1714,15 +1734,21 @@ export async function createSystemdServiceForServer(
       useWineForForest = true;
       if (gameConfig.startCommandWindows) {
         startCommand = gameConfig.startCommandWindows;
+        // Az adatbázisból kinyert portokat használjuk (már korábban kinyertük)
+        const forestPort = finalPort || port;
+        const forestQueryPort = finalQueryPort || (gameConfig.queryPort || port + 1);
+        const forestSteamPeerPort = finalSteamPeerPort || (forestQueryPort + 1);
+        
         startCommand = startCommand
-          .replace(/{port}/g, port.toString())
+          .replace(/{port}/g, forestPort.toString())
           .replace(/{maxPlayers}/g, maxPlayers.toString())
           .replace(/{ram}/g, ram.toString())
           .replace(/{name}/g, name)
           .replace(/{world}/g, config.world || 'Dedicated')
           .replace(/{password}/g, config.password || '')
           .replace(/{adminPassword}/g, config.adminPassword || 'changeme')
-          .replace(/{queryPort}/g, (gameConfig.queryPort || port + 1).toString())
+          .replace(/{queryPort}/g, forestQueryPort.toString())
+          .replace(/{steamPeerPort}/g, forestSteamPeerPort.toString())
           .replace(/{map}/g, config.map || 'TheIsland');
         
         // The Forest specifikus placeholder-ek (Windows verzió)
