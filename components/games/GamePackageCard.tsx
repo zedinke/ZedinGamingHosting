@@ -18,9 +18,11 @@ interface GamePackage {
   currency: string;
   interval: string;
   image: string | null;
-  slot: number;
+  slot: number | null;
+  unlimitedSlot?: boolean;
   cpuCores: number;
   ram: number;
+  unlimitedRam?: boolean;
   discountPrice: number | null;
   isActive: boolean;
   order: number;
