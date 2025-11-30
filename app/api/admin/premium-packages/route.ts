@@ -93,8 +93,46 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    if (gameConfigs.length !== gameTypes.length) {
-      throw createValidationError('form', 'Egy vagy több játék nem található');
+    // Ha nincs GameConfig valamelyik játékhoz, akkor a GamePackage-ekből kinyerjük az adatokat
+    const foundGameTypes = new Set(gameConfigs.map((gc) => gc.gameType));
+    const missingGameTypes = gameTypes.filter((gt) => !foundGameTypes.has(gt));
+
+    if (missingGameTypes.length > 0) {
+      // Lekérjük a GamePackage-eket a hiányzó játékokhoz
+      const allGamePackages = await prisma.gamePackage.findMany({
+        where: {
+          gameType: {
+            in: missingGameTypes,
+          },
+          isActive: true,
+        },
+        select: {
+          gameType: true,
+          cpuCores: true,
+          ram: true,
+        },
+      });
+
+      // Csak az első GamePackage-t használjuk minden gameType-hoz (distinct logika)
+      const gamePackages = Array.from(
+        new Map(allGamePackages.map((pkg) => [pkg.gameType, pkg])).values()
+      );
+
+      // Hozzáadjuk a hiányzó GameConfig-eket a GamePackage-ekből
+      gamePackages.forEach((pkg) => {
+        gameConfigs.push({
+          gameType: pkg.gameType,
+          defaultCpuCores: pkg.cpuCores || 2,
+          defaultRamGB: pkg.ram || 4,
+        } as any);
+      });
+
+      // Ha még mindig hiányoznak játékok, akkor hiba
+      const allFoundGameTypes = new Set(gameConfigs.map((gc) => gc.gameType));
+      const stillMissing = gameTypes.filter((gt) => !allFoundGameTypes.has(gt));
+      if (stillMissing.length > 0) {
+        throw createValidationError('form', `Egy vagy több játék nem található: ${stillMissing.join(', ')}`);
+      }
     }
 
     // Számoljuk ki az erőforrás limiteket (legnagyobb gépigényű játék alapján)
