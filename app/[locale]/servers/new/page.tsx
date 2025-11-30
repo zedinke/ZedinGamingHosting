@@ -38,6 +38,43 @@ export default async function NewServerPage({
       redirect(`/${locale}/games`);
     }
 
+    // Lekérjük a GameConfig adatokat a játékokhoz
+    const gameTypes = selectedPremiumPackage.games.map((g) => g.gameType);
+    const gameConfigs = await prisma.gameConfig.findMany({
+      where: {
+        gameType: {
+          in: gameTypes,
+        },
+      },
+    });
+
+    // Átalakítjuk az adatokat a komponens által várt formátumra
+    const transformedPremiumPackage = {
+      id: selectedPremiumPackage.id,
+      nameHu: selectedPremiumPackage.nameHu,
+      nameEn: selectedPremiumPackage.nameEn,
+      descriptionHu: selectedPremiumPackage.descriptionHu,
+      descriptionEn: selectedPremiumPackage.descriptionEn,
+      price: selectedPremiumPackage.price,
+      currency: selectedPremiumPackage.currency,
+      interval: selectedPremiumPackage.interval,
+      discountPrice: selectedPremiumPackage.discountPrice,
+      image: selectedPremiumPackage.image,
+      videoUrl: selectedPremiumPackage.videoUrl,
+      cpuCores: selectedPremiumPackage.cpuCores,
+      ram: selectedPremiumPackage.ram,
+      games: selectedPremiumPackage.games.map((game) => {
+        const gameConfig = gameConfigs.find((gc) => gc.gameType === game.gameType);
+        return {
+          gameType: game.gameType,
+          displayName: gameConfig?.displayName || game.gameType,
+          image: gameConfig?.image || null,
+          videoUrl: gameConfig?.videoUrl || null,
+          description: gameConfig?.description || null,
+        };
+      }),
+    };
+
     return (
       <div className="min-h-screen bg-gray-50">
         <Navigation locale={locale} />
@@ -54,7 +91,7 @@ export default async function NewServerPage({
             </div>
 
             <ServerOrderForm
-              selectedPremiumPackage={selectedPremiumPackage}
+              selectedPremiumPackage={transformedPremiumPackage}
               locale={locale}
             />
           </div>
