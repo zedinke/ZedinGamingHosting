@@ -67,11 +67,15 @@ export function LoginForm({ locale }: LoginFormProps) {
   const handleOAuthSignIn = async (provider: 'google' | 'discord') => {
     setOauthLoading(provider);
     try {
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
+      const callbackUrl = `${baseUrl}/${locale}/dashboard`;
+      
       await signIn(provider, {
-        callbackUrl: `/${locale}/dashboard`,
+        callbackUrl,
         redirect: true,
       });
     } catch (error) {
+      console.error('OAuth sign in error:', error);
       toast.error(t('common.error'));
       setOauthLoading(null);
     }

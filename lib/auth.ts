@@ -61,6 +61,13 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || '',
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+      authorization: {
+        params: {
+          prompt: 'consent',
+          access_type: 'offline',
+          response_type: 'code',
+        },
+      },
     }),
     DiscordProvider({
       clientId: process.env.DISCORD_CLIENT_ID || '',
@@ -68,7 +75,20 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async signIn({ user, account, profile }) {
+      // OAuth bejelentkezés esetén automatikusan ellenőrizzük az email verifikációt
+      if (account?.provider === 'google' || account?.provider === 'discord') {
+        // OAuth esetén automatikusan verified-re állítjuk az email-t
+        if (user.email) {
+          await prisma.user.updateMany({
+            where: { email: user.email },
+            data: { emailVerified: new Date() },
+          });
+        }
+      }
+      return true;
+    },
+    async jwt({ token, user, account }) {
       if (user) {
         token.role = (user as any).role;
         token.id = (user as any).id;
@@ -95,5 +115,6 @@ export const authOptions: NextAuthOptions = {
     maxAge: 7 * 24 * 60 * 60, // 7 nap (biztonsági okokból csökkentve 30 napról)
   },
   secret: process.env.NEXTAUTH_SECRET,
+  debug: process.env.NODE_ENV === 'development',
 };
 
