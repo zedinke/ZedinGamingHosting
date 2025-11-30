@@ -30,16 +30,22 @@ interface GamePackage {
   id: string;
   gameType: string;
   name: string;
+  nameHu?: string | null;
+  nameEn?: string | null;
   price: number;
   currency: string;
   interval: string;
-  slot: number;
+  slot: number | null;
+  unlimitedSlot?: boolean;
   cpuCores: number;
   ram: number;
+  unlimitedRam?: boolean;
   discountPrice: number | null;
   pricePerSlot: number | null;
   image: string | null;
   description: string | null;
+  descriptionHu?: string | null;
+  descriptionEn?: string | null;
   videoUrl: string | null;
 }
 

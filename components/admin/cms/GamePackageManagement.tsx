@@ -9,14 +9,20 @@ interface GamePackage {
   id: string;
   gameType: GameType;
   name: string;
+  nameHu?: string | null;
+  nameEn?: string | null;
   description: string | null;
+  descriptionHu?: string | null;
+  descriptionEn?: string | null;
   price: number;
   currency: string;
   interval: string;
   image: string | null;
-  slot: number;
+  slot: number | null;
+  unlimitedSlot: boolean;
   cpuCores: number;
   ram: number;
+  unlimitedRam?: boolean;
   discountPrice: number | null;
   pricePerSlot: number | null;
   isActive: boolean;
@@ -216,7 +222,7 @@ export function GamePackageManagement({ packages: initialPackages, locale }: Gam
               <div className="grid grid-cols-3 gap-2 mb-4 text-sm">
                 <div>
                   <div className="text-gray-700 font-semibold">Slot</div>
-                  <div className="font-bold text-gray-900">{pkg.slot}</div>
+                  <div className="font-bold text-gray-900">{pkg.unlimitedSlot ? '∞' : (pkg.slot || '-')}</div>
                 </div>
                 <div>
                   <div className="text-gray-700 font-semibold">CPU</div>

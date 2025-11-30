@@ -117,7 +117,8 @@ export const POST = withPerformanceMonitoring(
         port: null, // Port generálás a provisioning során történik
         // Game package specifikációk mentése a konfigurációba (bővített értékekkel)
         configuration: {
-          slot: gamePackage.slot + additionalSlotsValue,
+          slot: gamePackage.unlimitedSlot ? 20 : ((gamePackage.slot || 0) + additionalSlotsValue),
+          unlimitedSlot: gamePackage.unlimitedSlot || false,
           cpuCores: gamePackage.cpuCores + additionalVCpuValue,
           ram: gamePackage.unlimitedRam ? null : (gamePackage.ram + additionalRamGBValue),
           unlimitedRam: gamePackage.unlimitedRam || false,
