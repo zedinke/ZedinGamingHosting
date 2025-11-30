@@ -46,7 +46,9 @@
     "restart": "Újraindítás",
     "start": "Indítás",
     "stop": "Leállítás",
-    "manage": "Kezelés"
+    "manage": "Kezelés",
+    "restarting": "Újraindítás...",
+    "error": "Hiba"
   },
   "common": {
     "save": "Mentés",
@@ -57,15 +59,61 @@
     "search": "Keresés",
     "loading": "Betöltés...",
     "error": "Hiba történt",
-    "success": "Sikeres művelet"
+    "success": "Sikeres művelet",
+    "yes": "Igen",
+    "no": "Nem",
+    "confirm": "Megerősítés",
+    "close": "Bezárás",
+    "back": "Vissza",
+    "next": "Következő",
+    "previous": "Előző",
+    "submit": "Küldés",
+    "reset": "Visszaállítás"
   },
-  "server": {
-    "online": "Online",
-    "offline": "Offline",
-    "starting": "Indítás...",
-    "stopping": "Leállítás...",
-    "restarting": "Újraindítás...",
-    "error": "Hiba"
+  "billing": {
+    "title": "Számlázás",
+    "invoices": "Számlák",
+    "subscriptions": "Előfizetések",
+    "paymentMethod": "Fizetési mód",
+    "amount": "Összeg",
+    "status": "Státusz",
+    "date": "Dátum",
+    "dueDate": "Esedékesség",
+    "paid": "Fizetve",
+    "pending": "Függőben",
+    "failed": "Sikertelen",
+    "refunded": "Visszatérítve",
+    "canceled": "Törölve",
+    "active": "Aktív",
+    "inactive": "Inaktív",
+    "totalPaid": "Összesen fizetve",
+    "pendingAmount": "Függőben lévő összeg",
+    "noInvoices": "Nincs számla",
+    "noSubscriptions": "Nincs előfizetés"
+  },
+  "games": {
+    "title": "Játékok",
+    "selectPackage": "Válassz csomagot",
+    "noPackages": "Jelenleg nincs elérhető csomag",
+    "loading": "Csomagok betöltése...",
+    "error": "Hiba történt a csomagok betöltése során"
+  },
+  "pricing": {
+    "title": "Árazás",
+    "subtitle": "Válassz egy csomagot, amely megfelel az igényeidnek. Minden csomag tartalmaz DDoS védelmet és 24/7 támogatást.",
+    "month": "hó",
+    "year": "év",
+    "noPlans": "Jelenleg nincs elérhető árazási csomag",
+    "showComparison": "Összehasonlítás megjelenítése",
+    "hideComparison": "Összehasonlítás elrejtése"
+  },
+  "admin": {
+    "title": "Admin",
+    "dashboard": "Vezérlőpult",
+    "servers": "Szerverek",
+    "users": "Felhasználók",
+    "invoices": "Számlák",
+    "settings": "Beállítások",
+    "cms": "Tartalomkezelés"
   }
 }
-

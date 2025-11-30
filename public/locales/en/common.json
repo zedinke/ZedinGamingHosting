@@ -46,7 +46,9 @@
     "restart": "Restart",
     "start": "Start",
     "stop": "Stop",
-    "manage": "Manage"
+    "manage": "Manage",
+    "restarting": "Restarting...",
+    "error": "Error"
   },
   "common": {
     "save": "Save",
@@ -57,15 +59,61 @@
     "search": "Search",
     "loading": "Loading...",
     "error": "An error occurred",
-    "success": "Success"
+    "success": "Success",
+    "yes": "Yes",
+    "no": "No",
+    "confirm": "Confirm",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "submit": "Submit",
+    "reset": "Reset"
   },
-  "server": {
-    "online": "Online",
-    "offline": "Offline",
-    "starting": "Starting...",
-    "stopping": "Stopping...",
-    "restarting": "Restarting...",
-    "error": "Error"
+  "billing": {
+    "title": "Billing",
+    "invoices": "Invoices",
+    "subscriptions": "Subscriptions",
+    "paymentMethod": "Payment Method",
+    "amount": "Amount",
+    "status": "Status",
+    "date": "Date",
+    "dueDate": "Due Date",
+    "paid": "Paid",
+    "pending": "Pending",
+    "failed": "Failed",
+    "refunded": "Refunded",
+    "canceled": "Canceled",
+    "active": "Active",
+    "inactive": "Inactive",
+    "totalPaid": "Total Paid",
+    "pendingAmount": "Pending Amount",
+    "noInvoices": "No invoices",
+    "noSubscriptions": "No subscriptions"
+  },
+  "games": {
+    "title": "Games",
+    "selectPackage": "Select Package",
+    "noPackages": "No packages available",
+    "loading": "Loading packages...",
+    "error": "Error loading packages"
+  },
+  "pricing": {
+    "title": "Pricing",
+    "subtitle": "Choose a plan that fits your needs. All plans include DDoS protection and 24/7 support.",
+    "month": "mo",
+    "year": "yr",
+    "noPlans": "No pricing plans available",
+    "showComparison": "Show Comparison",
+    "hideComparison": "Hide Comparison"
+  },
+  "admin": {
+    "title": "Admin",
+    "dashboard": "Dashboard",
+    "servers": "Servers",
+    "users": "Users",
+    "invoices": "Invoices",
+    "settings": "Settings",
+    "cms": "Content Management"
   }
 }
-

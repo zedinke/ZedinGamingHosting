@@ -60,11 +60,15 @@ export const POST = withPerformanceMonitoring(
       if (gamePackage.cpuCores + additionalVCpuValue > MAX_VCPU) {
         throw createValidationError('form', `A vCPU nem lehet nagyobb ${MAX_VCPU}-nál`);
       }
-      if (gamePackage.slot + additionalSlotsValue > MAX_SLOTS) {
+      // Unlimited slot kezelése
+      const baseSlot = gamePackage.unlimitedSlot ? 20 : (gamePackage.slot || 0);
+      
+      if (!gamePackage.unlimitedSlot && gamePackage.slot && (gamePackage.slot + additionalSlotsValue) > MAX_SLOTS) {
         throw createValidationError('form', `A slot szám nem lehet nagyobb ${MAX_SLOTS}-nál`);
       }
 
-      const finalMaxPlayers = gamePackage.slot + additionalSlotsValue;
+      // Ha unlimited slot, akkor 20 slot az indítósorban (nem lehet bővíteni)
+      const finalMaxPlayers = gamePackage.unlimitedSlot ? 20 : (baseSlot + additionalSlotsValue);
       const basePrice = gamePackage.discountPrice || gamePackage.price;
       const finalCurrency = gamePackage.currency;
 
@@ -217,7 +221,7 @@ export const POST = withPerformanceMonitoring(
         userId: (session.user as any).id,
         subscriptionId: subscription.id,
         amount: finalPrice,
-        currency: finalCurrency,
+        currency: 'EUR', // Számlák mindig EUR-ban
         status: 'PENDING',
         invoiceNumber,
         dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 nap

@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
           }))?.id,
           paymentProvider: 'STRIPE', // Próba esetén is STRIPE-ként jelöljük
           amount: amount || 0,
-          currency: currency || invoiceSettings.defaultCurrency,
+          currency: 'EUR', // Számlák mindig EUR-ban
           status: 'PAID', // Próba esetén automatikusan fizetett
           invoiceNumber,
           paidAt: new Date(),

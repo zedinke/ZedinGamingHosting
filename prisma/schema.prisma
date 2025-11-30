@@ -481,14 +481,19 @@ model PricingPlan {
 model GamePackage {
   id            String   @id @default(cuid())
   gameType      GameType
-  name          String // Csomag neve
-  description   String?  @db.Text
+  name          String // Csomag neve (deprecated - használd a nameHu/nameEn mezőket)
+  nameHu        String? // Csomag neve magyarul
+  nameEn        String? // Csomag neve angolul
+  description   String?  @db.Text // Deprecated - használd a descriptionHu/descriptionEn mezőket
+  descriptionHu String? @db.Text // Leírás magyarul
+  descriptionEn String? @db.Text // Leírás angolul
   price         Float
   currency      String   @default("HUF")
   interval      String   @default("month") // month, year
   image         String? // Kép URL
   videoUrl      String? // YouTube videó URL (opcionális)
-  slot          Int // Fix slot szám
+  slot          Int? // Fix slot szám (ha unlimitedSlot = false)
+  unlimitedSlot Boolean  @default(false) // Ha true, akkor korlátlan slot (20 slot az indítósorban)
   cpuCores      Int // Fix CPU vCore szám
   ram           Int // Fix RAM mennyiség GB-ban (ha unlimitedRam = false)
   unlimitedRam  Boolean  @default(false) // Ha true, akkor korlátlan RAM (csak CPU limit van)

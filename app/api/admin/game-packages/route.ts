@@ -56,13 +56,18 @@ export async function POST(request: NextRequest) {
     const {
       gameType,
       name,
+      nameHu,
+      nameEn,
       description,
+      descriptionHu,
+      descriptionEn,
       price,
       currency = 'HUF',
       interval = 'month',
       image,
       videoUrl,
       slot,
+      unlimitedSlot = false,
       cpuCores,
       ram,
       unlimitedRam = false,
@@ -73,9 +78,17 @@ export async function POST(request: NextRequest) {
     } = body;
 
     // Validáció
-    if (!gameType || !name || !price || !slot || !cpuCores) {
+    if (!gameType || !price || !cpuCores) {
       return NextResponse.json(
         { error: 'Minden kötelező mező kitöltése szükséges' },
+        { status: 400 }
+      );
+    }
+
+    // Ha nincs korlátlan slot, akkor slot kötelező
+    if (!unlimitedSlot && (!slot || slot < 1)) {
+      return NextResponse.json(
+        { error: 'Slot szám megadása kötelező, ha nincs korlátlan slot' },
         { status: 400 }
       );
     }
@@ -88,17 +101,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Név validáció - nameHu és nameEn kötelező
+    if (!nameHu || !nameEn) {
+      return NextResponse.json(
+        { error: 'Magyar és angol név megadása kötelező' },
+        { status: 400 }
+      );
+    }
+
     const gamePackage = await prisma.gamePackage.create({
       data: {
         gameType: gameType as any,
-        name,
-        description,
+        name: nameHu, // Backward compatibility
+        nameHu,
+        nameEn,
+        description: descriptionHu || description || null, // Backward compatibility
+        descriptionHu: descriptionHu || null,
+        descriptionEn: descriptionEn || null,
         price: parseFloat(price),
         currency,
         interval,
         image,
         videoUrl: videoUrl || null,
-        slot: parseInt(slot),
+        slot: unlimitedSlot ? null : parseInt(slot),
+        unlimitedSlot: Boolean(unlimitedSlot),
         cpuCores: parseInt(cpuCores),
         ram: unlimitedRam ? 0 : parseInt(ram), // Ha korlátlan RAM, akkor 0
         unlimitedRam: Boolean(unlimitedRam),

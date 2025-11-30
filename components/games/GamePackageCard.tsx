@@ -3,12 +3,17 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { GameType } from '@prisma/client';
+import { getLocalizedGamePackageName, getLocalizedGamePackageDescription } from '@/lib/game-package-i18n';
 
 interface GamePackage {
   id: string;
   gameType: GameType;
   name: string;
+  nameHu?: string | null;
+  nameEn?: string | null;
   description: string | null;
+  descriptionHu?: string | null;
+  descriptionEn?: string | null;
   price: number;
   currency: string;
   interval: string;
@@ -106,7 +111,7 @@ export function GamePackageCard({ package: pkg, locale, onSelect }: GamePackageC
                 <div>
                   <div className="text-2xl font-bold">
                     {formatPrice(pkg.discountPrice, pkg.currency)}
-                    <span className="text-sm font-normal opacity-80">/{pkg.interval === 'month' ? 'hó' : 'év'}</span>
+                    <span className="text-sm font-normal opacity-80">/{pkg.interval === 'month' ? (locale === 'hu' ? 'hó' : 'mo') : (locale === 'hu' ? 'év' : 'yr')}</span>
                   </div>
                   <div className="text-sm line-through opacity-60">
                     {formatPrice(pkg.price, pkg.currency)}
@@ -115,14 +120,14 @@ export function GamePackageCard({ package: pkg, locale, onSelect }: GamePackageC
               ) : (
                 <div className="text-2xl font-bold">
                   {formatPrice(pkg.price, pkg.currency)}
-                  <span className="text-sm font-normal opacity-80">/{pkg.interval === 'month' ? 'hó' : 'év'}</span>
+                  <span className="text-sm font-normal opacity-80">/{pkg.interval === 'month' ? (locale === 'hu' ? 'hó' : 'mo') : (locale === 'hu' ? 'év' : 'yr')}</span>
                 </div>
               )}
             </div>
 
             {/* Slot és Játék neve */}
             <div className="flex items-center justify-between text-sm font-medium">
-              <span>{pkg.slot} Slot</span>
+              <span>{(pkg as any).unlimitedSlot ? '∞' : (pkg.slot || '-')} {locale === 'hu' ? 'Slot' : 'Slots'}</span>
               <span className="opacity-90">{getGameTypeLabel(pkg.gameType)}</span>
             </div>
           </div>
@@ -131,24 +136,28 @@ export function GamePackageCard({ package: pkg, locale, onSelect }: GamePackageC
 
       {/* Tartalom */}
       <div className="px-6 py-4 bg-white">
-        <h3 className="text-xl font-bold text-gray-900 mb-2">{pkg.name}</h3>
+        <h3 className="text-xl font-bold text-gray-900 mb-2">
+          {getLocalizedGamePackageName(pkg, locale)}
+        </h3>
         
-        {pkg.description && (
-          <p className="text-gray-600 text-sm mb-4 line-clamp-2">{pkg.description}</p>
+        {getLocalizedGamePackageDescription(pkg, locale) && (
+          <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+            {getLocalizedGamePackageDescription(pkg, locale)}
+          </p>
         )}
 
         {/* Specifikációk */}
         <div className="grid grid-cols-3 gap-3 pt-4 border-t border-gray-100">
           <div className="text-center">
-            <div className="text-2xl font-bold text-primary-600">{pkg.slot}</div>
-            <div className="text-xs text-gray-500 mt-1">Slot</div>
+            <div className="text-2xl font-bold text-primary-600">{(pkg as any).unlimitedSlot ? '∞' : (pkg.slot || '-')}</div>
+            <div className="text-xs text-gray-500 mt-1">{locale === 'hu' ? 'Slot' : 'Slots'}</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-primary-600">{pkg.cpuCores}</div>
             <div className="text-xs text-gray-500 mt-1">vCore</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-primary-600">{pkg.ram}</div>
+            <div className="text-2xl font-bold text-primary-600">{(pkg as any).unlimitedRam ? '∞' : (pkg.ram || '-')}</div>
             <div className="text-xs text-gray-500 mt-1">GB RAM</div>
           </div>
         </div>

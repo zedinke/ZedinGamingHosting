@@ -12,7 +12,13 @@ interface GamePackage {
   id: string;
   gameType: GameType;
   name: string;
+  nameHu?: string | null;
+  nameEn?: string | null;
   description: string | null;
+  descriptionHu?: string | null;
+  descriptionEn?: string | null;
+  unlimitedSlot?: boolean;
+  unlimitedRam?: boolean;
   price: number;
   currency: string;
   interval: string;

@@ -11,14 +11,19 @@ import { Button } from '@/components/ui/Button';
 
 const gamePackageSchema = z.object({
   gameType: z.nativeEnum(GameType, { required_error: 'Játék típus megadása kötelező' }),
-  name: z.string().min(1, 'Név megadása kötelező'),
-  description: z.string().optional(),
+  name: z.string().optional(), // Deprecated - backward compatibility
+  nameHu: z.string().min(1, 'Magyar név megadása kötelező'),
+  nameEn: z.string().min(1, 'Angol név megadása kötelező'),
+  description: z.string().optional(), // Deprecated
+  descriptionHu: z.string().optional(),
+  descriptionEn: z.string().optional(),
   price: z.number().min(0, 'Az ár nem lehet negatív'),
   currency: z.string().min(1, 'Pénznem megadása kötelező'),
   interval: z.enum(['month', 'year']),
   image: z.string().optional(),
   videoUrl: z.string().url('Érvényes YouTube URL megadása kötelező').optional().or(z.literal('')),
-  slot: z.number().int().min(1, 'Slot szám megadása kötelező'),
+  slot: z.number().int().min(1, 'Slot szám megadása kötelező').optional().nullable(),
+  unlimitedSlot: z.boolean(),
   cpuCores: z.number().int().min(1, 'CPU vCore szám megadása kötelező'),
   ram: z.number().int().min(1, 'RAM mennyiség megadása kötelező').optional(),
   unlimitedRam: z.boolean(),
@@ -31,10 +36,23 @@ const gamePackageSchema = z.object({
   if (!data.unlimitedRam && (!data.ram || data.ram < 1)) {
     return false;
   }
+  // Ha unlimitedSlot = false, akkor slot kötelező
+  if (!data.unlimitedSlot && (!data.slot || data.slot < 1)) {
+    return false;
+  }
   return true;
 }, {
   message: 'RAM mennyiség megadása kötelező, ha nincs korlátlan RAM',
   path: ['ram'],
+}).refine((data) => {
+  // Ha unlimitedSlot = false, akkor slot kötelező
+  if (!data.unlimitedSlot && (!data.slot || data.slot < 1)) {
+    return false;
+  }
+  return true;
+}, {
+  message: 'Slot szám megadása kötelező, ha nincs korlátlan slot',
+  path: ['slot'],
 });
 
 type GamePackageFormData = z.infer<typeof gamePackageSchema>;
@@ -49,10 +67,15 @@ interface GamePackage {
   interval: string;
   image: string | null;
   videoUrl: string | null;
-  slot: number;
+  slot: number | null;
+  unlimitedSlot: boolean;
   cpuCores: number;
   ram: number;
   unlimitedRam: boolean;
+  nameHu?: string | null;
+  nameEn?: string | null;
+  descriptionHu?: string | null;
+  descriptionEn?: string | null;
   discountPrice: number | null;
   pricePerSlot: number | null;
   isActive: boolean;
@@ -96,6 +119,15 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
     fetchGameTypes();
   }, []);
 
+  // Helper function to parse price with decimal comma support
+  const parsePrice = (value: string): number => {
+    if (!value) return 0;
+    // Replace comma with dot for parsing
+    const normalized = value.replace(',', '.');
+    const parsed = parseFloat(normalized);
+    return isNaN(parsed) ? 0 : parsed;
+  };
+
   const {
     register,
     handleSubmit,
@@ -106,16 +138,21 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
   } = useForm<GamePackageFormData>({
     resolver: zodResolver(gamePackageSchema),
     defaultValues: packageData
-      ? {
+        ? {
           gameType: packageData.gameType,
-          name: packageData.name,
+          name: packageData.name || '',
+          nameHu: packageData.nameHu || packageData.name || '',
+          nameEn: packageData.nameEn || packageData.name || '',
           description: packageData.description || '',
+          descriptionHu: packageData.descriptionHu || packageData.description || '',
+          descriptionEn: packageData.descriptionEn || packageData.description || '',
           price: packageData.price,
           currency: packageData.currency,
           interval: packageData.interval as 'month' | 'year',
           image: packageData.image || '',
           videoUrl: packageData.videoUrl || '',
           slot: packageData.slot,
+          unlimitedSlot: packageData.unlimitedSlot || false,
           cpuCores: packageData.cpuCores,
           ram: packageData.ram,
           unlimitedRam: packageData.unlimitedRam || false,
@@ -124,16 +161,21 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
           isActive: packageData.isActive,
           order: packageData.order,
         }
-      : {
+        : {
           gameType: 'MINECRAFT',
           name: '',
+          nameHu: '',
+          nameEn: '',
           description: '',
+          descriptionHu: '',
+          descriptionEn: '',
           price: 0,
           currency: 'HUF',
           interval: 'month',
           image: '',
           videoUrl: '',
           slot: 10,
+          unlimitedSlot: false,
           cpuCores: 2,
           ram: 4,
           unlimitedRam: false,
@@ -274,33 +316,63 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
             </div>
 
             <div>
-              <label htmlFor="name" className="block text-sm font-semibold text-gray-900 mb-1">
-                Csomag neve *
+              <label htmlFor="nameHu" className="block text-sm font-semibold text-gray-900 mb-1">
+                Csomag neve (Magyar) *
               </label>
               <input
-                {...register('name')}
+                {...register('nameHu')}
                 type="text"
-                id="name"
+                id="nameHu"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white"
                 placeholder="Pl. Starter Pack"
               />
-              {errors.name && (
-                <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
+              {errors.nameHu && (
+                <p className="text-red-500 text-sm mt-1">{errors.nameHu.message}</p>
+              )}
+            </div>
+
+            <div>
+              <label htmlFor="nameEn" className="block text-sm font-semibold text-gray-900 mb-1">
+                Csomag neve (English) *
+              </label>
+              <input
+                {...register('nameEn')}
+                type="text"
+                id="nameEn"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white"
+                placeholder="E.g. Starter Pack"
+              />
+              {errors.nameEn && (
+                <p className="text-red-500 text-sm mt-1">{errors.nameEn.message}</p>
               )}
             </div>
           </div>
 
-          <div className="mt-4">
-            <label htmlFor="description" className="block text-sm font-semibold text-gray-900 mb-1">
-              Leírás
-            </label>
-            <textarea
-              {...register('description')}
-              id="description"
-              rows={3}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-500"
-              placeholder="Csomag leírása..."
-            />
+          <div className="mt-4 grid md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="descriptionHu" className="block text-sm font-semibold text-gray-900 mb-1">
+                Leírás (Magyar)
+              </label>
+              <textarea
+                {...register('descriptionHu')}
+                id="descriptionHu"
+                rows={3}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-500"
+                placeholder="Csomag leírása magyarul..."
+              />
+            </div>
+            <div>
+              <label htmlFor="descriptionEn" className="block text-sm font-semibold text-gray-900 mb-1">
+                Leírás (English)
+              </label>
+              <textarea
+                {...register('descriptionEn')}
+                id="descriptionEn"
+                rows={3}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-500"
+                placeholder="Package description in English..."
+              />
+            </div>
           </div>
         </div>
 
@@ -378,18 +450,36 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
           <div className="grid md:grid-cols-3 gap-4">
             <div>
               <label htmlFor="slot" className="block text-sm font-semibold text-gray-900 mb-1">
-                Fix Slot szám *
+                Fix Slot szám {!watch('unlimitedSlot') && '*'}
               </label>
               <input
                 {...register('slot', { valueAsNumber: true })}
                 type="number"
                 id="slot"
                 min="1"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white"
+                disabled={watch('unlimitedSlot')}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100"
               />
               {errors.slot && (
                 <p className="text-red-500 text-sm mt-1">{errors.slot.message}</p>
               )}
+            </div>
+            
+            <div className="col-span-3 mt-4">
+              <div className="flex items-center">
+                <input
+                  {...register('unlimitedSlot')}
+                  type="checkbox"
+                  id="unlimitedSlot"
+                  className="w-5 h-5 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                />
+                <label htmlFor="unlimitedSlot" className="ml-2 text-sm font-semibold text-gray-900">
+                  Korlátlan Slot (20 slot az indítósorban)
+                </label>
+              </div>
+              <p className="text-xs text-gray-600 mt-1 ml-7">
+                Ha be van jelölve, a szerver korlátlan slot-ot használ. Az indítósorban 20 slot lesz beállítva.
+              </p>
             </div>
 
             <div>
@@ -453,13 +543,18 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
                 Ár *
               </label>
               <input
-                {...register('price', { valueAsNumber: true })}
-                type="number"
+                {...register('price', { 
+                  setValueAs: (value) => parsePrice(value),
+                })}
+                type="text"
                 id="price"
-                min="0"
-                step="0.01"
+                inputMode="decimal"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white"
+                placeholder="0,00 vagy 0.00"
               />
+              <p className="text-xs text-gray-600 mt-1">
+                Tizedesvessző vagy tizedespont használható (pl. 9,99 vagy 9.99)
+              </p>
               {errors.price && (
                 <p className="text-red-500 text-sm mt-1">{errors.price.message}</p>
               )}
@@ -499,12 +594,14 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
                 Akciós ár (opcionális)
               </label>
               <input
-                {...register('discountPrice', { valueAsNumber: true })}
-                type="number"
+                {...register('discountPrice', { 
+                  setValueAs: (value) => value ? parsePrice(value) : null,
+                })}
+                type="text"
                 id="discountPrice"
-                min="0"
-                step="0.01"
+                inputMode="decimal"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white"
+                placeholder="0,00 vagy 0.00"
               />
             </div>
           </div>
@@ -519,17 +616,18 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
                 Slot bővítés ára (havonta, opcionális)
               </label>
               <input
-                {...register('pricePerSlot', { valueAsNumber: true })}
-                type="number"
+                {...register('pricePerSlot', { 
+                  setValueAs: (value) => value ? parsePrice(value) : null,
+                })}
+                type="text"
                 id="pricePerSlot"
-                min="0"
-                step="0.01"
+                inputMode="decimal"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white"
-                placeholder="0"
+                placeholder="0,00 vagy 0.00"
               />
               <p className="text-xs text-gray-600 mt-1 font-medium">
                 Ha be van állítva, a felhasználók rendeléskor bővíthetik a slot számot (max 50 slot-ig). 
-                Az ár havonta vonatkozik a bővített slotokra.
+                Az ár havonta vonatkozik a bővített slotokra. Tizedesvessző vagy tizedespont használható.
               </p>
             </div>
           </div>

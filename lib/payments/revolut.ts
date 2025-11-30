@@ -158,7 +158,7 @@ async function handleOrderCompleted(order: any) {
       revolutOrderId: order.id,
       revolutPaymentId: order.payments?.[0]?.id,
       amount: order.amount / 100,
-      currency: order.currency,
+      currency: 'EUR', // Számlák mindig EUR-ban
       status: 'PAID',
       invoiceNumber,
       paidAt: new Date(),

@@ -59,13 +59,18 @@ export async function PUT(
     const {
       gameType,
       name,
+      nameHu,
+      nameEn,
       description,
+      descriptionHu,
+      descriptionEn,
       price,
       currency,
       interval,
       image,
       videoUrl,
       slot,
+      unlimitedSlot,
       cpuCores,
       ram,
       unlimitedRam,
@@ -74,6 +79,14 @@ export async function PUT(
       isActive,
       order,
     } = body;
+
+    // Validáció: ha nincs korlátlan slot, akkor slot kötelező
+    if (unlimitedSlot === false && slot !== undefined && (!slot || slot < 1)) {
+      return NextResponse.json(
+        { error: 'Slot szám megadása kötelező, ha nincs korlátlan slot' },
+        { status: 400 }
+      );
+    }
 
     // Validáció: ha nincs korlátlan RAM, akkor ram kötelező
     if (unlimitedRam === false && (!ram || ram < 1)) {
@@ -87,13 +100,32 @@ export async function PUT(
 
     if (gameType !== undefined) updateData.gameType = gameType;
     if (name !== undefined) updateData.name = name;
+    if (nameHu !== undefined) {
+      updateData.nameHu = nameHu;
+      updateData.name = nameHu; // Backward compatibility
+    }
+    if (nameEn !== undefined) updateData.nameEn = nameEn;
     if (description !== undefined) updateData.description = description;
+    if (descriptionHu !== undefined) {
+      updateData.descriptionHu = descriptionHu;
+      updateData.description = descriptionHu; // Backward compatibility
+    }
+    if (descriptionEn !== undefined) updateData.descriptionEn = descriptionEn;
     if (price !== undefined) updateData.price = parseFloat(price);
     if (currency !== undefined) updateData.currency = currency;
     if (interval !== undefined) updateData.interval = interval;
     if (image !== undefined) updateData.image = image;
     if (videoUrl !== undefined) updateData.videoUrl = videoUrl || null;
-    if (slot !== undefined) updateData.slot = parseInt(slot);
+    if (unlimitedSlot !== undefined) {
+      updateData.unlimitedSlot = Boolean(unlimitedSlot);
+      if (unlimitedSlot) {
+        updateData.slot = null;
+      } else if (slot !== undefined) {
+        updateData.slot = parseInt(slot);
+      }
+    } else if (slot !== undefined) {
+      updateData.slot = parseInt(slot);
+    }
     if (cpuCores !== undefined) updateData.cpuCores = parseInt(cpuCores);
     if (unlimitedRam !== undefined) {
       updateData.unlimitedRam = Boolean(unlimitedRam);

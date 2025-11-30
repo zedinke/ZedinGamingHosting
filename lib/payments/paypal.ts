@@ -296,7 +296,7 @@ async function handlePaymentCompleted(payment: any) {
       paymentProvider: 'PAYPAL',
       paypalTransactionId: payment.id,
       amount: parseFloat(payment.amount.total),
-      currency: payment.amount.currency,
+      currency: 'EUR', // Számlák mindig EUR-ban
       status: 'PAID',
       invoiceNumber,
       paidAt: new Date(),
