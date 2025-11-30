@@ -13,6 +13,16 @@ SZERVER_USER="forest{serverId}"
 SZERVER_NEVE="{name}"
 # Admin jelszó
 ADMIN_JELSZO="{adminPassword}"
+# Szerver jelszó
+SZERVER_JELSZO="{password}"
+# Max játékosok
+MAX_JATEKOSOK={maxPlayers}
+# Nehézség
+NEHEZSEG="{difficulty}"
+# Init típus
+INIT_TIPUS="{inittype}"
+# Slot
+SLOT="{slot}"
 # PORTOK (adatbázisból jönnek, placeholder-ek)
 PORT_GAME={port}        # serverPort
 PORT_QUERY={queryPort}  # serverSteamPort
@@ -232,22 +242,23 @@ else
 fi
 
 # Létrehozzuk a config fájlt a portokkal
-cat > "$SERVER_DIR/server.cfg" <<EOF
+# A változók már be vannak állítva a script elején
+cat > "$SERVER_DIR/server.cfg" <<SERVERCFGEOF
 // Dedicated Server Settings
 serverName $SZERVER_NEVE
-serverPassword {password}
+serverPassword $SZERVER_JELSZO
 serverPasswordAdmin $ADMIN_JELSZO
 serverIP 0.0.0.0
 serverPort $PORT_GAME
 serverSteamPort $PORT_QUERY
 serverGamePort $PORT_STEAM
-maxPlayers {maxPlayers}
-difficulty {difficulty}
-initType {inittype}
-slot {slot}
+maxPlayers $MAX_JATEKOSOK
+difficulty $NEHEZSEG
+initType $INIT_TIPUS
+slot $SLOT
 showLogs off
 serverContact email@example.com
-EOF
+SERVERCFGEOF
 
 chmod 644 "$SERVER_DIR/server.cfg"
 if getent group sfgames >/dev/null 2>&1; then
