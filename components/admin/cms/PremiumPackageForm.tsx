@@ -48,8 +48,11 @@ export function PremiumPackageForm({ locale, package_: existingPackage }: Premiu
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [gameConfigs, setGameConfigs] = useState<GameConfig[]>([]);
-  const [selectedGames, setSelectedGames] = useState<GameType[]>(
-    existingPackage?.games.map((g) => g.gameType) || []
+  // Kiválasztott játékok tömbje - minden elem egy GameType vagy null (ha nincs kiválasztva)
+  const [selectedGames, setSelectedGames] = useState<(GameType | null)[]>(
+    existingPackage?.games.length 
+      ? existingPackage.games.map((g) => g.gameType)
+      : [null] // Kezdetben egy üres legördülő menü
   );
 
   const [formData, setFormData] = useState({
@@ -84,14 +87,15 @@ export function PremiumPackageForm({ locale, package_: existingPackage }: Premiu
 
   // Számoljuk ki az erőforrás limiteket
   const calculateResources = () => {
-    if (selectedGames.length === 0) {
+    const validGames = selectedGames.filter((g): g is GameType => g !== null);
+    if (validGames.length === 0) {
       return { cpuCores: 2, ram: 4 };
     }
 
     let maxCpuCores = 0;
     let maxRamGB = 0;
 
-    selectedGames.forEach((gameType) => {
+    validGames.forEach((gameType) => {
       const config = gameConfigs.find((gc) => gc.gameType === gameType);
       if (config) {
         maxCpuCores = Math.max(maxCpuCores, config.defaultCpuCores);
@@ -112,10 +116,19 @@ export function PremiumPackageForm({ locale, package_: existingPackage }: Premiu
     setLoading(true);
 
     try {
+      // Csak a null-tól különböző játékokat küldjük
+      const validGames = selectedGames.filter((g): g is GameType => g !== null);
+      
+      if (validGames.length === 0) {
+        toast.error('Legalább egy játékot ki kell választani');
+        setLoading(false);
+        return;
+      }
+
       const data = {
         ...formData,
         discountPrice: formData.discountPrice || null,
-        gameTypes: selectedGames,
+        gameTypes: validGames,
         cpuCores: resources.cpuCores,
         ram: resources.ram,
       };
@@ -147,14 +160,37 @@ export function PremiumPackageForm({ locale, package_: existingPackage }: Premiu
     }
   };
 
-  const toggleGame = (gameType: GameType) => {
+  // Új legördülő menü hozzáadása
+  const addGameSelector = () => {
+    setSelectedGames((prev) => [...prev, null]);
+  };
+
+  // Legördülő menü törlése
+  const removeGameSelector = (index: number) => {
+    if (selectedGames.length > 1) {
+      setSelectedGames((prev) => prev.filter((_, i) => i !== index));
+    }
+  };
+
+  // Játék kiválasztása egy legördülő menüben
+  const selectGame = (index: number, gameType: GameType | null) => {
     setSelectedGames((prev) => {
-      if (prev.includes(gameType)) {
-        return prev.filter((g) => g !== gameType);
-      } else {
-        return [...prev, gameType];
-      }
+      const newGames = [...prev];
+      newGames[index] = gameType;
+      return newGames;
     });
+  };
+
+  // Aktív játékok lekérése (amiknek van aktív GamePackage-je)
+  // Kiszűrjük azokat, amik már ki lettek választva más legördülő menüben
+  const getActiveGames = (currentIndex: number) => {
+    const otherSelectedGames = selectedGames
+      .map((g, i) => (i !== currentIndex ? g : null))
+      .filter((g): g is GameType => g !== null);
+    
+    return gameConfigs.filter(
+      (gc) => gc.isActive && !otherSelectedGames.includes(gc.gameType)
+    );
   };
 
   return (
@@ -304,37 +340,55 @@ export function PremiumPackageForm({ locale, package_: existingPackage }: Premiu
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Játékok kiválasztása *
           </label>
-          <div className="border border-gray-300 rounded-lg p-4 max-h-96 overflow-y-auto">
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {gameConfigs
-                .filter((gc) => gc.isActive)
-                .map((config) => (
-                  <label
-                    key={config.gameType}
-                    className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${
-                      selectedGames.includes(config.gameType)
-                        ? 'border-primary-500 bg-primary-50'
-                        : 'border-gray-300 hover:border-gray-400'
-                    }`}
+          <div className="space-y-3">
+            {selectedGames.map((selectedGame, index) => (
+              <div key={index} className="flex gap-3 items-center">
+                <select
+                  value={selectedGame || ''}
+                  onChange={(e) => selectGame(index, e.target.value ? (e.target.value as GameType) : null)}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 bg-white"
+                >
+                  <option value="">-- Válassz játékot --</option>
+                  {getActiveGames(index).map((config) => (
+                    <option key={config.gameType} value={config.gameType}>
+                      {config.displayName}
+                    </option>
+                  ))}
+                  {/* Ha van már kiválasztott játék, azt is megjelenítjük (ha nincs a listában) */}
+                  {selectedGame && !getActiveGames(index).find((gc) => gc.gameType === selectedGame) && (
+                    <option value={selectedGame}>
+                      {gameConfigs.find((gc) => gc.gameType === selectedGame)?.displayName || selectedGame}
+                    </option>
+                  )}
+                </select>
+                {selectedGames.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeGameSelector(index)}
+                    className="px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors font-medium"
+                    title="Törlés"
                   >
-                    <input
-                      type="checkbox"
-                      checked={selectedGames.includes(config.gameType)}
-                      onChange={() => toggleGame(config.gameType)}
-                      className="mr-3 h-4 w-4 text-primary-600 focus:ring-primary-500"
-                    />
-                    <span className="text-sm font-medium">{config.displayName}</span>
-                  </label>
-                ))}
-            </div>
+                    ✕
+                  </button>
+                )}
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={addGameSelector}
+              className="w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-primary-500 hover:text-primary-600 transition-colors font-medium flex items-center justify-center gap-2"
+            >
+              <span className="text-xl">+</span>
+              <span>Új játék hozzáadása</span>
+            </button>
           </div>
-          {selectedGames.length === 0 && (
+          {selectedGames.filter((g) => g !== null).length === 0 && (
             <p className="mt-2 text-sm text-red-600">Legalább egy játékot ki kell választani</p>
           )}
         </div>
 
         {/* Automatikusan számított erőforrások */}
-        {selectedGames.length > 0 && (
+        {selectedGames.filter((g) => g !== null).length > 0 && (
           <div className="bg-gray-50 p-4 rounded-lg">
             <h3 className="text-sm font-semibold text-gray-700 mb-2">
               Automatikusan számított erőforrás limitek
@@ -406,7 +460,7 @@ export function PremiumPackageForm({ locale, package_: existingPackage }: Premiu
           </button>
           <button
             type="submit"
-            disabled={loading || selectedGames.length === 0}
+            disabled={loading || selectedGames.filter((g) => g !== null).length === 0}
             className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Mentés...' : existingPackage ? 'Frissítés' : 'Létrehozás'}
