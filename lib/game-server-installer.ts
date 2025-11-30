@@ -1440,16 +1440,80 @@ export async function createSystemdServiceForServer(
         startCommand,
       });
     } else {
+      // Más játékoknál (Valheim, The Forest, Rust, stb.) is az adatbázisból kinyerjük a portokat
+      let finalPort = port;
+      let finalQueryPort = queryPort;
+      let finalSteamPeerPort: number | undefined;
+      let finalRustPlusPort: number | undefined;
+      
+      // Lekérjük a portokat az adatbázisból
+      const serverWithPorts = await prisma.server.findUnique({
+        where: { id: serverId },
+        select: {
+          port: true,
+          queryPort: true,
+          steamPeerPort: true,
+          rustPlusPort: true,
+          configuration: true,
+        },
+      });
+      
+      // Az adatbázisból kinyert portok használata
+      if (serverWithPorts) {
+        finalPort = serverWithPorts.port || port;
+        finalQueryPort = serverWithPorts.queryPort || queryPort;
+        
+        // The Forest esetén steamPeerPort
+        if (gameType === 'THE_FOREST') {
+          const serverWithPortsTyped = serverWithPorts as any;
+          finalSteamPeerPort = serverWithPortsTyped.steamPeerPort;
+          // Ha nincs az adatbázisban, számoljuk ki
+          if (!finalSteamPeerPort && finalQueryPort) {
+            finalSteamPeerPort = finalQueryPort + 1;
+          }
+        }
+        
+        // Rust esetén rustPlusPort
+        if (gameType === 'RUST') {
+          const serverWithPortsTyped = serverWithPorts as any;
+          finalRustPlusPort = serverWithPortsTyped.rustPlusPort;
+          // Ha nincs az adatbázisban, számoljuk ki
+          if (!finalRustPlusPort && finalPort) {
+            finalRustPlusPort = finalPort + 67;
+          }
+        }
+      }
+      
+      // Placeholder-ek cseréje az adatbázisból kinyert portokkal
       startCommand = startCommand
-        .replace(/{port}/g, port.toString())
+        .replace(/{port}/g, finalPort.toString())
         .replace(/{maxPlayers}/g, maxPlayers.toString())
         .replace(/{ram}/g, ram.toString())
         .replace(/{name}/g, name)
         .replace(/{world}/g, config.world || 'Dedicated')
         .replace(/{adminPassword}/g, config.adminPassword || 'changeme')
-        .replace(/{queryPort}/g, queryPort.toString())
+        .replace(/{queryPort}/g, finalQueryPort.toString())
         .replace(/{beaconPort}/g, beaconPort.toString())
         .replace(/{map}/g, config.map || 'TheIsland');
+      
+      // The Forest esetén steamPeerPort placeholder (ha van a startCommand-ban)
+      if (gameType === 'THE_FOREST' && finalSteamPeerPort) {
+        startCommand = startCommand.replace(/{steamPeerPort}/g, finalSteamPeerPort.toString());
+      }
+      
+      // Rust esetén rustPlusPort placeholder (ha van a startCommand-ban)
+      if (gameType === 'RUST' && finalRustPlusPort) {
+        startCommand = startCommand.replace(/{rustPlusPort}/g, finalRustPlusPort.toString());
+      }
+      
+      logger.info(`${gameType} start command generated with ports from database`, {
+        serverId,
+        port: finalPort,
+        queryPort: finalQueryPort,
+        steamPeerPort: finalSteamPeerPort,
+        rustPlusPort: finalRustPlusPort,
+        startCommand,
+      });
     }
     
     // Valheim specifikus placeholder-ek
