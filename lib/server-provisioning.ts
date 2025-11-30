@@ -331,98 +331,24 @@ export async function provisionServer(
     // Satisfactory-nál a QueryPort, GamePort és BeaconPort generálása
     let configurationUpdate: any = {};
     if (options.gameType === 'SATISFACTORY') {
-      // Satisfactory port számítások a példa alapján:
-      // QueryPort = a generált port (4 számjegyű port, pl. 7777) - ez az alap port az adatbázisban
-      // GamePort = QueryPort (pl. 7777) - csatlakozási port (a példában 7780)
-      // QueryPort (ServerQueryPort) = GamePort + 8000 (pl. 7780 + 8000 = 15780)
-      // BeaconPort = GamePort + 7230 (pl. 7780 + 7230 = 15010)
+      // Satisfactory port számítások az új logika szerint:
+      // GamePort = alap port (automatikusan keresni üres portot, alapértelmezett 7777)
+      // QueryPort = GamePort + 2
+      // BeaconPort = QueryPort + 2 = GamePort + 4
       
-      // Alap QueryPort (ez lesz a GamePort is)
-      let queryPort = generatedPort; // Ez a GamePort lesz (pl. 7777)
-      let gamePort = queryPort; // GamePort = QueryPort (pl. 7777)
-      // ServerQueryPort = GamePort + 8000 (pl. 7777 + 8000 = 15777)
-      let serverQueryPort = gamePort + 8000;
-      // BeaconPort = GamePort + 7230 (pl. 7777 + 7230 = 15007)
-      let beaconPort = gamePort + 7230;
+      // GamePort generálása (alap port, automatikusan keresni üres portot)
+      let gamePort = generatedPort; // GamePort = alap port (pl. 7777)
+      // QueryPort = GamePort + 2
+      let queryPort = gamePort + 2;
+      // BeaconPort = QueryPort + 2 = GamePort + 4
+      let beaconPort = queryPort + 2;
       
       // Biztosítjuk, hogy a 3 port különböző legyen
-      // Loop-ban újrageneráljuk a portokat, amíg biztosan különbözőek nem lesznek
-      let maxAdjustmentAttempts = 10;
-      let adjustmentAttempt = 0;
-      
-      while ((gamePort === serverQueryPort || gamePort === beaconPort || serverQueryPort === beaconPort) && adjustmentAttempt < maxAdjustmentAttempts) {
-        adjustmentAttempt++;
-        
-        logger.warn('Port conflict detected in port calculation, adjusting', {
-          serverId,
-          attempt: adjustmentAttempt,
-          gamePort,
-          serverQueryPort,
-          beaconPort,
-        });
-        
-        // Újraszámoljuk a portokat különböző offset-ekkel
-        // Offset-ek, amik biztosan különbözőek:
-        // - ServerQueryPort = GamePort + 8000
-        // - BeaconPort = GamePort + 7230 (770 különbség a QueryPort-tól, biztosan különböző)
-        serverQueryPort = gamePort + 8000;
-        
-        // BeaconPort offset-ét módosítjuk, ha ütközik
-        // BeaconPort = GamePort + 7230 (770 különbség a QueryPort-tól)
-        const calculatedBeaconPort = gamePort + 7230;
-        
-        if (calculatedBeaconPort === serverQueryPort || calculatedBeaconPort === gamePort) {
-          // Ha 7230 ütközik, használjunk más offset-et
-          // Próbáljuk különböző offset-eket, amíg nem lesz egyedi
-          beaconPort = gamePort + 7500; // 500 különbség a QueryPort-tól
-          
-          // Ha még mindig ütközik, próbáljunk más offset-et
-          if (beaconPort === serverQueryPort || beaconPort === gamePort) {
-            beaconPort = gamePort + 9000; // Még nagyobb offset
-          }
-        } else {
-          beaconPort = calculatedBeaconPort;
-        }
-        
-        // Ha még mindig ütköznek, akkor újra generáljuk a GamePort-ot
-        if (gamePort === serverQueryPort || gamePort === beaconPort || serverQueryPort === beaconPort) {
-          logger.warn('Ports still conflict after offset adjustment, regenerating GamePort', {
-            serverId,
-            gamePort,
-            serverQueryPort,
-            beaconPort,
-            attempt: adjustmentAttempt,
-          });
-          
-          // Új GamePort generálása (egy új, szabad port)
-          const newGamePort = await generateServerPort(options.gameType, bestLocation.machineId);
-          gamePort = newGamePort;
-          serverQueryPort = gamePort + 8000;
-          beaconPort = gamePort + 7230;
-          
-          // Ellenőrizzük, hogy az új portok sem ütköznek-e
-          if (beaconPort === serverQueryPort || beaconPort === gamePort || serverQueryPort === gamePort) {
-            // Ha még mindig ütköznek, módosítjuk a BeaconPort offset-ét
-            beaconPort = gamePort + 7500;
-          }
-        }
-      }
-      
-      // Ha még mindig ütköznek, akkor hibaüzenet
-      if (gamePort === serverQueryPort || gamePort === beaconPort || serverQueryPort === beaconPort) {
-        logger.error('Could not resolve port conflicts after multiple attempts', new Error('Port conflict resolution failed'), {
-          serverId,
-          gamePort,
-          serverQueryPort,
-          beaconPort,
-          attempts: adjustmentAttempt,
-        });
-        throw new Error('Nem sikerült különböző portokat generálni a Satisfactory szerverhez.');
-      }
-      
-      // Az adatbázisban a QueryPort mezőben a ServerQueryPort-ot tároljuk
-      // A GamePort-ot külön mezőben vagy a configuration-ban
-      queryPort = serverQueryPort; // Az adatbázisban a QueryPort = ServerQueryPort
+      // Az új logika szerint:
+      // - GamePort = alap port (pl. 7777)
+      // - QueryPort = GamePort + 2 (pl. 7779)
+      // - BeaconPort = QueryPort + 2 = GamePort + 4 (pl. 7781)
+      // Mivel mindig különbözőek lesznek (+2, +4 offset), nincs szükség ütközés ellenőrzésre
       
       // Ellenőrizzük, hogy a GamePort és BeaconPort is szabad-e
       // Ha foglaltak, újra generáljuk a QueryPort-ot, amíg mindhárom port szabad nem lesz
@@ -432,9 +358,9 @@ export async function provisionServer(
       
       while (!allPortsAvailable && retryCount < maxRetries) {
         // Ellenőrizzük, hogy a portok szabadok-e az adatbázisban ÉS a gépen
-        const queryPortAvailableInDb = await checkSatisfactoryPortInDatabase(queryPort, serverId);
-        const beaconPortAvailableInDb = await checkSatisfactoryPortInDatabase(beaconPort, serverId);
-        const gamePortAvailableInDb = await checkSatisfactoryPortInDatabase(gamePort, serverId);
+        const queryPortAvailableInDb = await checkMultiPortInDatabase(queryPort, options.gameType, serverId);
+        const beaconPortAvailableInDb = await checkMultiPortInDatabase(beaconPort, options.gameType, serverId);
+        const gamePortAvailableInDb = await checkMultiPortInDatabase(gamePort, options.gameType, serverId);
         
         const queryPortAvailableOnMachine = await checkPortAvailableOnMachine(bestLocation.machineId, queryPort);
         const gamePortAvailableOnMachine = await checkPortAvailableOnMachine(bestLocation.machineId, gamePort);
@@ -451,11 +377,10 @@ export async function provisionServer(
           // Az offset-tel való növelés helyett újra generáljuk, hogy biztosan szabad portot kapjunk
           const newGamePort = await generateServerPort(options.gameType, bestLocation.machineId);
           
-          // GamePort alapján számoljuk a QueryPort és BeaconPort értékeket
+          // GamePort alapján számoljuk a QueryPort és BeaconPort értékeket az új logika szerint
           gamePort = newGamePort;
-          serverQueryPort = gamePort + 8000;
-          beaconPort = gamePort + 7230;
-          queryPort = serverQueryPort; // QueryPort = ServerQueryPort az adatbázisban
+          queryPort = gamePort + 2; // QueryPort = GamePort + 2
+          beaconPort = queryPort + 2; // BeaconPort = QueryPort + 2
           
           logger.warn('Port is not available, regenerating QueryPort', {
             serverId,
@@ -488,17 +413,273 @@ export async function provisionServer(
       generatedPort = gamePort; // GamePort = alap port (pl. 7777 vagy 7780)
       
       // BeaconPort és GamePort mentése a configuration JSON-ben
+      // Az adatbázisban:
+      // - port mező = GamePort (alap port, pl. 7777)
+      // - queryPort mező = QueryPort (GamePort + 2, pl. 7779)
+      // - beaconPort mező = BeaconPort (QueryPort + 2, pl. 7781)
       configurationUpdate = {
-        queryPort: queryPort, // ServerQueryPort (pl. 15777 vagy 15780)
-        gamePort: gamePort, // GamePort (alap port, pl. 7777 vagy 7780)
-        beaconPort: beaconPort, // BeaconPort (pl. 15007 vagy 15010)
+        queryPort: queryPort, // QueryPort (GamePort + 2)
+        gamePort: gamePort, // GamePort (alap port)
+        beaconPort: beaconPort, // BeaconPort (QueryPort + 2)
       };
       
       logger.info('Satisfactory ports generated', {
         serverId,
-        queryPort, // ServerQueryPort
+        queryPort, // QueryPort (GamePort + 2)
         gamePort, // GamePort (alap port)
-        beaconPort, // BeaconPort
+        beaconPort, // BeaconPort (QueryPort + 2)
+        machineId: bestLocation.machineId,
+        retries: retryCount,
+      });
+    } else if (options.gameType === 'VALHEIM') {
+      // Valheim port számítások:
+      // Port = alap port (automatikusan keresni üres portot)
+      // QueryPort = Port + 1
+      // Összesen: 2 port (2456, 2457)
+      
+      // Alap port generálása
+      let gamePort = generatedPort; // Port = alap port
+      // QueryPort = Port + 1
+      let queryPort = gamePort + 1;
+      
+      // Ellenőrizzük, hogy mindkét port szabad-e
+      // Ha foglaltak, újra generáljuk a portot, amíg mindkét port szabad nem lesz
+      let maxRetries = 10;
+      let retryCount = 0;
+      let allPortsAvailable = false;
+      
+      while (!allPortsAvailable && retryCount < maxRetries) {
+        // Ellenőrizzük, hogy a portok szabadok-e az adatbázisban ÉS a gépen
+        const gamePortAvailableInDb = await checkMultiPortInDatabase(gamePort, options.gameType, serverId);
+        const queryPortAvailableInDb = await checkMultiPortInDatabase(queryPort, options.gameType, serverId);
+        
+        const gamePortAvailableOnMachine = await checkPortAvailableOnMachine(bestLocation.machineId, gamePort);
+        const queryPortAvailableOnMachine = await checkPortAvailableOnMachine(bestLocation.machineId, queryPort);
+        
+        // Mindkét portnak szabadnak kell lennie az adatbázisban ÉS a gépen
+        if (gamePortAvailableInDb && queryPortAvailableInDb &&
+            gamePortAvailableOnMachine && queryPortAvailableOnMachine) {
+          allPortsAvailable = true;
+        } else {
+          // Ha valamelyik port foglalt, újra generáljuk a portot
+          retryCount++;
+          // Új port generálása a generateServerPort függvénnyel, ami már ellenőrzi az adatbázist és a gépen is
+          const newPort = await generateServerPort(options.gameType, bestLocation.machineId);
+          
+          // Port alapján számoljuk a QueryPort értékét
+          gamePort = newPort;
+          queryPort = gamePort + 1; // QueryPort = Port + 1
+          
+          logger.warn('Port is not available, regenerating port', {
+            serverId,
+            retryCount,
+            newPort: gamePort,
+            newQueryPort: queryPort,
+            gamePortAvailableInDb,
+            queryPortAvailableInDb,
+            gamePortAvailableOnMachine,
+            queryPortAvailableOnMachine,
+          });
+        }
+      }
+      
+      if (!allPortsAvailable) {
+        logger.error(`Could not find available ports for ${options.gameType} server after retries`, new Error('Port allocation failed after retries'), {
+          serverId,
+          finalPort: gamePort,
+          finalQueryPort: queryPort,
+        });
+        // Folytatjuk, de logoljuk a hibát
+      }
+      
+      // Az adatbázisban a port mezőbe a Port-ot mentjük (alap port)
+      generatedPort = gamePort; // Port = alap port
+      
+      // QueryPort mentése a configuration JSON-ben és az adatbázisban
+      configurationUpdate = {
+        queryPort: queryPort, // QueryPort (Port + 1)
+      };
+      
+      logger.info(`${options.gameType} ports generated`, {
+        serverId,
+        port: gamePort, // Port (alap port)
+        queryPort, // QueryPort (Port + 1)
+        machineId: bestLocation.machineId,
+        retries: retryCount,
+      });
+    } else if (options.gameType === 'THE_FOREST') {
+      // The Forest port számítások:
+      // Port = alap port (automatikusan keresni üres portot)
+      // QueryPort = Port + 1
+      // SteamPeerPort = QueryPort + 1
+      // Összesen: 3 port (pl. 27015, 27016, 27017)
+      
+      // Alap port generálása
+      let gamePort = generatedPort; // Port = alap port
+      // QueryPort = Port + 1
+      let queryPort = gamePort + 1;
+      // SteamPeerPort = QueryPort + 1
+      let steamPeerPort = queryPort + 1;
+      
+      // Ellenőrizzük, hogy mindhárom port szabad-e
+      // Ha foglaltak, újra generáljuk a portot, amíg mindhárom port szabad nem lesz
+      let maxRetries = 10;
+      let retryCount = 0;
+      let allPortsAvailable = false;
+      
+      while (!allPortsAvailable && retryCount < maxRetries) {
+        // Ellenőrizzük, hogy a portok szabadok-e az adatbázisban ÉS a gépen
+        const gamePortAvailableInDb = await checkMultiPortInDatabase(gamePort, options.gameType, serverId);
+        const queryPortAvailableInDb = await checkMultiPortInDatabase(queryPort, options.gameType, serverId);
+        const steamPeerPortAvailableInDb = await checkMultiPortInDatabase(steamPeerPort, options.gameType, serverId);
+        
+        const gamePortAvailableOnMachine = await checkPortAvailableOnMachine(bestLocation.machineId, gamePort);
+        const queryPortAvailableOnMachine = await checkPortAvailableOnMachine(bestLocation.machineId, queryPort);
+        const steamPeerPortAvailableOnMachine = await checkPortAvailableOnMachine(bestLocation.machineId, steamPeerPort);
+        
+        // Mindhárom portnak szabadnak kell lennie az adatbázisban ÉS a gépen
+        if (gamePortAvailableInDb && queryPortAvailableInDb && steamPeerPortAvailableInDb &&
+            gamePortAvailableOnMachine && queryPortAvailableOnMachine && steamPeerPortAvailableOnMachine) {
+          allPortsAvailable = true;
+        } else {
+          // Ha valamelyik port foglalt, újra generáljuk a portot
+          retryCount++;
+          // Új port generálása a generateServerPort függvénnyel, ami már ellenőrzi az adatbázist és a gépen is
+          const newPort = await generateServerPort(options.gameType, bestLocation.machineId);
+          
+          // Port alapján számoljuk a QueryPort és SteamPeerPort értékét
+          gamePort = newPort;
+          queryPort = gamePort + 1; // QueryPort = Port + 1
+          steamPeerPort = queryPort + 1; // SteamPeerPort = QueryPort + 1
+          
+          logger.warn('Port is not available, regenerating port', {
+            serverId,
+            retryCount,
+            newPort: gamePort,
+            newQueryPort: queryPort,
+            newSteamPeerPort: steamPeerPort,
+            gamePortAvailableInDb,
+            queryPortAvailableInDb,
+            steamPeerPortAvailableInDb,
+            gamePortAvailableOnMachine,
+            queryPortAvailableOnMachine,
+            steamPeerPortAvailableOnMachine,
+          });
+        }
+      }
+      
+      if (!allPortsAvailable) {
+        logger.error(`Could not find available ports for ${options.gameType} server after retries`, new Error('Port allocation failed after retries'), {
+          serverId,
+          finalPort: gamePort,
+          finalQueryPort: queryPort,
+          finalSteamPeerPort: steamPeerPort,
+        });
+        // Folytatjuk, de logoljuk a hibát
+      }
+      
+      // Az adatbázisban a port mezőbe a Port-ot mentjük (alap port)
+      generatedPort = gamePort; // Port = alap port
+      
+      // QueryPort és SteamPeerPort mentése a configuration JSON-ben és az adatbázisban
+      configurationUpdate = {
+        queryPort: queryPort, // QueryPort (Port + 1)
+        steamPeerPort: steamPeerPort, // SteamPeerPort (QueryPort + 1)
+      };
+      
+      logger.info(`${options.gameType} ports generated`, {
+        serverId,
+        port: gamePort, // Port (alap port)
+        queryPort, // QueryPort (Port + 1)
+        steamPeerPort, // SteamPeerPort (QueryPort + 1)
+        machineId: bestLocation.machineId,
+        retries: retryCount,
+      });
+    } else if (options.gameType === 'RUST') {
+      // Rust port számítások:
+      // Port = alap port (automatikusan keresni üres portot)
+      // QueryPort = Port + 1
+      // RustPlusPort = Port + 67 (28015 + 67 = 28082)
+      // Összesen: 3 port (pl. 28015, 28016, 28082)
+      
+      // Alap port generálása
+      let gamePort = generatedPort; // Port = alap port
+      // QueryPort = Port + 1
+      let queryPort = gamePort + 1;
+      // RustPlusPort = Port + 67 (28015 alapból + 67 = 28082)
+      let rustPlusPort = gamePort + 67;
+      
+      // Ellenőrizzük, hogy mindhárom port szabad-e
+      // Ha foglaltak, újra generáljuk a portot, amíg mindhárom port szabad nem lesz
+      let maxRetries = 10;
+      let retryCount = 0;
+      let allPortsAvailable = false;
+      
+      while (!allPortsAvailable && retryCount < maxRetries) {
+        // Ellenőrizzük, hogy a portok szabadok-e az adatbázisban ÉS a gépen
+        const gamePortAvailableInDb = await checkMultiPortInDatabase(gamePort, options.gameType, serverId);
+        const queryPortAvailableInDb = await checkMultiPortInDatabase(queryPort, options.gameType, serverId);
+        const rustPlusPortAvailableInDb = await checkMultiPortInDatabase(rustPlusPort, options.gameType, serverId);
+        
+        const gamePortAvailableOnMachine = await checkPortAvailableOnMachine(bestLocation.machineId, gamePort);
+        const queryPortAvailableOnMachine = await checkPortAvailableOnMachine(bestLocation.machineId, queryPort);
+        const rustPlusPortAvailableOnMachine = await checkPortAvailableOnMachine(bestLocation.machineId, rustPlusPort);
+        
+        // Mindhárom portnak szabadnak kell lennie az adatbázisban ÉS a gépen
+        if (gamePortAvailableInDb && queryPortAvailableInDb && rustPlusPortAvailableInDb &&
+            gamePortAvailableOnMachine && queryPortAvailableOnMachine && rustPlusPortAvailableOnMachine) {
+          allPortsAvailable = true;
+        } else {
+          // Ha valamelyik port foglalt, újra generáljuk a portot
+          retryCount++;
+          // Új port generálása a generateServerPort függvénnyel, ami már ellenőrzi az adatbázist és a gépen is
+          const newPort = await generateServerPort(options.gameType, bestLocation.machineId);
+          
+          // Port alapján számoljuk a QueryPort és RustPlusPort értékét
+          gamePort = newPort;
+          queryPort = gamePort + 1; // QueryPort = Port + 1
+          rustPlusPort = gamePort + 67; // RustPlusPort = Port + 67
+          
+          logger.warn('Port is not available, regenerating port', {
+            serverId,
+            retryCount,
+            newPort: gamePort,
+            newQueryPort: queryPort,
+            newRustPlusPort: rustPlusPort,
+            gamePortAvailableInDb,
+            queryPortAvailableInDb,
+            rustPlusPortAvailableInDb,
+            gamePortAvailableOnMachine,
+            queryPortAvailableOnMachine,
+            rustPlusPortAvailableOnMachine,
+          });
+        }
+      }
+      
+      if (!allPortsAvailable) {
+        logger.error(`Could not find available ports for ${options.gameType} server after retries`, new Error('Port allocation failed after retries'), {
+          serverId,
+          finalPort: gamePort,
+          finalQueryPort: queryPort,
+          finalRustPlusPort: rustPlusPort,
+        });
+        // Folytatjuk, de logoljuk a hibát
+      }
+      
+      // Az adatbázisban a port mezőbe a Port-ot mentjük (alap port)
+      generatedPort = gamePort; // Port = alap port
+      
+      // QueryPort és RustPlusPort mentése a configuration JSON-ben és az adatbázisban
+      configurationUpdate = {
+        queryPort: queryPort, // QueryPort (Port + 1)
+        rustPlusPort: rustPlusPort, // RustPlusPort (Port + 67)
+      };
+      
+      logger.info(`${options.gameType} ports generated`, {
+        serverId,
+        port: gamePort, // Port (alap port)
+        queryPort, // QueryPort (Port + 1)
+        rustPlusPort, // RustPlusPort (Port + 67)
         machineId: bestLocation.machineId,
         retries: retryCount,
       });
@@ -522,8 +703,19 @@ export async function provisionServer(
     };
     
     if (options.gameType === 'SATISFACTORY' && Object.keys(configurationUpdate).length > 0) {
-      updateData.queryPort = configurationUpdate.queryPort; // ServerQueryPort
-      updateData.beaconPort = configurationUpdate.beaconPort; // BeaconPort
+      updateData.queryPort = configurationUpdate.queryPort; // QueryPort (GamePort + 2)
+      updateData.beaconPort = configurationUpdate.beaconPort; // BeaconPort (QueryPort + 2)
+      updateData.configuration = updatedConfig;
+    } else if (options.gameType === 'VALHEIM' && Object.keys(configurationUpdate).length > 0) {
+      updateData.queryPort = configurationUpdate.queryPort; // QueryPort (Port + 1)
+      updateData.configuration = updatedConfig;
+    } else if (options.gameType === 'THE_FOREST' && Object.keys(configurationUpdate).length > 0) {
+      updateData.queryPort = configurationUpdate.queryPort; // QueryPort (Port + 1)
+      updateData.steamPeerPort = configurationUpdate.steamPeerPort; // SteamPeerPort (QueryPort + 1)
+      updateData.configuration = updatedConfig;
+    } else if (options.gameType === 'RUST' && Object.keys(configurationUpdate).length > 0) {
+      updateData.queryPort = configurationUpdate.queryPort; // QueryPort (Port + 1)
+      updateData.rustPlusPort = configurationUpdate.rustPlusPort; // RustPlusPort (Port + 67)
       updateData.configuration = updatedConfig;
     } else if (Object.keys(configurationUpdate).length > 0) {
       updateData.configuration = updatedConfig;
@@ -619,30 +811,144 @@ export async function generateServerPort(
 
   // Satisfactory-nál külön ellenőrzés, mert több portot kell ellenőrizni (QueryPort, BeaconPort, GamePort)
   if (gameType === 'SATISFACTORY') {
-    // Satisfactory-nál ellenőrizzük a QueryPort-ot, BeaconPort-ot és GamePort-ot is
+    // Satisfactory-nál az új logika szerint:
+    // - GamePort = alap port (pl. 7777)
+    // - QueryPort = GamePort + 2 (pl. 7779)
+    // - BeaconPort = QueryPort + 2 = GamePort + 4 (pl. 7781)
+    // A generateServerPort a GamePort-ot adja vissza (alap port)
     for (let offset = 0; offset < 100; offset++) {
-      const queryPort = basePort + offset;
-      const beaconPort = queryPort + 7223;
-      const gamePort = queryPort + 10000;
+      const gamePort = basePort + offset; // GamePort = alap port
+      const queryPort = gamePort + 2; // QueryPort = GamePort + 2
+      const beaconPort = queryPort + 2; // BeaconPort = QueryPort + 2
       
       // Ellenőrizzük az adatbázisban, hogy a portok szabadok-e
-      const queryPortAvailableInDb = await checkSatisfactoryPortInDatabase(queryPort);
-      const beaconPortAvailableInDb = await checkSatisfactoryPortInDatabase(beaconPort);
-      const gamePortAvailableInDb = await checkSatisfactoryPortInDatabase(gamePort);
+      const gamePortAvailableInDb = await checkMultiPortInDatabase(gamePort, gameType);
+      const queryPortAvailableInDb = await checkMultiPortInDatabase(queryPort, gameType);
+      const beaconPortAvailableInDb = await checkMultiPortInDatabase(beaconPort, gameType);
       
       // Ha mindhárom port szabad az adatbázisban
-      if (queryPortAvailableInDb && beaconPortAvailableInDb && gamePortAvailableInDb) {
+      if (gamePortAvailableInDb && queryPortAvailableInDb && beaconPortAvailableInDb) {
         // Ha van machineId, ellenőrizzük a gépen is
         if (machineId) {
+          const gamePortAvailableOnMachine = await checkPortAvailableOnMachine(machineId, gamePort);
           const queryPortAvailableOnMachine = await checkPortAvailableOnMachine(machineId, queryPort);
           const beaconPortAvailableOnMachine = await checkPortAvailableOnMachine(machineId, beaconPort);
-          const gamePortAvailableOnMachine = await checkPortAvailableOnMachine(machineId, gamePort);
           
-          if (queryPortAvailableOnMachine && beaconPortAvailableOnMachine && gamePortAvailableOnMachine) {
-            return queryPort;
+          if (gamePortAvailableOnMachine && queryPortAvailableOnMachine && beaconPortAvailableOnMachine) {
+            return gamePort; // Visszaadjuk a GamePort-ot (alap port)
           }
         } else {
-          return queryPort;
+          return gamePort; // Visszaadjuk a GamePort-ot (alap port)
+        }
+      }
+    }
+    
+    // Ha nincs szabad port, visszaadjuk az alapértelmezettet
+    return basePort;
+  }
+
+  // Valheim esetén két portot kell ellenőrizni (Port és QueryPort)
+  if (gameType === 'VALHEIM') {
+    // Port számítások:
+    // - Port = alap port (pl. 2456)
+    // - QueryPort = Port + 1 (pl. 2457)
+    // A generateServerPort a Port-ot adja vissza (alap port)
+    for (let offset = 0; offset < 100; offset++) {
+      const port = basePort + offset; // Port = alap port
+      const queryPort = port + 1; // QueryPort = Port + 1
+      
+      // Ellenőrizzük az adatbázisban, hogy a portok szabadok-e
+      const portAvailableInDb = await checkMultiPortInDatabase(port, gameType);
+      const queryPortAvailableInDb = await checkMultiPortInDatabase(queryPort, gameType);
+      
+      // Ha mindkét port szabad az adatbázisban
+      if (portAvailableInDb && queryPortAvailableInDb) {
+        // Ha van machineId, ellenőrizzük a gépen is
+        if (machineId) {
+          const portAvailableOnMachine = await checkPortAvailableOnMachine(machineId, port);
+          const queryPortAvailableOnMachine = await checkPortAvailableOnMachine(machineId, queryPort);
+          
+          if (portAvailableOnMachine && queryPortAvailableOnMachine) {
+            return port; // Visszaadjuk a Port-ot (alap port)
+          }
+        } else {
+          return port; // Visszaadjuk a Port-ot (alap port)
+        }
+      }
+    }
+    
+    // Ha nincs szabad port, visszaadjuk az alapértelmezettet
+    return basePort;
+  }
+
+  // The Forest esetén három portot kell ellenőrizni (Port, QueryPort, SteamPeerPort)
+  if (gameType === 'THE_FOREST') {
+    // Port számítások:
+    // - Port = alap port (pl. 27015)
+    // - QueryPort = Port + 1 (pl. 27016)
+    // - SteamPeerPort = QueryPort + 1 (pl. 27017)
+    // A generateServerPort a Port-ot adja vissza (alap port)
+    for (let offset = 0; offset < 100; offset++) {
+      const port = basePort + offset; // Port = alap port
+      const queryPort = port + 1; // QueryPort = Port + 1
+      const steamPeerPort = queryPort + 1; // SteamPeerPort = QueryPort + 1
+      
+      // Ellenőrizzük az adatbázisban, hogy a portok szabadok-e
+      const portAvailableInDb = await checkMultiPortInDatabase(port, gameType);
+      const queryPortAvailableInDb = await checkMultiPortInDatabase(queryPort, gameType);
+      const steamPeerPortAvailableInDb = await checkMultiPortInDatabase(steamPeerPort, gameType);
+      
+      // Ha mindhárom port szabad az adatbázisban
+      if (portAvailableInDb && queryPortAvailableInDb && steamPeerPortAvailableInDb) {
+        // Ha van machineId, ellenőrizzük a gépen is
+        if (machineId) {
+          const portAvailableOnMachine = await checkPortAvailableOnMachine(machineId, port);
+          const queryPortAvailableOnMachine = await checkPortAvailableOnMachine(machineId, queryPort);
+          const steamPeerPortAvailableOnMachine = await checkPortAvailableOnMachine(machineId, steamPeerPort);
+          
+          if (portAvailableOnMachine && queryPortAvailableOnMachine && steamPeerPortAvailableOnMachine) {
+            return port; // Visszaadjuk a Port-ot (alap port)
+          }
+        } else {
+          return port; // Visszaadjuk a Port-ot (alap port)
+        }
+      }
+    }
+    
+    // Ha nincs szabad port, visszaadjuk az alapértelmezettet
+    return basePort;
+  }
+
+  // Rust esetén három portot kell ellenőrizni (Port, QueryPort, RustPlusPort)
+  if (gameType === 'RUST') {
+    // Port számítások:
+    // - Port = alap port (pl. 28015)
+    // - QueryPort = Port + 1 (pl. 28016)
+    // - RustPlusPort = Port + 67 (pl. 28082)
+    // A generateServerPort a Port-ot adja vissza (alap port)
+    for (let offset = 0; offset < 100; offset++) {
+      const port = basePort + offset; // Port = alap port
+      const queryPort = port + 1; // QueryPort = Port + 1
+      const rustPlusPort = port + 67; // RustPlusPort = Port + 67
+      
+      // Ellenőrizzük az adatbázisban, hogy a portok szabadok-e
+      const portAvailableInDb = await checkMultiPortInDatabase(port, gameType);
+      const queryPortAvailableInDb = await checkMultiPortInDatabase(queryPort, gameType);
+      const rustPlusPortAvailableInDb = await checkMultiPortInDatabase(rustPlusPort, gameType);
+      
+      // Ha mindhárom port szabad az adatbázisban
+      if (portAvailableInDb && queryPortAvailableInDb && rustPlusPortAvailableInDb) {
+        // Ha van machineId, ellenőrizzük a gépen is
+        if (machineId) {
+          const portAvailableOnMachine = await checkPortAvailableOnMachine(machineId, port);
+          const queryPortAvailableOnMachine = await checkPortAvailableOnMachine(machineId, queryPort);
+          const rustPlusPortAvailableOnMachine = await checkPortAvailableOnMachine(machineId, rustPlusPort);
+          
+          if (portAvailableOnMachine && queryPortAvailableOnMachine && rustPlusPortAvailableOnMachine) {
+            return port; // Visszaadjuk a Port-ot (alap port)
+          }
+        } else {
+          return port; // Visszaadjuk a Port-ot (alap port)
         }
       }
     }
@@ -704,69 +1010,67 @@ export async function generateServerPort(
 }
 
 /**
- * Ellenőrzi, hogy egy port foglalt-e az adatbázisban Satisfactory szervereknél
- * Ellenőrzi a port, queryPort, beaconPort mezőket ÉS a configuration JSON-ben tárolt queryPort, beaconPort és gamePort értékeket is
+ * Ellenőrzi, hogy egy port foglalt-e az adatbázisban több portot használó játékoknál
+ * (Valheim, The Forest, Rust, Satisfactory)
+ * Ellenőrzi a port, queryPort, beaconPort mezőket ÉS a configuration JSON-ben tárolt portokat is
  */
-export async function checkSatisfactoryPortInDatabase(port: number, excludeServerId?: string): Promise<boolean> {
+export async function checkMultiPortInDatabase(port: number, gameType: GameType, excludeServerId?: string): Promise<boolean> {
   try {
-    // Lekérjük az összes Satisfactory szervert, amely nem OFFLINE
-    const satisfactoryServers = await prisma.server.findMany({
+    // Lekérjük az összes szervert az adott játék típusnál, amely nem OFFLINE
+    const servers = await prisma.server.findMany({
       where: {
-        gameType: 'SATISFACTORY',
+        gameType: gameType,
         status: {
           not: 'OFFLINE',
         },
         ...(excludeServerId ? { id: { not: excludeServerId } } : {}),
       },
-      select: {
-        id: true,
-        port: true,
-        configuration: true,
-      },
     });
 
     // Ellenőrizzük, hogy a port foglalt-e
-    for (const server of satisfactoryServers) {
-      // Ellenőrizzük a port mezőt (QueryPort)
+    for (const server of servers) {
+      // Ellenőrizzük a port mezőt (alap port)
       if (server.port === port) {
         return false; // Foglalt
       }
 
-      // Ellenőrizzük a queryPort és beaconPort mezőket a configuration JSON-ból
-      if (server.configuration) {
-        try {
-          const config = typeof server.configuration === 'string' ? JSON.parse(server.configuration) : server.configuration;
-          if (config.queryPort === port || config.beaconPort === port || config.gamePort === port) {
-            return false; // Foglalt
-          }
-        } catch (parseError) {
-          console.warn('Failed to parse server configuration:', parseError);
+      // Ellenőrizzük a queryPort mezőt
+      // Type assertion használata, mert a Prisma client típusokban lehet, hogy nincs benne
+      const serverWithPorts = server as any;
+      if (serverWithPorts.queryPort !== null && serverWithPorts.queryPort !== undefined && serverWithPorts.queryPort === port) {
+        return false; // Foglalt
+      }
+
+      // Satisfactory-nál ellenőrizzük a beaconPort mezőt is
+      if (gameType === 'SATISFACTORY') {
+        if (serverWithPorts.beaconPort !== null && serverWithPorts.beaconPort !== undefined && serverWithPorts.beaconPort === port) {
+          return false; // Foglalt
         }
       }
 
-      // Ellenőrizzük a configuration JSON-ben tárolt portokat (backward compatibility)
+      // The Forest-nál ellenőrizzük a steamPeerPort mezőt is
+      if (gameType === 'THE_FOREST') {
+        if (serverWithPorts.steamPeerPort !== null && serverWithPorts.steamPeerPort !== undefined && serverWithPorts.steamPeerPort === port) {
+          return false; // Foglalt
+        }
+      }
+
+      // Rust-nál ellenőrizzük a rustPlusPort mezőt is
+      if (gameType === 'RUST') {
+        if (serverWithPorts.rustPlusPort !== null && serverWithPorts.rustPlusPort !== undefined && serverWithPorts.rustPlusPort === port) {
+          return false; // Foglalt
+        }
+      }
+
+      // Ellenőrizzük a portokat a configuration JSON-ból is (backward compatibility)
       if (server.configuration) {
         try {
-          const config = typeof server.configuration === 'string' 
-            ? JSON.parse(server.configuration) 
-            : server.configuration;
-
-          // QueryPort ellenőrzés
-          if (config.queryPort === port) {
-            return false; // Foglalt
-          }
-
-          // BeaconPort ellenőrzés
-          if (config.beaconPort === port) {
-            return false; // Foglalt
-          }
-
-          // GamePort ellenőrzés
-          if (config.gamePort === port) {
+          const config = typeof server.configuration === 'string' ? JSON.parse(server.configuration) : server.configuration;
+          if (config.queryPort === port || config.beaconPort === port || config.gamePort === port || config.port === port ||
+              config.steamPeerPort === port || config.rustPlusPort === port) {
             return false; // Foglalt
           }
         } catch (parseError) {
-          // Ha nem sikerül parse-olni, folytatjuk
           console.warn('Failed to parse server configuration:', parseError);
         }
       }
@@ -775,9 +1079,17 @@ export async function checkSatisfactoryPortInDatabase(port: number, excludeServe
     return true; // Szabad
   } catch (error) {
     // Hiba esetén biztonságosabb feltételezni, hogy a port foglalt
-    console.error(`Database port check error for port ${port}:`, error);
+    console.error(`Database port check error for port ${port} (${gameType}):`, error);
     return false;
   }
+}
+
+/**
+ * Ellenőrzi, hogy egy port foglalt-e az adatbázisban Satisfactory szervereknél
+ * Ellenőrzi a port, queryPort, beaconPort mezőket ÉS a configuration JSON-ben tárolt queryPort, beaconPort és gamePort értékeket is
+ */
+export async function checkSatisfactoryPortInDatabase(port: number, excludeServerId?: string): Promise<boolean> {
+  return checkMultiPortInDatabase(port, 'SATISFACTORY', excludeServerId);
 }
 
 /**

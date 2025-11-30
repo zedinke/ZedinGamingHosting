@@ -111,6 +111,8 @@ model Server {
   port          Int? // Alap port (QueryPort Satisfactory-nál)
   queryPort     Int? // QueryPort (Satisfactory-nál és más játékoknál)
   beaconPort    Int? // BeaconPort (Satisfactory-nál)
+  steamPeerPort Int? // SteamPeerPort (The Forest-nál)
+  rustPlusPort  Int? // RustPlusPort (Rust-nál)
   maxPlayers    Int          @default(10)
   configuration Json? // Szerver konfiguráció JSON formátumban
   resourceUsage Json? // CPU, RAM, Disk használat

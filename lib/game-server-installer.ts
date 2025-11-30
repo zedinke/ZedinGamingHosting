@@ -1325,26 +1325,26 @@ export async function createSystemdServiceForServer(
         },
       });
       
-      // Satisfactory port számítások az adatbázisból:
+      // Satisfactory port számítások az adatbázisból (új logika):
       // Az adatbázisban:
       // - port mező = GamePort (alap port, pl. 7777)
-      // - queryPort mező = ServerQueryPort (GamePort + 8000, pl. 15777)
-      // - beaconPort mező = BeaconPort (GamePort + 7230, pl. 15007)
+      // - queryPort mező = QueryPort (GamePort + 2, pl. 7779)
+      // - beaconPort mező = BeaconPort (QueryPort + 2, pl. 7781)
       
       // Lekérjük az adatbázisból a portokat
       const dbGamePort = serverWithPorts?.port || port || 7777; // GamePort = port mező
-      const dbQueryPort = serverWithPorts?.queryPort || (dbGamePort + 8000); // ServerQueryPort = queryPort mező
-      const dbBeaconPort = serverWithPorts?.beaconPort || (dbGamePort + 7230); // BeaconPort = beaconPort mező
+      const dbQueryPort = serverWithPorts?.queryPort || (dbGamePort + 2); // QueryPort = queryPort mező (GamePort + 2)
+      const dbBeaconPort = serverWithPorts?.beaconPort || (dbQueryPort + 2); // BeaconPort = beaconPort mező (QueryPort + 2)
       
       // Config-ból is próbáljuk, ha van (ha a config-ban vannak, akkor azokat használjuk)
       let finalGamePort = config.gamePort || dbGamePort;
       let finalQueryPort = config.queryPort || dbQueryPort;
       let finalBeaconPort = config.beaconPort || dbBeaconPort;
       
-      // Ha a config-ban csak egy port van, számoljuk ki a többit
+      // Ha a config-ban csak egy port van, számoljuk ki a többit az új logika szerint
       if (config.gamePort && !config.queryPort && !config.beaconPort) {
-        finalQueryPort = config.gamePort + 8000;
-        finalBeaconPort = config.gamePort + 7230;
+        finalQueryPort = config.gamePort + 2; // QueryPort = GamePort + 2
+        finalBeaconPort = finalQueryPort + 2; // BeaconPort = QueryPort + 2
       }
       
       // Biztosítjuk, hogy mindhárom port különböző legyen
@@ -1364,8 +1364,8 @@ export async function createSystemdServiceForServer(
         });
         
         // Az adatbázisból a port mező a GamePort-ot tartalmazza (alap port)
-        // Újraszámoljuk a portokat a GamePort alapján
-        const baseGamePort = finalGamePort || finalQueryPort - 8000 || 7777;
+        // Újraszámoljuk a portokat a GamePort alapján az új logika szerint
+        const baseGamePort = finalGamePort || (finalQueryPort ? finalQueryPort - 2 : 7777);
         
         // Ha a GamePort hiányzik vagy ütközik, újraszámoljuk
         if (finalGamePort === finalQueryPort || finalGamePort === finalBeaconPort || !finalGamePort) {
@@ -1373,23 +1373,19 @@ export async function createSystemdServiceForServer(
           finalGamePort = baseGamePort;
         }
         
-        // ServerQueryPort = GamePort + 8000
+        // QueryPort = GamePort + 2
         if (finalQueryPort === finalGamePort || finalQueryPort === finalBeaconPort || !finalQueryPort) {
-          finalQueryPort = finalGamePort + 8000;
+          finalQueryPort = finalGamePort + 2;
         }
         
-        // BeaconPort = GamePort + 7230 (770 különbség a QueryPort-tól, biztosan különböző)
-        // Ha még mindig ütközik, módosítjuk az offset-et
-        const calculatedBeaconPort = finalGamePort + 7230;
-        if (calculatedBeaconPort === finalQueryPort || calculatedBeaconPort === finalGamePort) {
-          finalBeaconPort = finalGamePort + 7500; // 500 különbség a QueryPort-tól
-        } else {
-          finalBeaconPort = calculatedBeaconPort;
+        // BeaconPort = QueryPort + 2
+        if (finalBeaconPort === finalGamePort || finalBeaconPort === finalQueryPort || !finalBeaconPort) {
+          finalBeaconPort = finalQueryPort + 2;
         }
         
-        // Ha még mindig ütköznek, akkor más offset-eket próbálunk
+        // Ha még mindig ütköznek, akkor újraszámoljuk az új logika szerint
         if (finalGamePort === finalQueryPort || finalGamePort === finalBeaconPort || finalQueryPort === finalBeaconPort) {
-          logger.warn('Ports still conflict after initial recalculation, trying different offsets', {
+          logger.warn('Ports still conflict after initial recalculation, recalculating with new logic', {
             serverId,
             gamePort: finalGamePort,
             queryPort: finalQueryPort,
@@ -1397,27 +1393,10 @@ export async function createSystemdServiceForServer(
             attempt: adjustmentAttempt,
           });
           
-          // Próbáljuk különböző offset-ekkel
-          // ServerQueryPort = GamePort + 8000 (fix)
-          finalQueryPort = finalGamePort + 8000;
-          
-          // BeaconPort különböző offset-ekkel, amíg nem lesz egyedi
-          const offsetOptions = [7230, 7500, 9000, 10000, 11000]; // Különböző offset opciók
-          for (const offset of offsetOptions) {
-            const testBeaconPort = finalGamePort + offset;
-            if (testBeaconPort !== finalGamePort && testBeaconPort !== finalQueryPort) {
-              finalBeaconPort = testBeaconPort;
-              break; // Találtunk egyedi portot
-            }
-          }
-          
-          // Ha még mindig ütköznek, akkor módosítjuk a GamePort-ot
-          if (finalGamePort === finalQueryPort || finalGamePort === finalBeaconPort || finalQueryPort === finalBeaconPort) {
-            // Új GamePort generálása (egy kis offset-tel)
-            finalGamePort = (finalGamePort + adjustmentAttempt) || 7777;
-            finalQueryPort = finalGamePort + 8000;
-            finalBeaconPort = finalGamePort + 7230;
-          }
+          // Újraszámoljuk az új logika szerint
+          finalGamePort = baseGamePort;
+          finalQueryPort = finalGamePort + 2;
+          finalBeaconPort = finalQueryPort + 2;
         }
       }
       
@@ -1443,11 +1422,15 @@ export async function createSystemdServiceForServer(
       
       // A startCommand placeholder-eket cseréljük le
       // -Port={gamePort} -ServerQueryPort={queryPort} -BeaconPort={beaconPort}
+      // Fontos: a Satisfactory FactoryServer.sh a következő paramétereket várja:
+      // -Port={gamePort} - a játékosok által használt port
+      // -ServerQueryPort={queryPort} - a query port (a jelenlegi kódban queryPort mezőben van)
+      // -BeaconPort={beaconPort} - a beacon port
       startCommand = startCommand
         .replace(/{gamePort}/g, finalGamePort.toString())
         .replace(/{queryPort}/g, finalQueryPort.toString())
         .replace(/{beaconPort}/g, finalBeaconPort.toString())
-        .replace(/{port}/g, finalQueryPort.toString()); // {port} is QueryPort-t jelent (backward compatibility)
+        .replace(/{port}/g, finalGamePort.toString()); // {port} is GamePort-t jelent (backward compatibility)
       
       logger.info('Satisfactory start command generated with ports', {
         serverId,
