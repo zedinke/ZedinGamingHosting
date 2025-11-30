@@ -8,7 +8,8 @@
     "dashboard": "Vezérlőpult",
     "login": "Bejelentkezés",
     "register": "Regisztráció",
-    "logout": "Kijelentkezés"
+    "logout": "Kijelentkezés",
+    "system": "Zed Gaming System"
   },
   "hero": {
     "title": "A legjobb gaming szerver hosting",
@@ -115,5 +116,129 @@
     "invoices": "Számlák",
     "settings": "Beállítások",
     "cms": "Tartalomkezelés"
+  },
+  "system": {
+    "title": "Zed Gaming System",
+    "subtitle": "Fedezd fel a jövő gaming szerver hosting technológiáját",
+    "intro": {
+      "title": "Üdvözöl a Zed Gaming System",
+      "description": "A Zed Gaming System egy forradalmi gaming szerver hosting platform, amely mindent megold, amire egy szerver tulajdonosnak szüksége lehet. Nem csak egy egyszerű hosting szolgáltatás – ez egy teljes körű rendszer, amely gondoskodik mindenről, a szerver létrehozásától a számlázásig, a monitoringtól a támogatásig. Modern technológiákkal, skálázható architektúrával és felhasználóbarát felülettel rendelkezik, amely lehetővé teszi, hogy percek alatt létrehozd és kezeld szervereidet."
+    },
+    "games": {
+      "title": "Támogatott Játékok",
+      "subtitle": "A Zed Gaming System több mint 20 népszerű játékot támogat, és folyamatosan bővül",
+      "ark": {
+        "title": "ARK: Survival Evolved & ARK: Survival Ascended",
+        "description": "Építsd fel a saját dinoszaurusz birodalmadat! Mindkét ARK verziót támogatjuk, teljes mod támogatással és egyedi konfigurációval. Automatikus frissítések, backup kezelés és teljes konzol hozzáférés biztosított."
+      },
+      "survival": {
+        "title": "Survival Játékok",
+        "description": "Rust, Valheim, 7 Days to Die, Conan Exiles, DayZ, Project Zomboid, Palworld, Enshrouded, Sons of the Forest, The Forest, Grounded, V Rising, Don't Starve Together – minden kedvenc survival játékod egy helyen! Minden játékhoz optimalizált konfiguráció és teljes fájlkezelő hozzáférés."
+      },
+      "minecraft": {
+        "title": "Minecraft",
+        "description": "Java és Bedrock szerverek, mod támogatás, plugin kezelés – a Minecraft szervered tökéletes otthona. Támogatjuk a Paper, Spigot, Forge és Fabric szervereket is, teljes plugin és mod kompatibilitással."
+      },
+      "fps": {
+        "title": "FPS Játékok",
+        "description": "CS2, CS:GO, Left 4 Dead 2, Killing Floor 2, Insurgency: Sandstorm, Squad, Hell Let Loose, Post Scriptum – intenzív akció minden percben. Alacsony késleltetés, magas teljesítmény és stabil kapcsolat garantálva."
+      },
+      "other": {
+        "title": "És még sok más!",
+        "description": "Terraria, Satisfactory, és még sok más játék. Ha a játékod támogat szerver hostingot, valószínűleg mi is támogatjuk! Folyamatosan bővítjük a támogatott játékok listáját, hogy minden játékos megtalálja a számára megfelelő szervert."
+      }
+    },
+    "features": {
+      "title": "Rendszer Funkciók",
+      "subtitle": "Tekintsd meg, mire képes a Zed Gaming System",
+      "serverManagement": {
+        "title": "Teljes Szerver Kezelés",
+        "description": "Indítsd, állítsd le vagy indítsd újra szervereidet egy kattintással. Valós idejű monitoring, fájlkezelő, konzol hozzáférés, szerver konfiguráció szerkesztése, backup kezelés és szerver sablonok – minden, amire szükséged van, egy helyen. Több mint 100+ API endpoint biztosítja a teljes kontrollt."
+      },
+      "billing": {
+        "title": "Intelligens Számlázás",
+        "description": "Több fizetési mód támogatás (Stripe, PayPal, Revolut), automatikus számlázás, kuponok, előfizetések kezelése, PDF számla generálás, ÁFA kezelés, számlázási adatok kezelése – a pénzügyek soha nem voltak ilyen egyszerűek. Automatikus webhook kezelés és fizetési események feldolgozása."
+      },
+      "monitoring": {
+        "title": "Valós Idejű Monitoring",
+        "description": "Kövesd szervereid teljesítményét valós időben Server-Sent Events (SSE) technológiával. CPU, RAM, Disk használat, játékosok száma, szerver státusz, logok streamelése, metrikák és health check endpoint – minden információ az ujjaid hegyén, valós időben."
+      },
+      "automation": {
+        "title": "Automatizáció",
+        "description": "Automatikus szerver provisioning, backup kezelés, frissítések, port kezelés, cron job végrehajtás, task feldolgozás, automatikus terheléselosztás – a rendszer gondoskodik mindenről, hogy te csak játszhass. Agent-based architektúra biztosítja a skálázhatóságot és megbízhatóságot."
+      },
+      "support": {
+        "title": "24/7 Támogatás",
+        "description": "Integrált ticket rendszer kategóriákkal és prioritásokkal, AI chat támogatás magyar nyelvű válaszokkal (Ollama integráció), gyors válaszidő, ticket státusz követés, üzenetkezelés – segítünk, amikor szükséged van rá. Többnyelvű támogatás magyar és angol nyelven."
+      },
+      "cms": {
+        "title": "Teljes CMS Rendszer",
+        "description": "Blog és hírek kezelése kategóriákkal és címkékkel, FAQ rendszer, slideshow kezelés képek és videókkal, dinamikus árazási táblázatok, vásárlói vélemények (testimonials), csapat tagok kezelése, játékok és kategóriák kezelése, statikus oldalak építő, SEO beállítások – minden, amit egy modern weboldalhoz szükséges, beépítve."
+      },
+      "security": {
+        "title": "Biztonság",
+        "description": "Szerepkör alapú hozzáférés-vezérlés (RBAC) USER, MODERATOR, ADMIN szerepkörökkel, audit logok minden rendszereseményhez, email verifikáció, kétfaktoros autentikáció (2FA) támogatás, biztonságos jelszó hashelés (bcrypt), session kezelés (JWT, 30 napos érvényesség), OAuth integráció (Google, Discord), IP cím és user agent naplózás – adataid biztonságban."
+      },
+      "scalability": {
+        "title": "Skálázhatóság",
+        "description": "Agent-based architektúra több szerver gép támogatással, automatikus terheléselosztás, SSH kapcsolat kezelés, agent heartbeat monitoring, task feldolgozás háttérben, resource kapacitás követés, szerver gépek (machines) kezelése – a rendszer növekszik veled, akár több ezer szerver kezelésére is képes."
+      },
+      "userManagement": {
+        "title": "Felhasználókezelés",
+        "description": "Email/jelszó és OAuth alapú regisztráció (Google, Discord), email verifikáció, jelszó visszaállítás, profil kezelés avatar feltöltéssel, szerepkör kezelés, felhasználói dashboard statisztikákkal, beállítások kezelése – minden felhasználói funkció egy helyen."
+      },
+      "adminPanel": {
+        "title": "Admin Vezérlőpult",
+        "description": "Teljes admin vezérlőpult statisztikákkal, felhasználókezelés kereséssel és szűréssel, szerver kezelés minden szerverhez, előfizetés és számlázás kezelés, support ticket rendszer, CMS kezelés, rendszerbeállítások, analytics dashboard, audit logok, webhook kezelés, téma szerkesztő – teljes rendszerirányítás egy helyen."
+      },
+      "api": {
+        "title": "API és Integrációk",
+        "description": "100+ RESTful API endpoint, Server-Sent Events (SSE) támogatás valós idejű adatokhoz, webhook rendszer eseményekhez, API dokumentáció, több fizetési provider integráció (Stripe, PayPal, Revolut), email rendszer (Nodemailer, Hestia CP SMTP), PDF generálás (Puppeteer) – minden integráció egy helyen."
+      },
+      "multilanguage": {
+        "title": "Többnyelvűség",
+        "description": "Teljes magyar és angol nyelvi támogatás, automatikus nyelvváltás URL alapján, server-side és client-side fordítások, lokalizált email sablonok, dinamikus tartalom több nyelven – a rendszer tökéletesen működik mindkét nyelven."
+      }
+    },
+    "why": {
+      "title": "Miért a Zed Gaming System?",
+      "description": "Mert ez nem csak egy hosting szolgáltatás – ez egy teljes rendszer, amely gondoskodik mindenről. Nem kell különböző szolgáltatásokat kombinálnod, nem kell bonyolult konfigurációkkal bajlódnod. Minden egy helyen, egyszerűen, gyorsan, megbízhatóan. Modern technológiákkal épített rendszer (Next.js 14, TypeScript, Prisma ORM), amely garantálja a teljesítményt és a megbízhatóságot. Agent-based architektúrával skálázható, és folyamatosan fejlesztjük, hogy mindig a legjobb élményt nyújtsuk."
+    },
+    "technical": {
+      "title": "Technikai Részletek",
+      "subtitle": "A rendszer mögött álló technológiák",
+      "frontend": {
+        "title": "Frontend",
+        "description": "Next.js 14 App Router, React, TypeScript, Tailwind CSS – modern, gyors és reszponzív felület minden eszközön."
+      },
+      "backend": {
+        "title": "Backend",
+        "description": "Next.js API Routes, Server Actions, Prisma ORM, MySQL/PostgreSQL – robusztus és skálázható backend architektúra."
+      },
+      "database": {
+        "title": "Adatbázis",
+        "description": "25+ adatbázis modell, 10+ enum típus, teljes kapcsolatok kezelése, automatikus migrációk – strukturált és megbízható adatkezelés."
+      },
+      "deployment": {
+        "title": "Telepítés",
+        "description": "Docker támogatás, Standalone Build, PM2 process manager, Hestia CP integráció – könnyű telepítés és karbantartás."
+      }
+    },
+    "cta": {
+      "title": "Készen állsz?",
+      "description": "Csatlakozz a jövő gaming szerver hosting technológiájához",
+      "button": "Kezdj el most"
+    },
+    "stats": {
+      "title": "Rendszer Statisztikák",
+      "models": "25+ adatbázis modell",
+      "endpoints": "100+ API endpoint",
+      "components": "80+ React komponens",
+      "pages": "50+ oldal",
+      "games": "20+ támogatott játék",
+      "languages": "2 nyelv (magyar, angol)",
+      "uptime": "99.99% átlagos uptime",
+      "support": "24/7 támogatás"
+    }
   }
 }

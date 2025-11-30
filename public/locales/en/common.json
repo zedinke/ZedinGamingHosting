@@ -8,7 +8,8 @@
     "dashboard": "Dashboard",
     "login": "Login",
     "register": "Register",
-    "logout": "Logout"
+    "logout": "Logout",
+    "system": "Zed Gaming System"
   },
   "hero": {
     "title": "The Best Gaming Server Hosting",
@@ -115,5 +116,129 @@
     "invoices": "Invoices",
     "settings": "Settings",
     "cms": "Content Management"
+  },
+  "system": {
+    "title": "Zed Gaming System",
+    "subtitle": "Discover the future of gaming server hosting technology",
+    "intro": {
+      "title": "Welcome to Zed Gaming System",
+      "description": "Zed Gaming System is a revolutionary gaming server hosting platform that handles everything a server owner needs. It's not just a simple hosting service – it's a complete system that takes care of everything, from server creation to billing, from monitoring to support. Built with modern technologies, scalable architecture, and user-friendly interface that allows you to create and manage your servers in minutes."
+    },
+    "games": {
+      "title": "Supported Games",
+      "subtitle": "Zed Gaming System supports over 20 popular games and is constantly expanding",
+      "ark": {
+        "title": "ARK: Survival Evolved & ARK: Survival Ascended",
+        "description": "Build your own dinosaur empire! We support both ARK versions with full mod support and custom configuration. Automatic updates, backup management, and full console access included."
+      },
+      "survival": {
+        "title": "Survival Games",
+        "description": "Rust, Valheim, 7 Days to Die, Conan Exiles, DayZ, Project Zomboid, Palworld, Enshrouded, Sons of the Forest, The Forest, Grounded, V Rising, Don't Starve Together – all your favorite survival games in one place! Optimized configuration for each game and full file manager access."
+      },
+      "minecraft": {
+        "title": "Minecraft",
+        "description": "Java and Bedrock servers, mod support, plugin management – the perfect home for your Minecraft server. We support Paper, Spigot, Forge, and Fabric servers with full plugin and mod compatibility."
+      },
+      "fps": {
+        "title": "FPS Games",
+        "description": "CS2, CS:GO, Left 4 Dead 2, Killing Floor 2, Insurgency: Sandstorm, Squad, Hell Let Loose, Post Scriptum – intense action every minute. Low latency, high performance, and stable connection guaranteed."
+      },
+      "other": {
+        "title": "And So Much More!",
+        "description": "Terraria, Satisfactory, and many other games. If your game supports server hosting, we probably support it too! We continuously expand our supported games list so every player can find the perfect server for them."
+      }
+    },
+    "features": {
+      "title": "System Features",
+      "subtitle": "See what Zed Gaming System is capable of",
+      "serverManagement": {
+        "title": "Complete Server Management",
+        "description": "Start, stop, or restart your servers with a single click. Real-time monitoring, file manager, console access, server configuration editing, backup management, and server templates – everything you need in one place. 100+ API endpoints ensure full control."
+      },
+      "billing": {
+        "title": "Smart Billing",
+        "description": "Multiple payment methods (Stripe, PayPal, Revolut), automatic invoicing, coupons, subscription management, PDF invoice generation, tax handling, billing data management – finances have never been this simple. Automatic webhook handling and payment event processing."
+      },
+      "monitoring": {
+        "title": "Real-Time Monitoring",
+        "description": "Track your servers' performance in real-time using Server-Sent Events (SSE) technology. CPU, RAM, Disk usage, player count, server status, log streaming, metrics, and health check endpoint – all information at your fingertips, in real-time."
+      },
+      "automation": {
+        "title": "Automation",
+        "description": "Automatic server provisioning, backup management, updates, port management, cron job execution, task processing, automatic load balancing – the system takes care of everything so you can just play. Agent-based architecture ensures scalability and reliability."
+      },
+      "support": {
+        "title": "24/7 Support",
+        "description": "Integrated ticket system with categories and priorities, AI chat support with Hungarian language responses (Ollama integration), fast response time, ticket status tracking, message management – we're here when you need us. Multilingual support in Hungarian and English."
+      },
+      "cms": {
+        "title": "Complete CMS System",
+        "description": "Blog and news management with categories and tags, FAQ system, slideshow management with images and videos, dynamic pricing tables, customer testimonials, team member management, games and categories management, static page builder, SEO settings – everything you need for a modern website, built-in."
+      },
+      "security": {
+        "title": "Security",
+        "description": "Role-based access control (RBAC) with USER, MODERATOR, ADMIN roles, audit logs for all system events, email verification, two-factor authentication (2FA) support, secure password hashing (bcrypt), session management (JWT, 30-day validity), OAuth integration (Google, Discord), IP address and user agent logging – your data is safe."
+      },
+      "scalability": {
+        "title": "Scalability",
+        "description": "Agent-based architecture with multiple server machine support, automatic load balancing, SSH connection management, agent heartbeat monitoring, background task processing, resource capacity tracking, server machine management – the system grows with you, capable of managing thousands of servers."
+      },
+      "userManagement": {
+        "title": "User Management",
+        "description": "Email/password and OAuth-based registration (Google, Discord), email verification, password reset, profile management with avatar upload, role management, user dashboard with statistics, settings management – all user functions in one place."
+      },
+      "adminPanel": {
+        "title": "Admin Dashboard",
+        "description": "Complete admin dashboard with statistics, user management with search and filtering, server management for all servers, subscription and billing management, support ticket system, CMS management, system settings, analytics dashboard, audit logs, webhook management, theme editor – complete system control in one place."
+      },
+      "api": {
+        "title": "API and Integrations",
+        "description": "100+ RESTful API endpoints, Server-Sent Events (SSE) support for real-time data, webhook system for events, API documentation, multiple payment provider integrations (Stripe, PayPal, Revolut), email system (Nodemailer, Hestia CP SMTP), PDF generation (Puppeteer) – all integrations in one place."
+      },
+      "multilanguage": {
+        "title": "Multilingual",
+        "description": "Full Hungarian and English language support, automatic language switching based on URL, server-side and client-side translations, localized email templates, dynamic content in multiple languages – the system works perfectly in both languages."
+      }
+    },
+    "why": {
+      "title": "Why Zed Gaming System?",
+      "description": "Because it's not just a hosting service – it's a complete system that takes care of everything. No need to combine different services, no need to deal with complex configurations. Everything in one place, simply, quickly, reliably. A system built with modern technologies (Next.js 14, TypeScript, Prisma ORM) that guarantees performance and reliability. Scalable with agent-based architecture, and we continuously improve it to always provide the best experience."
+    },
+    "technical": {
+      "title": "Technical Details",
+      "subtitle": "Technologies behind the system",
+      "frontend": {
+        "title": "Frontend",
+        "description": "Next.js 14 App Router, React, TypeScript, Tailwind CSS – modern, fast, and responsive interface on all devices."
+      },
+      "backend": {
+        "title": "Backend",
+        "description": "Next.js API Routes, Server Actions, Prisma ORM, MySQL/PostgreSQL – robust and scalable backend architecture."
+      },
+      "database": {
+        "title": "Database",
+        "description": "25+ database models, 10+ enum types, full relationship management, automatic migrations – structured and reliable data management."
+      },
+      "deployment": {
+        "title": "Deployment",
+        "description": "Docker support, Standalone Build, PM2 process manager, Hestia CP integration – easy installation and maintenance."
+      }
+    },
+    "cta": {
+      "title": "Ready to get started?",
+      "description": "Join the future of gaming server hosting technology",
+      "button": "Get Started Now"
+    },
+    "stats": {
+      "title": "System Statistics",
+      "models": "25+ database models",
+      "endpoints": "100+ API endpoints",
+      "components": "80+ React components",
+      "pages": "50+ pages",
+      "games": "20+ supported games",
+      "languages": "2 languages (Hungarian, English)",
+      "uptime": "99.99% average uptime",
+      "support": "24/7 support"
+    }
   }
 }

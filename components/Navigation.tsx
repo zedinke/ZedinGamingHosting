@@ -66,6 +66,16 @@ export function Navigation({ locale }: NavigationProps) {
             >
               {t('nav.games')}
             </Link>
+            <Link
+              href={`/${locale}/system`}
+              className={`hover:text-gray-900 transition-colors font-medium ${
+                isActive('/system') 
+                  ? 'text-gray-900 font-semibold' 
+                  : 'text-gray-700'
+              }`}
+            >
+              {t('nav.system')}
+            </Link>
             
             {session ? (
               <>
@@ -145,6 +155,17 @@ export function Navigation({ locale }: NavigationProps) {
                 }`}
               >
                 {t('nav.games')}
+              </Link>
+              <Link
+                href={`/${locale}/system`}
+                onClick={() => setMobileMenuOpen(false)}
+                className={`hover:text-gray-900 transition-colors font-medium py-2 ${
+                  isActive('/system') 
+                    ? 'text-gray-900 font-semibold' 
+                    : 'text-gray-700'
+                }`}
+              >
+                {t('nav.system')}
               </Link>
               
               {session ? (
