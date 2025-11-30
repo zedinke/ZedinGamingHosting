@@ -23,7 +23,7 @@ interface GamePackage {
   currency: string;
   interval: string;
   image: string | null;
-  slot: number;
+  slot: number | null;
   cpuCores: number;
   ram: number;
   discountPrice: number | null;
