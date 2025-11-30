@@ -8,6 +8,7 @@ interface ProvisioningOptions {
   maxPlayers: number;
   planId?: string;
   gamePackageId?: string;
+  premiumPackageId?: string;
 }
 
 interface MachineResources {
@@ -320,6 +321,7 @@ export async function provisionServer(
           maxPlayers: options.maxPlayers,
           planId: options.planId,
           gamePackageId: options.gamePackageId,
+          premiumPackageId: options.premiumPackageId,
         },
       },
     });
