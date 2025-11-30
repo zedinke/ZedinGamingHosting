@@ -87,6 +87,7 @@ export async function GET(request: NextRequest) {
           defaultCpuCores: pkg.cpuCores || 2,
           defaultRamGB: pkg.ram || 4,
           defaultDiskGB: 5,
+          order: 0,
           // Egyéb mezők null/undefined
           steamAppId: null,
           installScript: null,
@@ -99,6 +100,10 @@ export async function GET(request: NextRequest) {
           configPath: null,
           defaultPort: null,
           queryPort: null,
+          description: null,
+          image: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         } as any);
       });
 

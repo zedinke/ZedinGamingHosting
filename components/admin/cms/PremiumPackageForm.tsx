@@ -80,12 +80,9 @@ export function PremiumPackageForm({ locale, package_: existingPackage }: Premiu
         return res.json();
       })
       .then((data) => {
-        console.log('Game configs loaded:', data);
         if (data.configs && Array.isArray(data.configs)) {
           setGameConfigs(data.configs);
-          console.log('Game configs set:', data.configs.length, 'configs');
         } else {
-          console.warn('No configs in response:', data);
           setGameConfigs([]);
         }
       })
@@ -199,16 +196,9 @@ export function PremiumPackageForm({ locale, package_: existingPackage }: Premiu
       .map((g, i) => (i !== currentIndex ? g : null))
       .filter((g): g is GameType => g !== null);
     
-    const available = gameConfigs.filter(
+    return gameConfigs.filter(
       (gc) => gc.isActive && !otherSelectedGames.includes(gc.gameType)
     );
-    
-    // Debug: logoljuk, ha nincs elérhető játék
-    if (available.length === 0 && gameConfigs.length > 0) {
-      console.log('No available games after filtering. Total configs:', gameConfigs.length, 'Selected games:', otherSelectedGames);
-    }
-    
-    return available;
   };
 
   return (
