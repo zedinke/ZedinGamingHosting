@@ -65,6 +65,32 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
+  // NextAuth login/register/error oldalak átirányítása locale-re
+  const validLocales = ['hu', 'en'];
+  const defaultLocale = 'hu';
+  
+  // Ha a pathname /login, /register, /auth/error, stb. és nincs locale, átirányítjuk
+  if (pathname === '/login' || pathname === '/register' || pathname === '/auth/error') {
+    // Próbáljuk meg kinyerni a locale-t a cookie-ból vagy header-ből
+    const acceptLanguage = request.headers.get('accept-language');
+    let locale = defaultLocale;
+    
+    if (acceptLanguage) {
+      const preferredLocale = acceptLanguage.split(',')[0].split('-')[0].toLowerCase();
+      if (validLocales.includes(preferredLocale)) {
+        locale = preferredLocale;
+      }
+    }
+    
+    const redirectUrl = new URL(`/${locale}${pathname}`, request.url);
+    // Megtartjuk a query paramétereket
+    request.nextUrl.searchParams.forEach((value, key) => {
+      redirectUrl.searchParams.set(key, value);
+    });
+    
+    return NextResponse.redirect(redirectUrl);
+  }
+
   // Karbantartási mód ellenőrzése (csak nem API és nem statikus fájlok esetén)
   // Kivételek: API, Next.js belső fájlok, statikus fájlok
   const isApiRoute = pathname.startsWith('/api/');

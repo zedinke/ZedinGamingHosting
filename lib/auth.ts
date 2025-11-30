@@ -88,6 +88,22 @@ export const authOptions: NextAuthOptions = {
       }
       return true;
     },
+    async redirect({ url, baseUrl }) {
+      // Ha a URL relatív, hozzáadjuk a baseUrl-t
+      if (url.startsWith('/')) {
+        // Ha a URL nem tartalmaz locale-t, hozzáadjuk az alapértelmezettet
+        if (!url.match(/^\/(hu|en)\//)) {
+          return `${baseUrl}/hu${url}`;
+        }
+        return `${baseUrl}${url}`;
+      }
+      // Ha a URL teljes URL, ellenőrizzük, hogy a saját domain-ünk
+      if (url.startsWith(baseUrl)) {
+        return url;
+      }
+      // Külső URL esetén a baseUrl-re irányítunk
+      return baseUrl;
+    },
     async jwt({ token, user, account }) {
       if (user) {
         token.role = (user as any).role;
@@ -105,10 +121,10 @@ export const authOptions: NextAuthOptions = {
     },
   },
   pages: {
-    signIn: '/login',
+    signIn: '/login', // A /login oldal átirányít a megfelelő locale-re
     signOut: '/',
-    error: '/auth/error',
-    verifyRequest: '/auth/verify-email',
+    error: '/auth/error', // Az /auth/error oldal átirányít a megfelelő locale-re
+    verifyRequest: '/hu/auth/verify-email',
   },
   session: {
     strategy: 'jwt',
