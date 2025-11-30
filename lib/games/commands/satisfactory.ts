@@ -14,7 +14,8 @@ export const commands = {
   // Natív Linux szerver, FactoryServer.sh script használata
   // Portok paraméterként: -Port={gamePort} -ServerQueryPort={queryPort} -BeaconPort={beaconPort}
   // A {gamePort}, {queryPort} és {beaconPort} placeholder-eket a rendszer cseréli le az indításkor
-  startCommand: './FactoryServer.sh -Port={gamePort} -ServerQueryPort={queryPort} -BeaconPort={beaconPort} -log -unattended',
+  // A {multihome} placeholder a szervergép külső IP címét tartalmazza
+  startCommand: './FactoryServer.sh -Port={gamePort} -ServerQueryPort={queryPort} -BeaconPort={beaconPort} -multihome={multihome} -log -unattended',
   stopCommand: 'quit', // Systemd automatikusan kezeli a leállítást, de a stopCommand mező kötelező
 };
 

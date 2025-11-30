@@ -1427,15 +1427,18 @@ export async function createSystemdServiceForServer(
       });
       
       // A startCommand placeholder-eket cseréljük le
-      // -Port={gamePort} -ServerQueryPort={queryPort} -BeaconPort={beaconPort}
+      // -Port={gamePort} -ServerQueryPort={queryPort} -BeaconPort={beaconPort} -multihome={multihome}
       // Fontos: a Satisfactory FactoryServer.sh a következő paramétereket várja:
       // -Port={gamePort} - a játékosok által használt port
       // -ServerQueryPort={queryPort} - a query port (a jelenlegi kódban queryPort mezőben van)
       // -BeaconPort={beaconPort} - a beacon port
+      // -multihome={multihome} - a szervergép külső IP címe
+      const multihomeIp = machine?.ipAddress || '0.0.0.0';
       startCommand = startCommand
         .replace(/{gamePort}/g, finalGamePort.toString())
         .replace(/{queryPort}/g, finalQueryPort.toString())
         .replace(/{beaconPort}/g, finalBeaconPort.toString())
+        .replace(/{multihome}/g, multihomeIp)
         .replace(/{port}/g, finalGamePort.toString()); // {port} is GamePort-t jelent (backward compatibility)
       
       logger.info('Satisfactory start command generated with ports', {

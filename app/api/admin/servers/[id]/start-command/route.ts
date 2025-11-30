@@ -126,12 +126,14 @@ export async function GET(
       const gamePort = serverWithPorts?.port || config.port || 7777;
       const queryPort = serverWithPorts?.queryPort || (gamePort + 2);
       const beaconPort = serverWithPorts?.beaconPort || (queryPort + 2);
+      const multihomeIp = server.machine?.ipAddress || '0.0.0.0';
       
       startCommand = startCommand
         .replace(/{gamePort}/g, gamePort.toString())
         .replace(/{port}/g, gamePort.toString())
         .replace(/{queryPort}/g, queryPort.toString())
-        .replace(/{beaconPort}/g, beaconPort.toString());
+        .replace(/{beaconPort}/g, beaconPort.toString())
+        .replace(/{multihome}/g, multihomeIp);
     } else if (server.gameType === 'VALHEIM') {
       // Valheim: port és queryPort az adatbázisból
       const port = serverWithPorts?.port || config.port || 2456;
