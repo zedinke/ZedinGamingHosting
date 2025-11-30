@@ -1342,20 +1342,16 @@ export async function createSystemdServiceForServer(
       // - beaconPort mező = BeaconPort (QueryPort + 2, pl. 7781)
       
       // Lekérjük az adatbázisból a portokat
+      // Fontos: az adatbázisban a port mező = GamePort (alap port)
+      // A config.gamePort-ot NEM használjuk, mert az a régi logikából származik (QueryPort + 10000)
       const dbGamePort = serverWithPorts?.port || port || 7777; // GamePort = port mező
       const dbQueryPort = serverWithPortsTyped?.queryPort || (dbGamePort + 2); // QueryPort = queryPort mező (GamePort + 2)
       const dbBeaconPort = serverWithPortsTyped?.beaconPort || (dbQueryPort + 2); // BeaconPort = beaconPort mező (QueryPort + 2)
       
-      // Config-ból is próbáljuk, ha van (ha a config-ban vannak, akkor azokat használjuk)
-      let finalGamePort = config.gamePort || dbGamePort;
-      let finalQueryPort = config.queryPort || dbQueryPort;
-      let finalBeaconPort = config.beaconPort || dbBeaconPort;
-      
-      // Ha a config-ban csak egy port van, számoljuk ki a többit az új logika szerint
-      if (config.gamePort && !config.queryPort && !config.beaconPort) {
-        finalQueryPort = config.gamePort + 2; // QueryPort = GamePort + 2
-        finalBeaconPort = finalQueryPort + 2; // BeaconPort = QueryPort + 2
-      }
+      // Mindig az adatbázisból kinyert portokat használjuk (config.gamePort-ot NEM használjuk)
+      let finalGamePort = dbGamePort;
+      let finalQueryPort = dbQueryPort;
+      let finalBeaconPort = dbBeaconPort;
       
       // Biztosítjuk, hogy mindhárom port különböző legyen
       // Loop-ban újrageneráljuk a portokat, amíg biztosan különbözőek nem lesznek
