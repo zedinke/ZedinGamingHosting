@@ -73,15 +73,26 @@ export function PremiumPackageForm({ locale, package_: existingPackage }: Premiu
   useEffect(() => {
     // Játékok betöltése
     fetch('/api/admin/game-configs')
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      })
       .then((data) => {
-        if (data.configs) {
+        console.log('Game configs loaded:', data);
+        if (data.configs && Array.isArray(data.configs)) {
           setGameConfigs(data.configs);
+          console.log('Game configs set:', data.configs.length, 'configs');
+        } else {
+          console.warn('No configs in response:', data);
+          setGameConfigs([]);
         }
       })
       .catch((error) => {
         console.error('Error loading game configs:', error);
-        toast.error('Hiba a játékok betöltése során');
+        toast.error('Hiba a játékok betöltése során: ' + error.message);
+        setGameConfigs([]);
       });
   }, []);
 
@@ -188,9 +199,16 @@ export function PremiumPackageForm({ locale, package_: existingPackage }: Premiu
       .map((g, i) => (i !== currentIndex ? g : null))
       .filter((g): g is GameType => g !== null);
     
-    return gameConfigs.filter(
+    const available = gameConfigs.filter(
       (gc) => gc.isActive && !otherSelectedGames.includes(gc.gameType)
     );
+    
+    // Debug: logoljuk, ha nincs elérhető játék
+    if (available.length === 0 && gameConfigs.length > 0) {
+      console.log('No available games after filtering. Total configs:', gameConfigs.length, 'Selected games:', otherSelectedGames);
+    }
+    
+    return available;
   };
 
   return (
@@ -340,39 +358,47 @@ export function PremiumPackageForm({ locale, package_: existingPackage }: Premiu
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Játékok kiválasztása *
           </label>
+          {gameConfigs.length === 0 && (
+            <p className="text-sm text-yellow-600 mb-2">
+              Nincsenek elérhető játékok. Ellenőrizd, hogy vannak-e aktív GamePackage-ek az adatbázisban.
+            </p>
+          )}
           <div className="space-y-3">
-            {selectedGames.map((selectedGame, index) => (
-              <div key={index} className="flex gap-3 items-center">
-                <select
-                  value={selectedGame || ''}
-                  onChange={(e) => selectGame(index, e.target.value ? (e.target.value as GameType) : null)}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 bg-white"
-                >
-                  <option value="">-- Válassz játékot --</option>
-                  {getActiveGames(index).map((config) => (
-                    <option key={config.gameType} value={config.gameType}>
-                      {config.displayName}
-                    </option>
-                  ))}
-                  {/* Ha van már kiválasztott játék, azt is megjelenítjük (ha nincs a listában) */}
-                  {selectedGame && !getActiveGames(index).find((gc) => gc.gameType === selectedGame) && (
-                    <option value={selectedGame}>
-                      {gameConfigs.find((gc) => gc.gameType === selectedGame)?.displayName || selectedGame}
-                    </option>
-                  )}
-                </select>
-                {selectedGames.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeGameSelector(index)}
-                    className="px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors font-medium"
-                    title="Törlés"
+            {selectedGames.map((selectedGame, index) => {
+              const availableGames = getActiveGames(index);
+              return (
+                <div key={index} className="flex gap-3 items-center">
+                  <select
+                    value={selectedGame || ''}
+                    onChange={(e) => selectGame(index, e.target.value ? (e.target.value as GameType) : null)}
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 bg-white"
                   >
-                    ✕
-                  </button>
-                )}
-              </div>
-            ))}
+                    <option value="">-- Válassz játékot --</option>
+                    {availableGames.map((config) => (
+                      <option key={config.gameType} value={config.gameType}>
+                        {config.displayName}
+                      </option>
+                    ))}
+                    {/* Ha van már kiválasztott játék, azt is megjelenítjük (ha nincs a listában) */}
+                    {selectedGame && !availableGames.find((gc) => gc.gameType === selectedGame) && (
+                      <option value={selectedGame}>
+                        {gameConfigs.find((gc) => gc.gameType === selectedGame)?.displayName || selectedGame}
+                      </option>
+                    )}
+                  </select>
+                  {selectedGames.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeGameSelector(index)}
+                      className="px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors font-medium"
+                      title="Törlés"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              );
+            })}
             <button
               type="button"
               onClick={addGameSelector}

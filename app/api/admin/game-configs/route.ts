@@ -13,11 +13,12 @@ export async function GET(request: NextRequest) {
       throw createUnauthorizedError('Admin jogosultság szükséges');
     }
 
-    // Csak azokat a játékokat adjuk vissza, amiknek van aktív GamePackage-je
+    // Visszaadjuk az összes aktív GameConfig-et, amiknek van aktív GamePackage-je
+    // Premium csomagokhoz is szükségünk van játékokra, ezért csak azokat adjuk vissza, amiknek van aktív csomagja
+    // Ez biztosítja, hogy csak azok a játékok jelenjenek meg, amik valóban elérhetők
     const configs = await prisma.gameConfig.findMany({
       where: {
         isActive: true,
-        isVisible: true,
       },
       orderBy: {
         displayName: 'asc',
@@ -33,6 +34,7 @@ export async function GET(request: NextRequest) {
             isActive: true,
           },
         });
+        // Visszaadjuk a config-ot, ha van aktív csomagja
         return activePackage ? config : null;
       })
     );
