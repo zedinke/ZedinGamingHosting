@@ -120,12 +120,18 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
   }, []);
 
   // Helper function to parse price with decimal comma support
-  const parsePrice = (value: string): number => {
-    if (!value) return 0;
-    // Replace comma with dot for parsing
-    const normalized = value.replace(',', '.');
-    const parsed = parseFloat(normalized);
-    return isNaN(parsed) ? 0 : parsed;
+  const parsePrice = (value: string | number | undefined): number => {
+    if (!value && value !== 0) return 0;
+    // Ha már szám, akkor visszaadjuk
+    if (typeof value === 'number') return value;
+    // Ha string, akkor normalizáljuk és parse-oljuk
+    if (typeof value === 'string') {
+      // Replace comma with dot for parsing
+      const normalized = value.replace(',', '.');
+      const parsed = parseFloat(normalized);
+      return isNaN(parsed) ? 0 : parsed;
+    }
+    return 0;
   };
 
   const {
