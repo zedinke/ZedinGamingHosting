@@ -451,15 +451,27 @@ fi
 
       // SteamCMD exit code 8 lehet warning, de a fájlok letöltődhetnek
       // Ellenőrizzük a logot, hogy van-e valódi hiba vagy csak warning
+      // SSH warning-okat (pl. "Permanently added...") kiszűrjük
+      const stderrWithoutSSHWarnings = executeResult.stderr
+        ?.split('\n')
+        .filter(line => !line.includes('Permanently added') && !line.includes('Warning: Permanently added'))
+        .join('\n') || '';
+      
       const hasRealError = executeResult.stdout?.includes('ERROR') || 
                           executeResult.stdout?.includes('HIBA') ||
-                          executeResult.stderr?.includes('ERROR') ||
-                          executeResult.stderr?.includes('HIBA');
+                          stderrWithoutSSHWarnings.includes('ERROR') ||
+                          stderrWithoutSSHWarnings.includes('HIBA');
+      
+      // Ha csak SSH warning-ok vannak a stderr-ben, akkor nem tekintjük hibának
+      const onlySSHWarnings = executeResult.stderr && 
+                              !stderrWithoutSSHWarnings.trim() && 
+                              (executeResult.stderr.includes('Permanently added') || executeResult.stderr.includes('Warning: Permanently added'));
       
       // Ha exit code 8 és nincs valódi hiba a logban, lehet, hogy csak warning
       // De ha van valódi hiba vagy más exit code, akkor hibát dobunk
-      if (executeResult.exitCode !== 0 && (executeResult.exitCode !== 8 || hasRealError)) {
-        const error = `Telepítési script sikertelen (exit code: ${executeResult.exitCode}): ${executeResult.stderr || executeResult.stdout || 'Ismeretlen hiba'}`;
+      // Kivéve, ha csak SSH warning-ok vannak, akkor nem hibát dobunk
+      if (executeResult.exitCode !== 0 && !onlySSHWarnings && (executeResult.exitCode !== 8 || hasRealError)) {
+        const error = `Telepítési script sikertelen (exit code: ${executeResult.exitCode}): ${stderrWithoutSSHWarnings || executeResult.stdout || 'Ismeretlen hiba'}`;
         
         logger.error('Installation script failed', new Error(executeResult.stderr || executeResult.stdout || 'Unknown error'), {
           serverId,
