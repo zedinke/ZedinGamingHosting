@@ -35,7 +35,13 @@ prepare_system() {
         apt-get update
     fi
     
+    # SteamCMD és alapvető függőségek
     apt-get install -y steamcmd lib32gcc-s1 libstdc++6:i386
+    
+    # 7 Days to Die kritikus audio könyvtárak (Unity motor miatt)
+    # A szerver összeomlását megelőzendő, mert még szerver módban is megpróbálja inicializálni a hangrendszert
+    log "Audio könyvtárak telepítése (7 Days to Die Unity motor támogatás)..."
+    apt-get install -y libpulse0 libasound2 libatomic1 libpulse0:i386 libasound2:i386
 }
 
 # Felhasználók és csoportok létrehozása
