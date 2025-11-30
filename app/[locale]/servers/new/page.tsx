@@ -69,7 +69,7 @@ export default async function NewServerPage({
           gameType: game.gameType,
           displayName: gameConfig?.displayName || game.gameType,
           image: gameConfig?.image || null,
-          videoUrl: gameConfig?.videoUrl || null,
+          videoUrl: null, // GameConfig-ban nincs videoUrl, csak GamePackage-ben
           description: gameConfig?.description || null,
         };
       }),
