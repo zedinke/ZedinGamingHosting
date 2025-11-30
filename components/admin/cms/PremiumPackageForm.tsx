@@ -162,7 +162,8 @@ export function PremiumPackageForm({ locale, package_: existingPackage }: Premiu
       toast.success(existingPackage ? 'Csomag frissítve' : 'Csomag létrehozva');
       router.push(`/${locale}/admin/cms/premium-packages`);
     } catch (error: any) {
-      toast.error(error.message || 'Hiba történt');
+      const errorMessage = error?.message || (typeof error === 'string' ? error : 'Hiba történt');
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -223,7 +224,7 @@ export function PremiumPackageForm({ locale, package_: existingPackage }: Premiu
               type="text"
               value={formData.nameHu}
               onChange={(e) => setFormData({ ...formData, nameHu: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
               required
             />
           </div>
@@ -235,7 +236,7 @@ export function PremiumPackageForm({ locale, package_: existingPackage }: Premiu
               type="text"
               value={formData.nameEn}
               onChange={(e) => setFormData({ ...formData, nameEn: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
               required
             />
           </div>
@@ -250,7 +251,7 @@ export function PremiumPackageForm({ locale, package_: existingPackage }: Premiu
               value={formData.descriptionHu}
               onChange={(e) => setFormData({ ...formData, descriptionHu: e.target.value })}
               rows={3}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
             />
           </div>
           <div>
@@ -261,7 +262,7 @@ export function PremiumPackageForm({ locale, package_: existingPackage }: Premiu
               value={formData.descriptionEn}
               onChange={(e) => setFormData({ ...formData, descriptionEn: e.target.value })}
               rows={3}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
             />
           </div>
         </div>
@@ -278,7 +279,7 @@ export function PremiumPackageForm({ locale, package_: existingPackage }: Premiu
               min="0"
               value={formData.price}
               onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
               required
             />
           </div>
@@ -297,7 +298,7 @@ export function PremiumPackageForm({ locale, package_: existingPackage }: Premiu
                   discountPrice: e.target.value ? parseFloat(e.target.value) : null,
                 })
               }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
             />
           </div>
           <div>
@@ -307,7 +308,7 @@ export function PremiumPackageForm({ locale, package_: existingPackage }: Premiu
             <select
               value={formData.currency}
               onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
             >
               <option value="HUF">HUF</option>
               <option value="EUR">EUR</option>
@@ -324,7 +325,7 @@ export function PremiumPackageForm({ locale, package_: existingPackage }: Premiu
             <select
               value={formData.interval}
               onChange={(e) => setFormData({ ...formData, interval: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
             >
               <option value="month">Havi</option>
               <option value="year">Éves</option>
@@ -338,7 +339,7 @@ export function PremiumPackageForm({ locale, package_: existingPackage }: Premiu
               type="number"
               value={formData.order}
               onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) || 0 })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
             />
           </div>
         </div>
@@ -435,7 +436,7 @@ export function PremiumPackageForm({ locale, package_: existingPackage }: Premiu
               type="url"
               value={formData.image}
               onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
             />
           </div>
           <div>
@@ -446,7 +447,7 @@ export function PremiumPackageForm({ locale, package_: existingPackage }: Premiu
               type="url"
               value={formData.videoUrl}
               onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
             />
           </div>
         </div>
