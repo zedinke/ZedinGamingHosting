@@ -1534,15 +1534,12 @@ export async function createSystemdServiceForServer(
         }
       }
       
-      // 7 Days to Die esetén telnetPort és webMapPort a configuration JSON-ből
+      // 7 Days to Die esetén telnetPort és webMapPort az adatbázisból (mint a többi játéknál)
       let finalTelnetPort: number | undefined;
       if (gameType === 'SEVEN_DAYS_TO_DIE') {
-        // TelnetPort = GamePort + 2
-        // WebMapPort = GamePort + 3
-        // A telnetPort és webMapPort a configuration JSON-ben van tárolva
-        const serverConfig = serverWithPorts?.configuration ? (typeof serverWithPorts.configuration === 'string' ? JSON.parse(serverWithPorts.configuration) : serverWithPorts.configuration) : {};
-        finalTelnetPort = serverConfig.telnetPort;
-        // Ha nincs a configuration-ben, számoljuk ki
+        const serverWithPortsTyped = serverWithPorts as any;
+        finalTelnetPort = serverWithPortsTyped.telnetPort;
+        // Ha nincs az adatbázisban, számoljuk ki
         if (!finalTelnetPort && finalPort) {
           finalTelnetPort = finalPort + 2; // TelnetPort = GamePort + 2
         }

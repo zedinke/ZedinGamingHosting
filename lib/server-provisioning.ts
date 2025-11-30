@@ -767,12 +767,9 @@ export async function provisionServer(
       // Az adatbázisban a port mezőbe a GamePort-ot mentjük (alap port)
       generatedPort = gamePort; // GamePort = alap port
       
-      // QueryPort, TelnetPort és WebMapPort mentése a configuration JSON-ben
-      configurationUpdate = {
-        queryPort: queryPort, // QueryPort (GamePort + 1)
-        telnetPort: telnetPort, // TelnetPort (GamePort + 2)
-        webMapPort: webMapPort, // WebMapPort (GamePort + 3)
-      };
+      // QueryPort, TelnetPort és WebMapPort mentése az adatbázisba (mint a többi játéknál)
+      // A configuration JSON-ba nem kell menteni, mert az adatbázis mezőkben vannak
+      configurationUpdate = {};
       
       logger.info(`${options.gameType} ports generated`, {
         serverId,
@@ -817,10 +814,14 @@ export async function provisionServer(
       updateData.queryPort = configurationUpdate.queryPort; // QueryPort (Port + 1)
       updateData.rustPlusPort = configurationUpdate.rustPlusPort; // RustPlusPort (Port + 67)
       updateData.configuration = updatedConfig;
-    } else if (options.gameType === 'SEVEN_DAYS_TO_DIE' && Object.keys(configurationUpdate).length > 0) {
-      updateData.queryPort = configurationUpdate.queryPort; // QueryPort (GamePort + 1)
-      updateData.configuration = updatedConfig;
-      // TelnetPort és WebMapPort csak a configuration JSON-ben van tárolva
+    } else if (options.gameType === 'SEVEN_DAYS_TO_DIE') {
+      // 7 Days to Die: portok az adatbázis mezőkben (mint a többi játéknál)
+      updateData.queryPort = queryPort; // QueryPort (GamePort + 1)
+      updateData.telnetPort = telnetPort; // TelnetPort (GamePort + 2)
+      updateData.webMapPort = webMapPort; // WebMapPort (GamePort + 3)
+      if (Object.keys(configurationUpdate).length > 0) {
+        updateData.configuration = updatedConfig;
+      }
     } else if (Object.keys(configurationUpdate).length > 0) {
       updateData.configuration = updatedConfig;
     }
@@ -1208,9 +1209,16 @@ export async function checkMultiPortInDatabase(port: number, gameType: GameType,
         }
       }
 
-      // 7 Days to Die-nál ellenőrizzük a telnetPort és webMapPort mezőket is (configuration JSON-ben)
+      // 7 Days to Die-nál ellenőrizzük a telnetPort és webMapPort mezőket is (adatbázis mezőkben)
       if (gameType === 'SEVEN_DAYS_TO_DIE') {
-        // A telnetPort és webMapPort csak a configuration JSON-ben van tárolva
+        const serverWithPorts = server as any;
+        if (serverWithPorts.telnetPort !== null && serverWithPorts.telnetPort !== undefined && serverWithPorts.telnetPort === port) {
+          return false; // Foglalt
+        }
+        if (serverWithPorts.webMapPort !== null && serverWithPorts.webMapPort !== undefined && serverWithPorts.webMapPort === port) {
+          return false; // Foglalt
+        }
+        // Backward compatibility: ellenőrizzük a configuration JSON-ból is
         if (server.configuration) {
           try {
             const config = typeof server.configuration === 'string' ? JSON.parse(server.configuration) : server.configuration;

@@ -102,6 +102,8 @@ export async function GET(
         beaconPort: true,
         steamPeerPort: true,
         rustPlusPort: true,
+        telnetPort: true,
+        webMapPort: true,
         configuration: true,
       },
     });
@@ -153,6 +155,15 @@ export async function GET(
       const queryPort = serverWithPorts?.queryPort || (port + 1);
       const steamPeerPort = (serverWithPorts as any)?.steamPeerPort || (queryPort + 1);
       
+      // The Forest konfigurációs értékek a configuration-ből
+      const serverConfig = server.configuration ? (typeof server.configuration === 'string' ? JSON.parse(server.configuration) : server.configuration) : {};
+      const serverautosaveinterval = serverConfig.serverautosaveinterval || serverConfig.serverAutoSaveInterval || 15;
+      const difficulty = serverConfig.difficulty || 'Normal';
+      const inittype = serverConfig.inittype || serverConfig.initType || 'Continue';
+      const enableVAC = serverConfig.enableVAC || 'on';
+      const slot = serverConfig.slot || 3;
+      const serverip = server.machine?.ipAddress || '0.0.0.0';
+      
       startCommand = startCommand
         .replace(/{port}/g, port.toString())
         .replace(/{maxPlayers}/g, config.maxPlayers.toString())
@@ -160,7 +171,13 @@ export async function GET(
         .replace(/{name}/g, config.name)
         .replace(/{queryPort}/g, queryPort.toString())
         .replace(/{steamPeerPort}/g, steamPeerPort.toString())
-        .replace(/{password}/g, config.password);
+        .replace(/{password}/g, config.password)
+        .replace(/{serverautosaveinterval}/g, serverautosaveinterval.toString())
+        .replace(/{difficulty}/g, difficulty)
+        .replace(/{inittype}/g, inittype)
+        .replace(/{enableVAC}/g, enableVAC)
+        .replace(/{slot}/g, slot.toString())
+        .replace(/{serverip}/g, serverip);
     } else if (server.gameType === 'RUST') {
       // Rust: port, queryPort, rustPlusPort az adatbázisból
       const port = serverWithPorts?.port || config.port || 28015;
@@ -175,10 +192,9 @@ export async function GET(
         .replace(/{queryPort}/g, queryPort.toString())
         .replace(/{rustPlusPort}/g, rustPlusPort.toString());
     } else if (server.gameType === 'SEVEN_DAYS_TO_DIE') {
-      // 7 Days to Die: port és telnetPort az adatbázisból
+      // 7 Days to Die: portok az adatbázisból (mint a többi játéknál)
       const port = serverWithPorts?.port || config.port || 26900;
-      const serverConfig = serverWithPorts?.configuration ? (typeof serverWithPorts.configuration === 'string' ? JSON.parse(serverWithPorts.configuration) : serverWithPorts.configuration) : {};
-      const telnetPort = serverConfig.telnetPort || (port + 2);
+      const telnetPort = (serverWithPorts as any)?.telnetPort || (port + 2);
       
       startCommand = startCommand
         .replace(/{port}/g, port.toString())
@@ -324,9 +340,11 @@ export async function GET(
       responseConfig.queryPort = serverWithPorts?.queryPort || (responseConfig.port + 1);
       responseConfig.rustPlusPort = (serverWithPorts as any)?.rustPlusPort || (responseConfig.port + 67);
     } else if (server.gameType === 'SEVEN_DAYS_TO_DIE') {
-      const serverConfig = serverWithPorts?.configuration ? (typeof serverWithPorts.configuration === 'string' ? JSON.parse(serverWithPorts.configuration) : serverWithPorts.configuration) : {};
+      // 7 Days to Die: portok az adatbázisból (mint a többi játéknál)
       responseConfig.port = serverWithPorts?.port || config.port || 26900;
-      responseConfig.telnetPort = serverConfig.telnetPort || (responseConfig.port + 2);
+      responseConfig.queryPort = serverWithPorts?.queryPort || (responseConfig.port + 1);
+      responseConfig.telnetPort = (serverWithPorts as any)?.telnetPort || (responseConfig.port + 2);
+      responseConfig.webMapPort = (serverWithPorts as any)?.webMapPort || (responseConfig.port + 3);
     } else if (server.gameType === 'PALWORLD') {
       responseConfig.port = serverWithPorts?.port || config.port || 8211;
     } else if (server.gameType === 'ENSHROUDED') {

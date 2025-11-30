@@ -113,6 +113,8 @@ model Server {
   beaconPort    Int? // BeaconPort (Satisfactory-nál)
   steamPeerPort Int? // SteamPeerPort (The Forest-nál)
   rustPlusPort  Int? // RustPlusPort (Rust-nál)
+  telnetPort    Int? // TelnetPort (7 Days to Die-nál)
+  webMapPort    Int? // WebMapPort/ControlPanelPort (7 Days to Die-nál)
   maxPlayers    Int          @default(10)
   configuration Json? // Szerver konfiguráció JSON formátumban
   resourceUsage Json? // CPU, RAM, Disk használat
