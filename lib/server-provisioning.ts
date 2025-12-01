@@ -1123,13 +1123,10 @@ export async function generateServerPort(
   }
 
   // Más játékoknál az egyszerű ellenőrzés
-  // Ellenőrizzük, hogy a port szabad-e az adatbázisban
+  // Ellenőrizzük, hogy a port szabad-e az adatbázisban (OFFLINE szervereket is ellenőrizzük)
   const existingServer = await prisma.server.findFirst({
     where: {
       port: basePort,
-      status: {
-        not: 'OFFLINE',
-      },
     },
   });
 
@@ -1147,13 +1144,10 @@ export async function generateServerPort(
   for (let offset = 1; offset < 100; offset++) {
     const port = basePort + offset;
     
-    // Adatbázis ellenőrzés
+    // Adatbázis ellenőrzés (OFFLINE szervereket is ellenőrizzük)
     const exists = await prisma.server.findFirst({
       where: {
         port,
-        status: {
-          not: 'OFFLINE',
-        },
       },
     });
 
@@ -1181,13 +1175,10 @@ export async function generateServerPort(
  */
 export async function checkMultiPortInDatabase(port: number, gameType: GameType, excludeServerId?: string): Promise<boolean> {
   try {
-    // Lekérjük az összes szervert az adott játék típusnál, amely nem OFFLINE
+    // Lekérjük az összes szervert az adott játék típusnál (OFFLINE szervereket is ellenőrizzük)
     const servers = await prisma.server.findMany({
       where: {
         gameType: gameType,
-        status: {
-          not: 'OFFLINE',
-        },
         ...(excludeServerId ? { id: { not: excludeServerId } } : {}),
       },
     });
