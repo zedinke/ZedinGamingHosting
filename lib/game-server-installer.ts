@@ -743,23 +743,24 @@ MinDynamicBandwidth=1000
           await appendInstallLog(serverId, `Jogosultságok beállítva a konfigurációs mappán: ${configDir}`);
         }
       }
-    } else if (gameType === 'SEVEN_DAYS_TO_DIE') {
-      // 7 Days to Die-nál a serverconfig.xml fájlt hozzuk létre
-      // A szerver felhasználó neve: seven{serverId}
-      const serverUser = `seven${serverId}`;
-      await executeSSHCommand(
-        {
-          host: machine.ipAddress,
-          port: machine.sshPort,
-          user: machine.sshUser,
-          keyPath: machine.sshKeyPath || undefined,
-        },
-        `mkdir -p $(dirname ${configPath}) && sudo -u ${serverUser} cat > ${configPath} << 'EOF'\n${configContent}\nEOF && chown ${serverUser}:sfgames ${configPath} && chmod 644 ${configPath}`
-      );
-      
-      if (writeProgress) {
-        await appendInstallLog(serverId, `Konfigurációs fájl létrehozva: ${configPath}`);
-      }
+      } else if (gameType === 'SEVEN_DAYS_TO_DIE') {
+        // 7 Days to Die-nál a serverconfig.xml fájlt hozzuk létre
+        // A szerver felhasználó neve: seven{serverId}
+        const serverUser = `seven${serverId}`;
+        const sevenDaysConfigPath = gameConfig.configPath.replace(/{serverId}/g, serverId);
+        await executeSSHCommand(
+          {
+            host: machine.ipAddress,
+            port: machine.sshPort,
+            user: machine.sshUser,
+            keyPath: machine.sshKeyPath || undefined,
+          },
+          `mkdir -p $(dirname ${sevenDaysConfigPath}) && sudo -u ${serverUser} cat > ${sevenDaysConfigPath} << 'EOF'\n${configContent}\nEOF && chown ${serverUser}:sfgames ${sevenDaysConfigPath} && chmod 644 ${sevenDaysConfigPath}`
+        );
+        
+        if (writeProgress) {
+          await appendInstallLog(serverId, `Konfigurációs fájl létrehozva: ${sevenDaysConfigPath}`);
+        }
     } else if (gameType === 'THE_FOREST') {
       // The Forest-nál a configfilepath kötelező, de ha nincs configContent,
       // akkor is létrehozunk egy üres fájlt, hogy a szerver generáljon egy alapértelmezettet
