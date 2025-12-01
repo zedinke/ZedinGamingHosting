@@ -14,6 +14,11 @@ export const config: GameServerConfig = {
   stopCommand: commands.stopCommand,
   port: 26900,
   queryPort: 26901,
+  // Környezeti változók a Unity motor számára
+  // Az LD_LIBRARY_PATH biztosítja, hogy a Unity motor megtalálja a szükséges könyvtárakat
+  environmentVariables: {
+    LD_LIBRARY_PATH: '/opt/servers/{serverId}:${LD_LIBRARY_PATH}',
+  },
   defaultSettings: {
     ServerPort: '26900',
     ServerName: 'Seven Days to Die Server',
