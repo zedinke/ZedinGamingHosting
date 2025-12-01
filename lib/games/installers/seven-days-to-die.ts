@@ -265,20 +265,95 @@ set_executable_permissions() {
 }
 
 # Konfigurációs fájl létrehozása
+# MEGJEGYZÉS: A config fájlt a game-server-installer.ts generálja dinamikusan
+# Ez a függvény csak akkor fut le, ha a config fájl még nem létezik
 create_server_config() {
-    log "Alapértelmezett konfigurációs fájl létrehozása..."
+    log "Konfigurációs fájl ellenőrzése..."
     
     local config_file="$SERVER_DIR/serverconfig.xml"
-    cat > "$config_file" <<EOL
-<?xml version="1.0"?>
+    
+    # Ha a config fájl már létezik (dinamikusan generálva), ne írjuk felül
+    if [ -f "$config_file" ]; then
+        log "Konfigurációs fájl már létezik, kihagyva..."
+        return 0
+    fi
+    
+    # Alapértelmezett config csak akkor, ha nincs dinamikusan generált
+    log "Alapértelmezett konfigurációs fájl létrehozása..."
+    cat > "$config_file" <<'EOL'
+<?xml version="1.0" encoding="UTF-8"?>
 <ServerSettings>
-    <property name="ServerPort" value="26900"/>
-    <property name="ServerIsPublic" value="true"/>
     <property name="ServerName" value="ZedinGaming 7 Days to Die Server"/>
+    <property name="ServerPort" value="26900"/>
     <property name="ServerMaxPlayerCount" value="8"/>
+    <property name="ServerPassword" value=""/>
+    <property name="ServerVisibility" value="2"/>
+    <property name="ServerIsPublic" value="true"/>
+    <property name="ServerDescription" value="A 7 Days to Die szerver"/>
+    <property name="ServerWebsiteURL" value=""/>
     <property name="GameWorld" value="Navezgane"/>
-    <property name="GameDifficulty" value="2"/>
-    <property name="ZombiesRun" value="0"/>
+    <property name="WorldGenSeed" value="asd123"/>
+    <property name="WorldGenSize" value="4096"/>
+    <property name="GameName" value="My Game"/>
+    <property name="GameMode" value="GameModeSurvival"/>
+    <property name="Difficulty" value="2"/>
+    <property name="DayNightLength" value="60"/>
+    <property name="DayLightLength" value="18"/>
+    <property name="MaxSpawnedZombies" value="60"/>
+    <property name="DropOnDeath" value="1"/>
+    <property name="DropOnQuit" value="0"/>
+    <property name="BedrollDeadZoneSize" value="15"/>
+    <property name="BlockDamagePlayer" value="100"/>
+    <property name="BlockDamageZombie" value="100"/>
+    <property name="XPMultiplier" value="100"/>
+    <property name="PlayerSafeZoneLevel" value="5"/>
+    <property name="PlayerSafeZoneHours" value="24"/>
+    <property name="BuildCreate" value="false"/>
+    <property name="AdminFileName" value="serveradmin.xml"/>
+    <property name="TelnetEnabled" value="true"/>
+    <property name="TelnetPort" value="26902"/>
+    <property name="TelnetPassword" value=""/>
+    <property name="ControlPanelEnabled" value="false"/>
+    <property name="ControlPanelPort" value="8080"/>
+    <property name="ControlPanelPassword" value=""/>
+    <property name="MaxUncoveredMapChunksPerPlayer" value="131072"/>
+    <property name="PersistentPlayerProfiles" value="false"/>
+    <property name="EACEnabled" value="true"/>
+    <property name="HideCommandExecutionLog" value="0"/>
+    <property name="AirDropFrequency" value="72"/>
+    <property name="AirDropMarker" value="false"/>
+    <property name="LootAbundance" value="100"/>
+    <property name="LootRespawnDays" value="7"/>
+    <property name="MaxSpawnedAnimals" value="50"/>
+    <property name="LandClaimCount" value="1"/>
+    <property name="LandClaimSize" value="41"/>
+    <property name="LandClaimExpiryTime" value="7"/>
+    <property name="LandClaimDeadZone" value="30"/>
+    <property name="LandClaimOnlineDurabilityModifier" value="4"/>
+    <property name="LandClaimOfflineDurabilityModifier" value="4"/>
+    <property name="LandClaimOfflineDelay" value="0"/>
+    <property name="PartySharedKillRange" value="100"/>
+    <property name="EnemySenseMemory" value="45"/>
+    <property name="EnemySpawnMode" value="true"/>
+    <property name="BloodMoonFrequency" value="7"/>
+    <property name="BloodMoonRange" value="0"/>
+    <property name="BloodMoonWarning" value="8"/>
+    <property name="BloodMoonEnemyCount" value="8"/>
+    <property name="BloodMoonEnemyRange" value="0"/>
+    <property name="UseAllowedZombieClasses" value="false"/>
+    <property name="DisableRadio" value="false"/>
+    <property name="DisablePoison" value="false"/>
+    <property name="DisableInfection" value="false"/>
+    <property name="DisableVault" value="false"/>
+    <property name="TraderAreaProtection" value="0"/>
+    <property name="TraderServiceAreaProtection" value="1"/>
+    <property name="ShowFriendPlayerOnMap" value="true"/>
+    <property name="FriendCantDamage" value="true"/>
+    <property name="FriendCantLoot" value="false"/>
+    <property name="BuildCraftTime" value="false"/>
+    <property name="ShowAllPlayersOnMap" value="false"/>
+    <property name="ShowSpawnWindow" value="false"/>
+    <property name="AutoParty" value="false"/>
 </ServerSettings>
 EOL
     
