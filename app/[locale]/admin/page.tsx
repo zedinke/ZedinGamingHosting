@@ -2,7 +2,12 @@ import { getTranslations } from '@/lib/i18n';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { SystemHealth } from '@/components/admin/SystemHealth';
-import { LicenseInfo } from '@/components/admin/LicenseInfo';
+import dynamic from 'next/dynamic';
+
+const LicenseInfo = dynamic(() => import('@/components/admin/LicenseInfo').then(mod => ({ default: mod.LicenseInfo })), {
+  ssr: false,
+  loading: () => <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 animate-pulse">Betöltés...</div>
+});
 
 export default async function AdminDashboardPage({
   params: { locale },

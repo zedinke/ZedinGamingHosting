@@ -122,7 +122,15 @@ export async function handleStripeWebhook(
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const userId = session.metadata?.userId;
   const serverId = session.metadata?.serverId;
+  const orderId = session.metadata?.orderId; // SaaS megrendelés ID
 
+  // SaaS megrendelés kezelése
+  if (orderId) {
+    await handleSaaSOrderPayment(orderId, session);
+    return;
+  }
+
+  // Normál szerver előfizetés kezelése
   if (!userId || !serverId) {
     return;
   }
@@ -147,6 +155,90 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   triggerAutoInstallOnPayment(serverId).catch((error) => {
     console.error('Auto-install error:', error);
   });
+}
+
+/**
+ * SaaS megrendelés fizetés kezelése
+ * Automatikus license key generálás és számla küldés
+ */
+async function handleSaaSOrderPayment(orderId: string, session: Stripe.Checkout.Session) {
+  try {
+    // Megrendelés lekérése
+    const order = await prisma.saaSOrder.findUnique({
+      where: { id: orderId },
+      include: { plan: true },
+    });
+
+    if (!order) {
+      console.error('SaaS order not found:', orderId);
+      return;
+    }
+
+    // Megrendelés frissítése - fizetve
+    const updatedOrder = await prisma.saaSOrder.update({
+      where: { id: orderId },
+      data: {
+        paymentStatus: 'PAID',
+        stripePaymentIntentId: session.id,
+        stripeCustomerId: session.customer as string,
+        isActive: true,
+        startDate: new Date(),
+        endDate: order.plan.interval === 'month'
+          ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+          : order.plan.interval === 'year'
+          ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+          : new Date(),
+      },
+    });
+
+    // License key generálás (ha még nincs)
+    if (!order.licenseKey) {
+      const { generateLicenseKey } = await import('@/lib/license-generator');
+      const licenseKey = generateLicenseKey();
+
+      await prisma.saaSOrder.update({
+        where: { id: orderId },
+        data: {
+          licenseKey,
+          licenseGenerated: true,
+          licenseGeneratedAt: new Date(),
+        },
+      });
+
+      console.log('License key generated for SaaS order:', orderId, licenseKey);
+    }
+
+    // Számla generálás és email küldés
+    const { sendInvoiceEmail } = await import('@/lib/email-invoice');
+    const invoiceNumber = `SAAS-${order.id.slice(0, 8).toUpperCase()}-${Date.now().toString().slice(-6)}`;
+    const issueDate = new Date();
+    const dueDate = new Date(issueDate);
+    dueDate.setDate(dueDate.getDate() + 14);
+
+    // Számla küldés
+    await sendInvoiceEmail({
+      order: updatedOrder,
+      plan: order.plan,
+      invoiceNumber,
+      issueDate,
+      dueDate,
+    });
+
+    // Számla státusz frissítése
+    await prisma.saaSOrder.update({
+      where: { id: orderId },
+      data: {
+        invoiceId: invoiceNumber,
+        invoiceSent: true,
+        invoiceSentAt: new Date(),
+      },
+    });
+
+    console.log('SaaS order payment processed:', orderId);
+  } catch (error: any) {
+    console.error('Error processing SaaS order payment:', error);
+    // Ne dobjuk a hibát, hogy ne akadályozza a webhook feldolgozását
+  }
 }
 
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {

@@ -1193,3 +1193,95 @@ enum CronExecutionStatus {
   SKIPPED // Kihagyva (pl. szerver offline volt start műveletnél)
   CANCELLED // Törölve
 }
+
+// SaaS Bérleti Rendszer
+// SaaS csomagok (Starter, Pro, Enterprise)
+model SaaSPlan {
+  id              String   @id @default(cuid())
+  name            String   @unique // "starter", "pro", "enterprise"
+  displayName     String   // "Starter Csomag"
+  description     String?  @db.Text
+  price           Float
+  currency        String   @default("HUF")
+  interval        String   @default("month") // "month", "year"
+  features        Json?    // Csomag funkciók (tömb)
+  maxUsers        Int?     // Korlátlan ha null
+  maxServers      Int?     // Korlátlan ha null
+  isActive        Boolean  @default(true)
+  order           Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  orders          SaaSOrder[]
+  
+  @@map("saas_plans")
+}
+
+// SaaS megrendelések
+model SaaSOrder {
+  id              String       @id @default(cuid())
+  planId          String
+  customerEmail   String
+  customerName    String?
+  customerCompany String?
+  billingAddress  String?      @db.Text
+  billingTaxNumber String?     // Adószám
+  
+  // Fizetés
+  amount          Float
+  currency        String       @default("HUF")
+  paymentProvider PaymentProvider @default(STRIPE)
+  paymentStatus   SaaSOrderStatus @default(PENDING)
+  
+  // Stripe
+  stripePaymentIntentId String? @unique
+  stripeCustomerId     String?
+  
+  // PayPal
+  paypalOrderId   String? @unique
+  paypalTransactionId String?
+  
+  // Revolut
+  revolutOrderId String? @unique
+  revolutPaymentId String?
+  
+  // License
+  licenseKey      String?      @unique // Generált license key
+  licenseGenerated Boolean     @default(false)
+  licenseGeneratedAt DateTime?
+  
+  // Számlázás
+  invoiceId       String?      @unique
+  invoiceSent     Boolean      @default(false)
+  invoiceSentAt   DateTime?
+  
+  // Előfizetés
+  startDate       DateTime?
+  endDate         DateTime?
+  isActive        Boolean      @default(false)
+  activatedAt     DateTime?
+  
+  // Telepítés információk (opcionális)
+  installationDomain String?  // Telepített domain
+  installationInfo    Json?    // További telepítési információk
+  
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  
+  plan            SaaSPlan     @relation(fields: [planId], references: [id])
+  
+  @@index([planId])
+  @@index([customerEmail])
+  @@index([paymentStatus])
+  @@index([licenseKey])
+  @@index([isActive])
+  @@map("saas_orders")
+}
+
+enum SaaSOrderStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+  REFUNDED
+}

@@ -21,6 +21,11 @@ export interface EmailOptions {
   html: string;
   text?: string;
   from?: string;
+  attachments?: Array<{
+    filename: string;
+    content: Buffer | string;
+    contentType?: string;
+  }>;
 }
 
 export async function sendEmail({
@@ -29,6 +34,7 @@ export async function sendEmail({
   html,
   text,
   from = process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@zedingaming.com',
+  attachments,
 }: EmailOptions) {
   try {
     const info = await transporter.sendMail({
@@ -37,6 +43,11 @@ export async function sendEmail({
       subject,
       html,
       text: text || html.replace(/<[^>]*>/g, ''), // HTML-t plain text-re konvertálás
+      attachments: attachments?.map(att => ({
+        filename: att.filename,
+        content: att.content,
+        contentType: att.contentType || 'application/pdf',
+      })),
     });
 
     console.log('Email sent:', info.messageId);

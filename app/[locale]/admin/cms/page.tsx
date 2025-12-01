@@ -40,6 +40,13 @@ export default async function AdminCMSPage({
       color: 'bg-purple-500',
     },
     {
+      title: 'SaaS Árazási Csomagok',
+      description: 'Zed Gaming System bérleti csomagok kezelése',
+      href: `/${locale}/admin/cms/saas-pricing`,
+      icon: '🔑',
+      color: 'bg-indigo-500',
+    },
+    {
       title: 'Testimonials',
       description: 'Vélemények kezelése',
       href: `/${locale}/admin/cms/testimonials`,

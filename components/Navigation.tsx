@@ -67,6 +67,16 @@ export function Navigation({ locale }: NavigationProps) {
               {t('nav.games')}
             </Link>
             <Link
+              href={`/${locale}/zed-gaming-system`}
+              className={`hover:text-gray-900 transition-colors font-medium ${
+                isActive('/zed-gaming-system') 
+                  ? 'text-gray-900 font-semibold' 
+                  : 'text-gray-700'
+              }`}
+            >
+              Zed Gaming System
+            </Link>
+            <Link
               href={`/${locale}/system`}
               className={`hover:text-gray-900 transition-colors font-medium ${
                 isActive('/system') 
@@ -155,6 +165,17 @@ export function Navigation({ locale }: NavigationProps) {
                 }`}
               >
                 {t('nav.games')}
+              </Link>
+              <Link
+                href={`/${locale}/zed-gaming-system`}
+                onClick={() => setMobileMenuOpen(false)}
+                className={`hover:text-gray-900 transition-colors font-medium py-2 ${
+                  isActive('/zed-gaming-system') 
+                    ? 'text-gray-900 font-semibold' 
+                    : 'text-gray-700'
+                }`}
+              >
+                Zed Gaming System
               </Link>
               <Link
                 href={`/${locale}/system`}
