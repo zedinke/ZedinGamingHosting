@@ -255,7 +255,9 @@ export function InstallLogsViewer({ locale, servers: initialServers }: InstallLo
                         {logData.progress !== undefined && (
                           <div className="w-full bg-gray-700 rounded-full h-2 mb-2">
                             <div
-                              className="bg-green-500 h-2 rounded-full transition-all"
+                              className={`h-2 rounded-full transition-all ${
+                                logData.status === 'error' ? 'bg-red-500' : 'bg-green-500'
+                              }`}
                               style={{ width: `${logData.progress}%` }}
                             />
                           </div>

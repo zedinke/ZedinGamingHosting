@@ -257,6 +257,44 @@ export async function installGameServer(
       }
     }
 
+    // 7 Days to Die specifikus függőségek (Unity motor audio támogatás)
+    if (gameType === 'SEVEN_DAYS_TO_DIE') {
+      if (writeProgress) {
+        await appendInstallLog(serverId, '7 Days to Die audio könyvtárak ellenőrzése...');
+      }
+      const sevenDaysDepsCheck = await executeSSHCommand(
+        {
+          host: machine.ipAddress,
+          port: machine.sshPort,
+          user: machine.sshUser,
+          keyPath: machine.sshKeyPath || undefined,
+        },
+        `dpkg -l | grep -E 'libpulse0|libasound2|libatomic1' | wc -l`
+      );
+      const installedCount = parseInt(sevenDaysDepsCheck.stdout?.trim() || '0');
+      if (installedCount < 3) {
+        if (writeProgress) {
+          await appendInstallLog(serverId, '7 Days to Die audio könyvtárak telepítése (hiányzó függőségek)...');
+        }
+        const sevenDaysDepsResult = await executeSSHCommand(
+          {
+            host: machine.ipAddress,
+            port: machine.sshPort,
+            user: machine.sshUser,
+            keyPath: machine.sshKeyPath || undefined,
+          },
+          `apt-get update && apt-get install -y libpulse0 libpulse-dev libasound2 libatomic1`
+        );
+        if (writeProgress) {
+          await appendInstallLog(serverId, `7 Days to Die függőségek telepítés eredmény: ${sevenDaysDepsResult.stdout || 'OK'}`);
+        }
+      } else {
+        if (writeProgress) {
+          await appendInstallLog(serverId, '7 Days to Die audio könyvtárak már telepítve vannak');
+        }
+      }
+    }
+
     // Telepítési script generálása (csak ha nem ARK, vagy ha még nincs telepítve)
     if (!isARK || !(await checkARKSharedInstallation(server.userId, machine.id, gameType, machine))) {
       // Ha a gameConfig.installScript üres, betöltjük a GAME_INSTALLERS-ből

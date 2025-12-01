@@ -15,6 +15,65 @@ Ez azt jelenti, hogy nincs beállítva egyetlen szerver gép sem, vagy a gépek 
 - SSH hozzáférés a szerver géphez, ahol a játékszervereket telepíteni szeretnéd
 - A szerver gépen telepített Node.js és Docker
 
+## 🔧 Rendszer Függőségek Telepítése
+
+A játékszerverek működéséhez szükséges rendszer függőségek telepítése.
+
+### Automatikus Telepítés (Ajánlott)
+
+Használd a telepítő scriptet:
+
+```bash
+# Töltsd le a scriptet a projektből
+cd /path/to/project
+chmod +x scripts/install-system-dependencies.sh
+
+# Futtasd root-ként vagy sudo-val
+sudo ./scripts/install-system-dependencies.sh
+```
+
+### Manuális Telepítés
+
+Ha manuálisan szeretnéd telepíteni:
+
+```bash
+# Frissítsd a csomag listát
+apt-get update
+
+# Alapvető rendszer függőségek
+apt-get install -y curl wget git
+
+# 7 Days to Die szerver függőségei (Unity motor támogatás)
+apt-get install -y libpulse0 libpulse-dev libasound2 libatomic1
+
+# Java (Java játékokhoz, pl. Minecraft)
+apt-get install -y openjdk-17-jre-headless
+
+# Wine (Windows játékokhoz, pl. The Forest)
+apt-get install -y wine64
+
+# SteamCMD telepítése (játékszerverek letöltéséhez)
+mkdir -p /opt/steamcmd
+cd /opt/steamcmd
+wget https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz
+tar -xzf steamcmd_linux.tar.gz
+chmod +x steamcmd.sh
+./steamcmd.sh +quit
+```
+
+**Fontos**: Ezeket a függőségeket minden szerver gépen telepíteni kell, ahol játékszervereket szeretnél futtatni.
+
+### Rendszer Függőségek Frissítése
+
+Ha újabb függőségeket szeretnél hozzáadni vagy frissíteni:
+
+```bash
+# Futtasd újra a telepítő scriptet
+sudo ./scripts/install-system-dependencies.sh
+```
+
+Ez a script idempotens, tehát biztonságosan futtathatod többször is - csak a hiányzó csomagokat telepíti.
+
 ## 🔧 Lépések
 
 ### 1. Lépés: Szerver Gép Hozzáadása az Admin Felületen
