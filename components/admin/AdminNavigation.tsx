@@ -55,6 +55,7 @@ export function AdminNavigation({ locale }: AdminNavigationProps) {
     { href: `/${locale}/admin/audit-logs`, label: 'Audit Logok', icon: FileText },
     { href: `/${locale}/admin/users`, label: 'Felhasználók', icon: Users },
     { href: `/${locale}/admin/servers`, label: 'Szerverek', icon: Server },
+    { href: `/${locale}/admin/install-logs`, label: 'Telepítési Logok', icon: FileText },
     { href: `/${locale}/admin/machines`, label: 'Szerver Gépek', icon: Network },
     { href: `/${locale}/admin/agents`, label: 'Agentek', icon: Server },
     { href: `/${locale}/admin/tasks`, label: 'Feladatok', icon: FileText },
