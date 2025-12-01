@@ -2,37 +2,39 @@ import { getTranslations } from '@/lib/i18n';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { SystemHealth } from '@/components/admin/SystemHealth';
+import { LicenseInfo } from '@/components/admin/LicenseInfo';
 
 export default async function AdminDashboardPage({
   params: { locale },
 }: {
   params: { locale: string };
 }) {
-  await requireAdmin(locale);
-  const t = getTranslations(locale, 'common');
+  try {
+    await requireAdmin(locale);
+    const t = getTranslations(locale, 'common');
 
-  // Statisztikák lekérése
-  const [
-    totalUsers,
-    totalServers,
-    activeSubscriptions,
-    totalRevenue,
-    openTickets,
-  ] = await Promise.all([
-    prisma.user.count(),
-    prisma.server.count(),
-    prisma.subscription.count({ where: { status: 'ACTIVE' } }),
-    prisma.invoice.aggregate({
-      where: { status: 'PAID' },
-      _sum: { amount: true },
-    }),
-    prisma.supportTicket.count({ where: { status: { not: 'CLOSED' } } }),
-  ]);
+    // Statisztikák lekérése
+    const [
+      totalUsers,
+      totalServers,
+      activeSubscriptions,
+      totalRevenue,
+      openTickets,
+    ] = await Promise.all([
+      prisma.user.count().catch(() => 0),
+      prisma.server.count().catch(() => 0),
+      prisma.subscription.count({ where: { status: 'ACTIVE' } }).catch(() => 0),
+      prisma.invoice.aggregate({
+        where: { status: 'PAID' },
+        _sum: { amount: true },
+      }).catch(() => ({ _sum: { amount: 0 } })),
+      prisma.supportTicket.count({ where: { status: { not: 'CLOSED' } } }).catch(() => 0),
+    ]);
 
-  const revenue = totalRevenue._sum.amount || 0;
+    const revenue = totalRevenue._sum.amount || 0;
 
-  return (
-    <div>
+    return (
+      <div>
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Vezérlőpult</h1>
         <p className="text-gray-700">Üdvözöljük az admin felületen</p>
@@ -67,6 +69,11 @@ export default async function AdminDashboardPage({
         </div>
       </div>
 
+      {/* License Információk */}
+      <div className="mb-8">
+        <LicenseInfo locale={locale} />
+      </div>
+
       {/* Rendszer Egészség */}
       <div className="mb-8">
         <SystemHealth locale={locale} />
@@ -82,27 +89,32 @@ export default async function AdminDashboardPage({
           <h2 className="text-xl font-bold text-gray-900 mb-6">Legutóbbi Szerverek</h2>
           <RecentServers />
         </div>
+        </div>
       </div>
-    </div>
-  );
+    );
+  } catch (error) {
+    console.error('Admin dashboard error:', error);
+    throw error;
+  }
 }
 
 async function RecentUsers() {
-  const users = await prisma.user.findMany({
-    take: 5,
-    orderBy: { createdAt: 'desc' },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      createdAt: true,
-      role: true,
-    },
-  });
+  try {
+    const users = await prisma.user.findMany({
+      take: 5,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        createdAt: true,
+        role: true,
+      },
+    });
 
-  return (
-    <div className="space-y-3">
-      {users.map((user) => (
+    return (
+      <div className="space-y-3">
+        {users.map((user) => (
         <div key={user.id} className="flex justify-between items-center pb-3 border-b last:border-0">
           <div>
             <p className="font-medium">{user.name || user.email}</p>
@@ -115,31 +127,40 @@ async function RecentUsers() {
             <span className="ml-2 px-2 py-1 bg-primary-100 text-primary-800 text-xs rounded">
               {user.role}
             </span>
+            </div>
           </div>
-        </div>
-      ))}
-    </div>
-  );
+        ))}
+      </div>
+    );
+  } catch (error) {
+    console.error('RecentUsers error:', error);
+    return (
+      <div className="text-center text-gray-500 py-4">
+        Nem sikerült betölteni a felhasználókat
+      </div>
+    );
+  }
 }
 
 async function RecentServers() {
-  const servers = await prisma.server.findMany({
-    take: 5,
-    orderBy: { createdAt: 'desc' },
-    include: {
-      user: {
-        select: {
-          name: true,
-          email: true,
+  try {
+    const servers = await prisma.server.findMany({
+      take: 5,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        user: {
+          select: {
+            name: true,
+            email: true,
+          },
         },
       },
-    },
-  });
+    });
 
-  return (
-    <div className="space-y-3">
-      {servers.map((server) => (
-        <div key={server.id} className="flex justify-between items-center pb-3 border-b last:border-0">
+    return (
+      <div className="space-y-3">
+        {servers.map((server) => (
+          <div key={server.id} className="flex justify-between items-center pb-3 border-b last:border-0">
           <div>
             <p className="font-medium">{server.name}</p>
             <p className="text-sm text-gray-700">
@@ -156,10 +177,18 @@ async function RecentServers() {
             >
               {server.status}
             </span>
+            </div>
           </div>
-        </div>
-      ))}
-    </div>
-  );
+        ))}
+      </div>
+    );
+  } catch (error) {
+    console.error('RecentServers error:', error);
+    return (
+      <div className="text-center text-gray-500 py-4">
+        Nem sikerült betölteni a szervereket
+      </div>
+    );
+  }
 }
 
