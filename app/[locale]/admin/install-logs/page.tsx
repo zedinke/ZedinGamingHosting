@@ -1,7 +1,6 @@
 import { getTranslations } from '@/lib/i18n';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
-import { AdminNavigation } from '@/components/admin/AdminNavigation';
 import { InstallLogsViewer } from '@/components/admin/InstallLogsViewer';
 
 export default async function AdminInstallLogsPage({
@@ -26,12 +25,6 @@ export default async function AdminInstallLogsPage({
     },
   });
 
-  return (
-    <AdminNavigation locale={locale}>
-      <div className="ml-64 p-8">
-        <InstallLogsViewer locale={locale} servers={servers} />
-      </div>
-    </AdminNavigation>
-  );
+  return <InstallLogsViewer locale={locale} servers={servers} />;
 }
 
