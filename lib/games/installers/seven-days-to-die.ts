@@ -139,20 +139,19 @@ install_server() {
         
         # SteamCMD futtatása és log mentése (valós időben is logoljuk)
         log "SteamCMD letöltés indítása..."
-        sudo -u "$SERVER_USER" HOME="$STEAM_HOME" $STEAMCMD_CMD \
-            +force_install_dir "$SERVER_DIR" \
-            +login anonymous \
-            +app_update "$STEAM_APP_ID" validate \
-            +quit 2>&1 | tee /tmp/steamcmd-$$.log | while read line; do
-            # Valós idejű logolás a progress követéshez
-            if echo "$line" | grep -qE "\[.*%\]|Update state|Success|ERROR"; then
-                log "  $line"
-            fi
-        done
+        # Futtatjuk a SteamCMD-t és minden kimenetet logolunk
+        sudo -u "$SERVER_USER" HOME="$STEAM_HOME" bash -c "$STEAMCMD_CMD +force_install_dir \"$SERVER_DIR\" +login anonymous +app_update $STEAM_APP_ID validate +quit" > /tmp/steamcmd-$$.log 2>&1
         
-        # Az exit code-ot a tee után kapjuk meg
         local exit_code=$?
         log "SteamCMD exit code: $exit_code"
+        
+        # Logoljuk a teljes kimenetet
+        if [ -f /tmp/steamcmd-$$.log ]; then
+            log "SteamCMD teljes kimenet:"
+            cat /tmp/steamcmd-$$.log | while read line; do
+                log "  $line"
+            done
+        fi
         
         # Várunk egy kicsit, hogy a fájlok biztosan leírásra kerüljenek
         sleep 5
