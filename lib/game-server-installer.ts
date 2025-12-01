@@ -296,7 +296,13 @@ export async function installGameServer(
     }
 
     // Telepítési script generálása (csak ha nem ARK, vagy ha még nincs telepítve)
-    if (!isARK || !(await checkARKSharedInstallation(server.userId, machine.id, gameType, machine))) {
+    const sharedFilesInstalled = isARK ? await checkARKSharedInstallation(server.userId, machine.id, gameType, machine) : false;
+    
+    if (writeProgress && isARK) {
+      await appendInstallLog(serverId, `ARK shared files telepítés ellenőrzése: ${sharedFilesInstalled ? 'telepítve' : 'nincs telepítve'}`);
+    }
+    
+    if (!isARK || !sharedFilesInstalled) {
       // Ha a gameConfig.installScript üres, betöltjük a GAME_INSTALLERS-ből
       let installScript = gameConfig.installScript || GAME_INSTALLERS[gameType] || '';
       
@@ -625,6 +631,35 @@ fi
         serverId,
         gameType,
         scriptPath,
+      });
+    }
+
+    // ARK-nál mindig létrehozzuk az instance mappában a szükséges könyvtárakat
+    // még akkor is, ha a shared files már telepítve vannak
+    if (isARK && sharedPath) {
+      if (writeProgress) {
+        await appendInstallLog(serverId, 'ARK instance könyvtárak létrehozása...');
+      }
+      
+      // Instance mappa és szükséges könyvtárak létrehozása
+      await executeSSHCommand(
+        {
+          host: machine.ipAddress,
+          port: machine.sshPort,
+          user: machine.sshUser,
+          keyPath: machine.sshKeyPath || undefined,
+        },
+        `mkdir -p ${serverPath}/ShooterGame/Saved/Config/LinuxServer && mkdir -p ${serverPath}/ShooterGame/Saved/SavedArks && chmod -R 755 ${serverPath} && chown -R root:root ${serverPath}`
+      );
+      
+      if (writeProgress) {
+        await appendInstallLog(serverId, `ARK instance könyvtárak létrehozva: ${serverPath}`);
+      }
+      
+      logger.info('ARK instance directories created', {
+        serverId,
+        instancePath: serverPath,
+        sharedPath,
       });
     }
 
