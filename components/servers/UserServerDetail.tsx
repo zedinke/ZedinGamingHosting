@@ -9,6 +9,7 @@ import { UserServerConfigEditor } from './UserServerConfigEditor';
 import { UserServerConfigFileEditor } from './UserServerConfigFileEditor';
 import { ServerSavesManager } from './ServerSavesManager';
 import { ARKASAServerConfigManager } from './ARKASAServerConfigManager';
+import { ServerUpdateButton } from './ServerUpdateButton';
 
 interface Server {
   id: string;
@@ -410,6 +411,15 @@ export function UserServerDetail({ server, locale }: UserServerDetailProps) {
             >
               Újraindítás
             </button>
+          </div>
+          
+          {/* Frissítés gomb */}
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <ServerUpdateButton 
+              serverId={server.id} 
+              locale={locale}
+              gameType={server.gameType}
+            />
           </div>
         </div>
       </div>

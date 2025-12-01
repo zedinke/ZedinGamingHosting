@@ -16,6 +16,7 @@ import { ServerScaling } from './ServerScaling';
 import { ServerMigration } from './ServerMigration';
 import { ServerDeleteDialog } from './ServerDeleteDialog';
 import { InstallProgress } from './InstallProgress';
+import { ServerUpdateButton } from '@/components/servers/ServerUpdateButton';
 
 interface Server {
   id: string;
@@ -291,6 +292,16 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
         {/* Szerver műveletek */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h2 className="text-xl font-bold text-gray-900 mb-4">Szerver Műveletek</h2>
+          
+          {/* Frissítés gomb */}
+          <div className="mb-4 pb-4 border-b border-gray-200">
+            <ServerUpdateButton 
+              serverId={server.id} 
+              locale={locale}
+              gameType={server.gameType}
+            />
+          </div>
+          
           <div className="space-y-2">
             <button
               onClick={() => handleServerAction('start')}
