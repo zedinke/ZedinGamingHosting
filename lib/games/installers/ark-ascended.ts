@@ -6,14 +6,18 @@
 export const installScript = `
 #!/bin/bash
 set +e
+# ARK-nál a shared path-ot használjuk (felhasználó + szervergép kombináció)
+# A game-server-installer.ts lecseréli a /opt/servers/{serverId}-t a sharedPath-re
 SERVER_DIR="/opt/servers/{serverId}"
 
 # Minden könyvtárat root tulajdonba teszünk, mivel root-ként futunk mindent
-mkdir -p /opt/servers
-chmod 755 /opt/servers
-chown root:root /opt/servers
+# ARK-nál a shared mappa könyvtárát használjuk
+mkdir -p "$(dirname "$SERVER_DIR")"
+chmod 755 "$(dirname "$SERVER_DIR")"
+chown root:root "$(dirname "$SERVER_DIR")"
 
 # Szerver könyvtár létrehozása root tulajdonban
+# ARK-nál ez a shared mappa lesz (pl. /opt/ark-shared/{userId}-{machineId})
 mkdir -p "$SERVER_DIR"
 chmod -R 755 "$SERVER_DIR"
 chown -R root:root "$SERVER_DIR"
@@ -99,51 +103,18 @@ if [ "$INSTALL_SUCCESS" != "true" ]; then
   exit 1
 fi
 
-# Könyvtárak létrehozása
+# Könyvtárak létrehozása a shared mappában
+# ARK-nál a bináris fájlok a shared mappában vannak
+# A konfigurációs fájlokat a game-server-installer.ts hozza létre az instance mappába
 mkdir -p "$SERVER_DIR/ShooterGame/Saved/Config/LinuxServer"
 mkdir -p "$SERVER_DIR/ShooterGame/Saved/SavedArks"
 chown -R root:root "$SERVER_DIR"
 chmod -R 755 "$SERVER_DIR"
 
-# Konfigurációs fájlok létrehozása
-echo "Szerver konfiguráció létrehozása..."
-
-# GameUserSettings.ini
-cat > "$SERVER_DIR/ShooterGame/Saved/Config/LinuxServer/GameUserSettings.ini" << EOF
-[/Script/ShooterGame.ShooterGameUserSettings]
-MasterAudioVolume=1.000000
-MusicAudioVolume=1.000000
-SFXAudioVolume=1.000000
-VoiceAudioVolume=1.000000
-UIScaling=1.000000
-UIScaleSlider=1.000000
-bFirstRun=False
-bShowChatbox=True
-
-[SessionSettings]
-SessionName={name}
-Port={port}
-QueryPort={queryPort}
-ServerPassword=
-AdminPassword={adminPassword}
-MaxPlayers={maxPlayers}
-ServerPVE=False
-
-[/Script/ShooterGame.ShooterGameMode]
-ConfigOverrideItemMaxQuantity=(ItemClassString="PrimalItemResource_Amarberry_C",Quantity=100.0)
-EOF
-
-# Game.ini
-cat > "$SERVER_DIR/ShooterGame/Saved/Config/LinuxServer/Game.ini" << EOF
-[/Script/ShooterGame.ShooterGameMode]
-ConfigOverrideItemMaxQuantity=(ItemClassString="PrimalItemResource_Amarberry_C",Quantity=100.0)
-ConfigOverrideItemMaxQuantity=(ItemClassString="PrimalItemResource_Arrow_Stone_C",Quantity=100.0)
-ConfigOverrideItemMaxQuantity=(ItemClassString="PrimalItemResource_Sparkpowder_C",Quantity=1000.0)
-EOF
-
-# Jogosultságok beállítása
-chown -R root:root "$SERVER_DIR"
-chmod -R 755 "$SERVER_DIR"
+# Megjegyzés: A konfigurációs fájlokat (GameUserSettings.ini, Game.ini) 
+# a game-server-installer.ts hozza létre az instance mappába
+# (pl. /opt/ark-shared/{userId}-{machineId}/instances/{serverId}/ShooterGame/Saved/Config/LinuxServer/)
+# Ez biztosítja, hogy minden szerver instance saját konfigurációval rendelkezzen
 
 # Executable jogok beállítása a szerver binárisra
 if [ -f "$SERVER_DIR/ShooterGame/Binaries/Linux/ShooterGameServer" ]; then
@@ -151,7 +122,8 @@ if [ -f "$SERVER_DIR/ShooterGame/Binaries/Linux/ShooterGameServer" ]; then
 fi
 
 echo "=== Installálás kész ==="
-echo "Szerver könyvtár: $SERVER_DIR"
-echo "Konfigurációs fájlok létrehozva"
+echo "Shared szerver könyvtár: $SERVER_DIR"
+echo "Bináris fájlok telepítve"
+echo "Megjegyzés: A konfigurációs fájlokat a game-server-installer.ts hozza létre az instance mappába"
 `;
 
