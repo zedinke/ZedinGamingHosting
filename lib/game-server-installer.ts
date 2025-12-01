@@ -506,6 +506,7 @@ fi
       // Ellenőrizzük, hogy a bináris fájl létezik-e (7 Days to Die esetén)
       let binaryExists = false;
       if (gameType === 'SEVEN_DAYS_TO_DIE') {
+        // Ellenőrizzük több helyen is a fájl létezését
         const binaryCheck = await executeSSHCommand(
           {
             host: machine.ipAddress,
@@ -513,11 +514,24 @@ fi
             user: machine.sshUser,
             keyPath: machine.sshKeyPath || undefined,
           },
-          `test -f /opt/servers/${serverId}/7DaysToDieServer.x86_64 || test -f /opt/servers/${serverId}/steamapps/common/7\ Days\ To\ Die\ Dedicated\ Server/7DaysToDieServer.x86_64 || test -f /opt/servers/${serverId}/steamapps/common/7\ Days\ To\ Die/7DaysToDieServer.x86_64 && echo "exists" || echo "missing"`
+          `if test -f /opt/servers/${serverId}/7DaysToDieServer.x86_64 || test -f /opt/servers/${serverId}/steamapps/common/7\\ Days\\ To\\ Die\\ Dedicated\\ Server/7DaysToDieServer.x86_64 || test -f /opt/servers/${serverId}/steamapps/common/7\\ Days\\ To\\ Die/7DaysToDieServer.x86_64; then echo "exists"; else echo "missing"; fi`
         );
-        binaryExists = binaryCheck.stdout?.includes('exists') || false;
+        binaryExists = binaryCheck.stdout?.trim() === 'exists';
         if (!binaryExists && writeProgress) {
           await appendInstallLog(serverId, 'HIBA: 7DaysToDieServer.x86_64 bináris fájl nem található a telepítés után!');
+          // Részletesebb ellenőrzés a hibakereséshez
+          const lsCheck = await executeSSHCommand(
+            {
+              host: machine.ipAddress,
+              port: machine.sshPort,
+              user: machine.sshUser,
+              keyPath: machine.sshKeyPath || undefined,
+            },
+            `ls -la /opt/servers/${serverId}/ | head -20`
+          );
+          if (lsCheck.stdout) {
+            await appendInstallLog(serverId, `Szerver könyvtár tartalma:\n${lsCheck.stdout}`);
+          }
         }
       }
       
