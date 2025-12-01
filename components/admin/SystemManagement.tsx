@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { UpdateProgress } from './UpdateProgress';
+import { AutoDeleteSettings } from './AutoDeleteSettings';
+import { BackupUpgradePriceSettings } from './BackupUpgradePriceSettings';
 
 interface SystemManagementProps {
   maintenanceMode: boolean;
@@ -551,6 +553,12 @@ export function SystemManagement({
           )}
         </div>
       </div>
+
+      {/* Automatikus törlési beállítások */}
+      <AutoDeleteSettings locale={locale} />
+
+      {/* Backup bővítés ára beállítások */}
+      <BackupUpgradePriceSettings locale={locale} />
     </div>
   );
 }

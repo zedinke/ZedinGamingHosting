@@ -36,6 +36,8 @@ model User {
   notifications     Notification[]
   chatConversations ChatConversation[]
   pushTokens        PushToken[]
+  cronJobs          CronJob[]
+  cronJobExecutions CronJobExecution[]
 
   @@map("users")
 }
@@ -121,6 +123,16 @@ model Server {
   machineId     String? // Melyik gépen fut
   agentId       String? // Melyik agent kezeli
   premiumPackageId String? // Ha premium csomagból van, akkor a csomag ID-ja
+  sftpUsername  String? @unique // Egyedi SFTP felhasználónév (pl: sftp_abc123)
+  sftpPassword  String? // Hashelt SFTP jelszó (bcrypt)
+  sftpPort      Int     @default(22) // SFTP port (általában 22)
+  
+  // Backup limit mezők (alapértelmezett: 5 db backup, 5 GB tárhely)
+  backupCountLimit    Int     @default(5) // Maximális backup száma
+  backupStorageLimitGB Float  @default(5.0) // Maximális tárhely GB-ban
+  backupCountUsed     Int     @default(0) // Használt backup száma
+  backupStorageUsedGB Float   @default(0.0) // Használt tárhely GB-ban
+  
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
@@ -130,7 +142,8 @@ model Server {
   agent        Agent?         @relation(fields: [agentId], references: [id], onDelete: SetNull)
   premiumPackage PremiumPackage? @relation(fields: [premiumPackageId], references: [id], onDelete: SetNull)
   tasks        Task[]
-
+  cronJobs     CronJob[]
+  
   @@index([premiumPackageId])
   @@map("servers")
 }
@@ -1067,4 +1080,115 @@ model GamePricingConfig {
   gameConfig GameConfig @relation(fields: [gameType], references: [gameType], onDelete: Cascade)
 
   @@map("game_pricing_configs")
+}
+
+// Cron job-ok - időzített szerver műveletek
+model CronJob {
+  id            String        @id @default(cuid())
+  serverId      String
+  userId        String
+  
+  name          String        // Cron job neve (pl: "Napi újraindítás")
+  description   String?       // Leírás
+  
+  // Cron kifejezés: "minute hour day month weekday"
+  // Példák:
+  // - "0 3 * * *" - Minden nap 3:00-kor
+  // - "0 */6 * * *" - 6 óránként
+  // - "0 0 * * 0" - Minden vasárnap éjfélkor
+  // - "30 2 1 * *" - Minden hónap 1-jén 2:30-kor
+  cronExpression String       // Standard cron formátum
+  
+  // Művelet típusa
+  action        CronJobAction // START, STOP, RESTART, UPDATE, WIPE, BACKUP stb.
+  
+  // Játékspecifikus beállítások (opcionális)
+  gameType      GameType?     // Ha játékspecifikus
+  
+  // Email értesítés beállítások
+  notifyOnSuccess Boolean     @default(false) // Sikeres végrehajtáskor email
+  notifyOnFailure Boolean     @default(false) // Sikertelen végrehajtáskor email
+  notifyAlways   Boolean      @default(false) // Mindig email (success + failure)
+  
+  // Státusz
+  isActive      Boolean       @default(true)  // Aktív-e a cron job
+  lastRun       DateTime?     // Utolsó végrehajtás ideje
+  lastResult    String?       // Utolsó eredmény (SUCCESS, FAILED, SKIPPED)
+  lastError     String?       @db.Text        // Utolsó hibaüzenet (ha volt)
+  nextRun       DateTime?     // Következő végrehajtás ideje (számított)
+  
+  // Végrehajtás statisztikák
+  runCount      Int           @default(0)     // Hányszor futott le
+  successCount  Int           @default(0)     // Hányszor volt sikeres
+  failureCount  Int           @default(0)     // Hányszor volt sikertelen
+  
+  // További beállítások
+  timezone      String        @default("Europe/Budapest") // Időzóna
+  enabled       Boolean       @default(true)  // Engedélyezve van-e
+  
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  
+  server        Server        @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  executions    CronJobExecution[]
+  
+  @@index([serverId])
+  @@index([userId])
+  @@index([isActive, enabled])
+  @@index([nextRun])
+  @@map("cron_jobs")
+}
+
+enum CronJobAction {
+  START       // Szerver indítása
+  STOP        // Szerver leállítása
+  RESTART     // Szerver újraindítása
+  UPDATE      // Szerver frissítése
+  WIPE        // Teljes wipe (játéktól függően törli a világot/adatokat)
+  BACKUP      // Backup készítése
+  CLEANUP     // Cleanup műveletek (logok, régi fájlok törlése)
+  SAVE        // Save mentés (amennyiben van)
+}
+
+// Cron job végrehajtási logok
+model CronJobExecution {
+  id            String        @id @default(cuid())
+  cronJobId     String
+  serverId      String
+  userId        String
+  
+  action        CronJobAction
+  status        CronExecutionStatus @default(PENDING)
+  
+  startedAt     DateTime      @default(now())
+  completedAt   DateTime?
+  duration      Int?          // Végrehajtás időtartama milliszekundumban
+  
+  result        String?       // SUCCESS, FAILED, SKIPPED
+  error         String?       @db.Text // Hibaüzenet ha volt
+  
+  // Email küldés információk
+  emailSent     Boolean       @default(false)
+  emailSentAt   DateTime?
+  
+  createdAt     DateTime      @default(now())
+  
+  cronJob       CronJob       @relation(fields: [cronJobId], references: [id], onDelete: Cascade)
+  
+  @@index([cronJobId])
+  @@index([serverId])
+  @@index([userId])
+  @@index([startedAt])
+  @@index([status])
+  @@map("cron_job_executions")
+}
+
+enum CronExecutionStatus {
+  PENDING       // Várakozik a végrehajtásra
+  RUNNING       // Végrehajtás alatt
+  SUCCESS       // Sikeres
+  FAILED        // Sikertelen
+  SKIPPED       // Kihagyva (pl. szerver offline volt start műveletnél)
+  CANCELLED     // Törölve
 }

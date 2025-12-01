@@ -17,6 +17,7 @@ import { ServerMigration } from './ServerMigration';
 import { ServerDeleteDialog } from './ServerDeleteDialog';
 import { InstallProgress } from './InstallProgress';
 import { ServerUpdateButton } from '@/components/servers/ServerUpdateButton';
+import { SFTPInfo } from '@/components/servers/SFTPInfo';
 
 interface Server {
   id: string;
@@ -70,7 +71,7 @@ interface ServerDetailProps {
 export function ServerDetail({ server, locale }: ServerDetailProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [serverStatus, setServerStatus] = useState(server.status);
-  const [activeTab, setActiveTab] = useState<'files' | 'console' | 'backup' | 'config' | 'logs' | 'startup-logs' | 'limits'>('files');
+  const [activeTab, setActiveTab] = useState<'files' | 'console' | 'backup' | 'config' | 'logs' | 'startup-logs' | 'limits' | 'sftp'>('files');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showVerifyDialog, setShowVerifyDialog] = useState(false);
   const [verifyResults, setVerifyResults] = useState<any>(null);
@@ -661,6 +662,16 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
             >
               Erőforrás Limitok
             </button>
+            <button
+              onClick={() => setActiveTab('sftp')}
+              className={`px-4 py-2 border-b-2 font-medium transition-colors ${
+                activeTab === 'sftp'
+                  ? 'border-primary-600 text-primary-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              SFTP Hozzáférés
+            </button>
           </div>
         </div>
         {activeTab === 'files' && <ServerFileManager serverId={server.id} locale={locale} />}
@@ -677,6 +688,7 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
         {activeTab === 'logs' && <ServerLogsViewer serverId={server.id} />}
         {activeTab === 'startup-logs' && <GameServerStartupLogs serverId={server.id} />}
         {activeTab === 'limits' && <ResourceLimitsEditor serverId={server.id} />}
+        {activeTab === 'sftp' && <SFTPInfo serverId={server.id} locale={locale} />}
       </div>
 
       {/* Erőforrás használat - Real-time monitoring */}

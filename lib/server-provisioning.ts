@@ -1,7 +1,13 @@
 import { prisma } from '@/lib/prisma';
-import { GameType, ServerStatus } from '@prisma/client';
+import { GameType, ServerStatus, ServerMachine } from '@prisma/client';
 import { executeTask } from './task-executor';
 import { logger } from '@/lib/logger';
+import {
+  generateSFTPUsername,
+  generateSFTPPassword,
+  createSFTPUser,
+  hashSFTPPassword,
+} from './sftp-user-manager';
 
 interface ProvisioningOptions {
   gameType: GameType;
@@ -859,6 +865,22 @@ export async function provisionServer(
       configuration: Object.keys(configurationUpdate).length > 0 ? configurationUpdate : undefined,
     });
 
+    // SFTP felhasználó létrehozása háttérben
+    // Az SFTP felhasználó csak a szerver könyvtárához férhet hozzá (chroot jail)
+    if (server.agent?.machine) {
+      const machine = server.agent.machine;
+      const serverPath = `/opt/servers/${serverId}`;
+      
+      // SFTP felhasználó létrehozása aszinkron módon
+      createSFTPUserAsync(serverId, serverPath, machine).catch((error) => {
+        logger.error('SFTP felhasználó létrehozási hiba (nem blokkoló)', error, {
+          serverId,
+          machineId: machine.id,
+        });
+        // Ez nem blokkolja a provisioning folyamatot, csak logoljuk a hibát
+      });
+    }
+
     // Task végrehajtása háttérben (ez telepíti a szervert)
     // A task executor hívja meg az installGameServer-t
     executeTask(task.id).catch((error) => {
@@ -1331,6 +1353,67 @@ export async function checkPortAvailableOnMachine(machineId: string, port: numbe
     // Hiba esetén biztonságosabb feltételezni, hogy a port foglalt
     console.error(`Port ellenőrzési hiba a ${machineId} gépen a ${port} porthoz:`, error);
     return false;
+  }
+}
+
+/**
+ * SFTP felhasználó létrehozása aszinkron módon
+ */
+async function createSFTPUserAsync(
+  serverId: string,
+  serverPath: string,
+  machine: ServerMachine
+): Promise<void> {
+  try {
+    // SFTP felhasználó adatok generálása
+    const sftpUsername = generateSFTPUsername(serverId);
+    const sftpPassword = generateSFTPPassword();
+    const hashedPassword = await hashSFTPPassword(sftpPassword);
+
+    // SSH konfiguráció
+    const sshConfig = {
+      host: machine.ipAddress,
+      port: machine.sshPort,
+      user: machine.sshUser,
+      keyPath: machine.sshKeyPath || undefined,
+    };
+
+    // SFTP felhasználó létrehozása a gépen
+    const result = await createSFTPUser(
+      serverId,
+      serverPath,
+      sftpUsername,
+      sftpPassword,
+      sshConfig
+    );
+
+    if (!result.success) {
+      throw new Error(result.error || 'SFTP felhasználó létrehozása sikertelen');
+    }
+
+    // SFTP adatok mentése az adatbázisba
+    await prisma.server.update({
+      where: { id: serverId },
+      data: {
+        sftpUsername,
+        sftpPassword: hashedPassword,
+        sftpPort: 22, // Alapértelmezett SSH/SFTP port
+      },
+    });
+
+    logger.info('SFTP felhasználó sikeresen létrehozva és mentve az adatbázisba', {
+      serverId,
+      sftpUsername,
+      serverPath,
+      machineId: machine.id,
+    });
+  } catch (error: any) {
+    logger.error('SFTP felhasználó létrehozási hiba', error, {
+      serverId,
+      serverPath,
+      machineId: machine.id,
+    });
+    throw error;
   }
 }
 

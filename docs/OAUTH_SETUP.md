@@ -125,3 +125,5 @@ Ha az OAuth gomb nem működik:
 - [Google OAuth Dokumentáció](https://developers.google.com/identity/protocols/oauth2)
 - [Discord OAuth Dokumentáció](https://discord.com/developers/docs/topics/oauth2)
 
+
+
