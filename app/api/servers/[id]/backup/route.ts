@@ -28,6 +28,7 @@ export async function GET(
       where: { id },
       select: {
         id: true,
+        name: true,
         userId: true,
         backupCountLimit: true,
         backupStorageLimitGB: true,

@@ -2,8 +2,6 @@ import { prisma } from '@/lib/prisma';
 import { CronJobAction, CronExecutionStatus } from '@prisma/client';
 import { logger } from './logger';
 import { parseExpression } from 'cron-parser';
-import { addMinutes, addHours, addDays, addWeeks, addMonths, isAfter, isBefore } from 'date-fns';
-import { zonedTimeToUtc, utcToZonedTime } from 'date-fns-tz';
 
 /**
  * Cron kifejezés validálása
@@ -147,7 +145,7 @@ export async function executeCronJob(cronJobId: string): Promise<{
     await prisma.cronJobExecution.update({
       where: { id: execution.id },
       data: {
-        status: result === 'SUCCESS' ? 'SUCCESS' : result === 'SKIPPED' ? 'SKIPPED' : 'FAILED',
+        status: result as CronExecutionStatus,
         completedAt: new Date(),
         duration,
         result,

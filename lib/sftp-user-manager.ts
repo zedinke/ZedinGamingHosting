@@ -90,7 +90,7 @@ if grep -q "Match User $SFTP_USER" "$SSH_CONFIG"; then
 else
   # Hozzáadjuk a konfigurációt
   echo "" >> "$SSH_CONFIG"
-  echo "# SFTP chroot jail for $SFTP_USER (Server: ${SERVER_ID})" >> "$SSH_CONFIG"
+  echo "# SFTP chroot jail for $SFTP_USER (Server: $SERVER_ID)" >> "$SSH_CONFIG"
   echo "$CHROOT_BLOCK" >> "$SSH_CONFIG"
   
   # SSH daemon újraindítása

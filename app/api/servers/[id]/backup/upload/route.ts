@@ -136,10 +136,10 @@ export async function POST(
         backupPath
       );
 
-      if (!uploadResult.success) {
+      if (uploadResult.exitCode !== 0) {
         return NextResponse.json(
           {
-            error: uploadResult.error || 'Hiba történt a backup feltöltése során',
+            error: uploadResult.stderr || 'Hiba történt a backup feltöltése során',
           },
           { status: 500 }
         );
