@@ -104,46 +104,46 @@ model PasswordResetToken {
 
 // Játék szerverek
 model Server {
-  id            String       @id @default(cuid())
-  userId        String
-  gameType      GameType
-  name          String
-  status        ServerStatus @default(OFFLINE)
-  ipAddress     String?
-  port          Int? // Alap port (QueryPort Satisfactory-nál)
-  queryPort     Int? // QueryPort (Satisfactory-nál és más játékoknál)
-  beaconPort    Int? // BeaconPort (Satisfactory-nál)
-  steamPeerPort Int? // SteamPeerPort (The Forest-nál)
-  rustPlusPort  Int? // RustPlusPort (Rust-nál)
-  telnetPort    Int? // TelnetPort (7 Days to Die-nál)
-  webMapPort    Int? // WebMapPort/ControlPanelPort (7 Days to Die-nál)
-  maxPlayers    Int          @default(10)
-  configuration Json? // Szerver konfiguráció JSON formátumban
-  resourceUsage Json? // CPU, RAM, Disk használat
-  machineId     String? // Melyik gépen fut
-  agentId       String? // Melyik agent kezeli
+  id               String       @id @default(cuid())
+  userId           String
+  gameType         GameType
+  name             String
+  status           ServerStatus @default(OFFLINE)
+  ipAddress        String?
+  port             Int? // Alap port (QueryPort Satisfactory-nál)
+  queryPort        Int? // QueryPort (Satisfactory-nál és más játékoknál)
+  beaconPort       Int? // BeaconPort (Satisfactory-nál)
+  steamPeerPort    Int? // SteamPeerPort (The Forest-nál)
+  rustPlusPort     Int? // RustPlusPort (Rust-nál)
+  telnetPort       Int? // TelnetPort (7 Days to Die-nál)
+  webMapPort       Int? // WebMapPort/ControlPanelPort (7 Days to Die-nál)
+  maxPlayers       Int          @default(10)
+  configuration    Json? // Szerver konfiguráció JSON formátumban
+  resourceUsage    Json? // CPU, RAM, Disk használat
+  machineId        String? // Melyik gépen fut
+  agentId          String? // Melyik agent kezeli
   premiumPackageId String? // Ha premium csomagból van, akkor a csomag ID-ja
-  sftpUsername  String? @unique // Egyedi SFTP felhasználónév (pl: sftp_abc123)
-  sftpPassword  String? // Hashelt SFTP jelszó (bcrypt)
-  sftpPort      Int     @default(22) // SFTP port (általában 22)
-  
-  // Backup limit mezők (alapértelmezett: 5 db backup, 5 GB tárhely)
-  backupCountLimit    Int     @default(5) // Maximális backup száma
-  backupStorageLimitGB Float  @default(5.0) // Maximális tárhely GB-ban
-  backupCountUsed     Int     @default(0) // Használt backup száma
-  backupStorageUsedGB Float   @default(0.0) // Használt tárhely GB-ban
-  
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  sftpUsername     String?      @unique // Egyedi SFTP felhasználónév (pl: sftp_abc123)
+  sftpPassword     String? // Hashelt SFTP jelszó (bcrypt)
+  sftpPort         Int          @default(22) // SFTP port (általában 22)
 
-  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  subscription Subscription?
-  machine      ServerMachine? @relation(fields: [machineId], references: [id], onDelete: SetNull)
-  agent        Agent?         @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  // Backup limit mezők (alapértelmezett: 5 db backup, 5 GB tárhely)
+  backupCountLimit     Int   @default(5) // Maximális backup száma
+  backupStorageLimitGB Float @default(5.0) // Maximális tárhely GB-ban
+  backupCountUsed      Int   @default(0) // Használt backup száma
+  backupStorageUsedGB  Float @default(0.0) // Használt tárhely GB-ban
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription   Subscription?
+  machine        ServerMachine?  @relation(fields: [machineId], references: [id], onDelete: SetNull)
+  agent          Agent?          @relation(fields: [agentId], references: [id], onDelete: SetNull)
   premiumPackage PremiumPackage? @relation(fields: [premiumPackageId], references: [id], onDelete: SetNull)
-  tasks        Task[]
-  cronJobs     CronJob[]
-  
+  tasks          Task[]
+  cronJobs       CronJob[]
+
   @@index([premiumPackageId])
   @@map("servers")
 }
@@ -362,16 +362,16 @@ model Coupon {
   validFrom     DateTime
   validUntil    DateTime
   isActive      Boolean      @default(true)
-  
+
   // Kupon alkalmazhatósága
-  applicableToGamePackages   Boolean @default(true) // Alkalmazható-e normál játék csomagokra
+  applicableToGamePackages    Boolean @default(true) // Alkalmazható-e normál játék csomagokra
   applicableToPremiumPackages Boolean @default(true) // Alkalmazható-e premium csomagokra
-  
+
   // Specifikus csomagok (ha null, akkor minden csomagra érvényes)
   premiumPackageId String? // Ha megadva, csak erre a premium csomagra érvényes
-  
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   premiumPackage PremiumPackage? @relation(fields: [premiumPackageId], references: [id], onDelete: SetNull)
 
@@ -514,8 +514,8 @@ model GamePackage {
   nameHu        String? // Csomag neve magyarul
   nameEn        String? // Csomag neve angolul
   description   String?  @db.Text // Deprecated - használd a descriptionHu/descriptionEn mezőket
-  descriptionHu String? @db.Text // Leírás magyarul
-  descriptionEn String? @db.Text // Leírás angolul
+  descriptionHu String?  @db.Text // Leírás magyarul
+  descriptionEn String?  @db.Text // Leírás angolul
   price         Float
   currency      String   @default("HUF")
   interval      String   @default("month") // month, year
@@ -539,32 +539,32 @@ model GamePackage {
 
 // Premium csomagok - több játék egy csomagban
 model PremiumPackage {
-  id            String   @id @default(cuid())
+  id            String  @id @default(cuid())
   nameHu        String // Csomag neve magyarul
   nameEn        String // Csomag neve angolul
   descriptionHu String? @db.Text // Leírás magyarul
   descriptionEn String? @db.Text // Leírás angolul
   price         Float // Komplett csomag ára
-  currency      String   @default("HUF")
-  interval      String   @default("month") // month, year
+  currency      String  @default("HUF")
+  interval      String  @default("month") // month, year
   discountPrice Float? // Akciós ár (opcionális)
-  isActive      Boolean  @default(true) // Ha aktív, akkor megjelenik és rendelhető
-  order         Int      @default(0) // Rendezési sorrend
-  
-  // Automatikusan számított erőforrás limitek (a legnagyobb gépigényű játékhoz igazítva)
-  cpuCores      Int // Automatikusan számított a játékok közül a legnagyobb
-  ram           Int // Automatikusan számított a játékok közül a legnagyobb
-  
-  // Kép és videó (opcionális, ha nincs megadva, akkor a játékok képeit használjuk)
-  image         String? // Fő kép URL
-  videoUrl      String? // YouTube videó URL (opcionális)
-  
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  isActive      Boolean @default(true) // Ha aktív, akkor megjelenik és rendelhető
+  order         Int     @default(0) // Rendezési sorrend
 
-  games         PremiumPackageGame[]
-  servers       Server[]
-  coupons       Coupon[]
+  // Automatikusan számított erőforrás limitek (a legnagyobb gépigényű játékhoz igazítva)
+  cpuCores Int // Automatikusan számított a játékok közül a legnagyobb
+  ram      Int // Automatikusan számított a játékok közül a legnagyobb
+
+  // Kép és videó (opcionális, ha nincs megadva, akkor a játékok képeit használjuk)
+  image    String? // Fő kép URL
+  videoUrl String? // YouTube videó URL (opcionális)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  games   PremiumPackageGame[]
+  servers Server[]
+  coupons Coupon[]
 
   @@index([isActive])
   @@map("premium_packages")
@@ -572,14 +572,14 @@ model PremiumPackage {
 
 // Premium csomag és játék kapcsolat (many-to-many)
 model PremiumPackageGame {
-  id                String   @id @default(cuid())
-  premiumPackageId  String
-  gameType          GameType
-  
+  id               String   @id @default(cuid())
+  premiumPackageId String
+  gameType         GameType
+
   // Játék specifikus információk a csomagban
-  order             Int      @default(0) // Sorrend a csomagban
-  
-  premiumPackage    PremiumPackage @relation(fields: [premiumPackageId], references: [id], onDelete: Cascade)
+  order Int @default(0) // Sorrend a csomagban
+
+  premiumPackage PremiumPackage @relation(fields: [premiumPackageId], references: [id], onDelete: Cascade)
 
   @@unique([premiumPackageId, gameType])
   @@index([premiumPackageId])
@@ -1084,55 +1084,55 @@ model GamePricingConfig {
 
 // Cron job-ok - időzített szerver műveletek
 model CronJob {
-  id            String        @id @default(cuid())
-  serverId      String
-  userId        String
-  
-  name          String        // Cron job neve (pl: "Napi újraindítás")
-  description   String?       // Leírás
-  
+  id       String @id @default(cuid())
+  serverId String
+  userId   String
+
+  name        String // Cron job neve (pl: "Napi újraindítás")
+  description String? // Leírás
+
   // Cron kifejezés: "minute hour day month weekday"
   // Példák:
   // - "0 3 * * *" - Minden nap 3:00-kor
   // - "0 */6 * * *" - 6 óránként
   // - "0 0 * * 0" - Minden vasárnap éjfélkor
   // - "30 2 1 * *" - Minden hónap 1-jén 2:30-kor
-  cronExpression String       // Standard cron formátum
-  
+  cronExpression String // Standard cron formátum
+
   // Művelet típusa
-  action        CronJobAction // START, STOP, RESTART, UPDATE, WIPE, BACKUP stb.
-  
+  action CronJobAction // START, STOP, RESTART, UPDATE, WIPE, BACKUP stb.
+
   // Játékspecifikus beállítások (opcionális)
-  gameType      GameType?     // Ha játékspecifikus
-  
+  gameType GameType? // Ha játékspecifikus
+
   // Email értesítés beállítások
-  notifyOnSuccess Boolean     @default(false) // Sikeres végrehajtáskor email
-  notifyOnFailure Boolean     @default(false) // Sikertelen végrehajtáskor email
-  notifyAlways   Boolean      @default(false) // Mindig email (success + failure)
-  
+  notifyOnSuccess Boolean @default(false) // Sikeres végrehajtáskor email
+  notifyOnFailure Boolean @default(false) // Sikertelen végrehajtáskor email
+  notifyAlways    Boolean @default(false) // Mindig email (success + failure)
+
   // Státusz
-  isActive      Boolean       @default(true)  // Aktív-e a cron job
-  lastRun       DateTime?     // Utolsó végrehajtás ideje
-  lastResult    String?       // Utolsó eredmény (SUCCESS, FAILED, SKIPPED)
-  lastError     String?       @db.Text        // Utolsó hibaüzenet (ha volt)
-  nextRun       DateTime?     // Következő végrehajtás ideje (számított)
-  
+  isActive   Boolean   @default(true) // Aktív-e a cron job
+  lastRun    DateTime? // Utolsó végrehajtás ideje
+  lastResult String? // Utolsó eredmény (SUCCESS, FAILED, SKIPPED)
+  lastError  String?   @db.Text // Utolsó hibaüzenet (ha volt)
+  nextRun    DateTime? // Következő végrehajtás ideje (számított)
+
   // Végrehajtás statisztikák
-  runCount      Int           @default(0)     // Hányszor futott le
-  successCount  Int           @default(0)     // Hányszor volt sikeres
-  failureCount  Int           @default(0)     // Hányszor volt sikertelen
-  
+  runCount     Int @default(0) // Hányszor futott le
+  successCount Int @default(0) // Hányszor volt sikeres
+  failureCount Int @default(0) // Hányszor volt sikertelen
+
   // További beállítások
-  timezone      String        @default("Europe/Budapest") // Időzóna
-  enabled       Boolean       @default(true)  // Engedélyezve van-e
-  
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  
-  server        Server        @relation(fields: [serverId], references: [id], onDelete: Cascade)
-  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  executions    CronJobExecution[]
-  
+  timezone String  @default("Europe/Budapest") // Időzóna
+  enabled  Boolean @default(true) // Engedélyezve van-e
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  server     Server             @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  executions CronJobExecution[]
+
   @@index([serverId])
   @@index([userId])
   @@index([isActive, enabled])
@@ -1141,41 +1141,42 @@ model CronJob {
 }
 
 enum CronJobAction {
-  START       // Szerver indítása
-  STOP        // Szerver leállítása
-  RESTART     // Szerver újraindítása
-  UPDATE      // Szerver frissítése
-  WIPE        // Teljes wipe (játéktól függően törli a világot/adatokat)
-  BACKUP      // Backup készítése
-  CLEANUP     // Cleanup műveletek (logok, régi fájlok törlése)
-  SAVE        // Save mentés (amennyiben van)
+  START // Szerver indítása
+  STOP // Szerver leállítása
+  RESTART // Szerver újraindítása
+  UPDATE // Szerver frissítése
+  WIPE // Teljes wipe (játéktól függően törli a világot/adatokat)
+  BACKUP // Backup készítése
+  CLEANUP // Cleanup műveletek (logok, régi fájlok törlése)
+  SAVE // Save mentés (amennyiben van)
 }
 
 // Cron job végrehajtási logok
 model CronJobExecution {
-  id            String        @id @default(cuid())
-  cronJobId     String
-  serverId      String
-  userId        String
-  
-  action        CronJobAction
-  status        CronExecutionStatus @default(PENDING)
-  
-  startedAt     DateTime      @default(now())
-  completedAt   DateTime?
-  duration      Int?          // Végrehajtás időtartama milliszekundumban
-  
-  result        String?       // SUCCESS, FAILED, SKIPPED
-  error         String?       @db.Text // Hibaüzenet ha volt
-  
+  id        String @id @default(cuid())
+  cronJobId String
+  serverId  String
+  userId    String
+
+  action CronJobAction
+  status CronExecutionStatus @default(PENDING)
+
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  duration    Int? // Végrehajtás időtartama milliszekundumban
+
+  result String? // SUCCESS, FAILED, SKIPPED
+  error  String? @db.Text // Hibaüzenet ha volt
+
   // Email küldés információk
-  emailSent     Boolean       @default(false)
-  emailSentAt   DateTime?
-  
-  createdAt     DateTime      @default(now())
-  
-  cronJob       CronJob       @relation(fields: [cronJobId], references: [id], onDelete: Cascade)
-  
+  emailSent   Boolean   @default(false)
+  emailSentAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  cronJob CronJob @relation(fields: [cronJobId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([cronJobId])
   @@index([serverId])
   @@index([userId])
@@ -1185,10 +1186,10 @@ model CronJobExecution {
 }
 
 enum CronExecutionStatus {
-  PENDING       // Várakozik a végrehajtásra
-  RUNNING       // Végrehajtás alatt
-  SUCCESS       // Sikeres
-  FAILED        // Sikertelen
-  SKIPPED       // Kihagyva (pl. szerver offline volt start műveletnél)
-  CANCELLED     // Törölve
+  PENDING // Várakozik a végrehajtásra
+  RUNNING // Végrehajtás alatt
+  SUCCESS // Sikeres
+  FAILED // Sikertelen
+  SKIPPED // Kihagyva (pl. szerver offline volt start műveletnél)
+  CANCELLED // Törölve
 }
