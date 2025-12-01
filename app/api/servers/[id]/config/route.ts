@@ -333,7 +333,8 @@ export async function PUT(
           writeCommand = `sudo -u satis mkdir -p $(dirname ${configPath}) && sudo -u satis cat > ${configPath} << 'CONFIG_EOF'\n${configContent}\nCONFIG_EOF`;
         } else if (server.gameType === 'SEVEN_DAYS_TO_DIE') {
           const serverUser = `seven${server.id}`;
-          writeCommand = `sudo -u ${serverUser} mkdir -p $(dirname ${configPath}) && sudo -u ${serverUser} cat > ${configPath} << 'CONFIG_EOF'\n${configContent}\nCONFIG_EOF && chown ${serverUser}:sfgames ${configPath} && chmod 644 ${configPath}`;
+          // Először írjuk a fájlt, majd külön állítsuk be a jogosultságokat
+          writeCommand = `sudo -u ${serverUser} mkdir -p $(dirname ${configPath}) && sudo -u ${serverUser} bash -c "cat > ${configPath} << 'CONFIG_EOF'\n${configContent}\nCONFIG_EOF"`;
         } else {
           writeCommand = `mkdir -p $(dirname ${configPath}) && cat > ${configPath} << 'CONFIG_EOF'\n${configContent}\nCONFIG_EOF`;
         }
@@ -347,6 +348,20 @@ export async function PUT(
           },
           writeCommand
         );
+
+        // 7 Days to Die-nál külön állítjuk be a jogosultságokat, hogy ne kerüljenek a fájlba
+        if (server.gameType === 'SEVEN_DAYS_TO_DIE') {
+          const serverUser = `seven${server.id}`;
+          await executeSSHCommand(
+            {
+              host: machine.ipAddress,
+              port: machine.sshPort,
+              user: machine.sshUser,
+              keyPath: machine.sshKeyPath || undefined,
+            },
+            `chown ${serverUser}:sfgames ${configPath} && chmod 644 ${configPath}`
+          );
+        }
 
         logger.info('Server config updated', {
           serverId: id,

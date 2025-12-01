@@ -244,15 +244,39 @@ export async function PUT(
       .replace(/\$/g, '\\$')
       .replace(/`/g, '\\`');
 
-    await executeSSHCommand(
-      {
-        host: machine.ipAddress,
-        port: machine.sshPort,
-        user: machine.sshUser,
-        keyPath: machine.sshKeyPath || undefined,
-      },
-      `mkdir -p $(dirname "${configPath}") && cat > "${configPath}" << 'CONFIG_FILE_EOF'\n${escapedContent}\nCONFIG_FILE_EOF`
-    );
+    // 7 Days to Die-nál seven{serverId} felhasználóként írjuk a fájlt
+    if (server.gameType === 'SEVEN_DAYS_TO_DIE') {
+      const serverUser = `seven${server.id}`;
+      await executeSSHCommand(
+        {
+          host: machine.ipAddress,
+          port: machine.sshPort,
+          user: machine.sshUser,
+          keyPath: machine.sshKeyPath || undefined,
+        },
+        `sudo -u ${serverUser} mkdir -p $(dirname "${configPath}") && sudo -u ${serverUser} bash -c "cat > ${configPath} << 'CONFIG_FILE_EOF'\n${escapedContent}\nCONFIG_FILE_EOF"`
+      );
+      // Külön állítjuk be a jogosultságokat, hogy ne kerüljenek a fájlba
+      await executeSSHCommand(
+        {
+          host: machine.ipAddress,
+          port: machine.sshPort,
+          user: machine.sshUser,
+          keyPath: machine.sshKeyPath || undefined,
+        },
+        `chown ${serverUser}:sfgames "${configPath}" && chmod 644 "${configPath}"`
+      );
+    } else {
+      await executeSSHCommand(
+        {
+          host: machine.ipAddress,
+          port: machine.sshPort,
+          user: machine.sshUser,
+          keyPath: machine.sshKeyPath || undefined,
+        },
+        `mkdir -p $(dirname "${configPath}") && cat > "${configPath}" << 'CONFIG_FILE_EOF'\n${escapedContent}\nCONFIG_FILE_EOF`
+      );
+    }
 
     logger.info('Config file updated', {
       serverId: id,
