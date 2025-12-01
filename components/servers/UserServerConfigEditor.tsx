@@ -237,6 +237,10 @@ export function UserServerConfigEditor({
     // Speciális esetek
     if (key === 'difficulty' || key === 'gamemode') return 'select';
     if (key === 'GameDifficulty' || key === 'Difficulty') return 'select';
+    // 7 Days to Die GameWorld select
+    if (key === 'GameWorld' && gameType === 'SEVEN_DAYS_TO_DIE') return 'select';
+    // 7 Days to Die WorldGenSize select (csak RWG esetén)
+    if (key === 'WorldGenSize' && gameType === 'SEVEN_DAYS_TO_DIE') return 'select';
     // 7 Days to Die boolean mezők
     if (key === 'ServerIsPublic' || key === 'BuildCreate' || key === 'TelnetEnabled' || 
         key === 'ControlPanelEnabled' || key === 'PersistentPlayerProfiles' || 
@@ -307,8 +311,33 @@ export function UserServerConfigEditor({
         { value: 'off', label: 'Kikapcsolva' },
       ];
     }
+    // 7 Days to Die GameWorld opciók
+    if (key === 'GameWorld' && gameType === 'SEVEN_DAYS_TO_DIE') {
+      return [
+        { value: 'Navezgane', label: 'Navezgane (Fix)' },
+        { value: 'Pregen06k', label: 'Pregen 6k (Gyors)' },
+        { value: 'Pregen08k', label: 'Pregen 8k (Standard)' },
+        { value: 'Pregen10k', label: 'Pregen 10k (Hatalmas)' },
+        { value: 'RWG', label: 'Random World Gen (RWG) - Egyedi' },
+        { value: 'CUSTOM', label: 'Egyéni Feltöltött Térkép (Custom)' },
+      ];
+    }
+    // 7 Days to Die WorldGenSize opciók (csak RWG esetén)
+    if (key === 'WorldGenSize' && gameType === 'SEVEN_DAYS_TO_DIE') {
+      return [
+        { value: '6144', label: '6144 (Kicsi)' },
+        { value: '8192', label: '8192 (Közepes - Ajánlott)' },
+        { value: '10240', label: '10240 (Nagy)' },
+      ];
+    }
     return [];
   };
+
+  // 7 Days to Die: Ellenőrizzük, hogy RWG vagy Custom van-e kiválasztva
+  const isRWGSelected = gameType === 'SEVEN_DAYS_TO_DIE' && config.GameWorld === 'RWG';
+  const isCustomSelected = gameType === 'SEVEN_DAYS_TO_DIE' && config.GameWorld === 'CUSTOM';
+  const shouldShowSeedAndSize = isRWGSelected;
+  const shouldShowCustomMapName = isCustomSelected;
 
   if (loading) {
     return (
@@ -344,6 +373,75 @@ export function UserServerConfigEditor({
           const fieldType = getFieldType(key, defaultValue);
           const label = getFieldLabel(key);
           const isReadonly = readonlyFieldsList.includes(key);
+
+          // 7 Days to Die: Rejtsük el a WorldGenSeed és WorldGenSize mezőket, ha nem RWG van kiválasztva
+          if (gameType === 'SEVEN_DAYS_TO_DIE' && (key === 'WorldGenSeed' || key === 'WorldGenSize')) {
+            if (!shouldShowSeedAndSize) {
+              return null;
+            }
+          }
+
+          // 7 Days to Die: Custom térkép esetén külön kezeljük a GameWorld mezőt
+          if (gameType === 'SEVEN_DAYS_TO_DIE' && key === 'GameWorld') {
+            return (
+              <div key={key}>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {label}
+                  {isReadonly && (
+                    <span className="ml-2 text-xs text-gray-500">(Nem módosítható)</span>
+                  )}
+                </label>
+                <select
+                  value={config[key] ?? defaultValue}
+                  onChange={(e) => {
+                    const newValue = e.target.value;
+                    updateConfig(key, newValue);
+                    // Ha RWG-ről váltunk másra, töröljük a Seed és Size értékeket
+                    if (newValue !== 'RWG') {
+                      if (config.WorldGenSeed) updateConfig('WorldGenSeed', '');
+                      if (config.WorldGenSize) updateConfig('WorldGenSize', '8192');
+                    }
+                    // Ha Custom-ról váltunk másra, töröljük a custom map name-t
+                    if (newValue !== 'CUSTOM' && config.CustomMapName) {
+                      updateConfig('CustomMapName', '');
+                    }
+                  }}
+                  disabled={isReadonly}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
+                >
+                  {getSelectOptions(key).map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                {/* RWG figyelmeztetés */}
+                {isRWGSelected && (
+                  <p className="mt-2 text-sm text-red-600 font-medium">
+                    ⚠️ Figyelem! RWG választása esetén az első indítás 5-10 percet vehet igénybe. Ne állítsd le a szervert!
+                  </p>
+                )}
+                {/* Custom térkép mező */}
+                {shouldShowCustomMapName && (
+                  <div className="mt-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Térkép Mappa Neve
+                    </label>
+                    <input
+                      type="text"
+                      value={config.CustomMapName ?? ''}
+                      onChange={(e) => updateConfig('CustomMapName', e.target.value)}
+                      placeholder="pl. MyCustomMap"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-400"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      A feltöltött térkép mappa nevének pontosan meg kell egyeznie ezzel az értékkel.
+                    </p>
+                  </div>
+                )}
+              </div>
+            );
+          }
 
           return (
             <div key={key}>

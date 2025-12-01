@@ -94,14 +94,26 @@ export async function GET(
               
               // Kihagyjuk a ServerPort és ServerMaxPlayerCount mezőket
               if (propName !== 'ServerPort' && propName !== 'ServerMaxPlayerCount') {
-                // Próbáljuk meg számként értelmezni, ha lehet
-                const numValue = Number(propValue);
-                if (!isNaN(numValue) && propValue.trim() !== '' && !isNaN(parseFloat(propValue))) {
-                  parsedConfig[propName] = numValue;
-                } else if (propValue === 'true' || propValue === 'false') {
-                  parsedConfig[propName] = propValue === 'true';
+                // GameWorld speciális kezelése
+                if (propName === 'GameWorld') {
+                  const knownWorlds = ['Navezgane', 'Pregen06k', 'Pregen08k', 'Pregen10k', 'RWG'];
+                  if (knownWorlds.includes(propValue)) {
+                    parsedConfig[propName] = propValue;
+                  } else {
+                    // Ha nem ismert térkép, akkor Custom
+                    parsedConfig[propName] = 'CUSTOM';
+                    parsedConfig.CustomMapName = propValue;
+                  }
                 } else {
-                  parsedConfig[propName] = propValue;
+                  // Próbáljuk meg számként értelmezni, ha lehet
+                  const numValue = Number(propValue);
+                  if (!isNaN(numValue) && propValue.trim() !== '' && !isNaN(parseFloat(propValue))) {
+                    parsedConfig[propName] = numValue;
+                  } else if (propValue === 'true' || propValue === 'false') {
+                    parsedConfig[propName] = propValue === 'true';
+                  } else {
+                    parsedConfig[propName] = propValue;
+                  }
                 }
               }
             }
@@ -503,9 +515,12 @@ function getDefaultConfig(gameType: string, maxPlayers: number): any {
       ServerPort: 26900,
       ServerMaxPlayerCount: maxPlayers,
       GameDifficulty: 2,
-      GameWorld: 'Navezgane',
+      GameWorld: 'Pregen08k', // Alapértelmezett: Pregen 8k (Standard)
+      WorldGenSeed: '',
+      WorldGenSize: 8192,
       ServerPassword: '',
       ServerDescription: '',
+      CustomMapName: '',
     },
     PALWORLD: {
       ServerName: 'Palworld Server',
@@ -635,7 +650,18 @@ function convertConfigToGameFormat(gameType: string, config: any): string {
       const serverMaxPlayers = config.ServerMaxPlayerCount || 8;
       
       // Eltávolítjuk a ServerPort és ServerMaxPlayerCount mezőket a config-ból, mert azokat külön kezeljük
-      const { ServerPort: _, ServerMaxPlayerCount: __, ...configWithoutPorts } = config;
+      const { ServerPort: _, ServerMaxPlayerCount: __, CustomMapName: ___, ...configWithoutPorts } = config;
+      
+      // Ha Custom térkép van kiválasztva, a GameWorld értékét a CustomMapName-re állítjuk
+      if (config.GameWorld === 'CUSTOM' && config.CustomMapName) {
+        configWithoutPorts.GameWorld = config.CustomMapName;
+      }
+      
+      // Ha nem RWG, akkor eltávolítjuk a WorldGenSeed és WorldGenSize mezőket
+      if (configWithoutPorts.GameWorld !== 'RWG') {
+        delete configWithoutPorts.WorldGenSeed;
+        delete configWithoutPorts.WorldGenSize;
+      }
       
       let xmlConfig = '<?xml version="1.0" encoding="UTF-8"?>\n<ServerSettings>\n';
       
@@ -645,6 +671,7 @@ function convertConfigToGameFormat(gameType: string, config: any): string {
       
       // Aztán az összes többi property
       xmlConfig += Object.entries(configWithoutPorts)
+        .filter(([key, value]) => value !== undefined && value !== null && value !== '')
         .map(([key, value]) => {
           // Escape XML speciális karakterek
           const escapedValue = String(value)
