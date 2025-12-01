@@ -982,7 +982,7 @@ MinDynamicBandwidth=1000
         await appendInstallLog(serverId, 'Szerver státusz frissítve: OFFLINE (telepítés sikeres)');
       }
     } catch (statusError) {
-      logger.warn('Failed to update server status after installation', statusError as Error, { serverId });
+      logger.warn('Failed to update server status after installation', statusError as Error);
       // Nem dobunk hibát, mert a telepítés sikeres volt
     }
     
