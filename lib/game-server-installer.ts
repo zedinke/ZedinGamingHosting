@@ -960,6 +960,32 @@ MinDynamicBandwidth=1000
       await appendInstallLog(serverId, '✓ Game szerver telepítése sikeresen befejezve!');
     }
     
+    // Szerver státusz frissítése: ha sikeres telepítés, akkor OFFLINE (még nincs elindítva)
+    // Ha ERROR volt, akkor megtartjuk, különben OFFLINE-re állítjuk
+    try {
+      const currentServer = await prisma.server.findUnique({
+        where: { id: serverId },
+        select: { status: true },
+      });
+      
+      // Ha ERROR volt, akkor szinkronizáljuk a státuszt (lehet, hogy már OFFLINE)
+      if (currentServer?.status === 'ERROR') {
+        const { syncServerStatus } = await import('./server-status-checker');
+        await syncServerStatus(serverId);
+        await appendInstallLog(serverId, 'Szerver státusz szinkronizálva telepítés után');
+      } else if (currentServer?.status !== 'OFFLINE') {
+        // Ha nem ERROR és nem OFFLINE, akkor OFFLINE-re állítjuk (sikeres telepítés után)
+        await prisma.server.update({
+          where: { id: serverId },
+          data: { status: 'OFFLINE' },
+        });
+        await appendInstallLog(serverId, 'Szerver státusz frissítve: OFFLINE (telepítés sikeres)');
+      }
+    } catch (statusError) {
+      logger.warn('Failed to update server status after installation', statusError as Error, { serverId });
+      // Nem dobunk hibát, mert a telepítés sikeres volt
+    }
+    
     logger.info('Game server installed successfully', {
       serverId,
       gameType,
