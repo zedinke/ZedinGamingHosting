@@ -126,12 +126,73 @@ export function UserServerConfigEditor({
       world: 'Világ Név',
       password: 'Jelszó',
       public: 'Nyilvános Szerver',
-      // 7 Days to Die
-      ServerPort: 'Port',
-      ServerMaxPlayerCount: 'Max Játékosok',
-      GameDifficulty: 'Nehézség',
+      // 7 Days to Die - csak a nem readonly mezők (ServerName és ServerPassword már definiálva van ARK-nál)
+      ServerVisibility: 'Szerver Láthatóság',
+      ServerIsPublic: '7DTD Nyilvános Szerver',
+      ServerWebsiteURL: 'Szerver Weboldal URL',
       GameWorld: 'Világ',
-      ServerDescription: 'Leírás',
+      WorldGenSeed: 'Világ Generálás Seed',
+      WorldGenSize: 'Világ Méret',
+      GameName: 'Játék Név',
+      GameMode: 'Játék Mód',
+      Difficulty: 'Nehézség',
+      DayNightLength: 'Nap/Éjszaka Hossz (perc)',
+      DayLightLength: 'Nappali Órák',
+      MaxSpawnedZombies: 'Max Spawnolt Zombik',
+      DropOnDeath: 'Hullás Halálkor',
+      DropOnQuit: 'Hullás Kilépéskor',
+      BedrollDeadZoneSize: 'Alvószsák Halálzóna Méret',
+      BlockDamagePlayer: 'Blokk Sérülés Játékos (%)',
+      BlockDamageZombie: 'Blokk Sérülés Zombi (%)',
+      // XPMultiplier már definiálva van ARK-nál
+      PlayerSafeZoneLevel: 'Játékos Biztonsági Zóna Szint',
+      PlayerSafeZoneHours: 'Játékos Biztonsági Zóna Órák',
+      BuildCreate: 'Építés Létrehozás',
+      AdminFileName: 'Admin Fájl Név',
+      TelnetEnabled: 'Telnet Engedélyezve',
+      TelnetPort: 'Telnet Port',
+      TelnetPassword: 'Telnet Jelszó',
+      ControlPanelEnabled: 'Vezérlőpult Engedélyezve',
+      ControlPanelPort: 'Vezérlőpult Port',
+      ControlPanelPassword: 'Vezérlőpult Jelszó',
+      MaxUncoveredMapChunksPerPlayer: 'Max Fedetlen Térkép Chunk Játékosonként',
+      PersistentPlayerProfiles: 'Tartós Játékos Profilok',
+      EACEnabled: 'EAC Engedélyezve',
+      HideCommandExecutionLog: 'Parancs Végrehajtás Log Elrejtése',
+      AirDropFrequency: 'Légi Szállítás Gyakoriság (óra)',
+      AirDropMarker: 'Légi Szállítás Jelölő',
+      LootAbundance: 'Zsákmány Bőség (%)',
+      LootRespawnDays: 'Zsákmány Újra Spawn Napok',
+      MaxSpawnedAnimals: 'Max Spawnolt Állatok',
+      LandClaimCount: 'Földigénylés Darabszám',
+      LandClaimSize: 'Földigénylés Méret',
+      LandClaimExpiryTime: 'Földigénylés Lejárat Idő (nap)',
+      LandClaimDeadZone: 'Földigénylés Halálzóna',
+      LandClaimOnlineDurabilityModifier: 'Földigénylés Online Tartósság Módosító',
+      LandClaimOfflineDurabilityModifier: 'Földigénylés Offline Tartósság Módosító',
+      LandClaimOfflineDelay: 'Földigénylés Offline Késleltetés',
+      PartySharedKillRange: 'Csapat Megosztott Ölés Távolság',
+      EnemySenseMemory: 'Ellenség Érzékelés Memória',
+      EnemySpawnMode: 'Ellenség Spawn Mód',
+      BloodMoonFrequency: 'Vérhold Gyakoriság (nap)',
+      BloodMoonRange: 'Vérhold Tartomány',
+      BloodMoonWarning: 'Vérhold Figyelmeztetés',
+      BloodMoonEnemyCount: 'Vérhold Ellenség Darabszám',
+      BloodMoonEnemyRange: 'Vérhold Ellenség Tartomány',
+      UseAllowedZombieClasses: 'Engedélyezett Zombi Osztályok Használata',
+      DisableRadio: 'Rádió Letiltása',
+      DisablePoison: 'Mérgezés Letiltása',
+      DisableInfection: 'Fertőzés Letiltása',
+      DisableVault: 'Páncélterem Letiltása',
+      TraderAreaProtection: 'Kereskedő Terület Védelem',
+      TraderServiceAreaProtection: 'Kereskedő Szolgáltatás Terület Védelem',
+      ShowFriendPlayerOnMap: 'Barát Játékos Mutatása Térképen',
+      FriendCantDamage: 'Barát Nem Sebezhető',
+      FriendCantLoot: 'Barát Nem Lootolható',
+      BuildCraftTime: 'Építés Készítés Idő',
+      ShowAllPlayersOnMap: 'Összes Játékos Mutatása Térképen',
+      ShowSpawnWindow: 'Spawn Ablak Mutatása',
+      AutoParty: 'Automatikus Csapat',
       // Palworld
       AdminPassword: 'Admin Jelszó',
       PublicPort: 'Nyilvános Port',
@@ -175,7 +236,15 @@ export function UserServerConfigEditor({
     
     // Speciális esetek
     if (key === 'difficulty' || key === 'gamemode') return 'select';
-    if (key === 'GameDifficulty') return 'select';
+    if (key === 'GameDifficulty' || key === 'Difficulty') return 'select';
+    // 7 Days to Die boolean mezők
+    if (key === 'ServerIsPublic' || key === 'BuildCreate' || key === 'TelnetEnabled' || 
+        key === 'ControlPanelEnabled' || key === 'PersistentPlayerProfiles' || 
+        key === 'EACEnabled' || key === 'AirDropMarker' || key === 'EnemySpawnMode' ||
+        key === 'UseAllowedZombieClasses' || key === 'DisableRadio' || key === 'DisablePoison' ||
+        key === 'DisableInfection' || key === 'DisableVault' || key === 'ShowFriendPlayerOnMap' ||
+        key === 'FriendCantDamage' || key === 'FriendCantLoot' || key === 'BuildCraftTime' ||
+        key === 'ShowAllPlayersOnMap' || key === 'ShowSpawnWindow' || key === 'AutoParty') return 'boolean';
     if (key === 'inittype') return 'select';
     if (key === 'enableVAC') return 'select';
     if (key === 'public' || key === 'sv_lan' || key === 'PvPEnabled' || key === 'PvP') return 'boolean';

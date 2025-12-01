@@ -33,6 +33,12 @@ export async function GET(
         configuration: true,
         maxPlayers: true,
         port: true,
+        agentId: true,
+        agent: {
+          include: {
+            machine: true,
+          },
+        },
       },
     });
 
@@ -52,8 +58,64 @@ export async function GET(
     }
 
     // The Forest esetén a szerver nevet a konfigurációból vesszük (servername), ha nincs, akkor a server.name-t használjuk
-    const config = (server.configuration as any) || {};
-    const defaults = getDefaultConfig(server.gameType, server.maxPlayers);
+    let config = (server.configuration as any) || {};
+    let defaults = getDefaultConfig(server.gameType, server.maxPlayers);
+    
+    // 7 Days to Die-nál beolvassuk a teljes serverconfig.xml fájlt
+    if (server.gameType === 'SEVEN_DAYS_TO_DIE' && server.agentId && server.agent?.machine) {
+      try {
+        const { ALL_GAME_SERVER_CONFIGS } = await import('@/lib/game-server-configs');
+        const gameConfig = ALL_GAME_SERVER_CONFIGS[server.gameType];
+        if (gameConfig) {
+          const configPath = gameConfig.configPath.replace(/{serverId}/g, server.id);
+          const machine = server.agent.machine;
+          
+          // Beolvassuk a serverconfig.xml fájlt
+          const xmlResult = await executeSSHCommand(
+            {
+              host: machine.ipAddress,
+              port: machine.sshPort,
+              user: machine.sshUser,
+              keyPath: machine.sshKeyPath || undefined,
+            },
+            `cat ${configPath} 2>/dev/null || echo ""`
+          );
+          
+          if (xmlResult.stdout && xmlResult.stdout.trim()) {
+            // Parse-oljuk az XML-t és kinyerjük az összes property-t
+            const xmlContent = xmlResult.stdout.trim();
+            const propertyRegex = /<property\s+name="([^"]+)"\s+value="([^"]*)"\s*\/?>/g;
+            const parsedConfig: any = {};
+            let match;
+            
+            while ((match = propertyRegex.exec(xmlContent)) !== null) {
+              const propName = match[1];
+              const propValue = match[2];
+              
+              // Kihagyjuk a ServerPort és ServerMaxPlayerCount mezőket
+              if (propName !== 'ServerPort' && propName !== 'ServerMaxPlayerCount') {
+                // Próbáljuk meg számként értelmezni, ha lehet
+                const numValue = Number(propValue);
+                if (!isNaN(numValue) && propValue.trim() !== '' && !isNaN(parseFloat(propValue))) {
+                  parsedConfig[propName] = numValue;
+                } else if (propValue === 'true' || propValue === 'false') {
+                  parsedConfig[propName] = propValue === 'true';
+                } else {
+                  parsedConfig[propName] = propValue;
+                }
+              }
+            }
+            
+            // A parsedConfig-et használjuk config-ként, és a defaults-et is frissítjük
+            config = { ...parsedConfig };
+            defaults = { ...parsedConfig };
+          }
+        }
+      } catch (error) {
+        logger.warn('Failed to read 7 Days to Die config file, using defaults', error as Error);
+        // Ha hiba van, használjuk az alapértelmezett konfigurációt
+      }
+    }
     
     // Ha a szerver neve változott a konfigurációban, akkor azt használjuk
     if (server.gameType === 'THE_FOREST' && config.servername && typeof config.servername === 'string') {
@@ -92,6 +154,8 @@ export async function GET(
       // Mezők, amiket nem lehet módosítani
       readonlyFields: server.gameType === 'SATISFACTORY' 
         ? ['GamePort', 'BeaconPort', 'QueryPort', 'MaxPlayers']
+        : server.gameType === 'SEVEN_DAYS_TO_DIE'
+        ? ['ServerPort', 'ServerMaxPlayerCount'] // 7 Days to Die-nál a port és max players nem módosítható
         : [],
     });
   } catch (error) {
@@ -155,6 +219,8 @@ export async function PUT(
     const readonlyFields: string[] = [];
     if (server.gameType === 'SATISFACTORY') {
       readonlyFields.push('GamePort', 'BeaconPort', 'QueryPort', 'MaxPlayers');
+    } else if (server.gameType === 'SEVEN_DAYS_TO_DIE') {
+      readonlyFields.push('ServerPort', 'ServerMaxPlayerCount');
     }
     
     // Ha readonly mezőket próbálnak módosítani, eltávolítjuk őket
@@ -237,13 +303,28 @@ export async function PUT(
       }
 
       // Konfiguráció fájlba írása (JSON-ból játék specifikus formátumba konvertálva)
-      const configContent = convertConfigToGameFormat(server.gameType, configuration);
+      // 7 Days to Die-nál a ServerPort és ServerMaxPlayerCount értékeket az adatbázisból vesszük
+      let configToSave = { ...configuration };
+      if (server.gameType === 'SEVEN_DAYS_TO_DIE') {
+        // A ServerPort és ServerMaxPlayerCount értékeket az adatbázisból vesszük
+        configToSave.ServerPort = server.port || 26900;
+        configToSave.ServerMaxPlayerCount = server.maxPlayers;
+      }
+      
+      const configContent = convertConfigToGameFormat(server.gameType, configToSave);
       
       if (configContent) {
         // Satisfactory esetén satis felhasználóként írjuk a fájlt
-        const writeCommand = server.gameType === 'SATISFACTORY'
-          ? `sudo -u satis mkdir -p $(dirname ${configPath}) && sudo -u satis cat > ${configPath} << 'CONFIG_EOF'\n${configContent}\nCONFIG_EOF`
-          : `mkdir -p $(dirname ${configPath}) && cat > ${configPath} << 'CONFIG_EOF'\n${configContent}\nCONFIG_EOF`;
+        // 7 Days to Die-nál seven{serverId} felhasználóként írjuk a fájlt
+        let writeCommand: string;
+        if (server.gameType === 'SATISFACTORY') {
+          writeCommand = `sudo -u satis mkdir -p $(dirname ${configPath}) && sudo -u satis cat > ${configPath} << 'CONFIG_EOF'\n${configContent}\nCONFIG_EOF`;
+        } else if (server.gameType === 'SEVEN_DAYS_TO_DIE') {
+          const serverUser = `seven${server.id}`;
+          writeCommand = `sudo -u ${serverUser} mkdir -p $(dirname ${configPath}) && sudo -u ${serverUser} cat > ${configPath} << 'CONFIG_EOF'\n${configContent}\nCONFIG_EOF && chown ${serverUser}:sfgames ${configPath} && chmod 644 ${configPath}`;
+        } else {
+          writeCommand = `mkdir -p $(dirname ${configPath}) && cat > ${configPath} << 'CONFIG_EOF'\n${configContent}\nCONFIG_EOF`;
+        }
         
         await executeSSHCommand(
           {
@@ -548,10 +629,34 @@ function convertConfigToGameFormat(gameType: string, config: any): string {
       return `#!/bin/bash\n./valheim_server.x86_64 -name "${config.name || 'Valheim Server'}" -port 2456 -world "${config.world || 'Dedicated'}" -password "${config.password || ''}" -public ${config.public || 1}`;
     
     case 'SEVEN_DAYS_TO_DIE':
+      // 7 Days to Die-nál a teljes XML struktúrát generáljuk
+      // A ServerPort és ServerMaxPlayerCount értékeket az adatbázisból vesszük
+      const serverPort = config.ServerPort || 26900;
+      const serverMaxPlayers = config.ServerMaxPlayerCount || 8;
+      
+      // Eltávolítjuk a ServerPort és ServerMaxPlayerCount mezőket a config-ból, mert azokat külön kezeljük
+      const { ServerPort: _, ServerMaxPlayerCount: __, ...configWithoutPorts } = config;
+      
       let xmlConfig = '<?xml version="1.0" encoding="UTF-8"?>\n<ServerSettings>\n';
-      xmlConfig += Object.entries(config)
-        .map(([key, value]) => `  <property name="${key}" value="${value}"/>`)
+      
+      // Először a ServerPort és ServerMaxPlayerCount (ezek fix értékek)
+      xmlConfig += `    <property name="ServerPort" value="${serverPort}"/>\n`;
+      xmlConfig += `    <property name="ServerMaxPlayerCount" value="${serverMaxPlayers}"/>\n`;
+      
+      // Aztán az összes többi property
+      xmlConfig += Object.entries(configWithoutPorts)
+        .map(([key, value]) => {
+          // Escape XML speciális karakterek
+          const escapedValue = String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&apos;');
+          return `    <property name="${key}" value="${escapedValue}"/>`;
+        })
         .join('\n');
+      
       xmlConfig += '\n</ServerSettings>';
       return xmlConfig;
     
