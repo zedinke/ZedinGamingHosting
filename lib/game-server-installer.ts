@@ -683,24 +683,25 @@ fi
         }
       }
       
-      // Satisfactory-nál a GameUserSettings.ini fájlt hozzuk létre
-      // A konfigurációs mappa: /home/satis/.config/Epic/FactoryGame/Saved/Config/LinuxServer/
-      await executeSSHCommand(
-        {
-          host: machine.ipAddress,
-          port: machine.sshPort,
-          user: machine.sshUser,
-          keyPath: machine.sshKeyPath || undefined,
-        },
-        `sudo -u satis mkdir -p $(dirname ${configPath}) && sudo -u satis cat > ${configPath} << 'EOF'\n${configContent}\nEOF`
-      );
-      
-      if (writeProgress) {
-        await appendInstallLog(serverId, `Konfigurációs fájl létrehozva: ${configPath}`);
-      }
-      
-      // Satisfactory-nál a Game.ini fájlt is létrehozzuk a port beállítással
+      // Játék-specifikus config fájl írási logika
       if (gameType === 'SATISFACTORY') {
+        // Satisfactory-nál a GameUserSettings.ini fájlt hozzuk létre
+        // A konfigurációs mappa: /home/satis/.config/Epic/FactoryGame/Saved/Config/LinuxServer/
+        await executeSSHCommand(
+          {
+            host: machine.ipAddress,
+            port: machine.sshPort,
+            user: machine.sshUser,
+            keyPath: machine.sshKeyPath || undefined,
+          },
+          `sudo -u satis mkdir -p $(dirname ${configPath}) && sudo -u satis cat > ${configPath} << 'EOF'\n${configContent}\nEOF`
+        );
+        
+        if (writeProgress) {
+          await appendInstallLog(serverId, `Konfigurációs fájl létrehozva: ${configPath}`);
+        }
+        
+        // Satisfactory-nál a Game.ini fájlt is létrehozzuk a port beállítással
         const gameIniPath = configPath.replace('GameUserSettings.ini', 'Game.ini');
         // A port mező a QueryPort-ot tartalmazza (4 számjegyű port, alapértelmezett 7777)
         // A Game.ini fájlban a GamePort-ot kell beállítani, ami QueryPort + 10000
@@ -738,8 +739,9 @@ MinDynamicBandwidth=1000
           },
           `chown -R satis:sfgames ${configDir} && chmod -R g+w ${configDir} && find ${configDir} -type d -exec chmod g+s {} + || true`
         );
-      if (writeProgress) {
-        await appendInstallLog(serverId, `Jogosultságok beállítva a konfigurációs mappán: ${configDir}`);
+        if (writeProgress) {
+          await appendInstallLog(serverId, `Jogosultságok beállítva a konfigurációs mappán: ${configDir}`);
+        }
       }
     } else if (gameType === 'SEVEN_DAYS_TO_DIE') {
       // 7 Days to Die-nál a serverconfig.xml fájlt hozzuk létre
