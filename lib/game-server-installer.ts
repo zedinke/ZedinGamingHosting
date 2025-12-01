@@ -1060,7 +1060,7 @@ server.saveinterval ${config.saveinterval || 600}
       const difficulty = config.difficulty || config.gameDifficulty || '2';
       const lootRespawnDays = config.lootRespawnDays || '7';
       
-      return `<?xml version="1.0" encoding="UTF-8"?>
+      const xmlContent = `<?xml version="1.0" encoding="UTF-8"?>
 <ServerSettings>
     <property name="ServerName" value="${name}"/>
     <property name="ServerPort" value="${port}"/>
@@ -1134,6 +1134,7 @@ server.saveinterval ${config.saveinterval || 600}
     <property name="ShowSpawnWindow" value="false"/>
     <property name="AutoParty" value="false"/>
 </ServerSettings>`;
+      return xmlContent;
 
     case 'PALWORLD':
       return `
