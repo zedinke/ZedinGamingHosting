@@ -150,7 +150,8 @@ install_server() {
             fi
         done
         
-        local exit_code=${PIPESTATUS[0]}
+        # Az exit code-ot a tee után kapjuk meg
+        local exit_code=$?
         log "SteamCMD exit code: $exit_code"
         
         # Várunk egy kicsit, hogy a fájlok biztosan leírásra kerüljenek
