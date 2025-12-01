@@ -39,6 +39,7 @@ const nextConfig = {
   },
   // Server Actions are available by default in Next.js 14+
   // output: 'standalone', // Ideiglenesen kikapcsolva - standalone build hiányos route fájlokat tartalmaz
+  serverComponentsExternalPackages: ['cron-parser'],
   webpack: (config, { isServer }) => {
     // Exclude optional dependencies from build
     if (isServer) {
