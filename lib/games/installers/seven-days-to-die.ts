@@ -79,6 +79,23 @@ prepare_server_directory() {
 install_server() {
     log "Szerverfájlok letöltése..."
     
+    # SteamCMD előkészítése: /tmp/dumps* könyvtárak törlése vagy tulajdonos javítása
+    log "SteamCMD előkészítése: /tmp/dumps* könyvtárak ellenőrzése..."
+    if [ -d /tmp ] && [ -w /tmp ]; then
+        # Töröljük a régi dump könyvtárakat, amelyek problémát okozhatnak
+        find /tmp -maxdepth 1 -type d -name "dumps*" -user "$SERVER_USER" -exec rm -rf {} + 2>/dev/null || true
+        # Ha más felhasználóé, akkor próbáljuk meg törölni vagy tulajdonost változtatni
+        find /tmp -maxdepth 1 -type d -name "dumps*" 2>/dev/null | while read dump_dir; do
+            if [ -n "$dump_dir" ] && [ -d "$dump_dir" ]; then
+                log "Dump könyvtár található: $dump_dir, törlés..."
+                rm -rf "$dump_dir" 2>/dev/null || {
+                    log "Nem sikerült törölni $dump_dir, tulajdonos változtatás próbálkozás..."
+                    chown -R "$SERVER_USER:$SERVER_GROUP" "$dump_dir" 2>/dev/null || true
+                }
+            fi
+        done
+    fi
+    
     mkdir -p "$STEAM_HOME"
     chown -R "$SERVER_USER:$SERVER_GROUP" "$STEAM_HOME"
     chmod -R 755 "$STEAM_HOME"
@@ -127,14 +144,28 @@ install_server() {
                 log "  $line"
             done
             
-            # Ellenőrizzük, hogy van-e ERROR a logban (pl. "ERROR! Failed to install app" vagy "Missing configuration")
-            if grep -qiE "ERROR.*Failed to install|Missing configuration|ERROR!" /tmp/steamcmd-$$.log; then
-                log "HIBA: SteamCMD ERROR üzenet található a logban!" >&2
+            # Ellenőrizzük, hogy van-e ERROR vagy FATAL a logban
+            if grep -qiE "ERROR.*Failed to install|Missing configuration|ERROR!|FATAL.*Steam cannot run|Fatal Assertion Failed" /tmp/steamcmd-$$.log; then
+                log "HIBA: SteamCMD ERROR vagy FATAL üzenet található a logban!" >&2
                 log "SteamCMD hiba részletei:" >&2
-                grep -iE "ERROR|Missing" /tmp/steamcmd-$$.log | while read line; do
+                grep -iE "ERROR|Missing|FATAL|Fatal" /tmp/steamcmd-$$.log | while read line; do
                     log "  $line" >&2
                 done
                 steamcmd_has_error=true
+                
+                # Ha a FATAL hiba a /tmp/dumps* könyvtárakkal kapcsolatos, próbáljuk meg megoldani
+                if grep -qiE "FATAL.*Steam cannot run|Please delete.*dumps" /tmp/steamcmd-$$.log; then
+                    log "SteamCMD FATAL hiba: /tmp/dumps* könyvtárak problémája" >&2
+                    log "Próbáljuk meg törölni a problémás könyvtárakat..." >&2
+                    find /tmp -maxdepth 1 -type d -name "dumps*" 2>/dev/null | while read dump_dir; do
+                        if [ -n "$dump_dir" ] && [ -d "$dump_dir" ]; then
+                            log "Dump könyvtár törlése: $dump_dir" >&2
+                            rm -rf "$dump_dir" 2>/dev/null || {
+                                chown -R "$SERVER_USER:$SERVER_GROUP" "$dump_dir" 2>/dev/null || true
+                            }
+                        fi
+                    done
+                fi
             fi
         fi
         
