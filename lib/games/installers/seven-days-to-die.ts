@@ -131,23 +131,40 @@ install_server() {
         log "Steam App ID: $STEAM_APP_ID"
         
         # SteamCMD futtatása részletes logolással (stable verzió)
+        # Fontos: a parancsok sorrendje kritikus! Először force_install_dir, majd login, majd app_update
         log "SteamCMD parancs: $STEAMCMD_CMD +force_install_dir $SERVER_DIR +login anonymous +app_update $STEAM_APP_ID validate +quit"
+        
+        # Töröljük a régi log fájlt, hogy tiszta legyen
+        rm -f /tmp/steamcmd-$$.log 2>/dev/null || true
+        
+        # SteamCMD futtatása és log mentése
         sudo -u "$SERVER_USER" HOME="$STEAM_HOME" $STEAMCMD_CMD \
             +force_install_dir "$SERVER_DIR" \
             +login anonymous \
             +app_update "$STEAM_APP_ID" validate \
-            +quit 2>&1 | tee -a /tmp/steamcmd-$$.log
+            +quit > /tmp/steamcmd-$$.log 2>&1
         
         local exit_code=$?
         log "SteamCMD exit code: $exit_code"
         
+        # Várunk egy kicsit, hogy a fájlok biztosan leírásra kerüljenek
+        sleep 3
+        
         # Ellenőrizzük a SteamCMD logot
         local steamcmd_has_error=false
+        local download_success=false
+        
         if [ -f /tmp/steamcmd-$$.log ]; then
-            log "SteamCMD log tartalma:"
-            tail -30 /tmp/steamcmd-$$.log | while read line; do
+            log "SteamCMD log tartalma (utolsó 50 sor):"
+            tail -50 /tmp/steamcmd-$$.log | while read line; do
                 log "  $line"
             done
+            
+            # Ellenőrizzük, hogy sikeresen letöltődött-e (Success vagy Update state)
+            if grep -qiE "Success.*app '294420'|Update state.*downloading|Update state.*validating|Successfully loaded" /tmp/steamcmd-$$.log; then
+                log "SteamCMD letöltés sikeresnek tűnik a log alapján"
+                download_success=true
+            fi
             
             # Ellenőrizzük, hogy van-e ERROR vagy FATAL a logban
             if grep -qiE "ERROR.*Failed to install|Missing configuration|ERROR!|FATAL.*Steam cannot run|Fatal Assertion Failed" /tmp/steamcmd-$$.log; then
@@ -223,6 +240,11 @@ install_server() {
                 log "HIBA: SteamCMD hibaüzenet: 'ERROR! Failed to install app' vagy 'Missing configuration'" >&2
                 exit 1
             fi
+        fi
+        
+        # Ha nincs hiba, de nincs sikeres letöltés jelzés sem, akkor is ellenőrizzük a fájlokat
+        if [ "$download_success" != "true" ] && [ "$steamcmd_has_error" != "true" ]; then
+            log "Figyelmeztetés: SteamCMD logban nincs egyértelmű sikeres letöltés jelzés, de ellenőrizzük a fájlokat..."
         fi
         
         # Ellenőrizzük, hogy a bináris fájl létezik-e
