@@ -339,6 +339,310 @@ export function UserServerConfigEditor({
   const shouldShowSeedAndSize = isRWGSelected;
   const shouldShowCustomMapName = isCustomSelected;
 
+  // 7 Days to Die: Kategóriák meghatározása
+  const getCategoryForField = (key: string): string => {
+    if (gameType !== 'SEVEN_DAYS_TO_DIE') return 'default';
+    
+    // Default kategória: Szerver név és Map beállítások
+    if (key === 'ServerName' || key === 'GameWorld' || key === 'WorldGenSeed' || 
+        key === 'WorldGenSize' || key === 'CustomMapName') {
+      return 'default';
+    }
+    
+    // Szerver beállítások
+    if (key === 'ServerPassword' || key === 'ServerVisibility' || key === 'ServerIsPublic' ||
+        key === 'ServerDescription' || key === 'ServerWebsiteURL') {
+      return 'server';
+    }
+    
+    // Játék beállítások
+    if (key === 'GameName' || key === 'GameMode' || key === 'Difficulty' ||
+        key === 'DayNightLength' || key === 'DayLightLength') {
+      return 'game';
+    }
+    
+    // Zombi és Spawn beállítások
+    if (key === 'MaxSpawnedZombies' || key === 'MaxSpawnedAnimals' || 
+        key === 'EnemySenseMemory' || key === 'EnemySpawnMode' ||
+        key === 'UseAllowedZombieClasses') {
+      return 'zombies';
+    }
+    
+    // Vérhold beállítások
+    if (key === 'BloodMoonFrequency' || key === 'BloodMoonRange' || 
+        key === 'BloodMoonWarning' || key === 'BloodMoonEnemyCount' ||
+        key === 'BloodMoonEnemyRange') {
+      return 'bloodmoon';
+    }
+    
+    // Játékos beállítások
+    if (key === 'DropOnDeath' || key === 'DropOnQuit' || key === 'BedrollDeadZoneSize' ||
+        key === 'PlayerSafeZoneLevel' || key === 'PlayerSafeZoneHours' ||
+        key === 'XPMultiplier' || key === 'BlockDamagePlayer' || key === 'BlockDamageZombie') {
+      return 'player';
+    }
+    
+    // Földigénylés beállítások
+    if (key === 'LandClaimCount' || key === 'LandClaimSize' || 
+        key === 'LandClaimExpiryTime' || key === 'LandClaimDeadZone' ||
+        key === 'LandClaimOnlineDurabilityModifier' || key === 'LandClaimOfflineDurabilityModifier' ||
+        key === 'LandClaimOfflineDelay') {
+      return 'landclaim';
+    }
+    
+    // Zsákmány beállítások
+    if (key === 'LootAbundance' || key === 'LootRespawnDays' || key === 'AirDropFrequency' ||
+        key === 'AirDropMarker') {
+      return 'loot';
+    }
+    
+    // Térkép és Csapat beállítások
+    if (key === 'MaxUncoveredMapChunksPerPlayer' || key === 'ShowFriendPlayerOnMap' ||
+        key === 'ShowAllPlayersOnMap' || key === 'ShowSpawnWindow' ||
+        key === 'PartySharedKillRange' || key === 'AutoParty') {
+      return 'map';
+    }
+    
+    // Barátság beállítások
+    if (key === 'FriendCantDamage' || key === 'FriendCantLoot') {
+      return 'friends';
+    }
+    
+    // Admin és Rendszer beállítások
+    if (key === 'AdminFileName' || key === 'TelnetEnabled' || key === 'TelnetPort' ||
+        key === 'TelnetPassword' || key === 'ControlPanelEnabled' || key === 'ControlPanelPort' ||
+        key === 'ControlPanelPassword' || key === 'EACEnabled' ||
+        key === 'HideCommandExecutionLog' || key === 'PersistentPlayerProfiles') {
+      return 'admin';
+    }
+    
+    // Építés beállítások
+    if (key === 'BuildCreate' || key === 'BuildCraftTime') {
+      return 'building';
+    }
+    
+    // Kereskedő beállítások
+    if (key === 'TraderAreaProtection' || key === 'TraderServiceAreaProtection') {
+      return 'trader';
+    }
+    
+    // Letiltások
+    if (key === 'DisableRadio' || key === 'DisablePoison' || key === 'DisableInfection' ||
+        key === 'DisableVault') {
+      return 'disabled';
+    }
+    
+    return 'other';
+  };
+
+  // 7 Days to Die: Kategóriák szerinti csoportosítás
+  const categorizeFields = (): Record<string, Array<[string, any]>> => {
+    if (gameType !== 'SEVEN_DAYS_TO_DIE') {
+      // Nem 7 Days to Die esetén nincs kategorizálás
+      return { default: Object.entries(defaults) };
+    }
+    
+    const categorized: Record<string, Array<[string, any]>> = {
+      default: [],
+      server: [],
+      game: [],
+      zombies: [],
+      bloodmoon: [],
+      player: [],
+      landclaim: [],
+      loot: [],
+      map: [],
+      friends: [],
+      admin: [],
+      building: [],
+      trader: [],
+      disabled: [],
+      other: [],
+    };
+    
+    Object.entries(defaults).forEach(([key, value]) => {
+      const category = getCategoryForField(key);
+      categorized[category].push([key, value]);
+    });
+    
+    // Eltávolítjuk az üres kategóriákat
+    Object.keys(categorized).forEach(category => {
+      if (categorized[category].length === 0) {
+        delete categorized[category];
+      }
+    });
+    
+    // Kategóriák sorrendje: Default legelöl, aztán a többi
+    const categoryOrder = ['default', 'server', 'game', 'zombies', 'bloodmoon', 'player', 
+                           'landclaim', 'loot', 'map', 'friends', 'admin', 'building', 
+                           'trader', 'disabled', 'other'];
+    
+    const ordered: Record<string, Array<[string, any]>> = {};
+    categoryOrder.forEach(category => {
+      if (categorized[category]) {
+        ordered[category] = categorized[category];
+      }
+    });
+    
+    // Hozzáadjuk a maradék kategóriákat is (ha vannak)
+    Object.keys(categorized).forEach(category => {
+      if (!ordered[category]) {
+        ordered[category] = categorized[category];
+      }
+    });
+    
+    return ordered;
+  };
+
+  const categoryLabels: Record<string, string> = {
+    default: 'Alapértelmezett',
+    server: 'Szerver Beállítások',
+    game: 'Játék Beállítások',
+    zombies: 'Zombi és Spawn Beállítások',
+    bloodmoon: 'Vérhold Beállítások',
+    player: 'Játékos Beállítások',
+    landclaim: 'Földigénylés Beállítások',
+    loot: 'Zsákmány Beállítások',
+    map: 'Térkép és Csapat Beállítások',
+    friends: 'Barátság Beállítások',
+    admin: 'Admin és Rendszer Beállítások',
+    building: 'Építés Beállítások',
+    trader: 'Kereskedő Beállítások',
+    disabled: 'Letiltások',
+    other: 'Egyéb',
+  };
+
+  // Mező renderelés függvény
+  const renderField = (key: string, defaultValue: any) => {
+    const fieldType = getFieldType(key, defaultValue);
+    const label = getFieldLabel(key);
+    const isReadonly = readonlyFieldsList.includes(key);
+
+    // 7 Days to Die: Rejtsük el a WorldGenSeed és WorldGenSize mezőket, ha nem RWG van kiválasztva
+    if (gameType === 'SEVEN_DAYS_TO_DIE' && (key === 'WorldGenSeed' || key === 'WorldGenSize')) {
+      if (!shouldShowSeedAndSize) {
+        return null;
+      }
+    }
+
+    // 7 Days to Die: Custom térkép esetén külön kezeljük a GameWorld mezőt
+    if (gameType === 'SEVEN_DAYS_TO_DIE' && key === 'GameWorld') {
+      return (
+        <div key={key}>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            {label}
+            {isReadonly && (
+              <span className="ml-2 text-xs text-gray-500">(Nem módosítható)</span>
+            )}
+          </label>
+          <select
+            value={config[key] ?? defaultValue}
+            onChange={(e) => {
+              const newValue = e.target.value;
+              updateConfig(key, newValue);
+              // Ha RWG-ről váltunk másra, töröljük a Seed és Size értékeket
+              if (newValue !== 'RWG') {
+                if (config.WorldGenSeed) updateConfig('WorldGenSeed', '');
+                if (config.WorldGenSize) updateConfig('WorldGenSize', '8192');
+              }
+              // Ha Custom-ról váltunk másra, töröljük a custom map name-t
+              if (newValue !== 'CUSTOM' && config.CustomMapName) {
+                updateConfig('CustomMapName', '');
+              }
+            }}
+            disabled={isReadonly}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
+          >
+            {getSelectOptions(key).map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          {/* RWG figyelmeztetés */}
+          {isRWGSelected && (
+            <p className="mt-2 text-sm text-red-600 font-medium">
+              ⚠️ Figyelem! RWG választása esetén az első indítás 5-10 percet vehet igénybe. Ne állítsd le a szervert!
+            </p>
+          )}
+          {/* Custom térkép mező */}
+          {shouldShowCustomMapName && (
+            <div className="mt-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Térkép Mappa Neve
+              </label>
+              <input
+                type="text"
+                value={config.CustomMapName ?? ''}
+                onChange={(e) => updateConfig('CustomMapName', e.target.value)}
+                placeholder="pl. MyCustomMap"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-400"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                A feltöltött térkép mappa nevének pontosan meg kell egyeznie ezzel az értékkel.
+              </p>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <div key={key}>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          {label}
+          {isReadonly && (
+            <span className="ml-2 text-xs text-gray-500">(Nem módosítható)</span>
+          )}
+        </label>
+        {fieldType === 'boolean' ? (
+          <label className="flex items-center">
+            <input
+              type="checkbox"
+              checked={config[key] ?? defaultValue}
+              onChange={(e) => updateConfig(key, e.target.checked)}
+              disabled={isReadonly}
+              className="rounded"
+            />
+            <span className="ml-2 text-sm text-gray-600">
+              {config[key] ?? defaultValue ? 'Igen' : 'Nem'}
+            </span>
+          </label>
+        ) : fieldType === 'select' ? (
+          <select
+            value={config[key] ?? defaultValue}
+            onChange={(e) => updateConfig(key, e.target.value)}
+            disabled={isReadonly}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
+          >
+            {getSelectOptions(key).map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        ) : fieldType === 'number' ? (
+          <input
+            type="number"
+            value={config[key] ?? defaultValue}
+            onChange={(e) => updateConfig(key, parseFloat(e.target.value) || 0)}
+            disabled={isReadonly}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
+          />
+        ) : (
+          <input
+            type={key.toLowerCase().includes('password') ? 'password' : 'text'}
+            value={config[key] ?? defaultValue}
+            onChange={(e) => updateConfig(key, e.target.value)}
+            disabled={isReadonly}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-400 disabled:bg-gray-100 disabled:cursor-not-allowed"
+            placeholder={label}
+          />
+        )}
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -368,136 +672,33 @@ export function UserServerConfigEditor({
         </div>
       </div>
 
-      <div className="space-y-4">
-        {Object.entries(defaults).map(([key, defaultValue]) => {
-          const fieldType = getFieldType(key, defaultValue);
-          const label = getFieldLabel(key);
-          const isReadonly = readonlyFieldsList.includes(key);
-
-          // 7 Days to Die: Rejtsük el a WorldGenSeed és WorldGenSize mezőket, ha nem RWG van kiválasztva
-          if (gameType === 'SEVEN_DAYS_TO_DIE' && (key === 'WorldGenSeed' || key === 'WorldGenSize')) {
-            if (!shouldShowSeedAndSize) {
-              return null;
-            }
-          }
-
-          // 7 Days to Die: Custom térkép esetén külön kezeljük a GameWorld mezőt
-          if (gameType === 'SEVEN_DAYS_TO_DIE' && key === 'GameWorld') {
-            return (
-              <div key={key}>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {label}
-                  {isReadonly && (
-                    <span className="ml-2 text-xs text-gray-500">(Nem módosítható)</span>
-                  )}
-                </label>
-                <select
-                  value={config[key] ?? defaultValue}
-                  onChange={(e) => {
-                    const newValue = e.target.value;
-                    updateConfig(key, newValue);
-                    // Ha RWG-ről váltunk másra, töröljük a Seed és Size értékeket
-                    if (newValue !== 'RWG') {
-                      if (config.WorldGenSeed) updateConfig('WorldGenSeed', '');
-                      if (config.WorldGenSize) updateConfig('WorldGenSize', '8192');
-                    }
-                    // Ha Custom-ról váltunk másra, töröljük a custom map name-t
-                    if (newValue !== 'CUSTOM' && config.CustomMapName) {
-                      updateConfig('CustomMapName', '');
-                    }
-                  }}
-                  disabled={isReadonly}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
-                >
-                  {getSelectOptions(key).map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                {/* RWG figyelmeztetés */}
-                {isRWGSelected && (
-                  <p className="mt-2 text-sm text-red-600 font-medium">
-                    ⚠️ Figyelem! RWG választása esetén az első indítás 5-10 percet vehet igénybe. Ne állítsd le a szervert!
-                  </p>
-                )}
-                {/* Custom térkép mező */}
-                {shouldShowCustomMapName && (
-                  <div className="mt-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Térkép Mappa Neve
-                    </label>
-                    <input
-                      type="text"
-                      value={config.CustomMapName ?? ''}
-                      onChange={(e) => updateConfig('CustomMapName', e.target.value)}
-                      placeholder="pl. MyCustomMap"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-400"
-                    />
-                    <p className="mt-1 text-xs text-gray-500">
-                      A feltöltött térkép mappa nevének pontosan meg kell egyeznie ezzel az értékkel.
-                    </p>
-                  </div>
-                )}
+      <div className="space-y-6">
+        {gameType === 'SEVEN_DAYS_TO_DIE' ? (
+          // 7 Days to Die: Kategorizált megjelenítés
+          Object.entries(categorizeFields()).map(([category, fields]) => (
+            <div key={category} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-300">
+                {categoryLabels[category] || category}
+              </h3>
+              <div className="space-y-4">
+                {fields.map(([key, defaultValue]) => {
+                  return renderField(key, defaultValue);
+                })}
               </div>
-            );
-          }
-
-          return (
-            <div key={key}>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {label}
-                {isReadonly && (
-                  <span className="ml-2 text-xs text-gray-500">(Nem módosítható)</span>
-                )}
-              </label>
-              {fieldType === 'boolean' ? (
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={config[key] ?? defaultValue}
-                    onChange={(e) => updateConfig(key, e.target.checked)}
-                    disabled={isReadonly}
-                    className="rounded"
-                  />
-                  <span className="ml-2 text-sm text-gray-600">
-                    {config[key] ?? defaultValue ? 'Igen' : 'Nem'}
-                  </span>
-                </label>
-              ) : fieldType === 'select' ? (
-                <select
-                  value={config[key] ?? defaultValue}
-                  onChange={(e) => updateConfig(key, e.target.value)}
-                  disabled={isReadonly}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
-                >
-                  {getSelectOptions(key).map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              ) : fieldType === 'number' ? (
-                <input
-                  type="number"
-                  value={config[key] ?? defaultValue}
-                  onChange={(e) => updateConfig(key, parseFloat(e.target.value) || 0)}
-                  disabled={isReadonly}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
-                />
-              ) : (
-                <input
-                  type={key.toLowerCase().includes('password') ? 'password' : 'text'}
-                  value={config[key] ?? defaultValue}
-                  onChange={(e) => updateConfig(key, e.target.value)}
-                  disabled={isReadonly}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-400 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  placeholder={label}
-                />
-              )}
             </div>
-          );
-        })}
+          ))
+        ) : (
+          // Más játékok: Normál megjelenítés
+          Object.entries(defaults).map(([key, defaultValue]) => {
+            return renderField(key, defaultValue);
+          })
+        )}
+
+        {Object.keys(defaults).length === 0 && (
+          <div className="text-center py-8 text-gray-500">
+            Nincs elérhető konfiguráció ehhez a játék típushoz
+          </div>
+        )}
 
         {Object.keys(defaults).length === 0 && (
           <div className="text-center py-8 text-gray-500">
