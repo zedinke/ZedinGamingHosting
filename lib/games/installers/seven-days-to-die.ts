@@ -137,18 +137,24 @@ install_server() {
         # Töröljük a régi log fájlt, hogy tiszta legyen
         rm -f /tmp/steamcmd-$$.log 2>/dev/null || true
         
-        # SteamCMD futtatása és log mentése
+        # SteamCMD futtatása és log mentése (valós időben is logoljuk)
+        log "SteamCMD letöltés indítása..."
         sudo -u "$SERVER_USER" HOME="$STEAM_HOME" $STEAMCMD_CMD \
             +force_install_dir "$SERVER_DIR" \
             +login anonymous \
             +app_update "$STEAM_APP_ID" validate \
-            +quit > /tmp/steamcmd-$$.log 2>&1
+            +quit 2>&1 | tee /tmp/steamcmd-$$.log | while read line; do
+            # Valós idejű logolás a progress követéshez
+            if echo "$line" | grep -qE "\[.*%\]|Update state|Success|ERROR"; then
+                log "  $line"
+            fi
+        done
         
-        local exit_code=$?
+        local exit_code=${PIPESTATUS[0]}
         log "SteamCMD exit code: $exit_code"
         
         # Várunk egy kicsit, hogy a fájlok biztosan leírásra kerüljenek
-        sleep 3
+        sleep 5
         
         # Ellenőrizzük a SteamCMD logot
         local steamcmd_has_error=false
