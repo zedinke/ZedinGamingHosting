@@ -738,9 +738,25 @@ MinDynamicBandwidth=1000
           },
           `chown -R satis:sfgames ${configDir} && chmod -R g+w ${configDir} && find ${configDir} -type d -exec chmod g+s {} + || true`
         );
-        if (writeProgress) {
-          await appendInstallLog(serverId, `Jogosultságok beállítva a konfigurációs mappán: ${configDir}`);
-        }
+      if (writeProgress) {
+        await appendInstallLog(serverId, `Jogosultságok beállítva a konfigurációs mappán: ${configDir}`);
+      }
+    } else if (gameType === 'SEVEN_DAYS_TO_DIE') {
+      // 7 Days to Die-nál a serverconfig.xml fájlt hozzuk létre
+      // A szerver felhasználó neve: seven{serverId}
+      const serverUser = `seven${serverId}`;
+      await executeSSHCommand(
+        {
+          host: machine.ipAddress,
+          port: machine.sshPort,
+          user: machine.sshUser,
+          keyPath: machine.sshKeyPath || undefined,
+        },
+        `mkdir -p $(dirname ${configPath}) && sudo -u ${serverUser} cat > ${configPath} << 'EOF'\n${configContent}\nEOF && chown ${serverUser}:sfgames ${configPath} && chmod 644 ${configPath}`
+      );
+      
+      if (writeProgress) {
+        await appendInstallLog(serverId, `Konfigurációs fájl létrehozva: ${configPath}`);
       }
     } else if (gameType === 'THE_FOREST') {
       // The Forest-nál a configfilepath kötelező, de ha nincs configContent,
