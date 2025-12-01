@@ -53,3 +53,21 @@ export const config: GameServerConfig = {
     LogLevel: 'full', // minimal, normal, full
   }
 };
+
+/**
+ * Counter-Strike 2 konfigurációs fájl generálása
+ */
+export function generateConfig(config: {
+  port: number;
+  maxPlayers: number;
+  name: string;
+  password?: string;
+  [key: string]: any;
+}): string {
+  return `
+hostname "${config.name}"
+maxplayers ${config.maxPlayers}
+sv_lan 0
+rcon_password "${config.password || 'changeme'}"
+  `.trim();
+}

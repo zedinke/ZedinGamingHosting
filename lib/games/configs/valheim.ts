@@ -26,3 +26,20 @@ export const config: GameServerConfig = {
     public: '1'
   }
 };
+
+/**
+ * Valheim konfigurációs fájl generálása
+ * Valheim-nél nincs külön config fájl, de a start script tartalmazza a beállításokat
+ */
+export function generateConfig(config: {
+  port: number;
+  maxPlayers: number;
+  name: string;
+  world?: string;
+  password?: string;
+  public?: string;
+  [key: string]: any;
+}): string {
+  // Valheim-nél nincs külön config fájl, a beállítások a start parancsban vannak
+  return '';
+}

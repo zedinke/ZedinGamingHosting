@@ -653,15 +653,16 @@ async function executeStartTask(task: any): Promise<any> {
         try {
           const { ALL_GAME_SERVER_CONFIGS } = await import('./game-server-configs');
           const { executeSSHCommand } = await import('./ssh-client');
-          const { generateConfigFile } = await import('./game-server-installer');
+          const { GAME_CONFIG_GENERATORS } = await import('./games/configs');
           
           const satisGameConfig = ALL_GAME_SERVER_CONFIGS[server.gameType as keyof typeof ALL_GAME_SERVER_CONFIGS];
           if (satisGameConfig && satisGameConfig.configPath) {
             // Konfigurációs fájl path
             let configPath = satisGameConfig.configPath.replace(/{serverId}/g, server.id);
             
-            // GameUserSettings.ini generálása az új portokkal
-            const configContent = generateConfigFile(server.gameType as any, finalConfig, satisGameConfig);
+            // GameUserSettings.ini generálása az új portokkal - moduláris generátor használata
+            const configGenerator = GAME_CONFIG_GENERATORS[server.gameType as keyof typeof GAME_CONFIG_GENERATORS];
+            const configContent = configGenerator ? configGenerator(finalConfig) : '';
             if (configContent) {
               await executeSSHCommand(
                 {

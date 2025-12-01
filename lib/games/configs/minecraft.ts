@@ -15,3 +15,23 @@ export const config: GameServerConfig = {
   port: 25565,
 };
 
+/**
+ * Minecraft konfigurációs fájl generálása
+ */
+export function generateConfig(config: {
+  port: number;
+  maxPlayers: number;
+  name: string;
+  [key: string]: any;
+}): string {
+  return `
+server-port=${config.port}
+max-players=${config.maxPlayers}
+online-mode=false
+white-list=false
+motd=${config.name}
+difficulty=normal
+gamemode=survival
+  `.trim();
+}
+

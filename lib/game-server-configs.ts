@@ -13,13 +13,13 @@ import { GameType } from '@prisma/client';
 import { GameServerConfig, GameConfigMap } from './games/types';
 import { GAME_CONFIGS } from './games/configs';
 import { GAME_INSTALLERS } from './games/installers';
-import { EXTENDED_GAME_SERVER_CONFIGS } from './game-server-configs-extended';
 
 // Exportáljuk a típusokat
 export type { GameServerConfig } from './games/types';
 
 /**
  * Összegyűjti az összes konfigurációt és telepítőt
+ * Minden játék moduláris struktúrában van (lib/games/configs és lib/games/installers)
  */
 function combineConfigsAndInstallers(): GameConfigMap {
   const combined: GameConfigMap = {};
@@ -39,10 +39,8 @@ function combineConfigsAndInstallers(): GameConfigMap {
 }
 
 // Összevonjuk az új struktúrából származó konfigurációkat
+// MINDEN játék moduláris struktúrában van, nincs szükség game-server-configs-extended.ts-re
 export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = combineConfigsAndInstallers();
 
-// Összevonjuk a két konfigurációt (új struktúra + kiterjesztett)
-export const ALL_GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = {
-  ...GAME_SERVER_CONFIGS,
-  ...EXTENDED_GAME_SERVER_CONFIGS,
-};
+// ALL_GAME_SERVER_CONFIGS = GAME_SERVER_CONFIGS (minden játék moduláris)
+export const ALL_GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = GAME_SERVER_CONFIGS;

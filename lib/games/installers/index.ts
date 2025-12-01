@@ -24,6 +24,27 @@ import { installScript as groundedInstaller } from './grounded';
 import { installScript as vRisingInstaller } from './v-rising';
 import { installScript as dontStarveTogetherInstaller } from './dont-starve-together';
 import { installScript as cs2Installer } from './cs2';
+import { installScript as teamFortress2Installer } from './team-fortress-2';
+import { installScript as counterStrikeSourceInstaller } from './counter-strike-source';
+import { installScript as dayOfDefeatSourceInstaller } from './day-of-defeat-source';
+import { installScript as deadByDaylightInstaller } from './dead-by-daylight';
+import { installScript as readyOrNotInstaller } from './ready-or-not';
+import { installScript as portal2Installer } from './portal-2';
+import { installScript as left4DeadInstaller } from './left-4-dead';
+import { installScript as helldivers2Installer } from './helldivers-2';
+import { installScript as stardewValleyInstaller } from './stardew-valley';
+import { installScript as warThunderInstaller } from './war-thunder';
+import { installScript as blackMythWukongInstaller } from './black-myth-wukong';
+import { installScript as callOfDutyWarzoneInstaller } from './call-of-duty-warzone';
+import { installScript as apexLegendsInstaller } from './apex-legends';
+import { installScript as pubgBattlegroundsInstaller } from './pubg-battlegrounds';
+import { installScript as eldenRingInstaller } from './elden-ring';
+import { installScript as theLastOfUsInstaller } from './the-last-of-us';
+import { installScript as horizonZeroDawnInstaller } from './horizon-zero-dawn';
+import { installScript as godOfWarInstaller } from './god-of-war';
+import { installScript as spiderManInstaller } from './spider-man';
+import { installScript as ghostOfTsushimaInstaller } from './ghost-of-tsushima';
+import { installScript as deathStrandingInstaller } from './death-stranding';
 
 // TODO: További játékok importálása...
 // Játékok listája: lib/games/README.md
@@ -47,6 +68,27 @@ export const GAME_INSTALLERS: Partial<Record<GameType, string>> = {
   V_RISING: vRisingInstaller,
   DONT_STARVE_TOGETHER: dontStarveTogetherInstaller,
   CS2: cs2Installer,
+  TEAM_FORTRESS_2: teamFortress2Installer,
+  COUNTER_STRIKE_SOURCE: counterStrikeSourceInstaller,
+  DAY_OF_DEFEAT_SOURCE: dayOfDefeatSourceInstaller,
+  DEAD_BY_DAYLIGHT: deadByDaylightInstaller,
+  READY_OR_NOT: readyOrNotInstaller,
+  PORTAL_2: portal2Installer,
+  LEFT_4_DEAD: left4DeadInstaller,
+  HELLDIVERS_2: helldivers2Installer,
+  STARDEW_VALLEY: stardewValleyInstaller,
+  WAR_THUNDER: warThunderInstaller,
+  BLACK_MYTH_WUKONG: blackMythWukongInstaller,
+  CALL_OF_DUTY_WARZONE: callOfDutyWarzoneInstaller,
+  APEX_LEGENDS: apexLegendsInstaller,
+  PUBG_BATTLEGROUNDS: pubgBattlegroundsInstaller,
+  ELDEN_RING: eldenRingInstaller,
+  THE_LAST_OF_US: theLastOfUsInstaller,
+  HORIZON_ZERO_DAWN: horizonZeroDawnInstaller,
+  GOD_OF_WAR: godOfWarInstaller,
+  SPIDER_MAN: spiderManInstaller,
+  GHOST_OF_TSUSHIMA: ghostOfTsushimaInstaller,
+  DEATH_STRANDING: deathStrandingInstaller,
   // TODO: További játékok hozzáadása...
   // Lásd: lib/games/README.md a teljes listáért
 };

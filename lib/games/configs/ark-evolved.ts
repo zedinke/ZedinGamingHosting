@@ -16,3 +16,30 @@ export const config: GameServerConfig = {
   queryPort: 27015,
 };
 
+/**
+ * ARK: Survival Evolved konfigurációs fájl generálása
+ */
+export function generateConfig(config: {
+  port: number;
+  maxPlayers: number;
+  name: string;
+  password?: string;
+  adminPassword?: string;
+  map?: string;
+  clusterId?: string;
+  [key: string]: any;
+}): string {
+  const map = config.map || 'TheIsland';
+  return `
+[ServerSettings]
+ServerAdminPassword=${config.adminPassword || 'changeme'}
+MaxPlayers=${config.maxPlayers}
+ServerPassword=${config.password || ''}
+ServerName=${config.name}
+${config.clusterId ? `ClusterDirOverride=/mnt/ark-cluster/${config.clusterId}` : ''}
+${config.clusterId ? `ClusterId=${config.clusterId}` : ''}
+
+[/Script/ShooterGame.ShooterGameMode]
+  `.trim();
+}
+

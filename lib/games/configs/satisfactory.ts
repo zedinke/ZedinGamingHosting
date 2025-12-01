@@ -30,3 +30,57 @@ export const config: GameServerConfig = {
     autoSaveInterval: '300'
   }
 };
+
+/**
+ * Satisfactory konfigurációs fájl generálása
+ */
+export function generateConfig(config: {
+  port: number;
+  queryPort?: number;
+  beaconPort?: number;
+  gamePort?: number;
+  maxPlayers: number;
+  name: string;
+  password?: string;
+  adminPassword?: string;
+  autopause?: boolean;
+  autoSaveOnDisconnect?: boolean;
+  autoSaveInterval?: number;
+  networkQuality?: number;
+  friendlyFire?: boolean;
+  autoArmor?: boolean;
+  enableCheats?: boolean;
+  gamePhase?: number;
+  startingPhase?: number;
+  skipTutorial?: boolean;
+  [key: string]: any;
+}): string {
+  // A port paraméter a QueryPort-ot tartalmazza (4 számjegyű port, alapértelmezett 7777)
+  const queryPortSatisfactory = config.queryPort || config.port || 7777;
+  
+  // BeaconPort és GamePort a configuration JSON-ből vagy számítva
+  const beaconPort = config.beaconPort || queryPortSatisfactory + 7223; // BeaconPort = QueryPort + 7223 (alapértelmezett 15000 = 7777 + 7223)
+  const gamePort = config.gamePort || queryPortSatisfactory + 10000; // GamePort = QueryPort + 10000 (alapértelmezett 17777 = 7777 + 10000)
+  
+  return `[/Script/Engine.GameSession]
+MaxPlayers=${config.maxPlayers}
+
+[/Script/FactoryGame.FGServerSubsystem]
+ServerName="${config.name}"
+ServerPassword="${config.password || ''}"
+AdminPassword="${config.adminPassword || 'changeme123'}"
+GamePort=${gamePort}
+BeaconPort=${beaconPort}
+QueryPort=${queryPortSatisfactory}
+Autopause=${config.autopause !== undefined ? config.autopause : false}
+AutoSaveOnDisconnect=${config.autoSaveOnDisconnect !== undefined ? config.autoSaveOnDisconnect : true}
+AutoSaveInterval=${config.autoSaveInterval || 5}
+NetworkQuality=${config.networkQuality || 3}
+FriendlyFire=${config.friendlyFire !== undefined ? config.friendlyFire : false}
+AutoArmor=${config.autoArmor !== undefined ? config.autoArmor : true}
+EnableCheats=${config.enableCheats !== undefined ? config.enableCheats : false}
+GamePhase=${config.gamePhase || 1}
+StartingPhase=${config.startingPhase || 1}
+SkipTutorial=${config.skipTutorial !== undefined ? config.skipTutorial : false}
+  `.trim();
+}

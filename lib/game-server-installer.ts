@@ -14,6 +14,7 @@ import { writeFile, appendFile, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
 import { join } from 'path';
 import { GAME_INSTALLERS } from './games/installers';
+import { GAME_CONFIG_GENERATORS } from './games/configs';
 
 // Progress fájl elérési út
 function getProgressFilePath(serverId: string): string {
@@ -257,43 +258,7 @@ export async function installGameServer(
       }
     }
 
-    // 7 Days to Die specifikus függőségek (Unity motor audio támogatás)
-    if (gameType === 'SEVEN_DAYS_TO_DIE') {
-      if (writeProgress) {
-        await appendInstallLog(serverId, '7 Days to Die audio könyvtárak ellenőrzése...');
-      }
-      const sevenDaysDepsCheck = await executeSSHCommand(
-        {
-          host: machine.ipAddress,
-          port: machine.sshPort,
-          user: machine.sshUser,
-          keyPath: machine.sshKeyPath || undefined,
-        },
-        `dpkg -l | grep -E 'libpulse0|libasound2|libatomic1' | wc -l`
-      );
-      const installedCount = parseInt(sevenDaysDepsCheck.stdout?.trim() || '0');
-      if (installedCount < 3) {
-        if (writeProgress) {
-          await appendInstallLog(serverId, '7 Days to Die audio könyvtárak telepítése (hiányzó függőségek)...');
-        }
-        const sevenDaysDepsResult = await executeSSHCommand(
-          {
-            host: machine.ipAddress,
-            port: machine.sshPort,
-            user: machine.sshUser,
-            keyPath: machine.sshKeyPath || undefined,
-          },
-          `apt-get update && apt-get install -y libpulse0 libpulse-dev libasound2 libatomic1`
-        );
-        if (writeProgress) {
-          await appendInstallLog(serverId, `7 Days to Die függőségek telepítés eredmény: ${sevenDaysDepsResult.stdout || 'OK'}`);
-        }
-      } else {
-        if (writeProgress) {
-          await appendInstallLog(serverId, '7 Days to Die audio könyvtárak már telepítve vannak');
-        }
-      }
-    }
+    // Játékspecifikus függőségek telepítése az installer scriptekben történik
 
     // Telepítési script generálása (csak ha nem ARK, vagy ha még nincs telepítve)
     const sharedFilesInstalled = isARK ? await checkARKSharedInstallation(server.userId, machine.id, gameType, machine) : false;
@@ -509,40 +474,8 @@ fi
                                executeResult.stdout?.includes('Missing configuration') ||
                                executeResult.stdout?.match(/ERROR!.*Failed to install app/i);
       
-      // Ellenőrizzük, hogy a bináris fájl létezik-e (7 Days to Die esetén)
-      let binaryExists = false;
-      if (gameType === 'SEVEN_DAYS_TO_DIE') {
-        // Ellenőrizzük több helyen is a fájl létezését
-        const binaryCheck = await executeSSHCommand(
-          {
-            host: machine.ipAddress,
-            port: machine.sshPort,
-            user: machine.sshUser,
-            keyPath: machine.sshKeyPath || undefined,
-          },
-          `if test -f /opt/servers/${serverId}/7DaysToDieServer.x86_64 || test -f /opt/servers/${serverId}/steamapps/common/7\\ Days\\ To\\ Die\\ Dedicated\\ Server/7DaysToDieServer.x86_64 || test -f /opt/servers/${serverId}/steamapps/common/7\\ Days\\ To\\ Die/7DaysToDieServer.x86_64; then echo "exists"; else echo "missing"; fi`
-        );
-        binaryExists = binaryCheck.stdout?.trim() === 'exists';
-        if (!binaryExists && writeProgress) {
-          await appendInstallLog(serverId, 'HIBA: 7DaysToDieServer.x86_64 bináris fájl nem található a telepítés után!');
-          // Részletesebb ellenőrzés a hibakereséshez
-          const lsCheck = await executeSSHCommand(
-            {
-              host: machine.ipAddress,
-              port: machine.sshPort,
-              user: machine.sshUser,
-              keyPath: machine.sshKeyPath || undefined,
-            },
-            `ls -la /opt/servers/${serverId}/ | head -20`
-          );
-          if (lsCheck.stdout) {
-            await appendInstallLog(serverId, `Szerver könyvtár tartalma:\n${lsCheck.stdout}`);
-          }
-        }
-      }
-      
+      // Bináris fájl ellenőrzése az installer scriptekben történik
       const hasRealError = hasSteamCMDError ||
-                          !binaryExists ||
                           executeResult.stdout?.includes('ERROR') || 
                           executeResult.stdout?.includes('HIBA') ||
                           stderrWithoutSSHWarnings.includes('ERROR') ||
@@ -561,8 +494,6 @@ fi
         let errorMessage = '';
         if (hasSteamCMDError) {
           errorMessage = `SteamCMD telepítés sikertelen: ${executeResult.stdout?.match(/ERROR!.*/)?.[0] || 'Missing configuration vagy Failed to install app'}`;
-        } else if (!binaryExists && gameType === 'SEVEN_DAYS_TO_DIE') {
-          errorMessage = `Telepítési script lefutott, de a 7DaysToDieServer.x86_64 bináris fájl nem található. A SteamCMD valószínűleg nem tudta letölteni a szervert.`;
         } else {
           errorMessage = `Telepítési script sikertelen (exit code: ${executeResult.exitCode}): ${stderrWithoutSSHWarnings || executeResult.stdout || 'Ismeretlen hiba'}`;
         }
@@ -576,7 +507,6 @@ fi
           stdout: executeResult.stdout,
           stderr: executeResult.stderr,
           hasSteamCMDError,
-          binaryExists,
         });
         
         // Próbáljuk meg lekérni a teljes logot
@@ -704,7 +634,9 @@ fi
       ...(gameType === 'SATISFACTORY' && serverConfiguration.beaconPort ? { beaconPort: serverConfiguration.beaconPort } : {}),
     };
     
-    const configContent = generateConfigFile(gameType, configWithPort, gameConfig);
+    // Moduláris config generátor használata
+    const configGenerator = GAME_CONFIG_GENERATORS[gameType];
+    const configContent = configGenerator ? configGenerator(configWithPort) : '';
     if (configContent) {
       let configPath = gameConfig.configPath;
       
@@ -1056,295 +988,20 @@ MinDynamicBandwidth=1000
 /**
  * Konfigurációs fájl generálása
  */
+/**
+ * @deprecated Ez a függvény már nem használatos.
+ * A konfigurációs fájlok generálása most a játékspecifikus config fájlokban történik
+ * (lib/games/configs/{game-name}.ts generateConfig függvények).
+ * 
+ * Kompatibilitás miatt megtartjuk, de üres stringet ad vissza.
+ */
 export function generateConfigFile(
   gameType: GameType,
   config: any,
   gameConfig: any
 ): string {
-  // Biztosítjuk, hogy a config létezik és tartalmazza a szükséges mezőket
-  if (!config) {
-    throw new Error('Config objektum hiányzik a generateConfigFile függvényben');
-  }
-  
-  const port = config.port || 25565;
-  const maxPlayers = config.maxPlayers || 10;
-  const name = config.name || 'Server';
-  const queryPort = gameConfig.queryPort || port + 1;
-
-  switch (gameType) {
-    case 'MINECRAFT':
-      return `
-server-port=${port}
-max-players=${maxPlayers}
-online-mode=false
-white-list=false
-motd=${name}
-difficulty=normal
-gamemode=survival
-      `.trim();
-
-    case 'ARK_EVOLVED':
-    case 'ARK_ASCENDED':
-      const map = config.map || 'TheIsland';
-      return `
-[ServerSettings]
-ServerAdminPassword=${config.adminPassword || 'changeme'}
-MaxPlayers=${maxPlayers}
-ServerPassword=${config.password || ''}
-ServerName=${name}
-${config.clusterId ? `ClusterDirOverride=/mnt/ark-cluster/${config.clusterId}` : ''}
-${config.clusterId ? `ClusterId=${config.clusterId}` : ''}
-
-[/Script/ShooterGame.ShooterGameMode]
-      `.trim();
-
-    case 'CS2':
-    case 'CSGO':
-      return `
-hostname "${name}"
-maxplayers ${maxPlayers}
-sv_lan 0
-rcon_password "${config.password || 'changeme'}"
-      `.trim();
-
-    case 'RUST':
-      // Rust szerver konfigurációs fájl (server.cfg)
-      // A Rust szerver automatikusan betölti ezt a fájlt a server/ könyvtárból
-      const rconPort = queryPort + 1;
-      const rconPassword = config.adminPassword || config.password || 'changeme';
-      return `
-server.hostname "${name}"
-server.identity "${name}"
-server.maxplayers ${maxPlayers}
-server.port ${port}
-server.queryport ${queryPort}
-rcon.port ${rconPort}
-rcon.password "${rconPassword}"
-server.seed ${config.seed || Math.floor(Math.random() * 1000000)}
-server.worldsize ${config.worldsize || 4000}
-server.saveinterval ${config.saveinterval || 600}
-      `.trim();
-
-    case 'VALHEIM':
-      return `
-# Valheim Server Config
-# Generated automatically
-      `.trim();
-
-    case 'SEVEN_DAYS_TO_DIE':
-      const telnetPort = config.telnetPort || queryPort + 1;
-      const gameWorld = config.world || config.gameWorld || 'Navezgane';
-      const worldSeed = config.worldSeed || config.seed || 'asd123';
-      const difficulty = config.difficulty || config.gameDifficulty || '2';
-      const lootRespawnDays = config.lootRespawnDays || '7';
-      
-      const xmlContent = `<?xml version="1.0" encoding="UTF-8"?>
-<ServerSettings>
-    <property name="ServerName" value="${name}"/>
-    <property name="ServerPort" value="${port}"/>
-    <property name="ServerMaxPlayerCount" value="${maxPlayers}"/>
-    <property name="ServerPassword" value="${config.password || ''}"/>
-    <property name="ServerVisibility" value="2"/>
-    <property name="ServerIsPublic" value="true"/>
-    <property name="ServerDescription" value="A 7 Days to Die szerver"/>
-    <property name="ServerWebsiteURL" value=""/>
-    <property name="GameWorld" value="${gameWorld}"/>
-    <property name="WorldGenSeed" value="${worldSeed}"/>
-    <property name="WorldGenSize" value="4096"/>
-    <property name="GameName" value="My Game"/>
-    <property name="GameMode" value="GameModeSurvival"/>
-    <property name="Difficulty" value="${difficulty}"/>
-    <property name="DayNightLength" value="60"/>
-    <property name="DayLightLength" value="18"/>
-    <property name="MaxSpawnedZombies" value="60"/>
-    <property name="DropOnDeath" value="1"/>
-    <property name="DropOnQuit" value="0"/>
-    <property name="BedrollDeadZoneSize" value="15"/>
-    <property name="BlockDamagePlayer" value="100"/>
-    <property name="BlockDamageZombie" value="100"/>
-    <property name="XPMultiplier" value="100"/>
-    <property name="PlayerSafeZoneLevel" value="5"/>
-    <property name="PlayerSafeZoneHours" value="24"/>
-    <property name="BuildCreate" value="false"/>
-    <property name="AdminFileName" value="serveradmin.xml"/>
-    <property name="TelnetEnabled" value="true"/>
-    <property name="TelnetPort" value="${telnetPort}"/>
-    <property name="TelnetPassword" value=""/>
-    <property name="ControlPanelEnabled" value="false"/>
-    <property name="ControlPanelPort" value="8080"/>
-    <property name="ControlPanelPassword" value=""/>
-    <property name="MaxUncoveredMapChunksPerPlayer" value="131072"/>
-    <property name="PersistentPlayerProfiles" value="false"/>
-    <property name="EACEnabled" value="true"/>
-    <property name="HideCommandExecutionLog" value="0"/>
-    <property name="AirDropFrequency" value="72"/>
-    <property name="AirDropMarker" value="false"/>
-    <property name="LootAbundance" value="100"/>
-    <property name="LootRespawnDays" value="${lootRespawnDays}"/>
-    <property name="MaxSpawnedAnimals" value="50"/>
-    <property name="LandClaimCount" value="1"/>
-    <property name="LandClaimSize" value="41"/>
-    <property name="LandClaimExpiryTime" value="7"/>
-    <property name="LandClaimDeadZone" value="30"/>
-    <property name="LandClaimOnlineDurabilityModifier" value="4"/>
-    <property name="LandClaimOfflineDurabilityModifier" value="4"/>
-    <property name="LandClaimOfflineDelay" value="0"/>
-    <property name="PartySharedKillRange" value="100"/>
-    <property name="EnemySenseMemory" value="45"/>
-    <property name="EnemySpawnMode" value="true"/>
-    <property name="BloodMoonFrequency" value="7"/>
-    <property name="BloodMoonRange" value="0"/>
-    <property name="BloodMoonWarning" value="8"/>
-    <property name="BloodMoonEnemyCount" value="8"/>
-    <property name="BloodMoonEnemyRange" value="0"/>
-    <property name="UseAllowedZombieClasses" value="false"/>
-    <property name="DisableRadio" value="false"/>
-    <property name="DisablePoison" value="false"/>
-    <property name="DisableInfection" value="false"/>
-    <property name="DisableVault" value="false"/>
-    <property name="TraderAreaProtection" value="0"/>
-    <property name="TraderServiceAreaProtection" value="1"/>
-    <property name="ShowFriendPlayerOnMap" value="true"/>
-    <property name="FriendCantDamage" value="true"/>
-    <property name="FriendCantLoot" value="false"/>
-    <property name="BuildCraftTime" value="false"/>
-    <property name="ShowAllPlayersOnMap" value="false"/>
-    <property name="ShowSpawnWindow" value="false"/>
-    <property name="AutoParty" value="false"/>
-</ServerSettings>`;
-      return xmlContent;
-
-    case 'PALWORLD':
-      return `
-[/Script/Pal.PalGameWorldSettings]
-OptionSettings=(
-  Difficulty=None,
-  DayTimeSpeedRate=1.000000,
-  NightTimeSpeedRate=1.000000,
-  ExpRate=1.000000,
-  PalCaptureRate=1.000000,
-  PalSpawnNumRate=1.000000,
-  PalDamageRateAttack=1.000000,
-  PalDamageRateDefense=1.000000,
-  PlayerDamageRateAttack=1.000000,
-  PlayerDamageRateDefense=1.000000,
-  PlayerStaminaRateConsume=1.000000,
-  PlayerAutoHPRegeneRate=1.000000,
-  PlayerAutoHpRegeneRateInSleep=1.000000,
-  PalStaminaRateConsume=1.000000,
-  PalAutoHPRegeneRate=1.000000,
-  PalAutoHpRegeneRateInSleep=1.000000,
-  BuildObjectDamageRate=1.000000,
-  BuildObjectDeteriorationDamageRate=1.000000,
-  CollectionDropRate=1.000000,
-  CollectionObjectHpRate=1.000000,
-  CollectionObjectRespawnSpeedRate=1.000000,
-  EnemyDropItemRate=1.000000,
-  DeathPenalty=None,
-  bEnablePlayerToPlayerDamage=False,
-  bEnableFriendlyFire=False,
-  bEnableInvaderEnemy=True,
-  bActiveUNKO=False,
-  bEnableAimAssistPad=True,
-  bEnableAimAssistKeyboard=False,
-  DropItemMaxNum=3000,
-  DropItemMaxNum_UNKO=100,
-  BaseCampMaxNum=128,
-  BaseCampWorkerMaxNum=15,
-  GuildPlayerMaxNum=20,
-  PalEggDefaultHatchingTime=72.000000,
-  WorkSpeedRate=1.000000,
-  bIsMultiplay=False,
-  bIsPvP=False,
-  bCanPickupOtherGuildDeathPenaltyDrop=False,
-  bEnableNonLoginPenalty=True,
-  bEnableFastTravel=True,
-  bIsStartLocationSelectByMap=True,
-  bExistPlayerAfterLogout=False,
-  bEnableDefenseOtherGuildPlayer=False,
-  CoopPlayerMaxNum=4,
-  ServerPlayerMaxNum=32,
-  ServerName="${name}",
-  ServerDescription="",
-  AdminPassword="${config.adminPassword || 'changeme'}",
-  ServerPassword="${config.password || ''}",
-  PublicPort=${port},
-  PublicIP="",
-  RCONEnabled=True,
-  RCONPort=25575,
-  Region="",
-  bUseAuth=True,
-  BanListURL="https://api.palworldgame.com/api/banlist.txt"
-)
-      `.trim();
-
-    case 'THE_FOREST':
-      // The Forest szerver konfigurációs fájl
-      // Az útmutató szerint a szerver generál egy alapértelmezett konfigurációt, ha a fájl nem létezik
-      // De létrehozunk egy alapvető konfigurációt, hogy biztosan működjön
-      return `# The Forest Dedicated Server Configuration
-# Generated automatically
-
-# Server Name
-serverName="${name}"
-
-# Server Password (leave empty for no password)
-serverPassword="${config.password || ''}"
-
-# Max Players
-maxPlayers=${maxPlayers}
-
-# Server Port
-serverPort=${port}
-
-# Query Port (usually port + 1)
-queryPort=${queryPort}
-
-# Admin Password
-adminPassword="${config.adminPassword || 'changeme'}"
-
-# Save Folder Path (relative to server directory)
-saveFolderPath=./savefilesserver/
-
-# Additional settings can be added here
-# For more information, see the official The Forest server documentation
-      `.trim();
-
-    case 'SATISFACTORY':
-      // Satisfactory szerver konfigurációs fájl (GameUserSettings.ini)
-      // A port paraméter a QueryPort-ot tartalmazza (4 számjegyű port, alapértelmezett 7777)
-      // A GamePort-ot és BeaconPort-ot számítjuk vagy a configuration-ből veszük
-      const queryPortSatisfactory = port || 7777; // QueryPort az adatbázisból (4 számjegyű port)
-      
-      // BeaconPort és GamePort a configuration JSON-ből vagy számítva
-      // Ha van a configuration-ben, akkor azt használjuk (provisioning során generált)
-      const beaconPort = config.beaconPort || queryPortSatisfactory + 7223; // BeaconPort = QueryPort + 7223 (alapértelmezett 15000 = 7777 + 7223)
-      const gamePort = config.gamePort || queryPortSatisfactory + 10000; // GamePort = QueryPort + 10000 (alapértelmezett 17777 = 7777 + 10000)
-      return `[/Script/Engine.GameSession]
-MaxPlayers=${maxPlayers}
-
-[/Script/FactoryGame.FGServerSubsystem]
-ServerName="${name}"
-ServerPassword="${config.password || ''}"
-AdminPassword="${config.adminPassword || 'changeme123'}"
-GamePort=${gamePort}
-BeaconPort=${beaconPort}
-QueryPort=${queryPortSatisfactory}
-Autopause=${config.autopause !== undefined ? config.autopause : false}
-AutoSaveOnDisconnect=${config.autoSaveOnDisconnect !== undefined ? config.autoSaveOnDisconnect : true}
-AutoSaveInterval=${config.autoSaveInterval || 5}
-NetworkQuality=${config.networkQuality || 3}
-FriendlyFire=${config.friendlyFire !== undefined ? config.friendlyFire : false}
-AutoArmor=${config.autoArmor !== undefined ? config.autoArmor : true}
-EnableCheats=${config.enableCheats !== undefined ? config.enableCheats : false}
-GamePhase=${config.gamePhase || 1}
-StartingPhase=${config.startingPhase || 1}
-SkipTutorial=${config.skipTutorial !== undefined ? config.skipTutorial : false}
-      `.trim();
-
-    default:
-      return '';
-  }
+  // Deprecated: használd a GAME_CONFIG_GENERATORS-t a lib/games/configs/index.ts-ből
+  return '';
 }
 
 /**
