@@ -148,21 +148,23 @@ install_server() {
         fi
         
         # 2. SteamApps mappában (különböző elérési utak)
-        local possible_paths=(
-            "$SERVER_DIR/steamapps/common/7 Days To Die Dedicated Server/7DaysToDieServer.x86_64"
-            "$SERVER_DIR/steamapps/common/7 Days To Die/7DaysToDieServer.x86_64"
-            "$SERVER_DIR/steamapps/common/7DaysToDieServer.x86_64"
-        )
+        local path1="$SERVER_DIR/steamapps/common/7 Days To Die Dedicated Server/7DaysToDieServer.x86_64"
+        local path2="$SERVER_DIR/steamapps/common/7 Days To Die/7DaysToDieServer.x86_64"
+        local path3="$SERVER_DIR/steamapps/common/7DaysToDieServer.x86_64"
         
-        for path in "${possible_paths[@]}"; do
-            if [ -f "$path" ]; then
-                log "7DaysToDieServer.x86_64 található: $path"
-                # Másoljuk át a fájlt a SERVER_DIR-be
-                cp "$path" "$SERVER_DIR/" 2>/dev/null || true
-                server_exe_found=true
-                break
-            fi
-        done
+        if [ -f "$path1" ]; then
+            log "7DaysToDieServer.x86_64 található: $path1"
+            cp "$path1" "$SERVER_DIR/" 2>/dev/null || true
+            server_exe_found=true
+        elif [ -f "$path2" ]; then
+            log "7DaysToDieServer.x86_64 található: $path2"
+            cp "$path2" "$SERVER_DIR/" 2>/dev/null || true
+            server_exe_found=true
+        elif [ -f "$path3" ]; then
+            log "7DaysToDieServer.x86_64 található: $path3"
+            cp "$path3" "$SERVER_DIR/" 2>/dev/null || true
+            server_exe_found=true
+        fi
         
         # 3. Ellenőrizzük a mappa tartalmát
         log "SERVER_DIR tartalma:"
@@ -196,9 +198,9 @@ install_server() {
         log "7DaysToDieServer.x86_64 nem található, újrapróbálkozás..."
         log "Ellenőrzött helyek:" >&2
         log "  - $SERVER_DIR/7DaysToDieServer.x86_64" >&2
-        for path in "${possible_paths[@]}"; do
-            log "  - $path" >&2
-        done
+        log "  - $SERVER_DIR/steamapps/common/7 Days To Die Dedicated Server/7DaysToDieServer.x86_64" >&2
+        log "  - $SERVER_DIR/steamapps/common/7 Days To Die/7DaysToDieServer.x86_64" >&2
+        log "  - $SERVER_DIR/steamapps/common/7DaysToDieServer.x86_64" >&2
         ((retry_count++))
         if [ $retry_count -lt $MAX_RETRIES ]; then
             log "Várakozás 15 másodpercet az újrapróbálkozás előtt..."
