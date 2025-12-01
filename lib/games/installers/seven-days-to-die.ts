@@ -130,24 +130,13 @@ install_server() {
         log "Telepítési mappa: $SERVER_DIR"
         log "Steam App ID: $STEAM_APP_ID"
         
-        # SteamCMD futtatása részletes logolással
-        # Próbáljuk meg először a standard módszert
+        # SteamCMD futtatása részletes logolással (stable verzió)
         log "SteamCMD parancs: $STEAMCMD_CMD +force_install_dir $SERVER_DIR +login anonymous +app_update $STEAM_APP_ID validate +quit"
         sudo -u "$SERVER_USER" HOME="$STEAM_HOME" $STEAMCMD_CMD \
             +force_install_dir "$SERVER_DIR" \
             +login anonymous \
             +app_update "$STEAM_APP_ID" validate \
             +quit 2>&1 | tee -a /tmp/steamcmd-$$.log
-        
-        # Ha "Missing configuration" hiba van, próbáljuk meg a beta public flaggel
-        if grep -qiE "Missing configuration|ERROR.*Failed to install.*294420" /tmp/steamcmd-$$.log; then
-            log "SteamCMD 'Missing configuration' hiba észlelve, próbálkozás beta public flaggel..."
-            sudo -u "$SERVER_USER" HOME="$STEAM_HOME" $STEAMCMD_CMD \
-                +force_install_dir "$SERVER_DIR" \
-                +login anonymous \
-                +app_update "$STEAM_APP_ID" -beta public validate \
-                +quit 2>&1 | tee -a /tmp/steamcmd-$$.log
-        fi
         
         local exit_code=$?
         log "SteamCMD exit code: $exit_code"
