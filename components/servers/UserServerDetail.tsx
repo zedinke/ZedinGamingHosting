@@ -10,6 +10,9 @@ import { UserServerConfigFileEditor } from './UserServerConfigFileEditor';
 import { ServerSavesManager } from './ServerSavesManager';
 import { ARKASAServerConfigManager } from './ARKASAServerConfigManager';
 import { ServerUpdateButton } from './ServerUpdateButton';
+import { CronJobManager } from './CronJobManager';
+import { SFTPInfo } from './SFTPInfo';
+import { UserServerBackupManager } from './UserServerBackupManager';
 
 interface Server {
   id: string;
@@ -46,7 +49,7 @@ export function UserServerDetail({ server, locale }: UserServerDetailProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [serverStatus, setServerStatus] = useState(server.status);
-  const [activeTab, setActiveTab] = useState<'info' | 'config' | 'config-file'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'config' | 'config-file' | 'cron' | 'sftp' | 'backup'>('info');
   const [isInstalled, setIsInstalled] = useState<boolean | null>(null);
   const [installProgress, setInstallProgress] = useState<any>(null);
   const [serverData, setServerData] = useState<Server>(server);
@@ -128,6 +131,39 @@ export function UserServerDetail({ server, locale }: UserServerDetailProps) {
     }, 5000); // 5 másodpercenként ellenőrizzük a fizetési státuszt
     
     return () => clearInterval(paymentCheckInterval);
+  }, [server.id, isInstalled]);
+
+  // Szerver státusz automatikus frissítése 5 másodpercenként (zavarásmentesen)
+  useEffect(() => {
+    if (!isInstalled || isInstalled === null) return;
+    
+    const statusCheckInterval = setInterval(async () => {
+      try {
+        const response = await fetch(`/api/servers/${server.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.server && data.server.status) {
+            // Csak akkor frissítjük, ha változott, hogy ne legyen zavaró
+            setServerStatus(prevStatus => {
+              if (prevStatus !== data.server.status) {
+                return data.server.status;
+              }
+              return prevStatus;
+            });
+            // Frissítjük a serverData-t is, hogy a státusz mindenhol naprakész legyen
+            setServerData(prevData => ({
+              ...prevData,
+              status: data.server.status,
+            }));
+          }
+        }
+      } catch (error) {
+        console.error('Server status check error:', error);
+        // Nem jelenítünk hibát, hogy ne legyen zavaró
+      }
+    }, 5000); // 5 másodpercenként frissítjük a státuszt
+    
+    return () => clearInterval(statusCheckInterval);
   }, [server.id, isInstalled]);
 
   const handleServerAction = async (action: string) => {
@@ -317,6 +353,36 @@ export function UserServerDetail({ server, locale }: UserServerDetailProps) {
               }`}
             >
               Konfigurációs Fájl
+            </button>
+            <button
+              onClick={() => setActiveTab('cron')}
+              className={`px-4 py-3 border-b-2 font-medium transition-colors ${
+                activeTab === 'cron'
+                  ? 'border-primary-600 text-primary-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Időzített Feladatok
+            </button>
+            <button
+              onClick={() => setActiveTab('sftp')}
+              className={`px-4 py-3 border-b-2 font-medium transition-colors ${
+                activeTab === 'sftp'
+                  ? 'border-primary-600 text-primary-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              SFTP Hozzáférés
+            </button>
+            <button
+              onClick={() => setActiveTab('backup')}
+              className={`px-4 py-3 border-b-2 font-medium transition-colors ${
+                activeTab === 'backup'
+                  ? 'border-primary-600 text-primary-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Backup Mentések
             </button>
           </div>
         </div>
@@ -587,6 +653,24 @@ export function UserServerDetail({ server, locale }: UserServerDetailProps) {
             port={serverData.port || server.port}
             maxPlayers={server.maxPlayers}
           />
+        </div>
+      )}
+
+      {activeTab === 'cron' && (
+        <div className="space-y-6">
+          <CronJobManager serverId={server.id} locale={locale} />
+        </div>
+      )}
+
+      {activeTab === 'sftp' && (
+        <div className="space-y-6">
+          <SFTPInfo serverId={server.id} locale={locale} />
+        </div>
+      )}
+
+      {activeTab === 'backup' && (
+        <div className="space-y-6">
+          <UserServerBackupManager serverId={server.id} locale={locale} />
         </div>
       )}
     </div>
