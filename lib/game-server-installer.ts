@@ -497,7 +497,33 @@ fi
         .filter(line => !line.includes('Permanently added') && !line.includes('Warning: Permanently added'))
         .join('\n') || '';
       
-      const hasRealError = executeResult.stdout?.includes('ERROR') || 
+      // Ellenőrizzük a SteamCMD hibaüzeneteket (pl. "ERROR! Failed to install app")
+      const hasSteamCMDError = executeResult.stdout?.includes('ERROR! Failed to install') ||
+                               executeResult.stdout?.includes('ERROR!') ||
+                               executeResult.stdout?.includes('Missing configuration') ||
+                               executeResult.stdout?.match(/ERROR!.*Failed to install app/i);
+      
+      // Ellenőrizzük, hogy a bináris fájl létezik-e (7 Days to Die esetén)
+      let binaryExists = false;
+      if (gameType === 'SEVEN_DAYS_TO_DIE') {
+        const binaryCheck = await executeSSHCommand(
+          {
+            host: machine.ipAddress,
+            port: machine.sshPort,
+            user: machine.sshUser,
+            keyPath: machine.sshKeyPath || undefined,
+          },
+          `test -f /opt/servers/${serverId}/7DaysToDieServer.x86_64 || test -f /opt/servers/${serverId}/steamapps/common/7\ Days\ To\ Die\ Dedicated\ Server/7DaysToDieServer.x86_64 || test -f /opt/servers/${serverId}/steamapps/common/7\ Days\ To\ Die/7DaysToDieServer.x86_64 && echo "exists" || echo "missing"`
+        );
+        binaryExists = binaryCheck.stdout?.includes('exists') || false;
+        if (!binaryExists && writeProgress) {
+          await appendInstallLog(serverId, 'HIBA: 7DaysToDieServer.x86_64 bináris fájl nem található a telepítés után!');
+        }
+      }
+      
+      const hasRealError = hasSteamCMDError ||
+                          !binaryExists ||
+                          executeResult.stdout?.includes('ERROR') || 
                           executeResult.stdout?.includes('HIBA') ||
                           stderrWithoutSSHWarnings.includes('ERROR') ||
                           stderrWithoutSSHWarnings.includes('HIBA');
@@ -510,8 +536,16 @@ fi
       // Ha exit code 8 és nincs valódi hiba a logban, lehet, hogy csak warning
       // De ha van valódi hiba vagy más exit code, akkor hibát dobunk
       // Kivéve, ha csak SSH warning-ok vannak, akkor nem hibát dobunk
-      if (executeResult.exitCode !== 0 && !onlySSHWarnings && (executeResult.exitCode !== 8 || hasRealError)) {
-        const error = `Telepítési script sikertelen (exit code: ${executeResult.exitCode}): ${stderrWithoutSSHWarnings || executeResult.stdout || 'Ismeretlen hiba'}`;
+      // Fontos: ha a bináris fájl hiányzik, akkor is hibát dobunk
+      if ((executeResult.exitCode !== 0 && !onlySSHWarnings && (executeResult.exitCode !== 8 || hasRealError)) || hasRealError) {
+        let errorMessage = '';
+        if (hasSteamCMDError) {
+          errorMessage = `SteamCMD telepítés sikertelen: ${executeResult.stdout?.match(/ERROR!.*/)?.[0] || 'Missing configuration vagy Failed to install app'}`;
+        } else if (!binaryExists && gameType === 'SEVEN_DAYS_TO_DIE') {
+          errorMessage = `Telepítési script lefutott, de a 7DaysToDieServer.x86_64 bináris fájl nem található. A SteamCMD valószínűleg nem tudta letölteni a szervert.`;
+        } else {
+          errorMessage = `Telepítési script sikertelen (exit code: ${executeResult.exitCode}): ${stderrWithoutSSHWarnings || executeResult.stdout || 'Ismeretlen hiba'}`;
+        }
         
         logger.error('Installation script failed', new Error(executeResult.stderr || executeResult.stdout || 'Unknown error'), {
           serverId,
@@ -521,6 +555,8 @@ fi
           exitCode: executeResult.exitCode,
           stdout: executeResult.stdout,
           stderr: executeResult.stderr,
+          hasSteamCMDError,
+          binaryExists,
         });
         
         // Próbáljuk meg lekérni a teljes logot
@@ -550,14 +586,14 @@ fi
         if (writeProgress) {
           await writeInstallProgress(serverId, {
             status: 'error',
-            message: error,
+            message: errorMessage,
             progress: 30,
-            error,
+            error: errorMessage,
           });
-          await appendInstallLog(serverId, `HIBA: ${error}`);
+          await appendInstallLog(serverId, `HIBA: ${errorMessage}`);
         }
         
-        throw new Error(error);
+        throw new Error(errorMessage);
       }
 
       if (writeProgress) {

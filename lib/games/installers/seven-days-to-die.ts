@@ -109,6 +109,7 @@ install_server() {
         log "Steam App ID: $STEAM_APP_ID"
         
         # SteamCMD futtatása részletes logolással
+        log "SteamCMD parancs: $STEAMCMD_CMD +force_install_dir $SERVER_DIR +login anonymous +app_update $STEAM_APP_ID validate +quit"
         sudo -u "$SERVER_USER" HOME="$STEAM_HOME" $STEAMCMD_CMD \
             +force_install_dir "$SERVER_DIR" \
             +login anonymous \
@@ -119,11 +120,22 @@ install_server() {
         log "SteamCMD exit code: $exit_code"
         
         # Ellenőrizzük a SteamCMD logot
+        local steamcmd_has_error=false
         if [ -f /tmp/steamcmd-$$.log ]; then
             log "SteamCMD log tartalma:"
-            tail -20 /tmp/steamcmd-$$.log | while read line; do
+            tail -30 /tmp/steamcmd-$$.log | while read line; do
                 log "  $line"
             done
+            
+            # Ellenőrizzük, hogy van-e ERROR a logban (pl. "ERROR! Failed to install app" vagy "Missing configuration")
+            if grep -qiE "ERROR.*Failed to install|Missing configuration|ERROR!" /tmp/steamcmd-$$.log; then
+                log "HIBA: SteamCMD ERROR üzenet található a logban!" >&2
+                log "SteamCMD hiba részletei:" >&2
+                grep -iE "ERROR|Missing" /tmp/steamcmd-$$.log | while read line; do
+                    log "  $line" >&2
+                done
+                steamcmd_has_error=true
+            fi
         fi
         
         # Ellenőrizzük több helyen is a fájlokat
@@ -135,13 +147,22 @@ install_server() {
             server_exe_found=true
         fi
         
-        # 2. SteamApps mappában
-        if [ -f "$SERVER_DIR/steamapps/common/7 Days To Die Dedicated Server/7DaysToDieServer.x86_64" ]; then
-            log "7DaysToDieServer.x86_64 található: $SERVER_DIR/steamapps/common/7 Days To Die Dedicated Server/"
-            # Másoljuk át a fájlt a SERVER_DIR-be
-            cp "$SERVER_DIR/steamapps/common/7 Days To Die Dedicated Server/7DaysToDieServer.x86_64" "$SERVER_DIR/" 2>/dev/null || true
-            server_exe_found=true
-        fi
+        # 2. SteamApps mappában (különböző elérési utak)
+        local possible_paths=(
+            "$SERVER_DIR/steamapps/common/7 Days To Die Dedicated Server/7DaysToDieServer.x86_64"
+            "$SERVER_DIR/steamapps/common/7 Days To Die/7DaysToDieServer.x86_64"
+            "$SERVER_DIR/steamapps/common/7DaysToDieServer.x86_64"
+        )
+        
+        for path in "${possible_paths[@]}"; do
+            if [ -f "$path" ]; then
+                log "7DaysToDieServer.x86_64 található: $path"
+                # Másoljuk át a fájlt a SERVER_DIR-be
+                cp "$path" "$SERVER_DIR/" 2>/dev/null || true
+                server_exe_found=true
+                break
+            fi
+        done
         
         # 3. Ellenőrizzük a mappa tartalmát
         log "SERVER_DIR tartalma:"
@@ -149,14 +170,38 @@ install_server() {
             log "  $line"
         done || log "  (nem sikerült listázni)"
         
+        # Ha van ERROR a SteamCMD logban, akkor hibát dobunk
+        if [ "$steamcmd_has_error" = "true" ]; then
+            log "HIBA: SteamCMD telepítés sikertelen (ERROR üzenet a logban)" >&2
+            log "SteamCMD teljes log:" >&2
+            cat /tmp/steamcmd-$$.log >&2
+            ((retry_count++))
+            if [ $retry_count -lt $MAX_RETRIES ]; then
+                log "Újrapróbálkozás $retry_count/$MAX_RETRIES..." >&2
+                sleep 15
+                continue
+            else
+                log "HIBA: SteamCMD telepítés sikertelen $MAX_RETRIES próbálkozás után" >&2
+                log "HIBA: SteamCMD hibaüzenet: 'ERROR! Failed to install app' vagy 'Missing configuration'" >&2
+                exit 1
+            fi
+        fi
+        
+        # Ellenőrizzük, hogy a bináris fájl létezik-e
         if [ "$server_exe_found" = "true" ]; then
             install_success=true
             break
         fi
         
         log "7DaysToDieServer.x86_64 nem található, újrapróbálkozás..."
+        log "Ellenőrzött helyek:" >&2
+        log "  - $SERVER_DIR/7DaysToDieServer.x86_64" >&2
+        for path in "${possible_paths[@]}"; do
+            log "  - $path" >&2
+        done
         ((retry_count++))
         if [ $retry_count -lt $MAX_RETRIES ]; then
+            log "Várakozás 15 másodpercet az újrapróbálkozás előtt..."
             sleep 15
         fi
     done
