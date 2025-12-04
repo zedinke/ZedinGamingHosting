@@ -392,6 +392,43 @@ export function ServerDetail({ server, locale }: ServerDetailProps) {
               >
                 {showInstallProgress ? 'Telepítés folyamatban...' : 'Szerver Újratelepítése'}
               </button>
+
+              {/* ARK Cluster Újratelepítés - Csak ARK szerverekhez */}
+              {(server.gameType === 'ARK_EVOLVED' || server.gameType === 'ARK_ASCENDED') && (
+                <button
+                  onClick={async () => {
+                    if (!confirm('⚠️  FIGYELEM!\n\nAz ARK Cluster újratelepítés a következőket fogja tenni:\n\n• Az instance könyvtár TELJES TÖRLÉSE\n• Szerver fájlok újratelepítése\n• Összes szerver adat VÉGLEGESEN törlésre kerül\n\nEz az operáció nem visszafordítható!\n\nBiztosan folytatod?')) {
+                      return;
+                    }
+
+                    setIsLoading(true);
+                    setShowInstallProgress(true);
+                    try {
+                      const response = await fetch(`/api/admin/servers/${server.id}/cluster-reinstall`, {
+                        method: 'POST',
+                      });
+                      const result = await response.json();
+                      if (response.ok) {
+                        toast.success(result.message || 'ARK Cluster újratelepítés elindítva');
+                        setServerStatus('OFFLINE');
+                      } else {
+                        toast.error(result.error || 'Hiba történt');
+                        setShowInstallProgress(false);
+                      }
+                    } catch (error) {
+                      toast.error('Hiba történt');
+                      setShowInstallProgress(false);
+                    } finally {
+                      setIsLoading(false);
+                    }
+                  }}
+                  disabled={isLoading || showInstallProgress}
+                  className="w-full bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                >
+                  {showInstallProgress ? 'Újratelepítés folyamatban...' : '🔄 ARK Cluster Újratelepítés'}
+                </button>
+              )}
+
               <button
                 onClick={async () => {
                   if (!confirm('Biztosan újratelepíted a systemd service fájlt? A szerver leáll, majd újrageneráljuk a service fájlt.')) {
