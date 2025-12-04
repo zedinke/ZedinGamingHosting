@@ -1314,6 +1314,10 @@ export async function createSystemdServiceForServer(
   
   let startCommand = gameConfig.startCommand;
   
+  // WorkingDirectory beállítása - ezt később frissíthetjük a játék típusa alapján
+  let workingDir = paths?.serverPath || `/opt/servers/${serverId}`;
+  let execDir = workingDir; // Alapértelmezett érték
+  
   // Változók definiálása az összes játékhoz (The Forest Windows verzióhoz is szükséges)
   // Ezeket az else blokkon kívül definiáljuk, hogy a The Forest Windows verzió kezelése is elérje
   let finalPort = port;
@@ -1335,7 +1339,12 @@ export async function createSystemdServiceForServer(
     const arkQueryPort = serverWithPortsARKTyped?.queryPort || (gameConfig.queryPort || arkPort + 1);
     const adminPassword = config.adminPassword || 'changeme';
     
-    startCommand = `cd ${paths.sharedPath} && ./ShooterGame/Binaries/Linux/ShooterGameServer ${map}?listen?Port=${arkPort}?QueryPort=${arkQueryPort}?ServerAdminPassword=${adminPassword} -servergamelog -servergamelogincludetribelogs -NoBattlEye -UseBattlEye -clusterid=${config.clusterId || ''} -ClusterDirOverride=${paths.serverPath}/ShooterGame/Saved`;
+    // FONTOS: Systemd-ben nincs "cd" parancs, teljes útvonalat kell használni
+    // A shared path-ban van a ShooterGameServer bináris, de az instance-specifikus Saved adatok az instance path-ban
+    startCommand = `${paths.sharedPath}/ShooterGame/Binaries/Linux/ShooterGameServer ${map}?listen?Port=${arkPort}?QueryPort=${arkQueryPort}?ServerAdminPassword=${adminPassword} -servergamelog -servergamelogincludetribelogs -NoBattlEye -UseBattlEye -clusterid=${config.clusterId || ''} -ClusterDirOverride=${paths.serverPath}/ShooterGame/Saved`;
+    
+    // Beállítjuk az execDir-t a shared path-ra, hogy a working directory helyes legyen
+    execDir = paths.sharedPath;
   } else {
     // Normál játékok
     // A változók már definiálva vannak az else blokkon kívül
@@ -1599,8 +1608,10 @@ export async function createSystemdServiceForServer(
     }
   }
 
-  const workingDir = paths?.serverPath || `/opt/servers/${serverId}`;
-  let execDir = paths?.isARK && paths.sharedPath ? paths.sharedPath : workingDir;
+  // execDir már definiálva van a startCommand előtt, ha nem, akkor az alapértelmezett workingDir-t használjuk
+  if (!execDir) {
+    execDir = workingDir;
+  }
   
   // Ha a startCommand tartalmazza a "cd" parancsot, akkor eltávolítjuk és módosítjuk a WorkingDirectory-t
   // Systemd-ben nem lehet cd-t használni az ExecStart-ban
