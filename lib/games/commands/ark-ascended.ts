@@ -7,8 +7,8 @@
 
 export const commands = {
   // ARK Ascended: Wine-t használunk a Windows bináris futtatásához
-  // ShooterGameServer.exe: Windows szerver executable
-  startCommand: 'wine ./ShooterGame/Binaries/Win64/ShooterGameServer.exe TheIsland_WP?listen?SessionName="{name}"?Port={port}?QueryPort={queryPort}?ServerPassword=?AdminPassword={adminPassword}?MaxPlayers={maxPlayers} -server -log',
+  // ArkAscendedServer.exe: Windows szerver executable (ARK Ascended)
+  startCommand: 'wine ./ShooterGame/Binaries/Win64/ArkAscendedServer.exe TheIsland_WP?listen?SessionName="{name}"?Port={port}?QueryPort={queryPort}?ServerPassword=?AdminPassword={adminPassword}?MaxPlayers={maxPlayers} -server -log',
   stopCommand: 'quit',
 };
 
