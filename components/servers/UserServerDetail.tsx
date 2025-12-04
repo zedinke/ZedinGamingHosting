@@ -13,6 +13,7 @@ import { ServerUpdateButton } from './ServerUpdateButton';
 import { CronJobManager } from './CronJobManager';
 import { SFTPInfo } from './SFTPInfo';
 import { UserServerBackupManager } from './UserServerBackupManager';
+import { UserGameConsoleManager } from './UserGameConsoleManager';
 
 interface Server {
   id: string;
@@ -49,7 +50,7 @@ export function UserServerDetail({ server, locale }: UserServerDetailProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [serverStatus, setServerStatus] = useState(server.status);
-  const [activeTab, setActiveTab] = useState<'info' | 'config' | 'config-file' | 'cron' | 'sftp' | 'backup'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'console' | 'config' | 'config-file' | 'cron' | 'sftp' | 'backup'>('info');
   const [isInstalled, setIsInstalled] = useState<boolean | null>(null);
   const [installProgress, setInstallProgress] = useState<any>(null);
   const [serverData, setServerData] = useState<Server>(server);
@@ -335,6 +336,16 @@ export function UserServerDetail({ server, locale }: UserServerDetailProps) {
               Információk
             </button>
             <button
+              onClick={() => setActiveTab('console')}
+              className={`px-4 py-3 border-b-2 font-medium transition-colors ${
+                activeTab === 'console'
+                  ? 'border-primary-600 text-primary-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Konzol
+            </button>
+            <button
               onClick={() => setActiveTab('config')}
               className={`px-4 py-3 border-b-2 font-medium transition-colors ${
                 activeTab === 'config'
@@ -613,6 +624,12 @@ export function UserServerDetail({ server, locale }: UserServerDetailProps) {
         </div>
       )}
         </>
+      )}
+
+      {activeTab === 'console' && (
+        <div className="space-y-6">
+          <UserGameConsoleManager serverId={server.id} />
+        </div>
       )}
 
       {activeTab === 'config' && (
