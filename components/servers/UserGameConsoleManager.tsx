@@ -6,6 +6,7 @@ import { Terminal, Settings, Package, RefreshCw, Pause, Play, Save, Download } f
 
 interface UserGameConsoleManagerProps {
   serverId: string;
+  gameType?: string;
 }
 
 interface ConfigFile {
@@ -19,7 +20,7 @@ interface Mod {
   category: string;
 }
 
-export function UserGameConsoleManager({ serverId }: UserGameConsoleManagerProps) {
+export function UserGameConsoleManager({ serverId, gameType }: UserGameConsoleManagerProps) {
   const [activeTab, setActiveTab] = useState<'console' | 'config' | 'mods'>('console');
   const [loading, setLoading] = useState(false);
   
@@ -40,11 +41,24 @@ export function UserGameConsoleManager({ serverId }: UserGameConsoleManagerProps
   const [passiveMods, setPassiveMods] = useState<string[]>([]);
   const [modsSaving, setModsSaving] = useState(false);
 
-  const configFiles: ConfigFile[] = [
-    { name: 'GameUserSettings.ini', label: 'GameUserSettings.ini' },
-    { name: 'Game.ini', label: 'Game.ini' },
-    { name: 'server.properties', label: 'Server Properties' },
-  ];
+  // ARK szerverek specifikus config fájlok
+  const isARK = gameType?.includes('ARK');
+  
+  const getConfigFiles = (): ConfigFile[] => {
+    if (isARK) {
+      return [
+        { name: 'GameUserSettings.ini', label: 'GameUserSettings.ini (Egyedi beállítások)' },
+        { name: 'Game.ini', label: 'Game.ini (Szerver beállítások)' },
+      ];
+    }
+    return [
+      { name: 'GameUserSettings.ini', label: 'GameUserSettings.ini' },
+      { name: 'Game.ini', label: 'Game.ini' },
+      { name: 'server.properties', label: 'Server Properties' },
+    ];
+  };
+  
+  const configFiles = getConfigFiles();
 
   const tabs = [
     { id: 'console', label: 'Játék Console', icon: <Terminal className="w-4 h-4" /> },

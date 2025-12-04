@@ -60,7 +60,7 @@ export async function GET(
     const machine = server.agent.machine;
     const gameConfig = ALL_GAME_SERVER_CONFIGS[server.gameType];
 
-    if (!gameConfig || !gameConfig.configPath) {
+    if (!gameConfig) {
       return NextResponse.json(
         { error: 'Ehhez a játék típushoz nincs konfigurációs fájl' },
         { status: 400 }
@@ -69,17 +69,23 @@ export async function GET(
 
     // Konfigurációs fájl elérési út meghatározása
     const isARK = server.gameType === 'ARK_EVOLVED' || server.gameType === 'ARK_ASCENDED';
-    let serverPath: string;
+    const fileName = request.nextUrl.searchParams.get('file') || 'GameUserSettings.ini';
+    let configPath: string;
     
     if (isARK) {
+      // ARK szerverek a shared mappában vannak
       const { getARKSharedPath } = await import('@/lib/ark-cluster');
       const sharedPath = getARKSharedPath(server.userId, server.machineId!);
-      serverPath = `${sharedPath}/instances/${server.id}`;
+      // ARK config fájlok az instances/{serverId}/Saved/Config/LinuxServer/ alatt
+      configPath = `${sharedPath}/instances/${server.id}/Saved/Config/LinuxServer/${fileName}`;
     } else {
-      serverPath = `/opt/servers/${server.id}`;
+      // Más szerverek az /opt/servers/{serverId} alatt
+      if (gameConfig.configPath) {
+        configPath = gameConfig.configPath.replace(/{serverId}/g, server.id);
+      } else {
+        configPath = `/opt/servers/${server.id}/${fileName}`;
+      }
     }
-
-    const configPath = gameConfig.configPath.replace(/{serverId}/g, server.id);
 
     // Konfigurációs fájl olvasása SSH-n keresztül
     try {
@@ -161,7 +167,7 @@ export async function PUT(
     const { id } = params;
     const userId = (session.user as any).id;
     const body = await request.json();
-    const { content } = body;
+    const { content, fileName } = body;
 
     if (typeof content !== 'string') {
       return NextResponse.json(
@@ -206,7 +212,7 @@ export async function PUT(
     const machine = server.agent.machine;
     const gameConfig = ALL_GAME_SERVER_CONFIGS[server.gameType];
 
-    if (!gameConfig || !gameConfig.configPath) {
+    if (!gameConfig) {
       return NextResponse.json(
         { error: 'Ehhez a játék típushoz nincs konfigurációs fájl' },
         { status: 400 }
@@ -215,17 +221,23 @@ export async function PUT(
 
     // Konfigurációs fájl elérési út meghatározása
     const isARK = server.gameType === 'ARK_EVOLVED' || server.gameType === 'ARK_ASCENDED';
-    let serverPath: string;
+    const configFileName = fileName || 'GameUserSettings.ini';
+    let configPath: string;
     
     if (isARK) {
+      // ARK szerverek a shared mappában vannak
       const { getARKSharedPath } = await import('@/lib/ark-cluster');
       const sharedPath = getARKSharedPath(server.userId, server.machineId!);
-      serverPath = `${sharedPath}/instances/${server.id}`;
+      // ARK config fájlok az instances/{serverId}/Saved/Config/LinuxServer/ alatt
+      configPath = `${sharedPath}/instances/${server.id}/Saved/Config/LinuxServer/${configFileName}`;
     } else {
-      serverPath = `/opt/servers/${server.id}`;
+      // Más szerverek az /opt/servers/{serverId} alatt
+      if (gameConfig.configPath) {
+        configPath = gameConfig.configPath.replace(/{serverId}/g, server.id);
+      } else {
+        configPath = `/opt/servers/${server.id}/${configFileName}`;
+      }
     }
-
-    const configPath = gameConfig.configPath.replace(/{serverId}/g, server.id);
 
     // IP, port és slot szám védelem - ezeket ne lehessen módosítani
     // A tartalmat ellenőrizzük és kicseréljük a védett értékeket

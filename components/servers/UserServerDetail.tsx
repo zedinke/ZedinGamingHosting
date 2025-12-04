@@ -628,7 +628,7 @@ export function UserServerDetail({ server, locale }: UserServerDetailProps) {
 
       {activeTab === 'console' && (
         <div className="space-y-6">
-          <UserGameConsoleManager serverId={server.id} />
+          <UserGameConsoleManager serverId={server.id} gameType={server.gameType} />
         </div>
       )}
 
