@@ -1204,6 +1204,24 @@ export async function createSystemdServiceForServer(
     throw new Error(`Config objektum hiányzik vagy érvénytelen: ${JSON.stringify(config)}`);
   }
   
+  // Ha paths nincs megadva, de ARK szerver, akkor generáljuk az ARK paths-ot
+  const isARK = gameType === 'ARK_EVOLVED' || gameType === 'ARK_ASCENDED';
+  if (!paths && isARK) {
+    const server = await prisma.server.findUnique({
+      where: { id: serverId },
+      select: { userId: true, machineId: true },
+    });
+    if (server && server.machineId) {
+      const { getARKSharedPath } = await import('./ark-cluster');
+      const sharedPath = getARKSharedPath(server.userId, server.machineId);
+      paths = {
+        isARK: true,
+        sharedPath,
+        serverPath: `${sharedPath}/instances/${serverId}`,
+      };
+    }
+  }
+  
   // Port lekérése az adatbázisból, hogy a helyes portot használjuk
   // Ez biztosítja, hogy a generált port mindig használatban legyen
   const serverFromDb = await prisma.server.findUnique({
