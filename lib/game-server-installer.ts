@@ -1016,8 +1016,10 @@ async function checkARKSharedInstallation(
   const { getARKSharedPath } = await import('./ark-cluster');
   const sharedPath = getARKSharedPath(userId, machineId);
   try {
-    const checkCommand = gameType === 'ARK_EVOLVED'
-      ? `test -f ${sharedPath}/ShooterGame/Binaries/Linux/ShooterGameServer && echo "installed" || echo "not_installed"`
+    // ARK Ascended: Windows binárist keresünk (Win64/ArkAscendedServer.exe)
+    // ARK Evolved: Linux binárist keresünk (Linux/ShooterGameServer)
+    const checkCommand = gameType === 'ARK_ASCENDED'
+      ? `test -f ${sharedPath}/ShooterGame/Binaries/Win64/ArkAscendedServer.exe && echo "installed" || echo "not_installed"`
       : `test -f ${sharedPath}/ShooterGame/Binaries/Linux/ShooterGameServer && echo "installed" || echo "not_installed"`;
     
     const result = await executeSSHCommand(
@@ -1103,7 +1105,8 @@ async function installARKSharedFiles(
       # Ellenőrizzük, hogy a telepítés sikeres volt-e
       if [ -d "${sharedPath}/ShooterGame" ] || [ -d "${sharedPath}/steamapps/common/ARK Survival Ascended" ] || [ -d "${sharedPath}/steamapps/common/ARK" ]; then
         # Ellenőrizzük, hogy a bináris fájl létezik-e
-        if [ -f "${sharedPath}/ShooterGame/Binaries/Linux/ShooterGameServer" ]; then
+        # ARK Ascended: Win64/ArkAscendedServer.exe; ARK Evolved: Linux/ShooterGameServer
+        if [ -f "${sharedPath}/ShooterGame/Binaries/Win64/ArkAscendedServer.exe" ] || [ -f "${sharedPath}/ShooterGame/Binaries/Linux/ShooterGameServer" ]; then
           INSTALL_SUCCESS=true
           echo "Telepítés sikeres! Bináris fájl megtalálható."
           break
@@ -1137,6 +1140,11 @@ async function installARKSharedFiles(
     chmod -R 755 ${sharedPath}
     
     # Executable jogok beállítása a szerver binárisra
+    # ARK Ascended: Win64/ArkAscendedServer.exe (Wine-on keresztül futtatva)
+    # ARK Evolved: Linux/ShooterGameServer
+    if [ -f "${sharedPath}/ShooterGame/Binaries/Win64/ArkAscendedServer.exe" ]; then
+      chmod +x "${sharedPath}/ShooterGame/Binaries/Win64/ArkAscendedServer.exe"
+    fi
     if [ -f "${sharedPath}/ShooterGame/Binaries/Linux/ShooterGameServer" ]; then
       chmod +x "${sharedPath}/ShooterGame/Binaries/Linux/ShooterGameServer"
     fi
@@ -1357,9 +1365,17 @@ export async function createSystemdServiceForServer(
     const arkQueryPort = serverWithPortsARKTyped?.queryPort || (gameConfig.queryPort || arkPort + 1);
     const adminPassword = config.adminPassword || 'changeme';
     
-    // FONTOS: Systemd-ben nincs "cd" parancs, teljes útvonalat kell használni
-    // A shared path-ban van a ShooterGameServer bináris, de az instance-specifikus Saved adatok az instance path-ban
-    startCommand = `${paths.sharedPath}/ShooterGame/Binaries/Linux/ShooterGameServer ${map}?listen?Port=${arkPort}?QueryPort=${arkQueryPort}?ServerAdminPassword=${adminPassword} -servergamelog -servergamelogincludetribelogs -NoBattlEye -UseBattlEye -clusterid=${config.clusterId || ''} -ClusterDirOverride=${paths.serverPath}/ShooterGame/Saved`;
+    // FONTOS: ARK Ascended-nél a Wine64-et és Windows binárist (Win64/ArkAscendedServer.exe) használjuk
+    // ARK Evolved-nél a Linux binárist (Linux/ShooterGameServer) használjuk
+    // A shared path-ban van az összes bináris, de az instance-specifikus Saved adatok az instance path-ban
+    
+    if (gameType === 'ARK_ASCENDED') {
+      // ARK Ascended: Windows bináris Wine-on keresztül
+      startCommand = `export WINEPREFIX=${paths.serverPath}/.wine && export WINE_CPU_TOPOLOGY=4:2 && export DISPLAY=:99 && Xvfb :99 -screen 0 1024x768x24 &>/dev/null & sleep 1 && wine64 ${paths.sharedPath}/ShooterGame/Binaries/Win64/ArkAscendedServer.exe ${map}?listen?Port=${arkPort}?QueryPort=${arkQueryPort}?ServerAdminPassword=${adminPassword} -servergamelog -servergamelogincludetribelogs -NoBattlEye -UseBattlEye -clusterid=${config.clusterId || ''} -ClusterDirOverride=${paths.serverPath}/ShooterGame/Saved`;
+    } else {
+      // ARK Evolved: Linux bináris (hagyományos)
+      startCommand = `${paths.sharedPath}/ShooterGame/Binaries/Linux/ShooterGameServer ${map}?listen?Port=${arkPort}?QueryPort=${arkQueryPort}?ServerAdminPassword=${adminPassword} -servergamelog -servergamelogincludetribelogs -NoBattlEye -UseBattlEye -clusterid=${config.clusterId || ''} -ClusterDirOverride=${paths.serverPath}/ShooterGame/Saved`;
+    }
     
     // Beállítjuk az execDir-t a shared path-ra, hogy a working directory helyes legyen
     execDir = paths.sharedPath;
