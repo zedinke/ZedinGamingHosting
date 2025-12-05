@@ -7,7 +7,7 @@ generator client {
 
 datasource db {
   provider = "sqlite" // SQLite - nincs szükség külső adatbázis szerverre
-  url      = env("DATABASE_URL")
+  url      = "file:./data/database.db"
 }
 
 // Felhasználók (csak admin)
@@ -18,7 +18,7 @@ model User {
   password         String? // Hashelt jelszó
   name             String?
   image            String?
-  role             UserRole  @default(ADMIN) // Alapértelmezetten csak ADMIN
+  role             String    @default("ADMIN") // Alapértelmezetten csak ADMIN
   twoFactorEnabled Boolean   @default(false)
   twoFactorSecret  String?
   createdAt        DateTime  @default(now())
@@ -28,10 +28,6 @@ model User {
   sessions  Session[]
 
   @@map("users")
-}
-
-enum UserRole {
-  ADMIN // Csak admin szerepkör
 }
 
 // OAuth fiókok (Google, Discord)
@@ -89,14 +85,14 @@ model SystemLicense {
   isTrial         Boolean  @default(false)
   
   // License típus
-  licenseType     LicenseType @default(MONTHLY)
+  licenseType     String @default("MONTHLY") // TRIAL, MONTHLY, YEARLY, LIFETIME
   maxUsers        Int?     // Korlátlan ha null
   maxServers      Int?     // Korlátlan ha null
-  
+
   // Telepítés információk
   installationId  String   @unique // Egyedi telepítés ID
   domain          String?  // Telepített domain
-  serverInfo      Json?    // Szerver információk (IP, stb.)
+  serverInfo      String?  // Szerver információk JSON string (IP, stb.)
   
   // Frissítések
   lastUpdateCheck DateTime?
@@ -108,38 +104,23 @@ model SystemLicense {
   @@map("system_licenses")
 }
 
-enum LicenseType {
-  TRIAL        // 14 napos próba
-  MONTHLY      // Havi előfizetés
-  YEARLY       // Éves előfizetés
-  LIFETIME     // Élethosszig tartó
-}
-
 // Modulok - moduláris rendszer
 model Module {
   id          String       @id @default(cuid())
   name        String       @unique // 'database-mysql', 'database-postgresql', 'email', stb.
   displayName String       // 'MySQL Adatbázis', 'PostgreSQL Adatbázis', 'Email Rendszer'
   description String?     // Modul leírás
-  category    ModuleCategory // 'database', 'communication', 'payment', 'feature'
+  category    String       // 'database', 'communication', 'payment', 'feature'
   version     String       // Modul verzió
   isInstalled Boolean      @default(false)
   isActive    Boolean      @default(false)
-  config      Json?        // Modul konfiguráció
+  config      String?      // Modul konfiguráció JSON string
   installedAt DateTime?
   updatedAt   DateTime     @updatedAt
   
   settings    ModuleSetting[]
   
   @@map("modules")
-}
-
-enum ModuleCategory {
-  DATABASE
-  COMMUNICATION
-  PAYMENT
-  FEATURE
-  INTEGRATION
 }
 
 // Modul beállítások

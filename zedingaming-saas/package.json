@@ -11,7 +11,7 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
-    "install": "node scripts/install.js",
+    "install": "npm install --ignore-scripts",
     "setup:admin": "tsx scripts/setup-admin.ts",
     "check:license": "tsx scripts/check-license.ts",
     "check:updates": "tsx scripts/check-updates.ts"

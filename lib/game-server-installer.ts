@@ -626,9 +626,12 @@ fi
     }
     
     // Frissítjük a config objektumot a helyes porttal és a configuration adatokkal
+    // ARK-nál biztosítjuk, hogy van map
     const configWithPort = {
       ...config,
       port: actualPort,
+      // ARK_ASCENDED-nél biztosítjuk, hogy van térkép
+      ...(gameType === 'ARK_ASCENDED' && !config.map ? { map: serverConfiguration.map || 'TheIsland_WP' } : {}),
       // Satisfactory-nál a GamePort és BeaconPort a configuration JSON-ből jön
       ...(gameType === 'SATISFACTORY' && serverConfiguration.gamePort ? { gamePort: serverConfiguration.gamePort } : {}),
       ...(gameType === 'SATISFACTORY' && serverConfiguration.beaconPort ? { beaconPort: serverConfiguration.beaconPort } : {}),

@@ -32,9 +32,12 @@ export function generateConfig(config: {
   difficulty?: number;
   [key: string]: any;
 }): string {
-  // Validálás
-  if (!config.map || !config.map.includes('_WP')) {
-    throw new Error(`HIBA: Érvénytelen térkép: ${config.map}. Támogatott térképek: TheIsland_WP, ScorchedEarth_WP stb.`);
+  // Alapértelmezett térkép: TheIsland_WP
+  const map = config.map || 'TheIsland_WP';
+  
+  // Validálás: térkép végződnie kell "_WP"-vel
+  if (!map.includes('_WP')) {
+    throw new Error(`HIBA: Érvénytelen térkép: ${map}. Támogatott térképek: TheIsland_WP, ScorchedEarth_WP, Ragnarok_WP stb.`);
   }
 
   if (config.maxPlayers < 2 || config.maxPlayers > 255) {
@@ -65,7 +68,7 @@ ServerAdminPassword=${adminPassword}
 ServerPassword=${serverPassword}
 ServerName=${config.name}
 Difficulty=${difficulty}
-Map=${config.map}
+Map=${map}
 ${clusterId ? `ClusterDirOverride=/mnt/cluster/${clusterId}` : ''}
 ${clusterId ? `ClusterId=${clusterId}` : ''}
 
