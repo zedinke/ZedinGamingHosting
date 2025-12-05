@@ -1,0 +1,128 @@
+version: '3.9'
+
+services:
+  # ARK: Survival Ascended Server
+  ark-ascended-${SERVER_ID}:
+    image: zedin-gaming/ark-ascended:latest
+    container_name: ark-ascended-${SERVER_ID}
+    environment:
+      # Server Configuration
+      - SERVER_NAME=${SERVER_NAME}
+      - SERVER_PORT=${SERVER_PORT}
+      - QUERY_PORT=${QUERY_PORT}
+      - STEAM_API_KEY=${STEAM_API_KEY}
+      
+      # Game Settings
+      - MAP_NAME=${MAP_NAME:-TheIsland_WP}
+      - MAX_PLAYERS=${MAX_PLAYERS:-70}
+      - DIFFICULTY=${DIFFICULTY:-1.0}
+      - SERVER_PASSWORD=${SERVER_PASSWORD:-}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      
+      # Cluster Configuration (optional)
+      - CLUSTER_ID=${CLUSTER_ID:-}
+      - CLUSTER_MODE=${CLUSTER_MODE:-false}
+      
+      # Server Config
+      - ENABLE_PVP=${ENABLE_PVP:-true}
+      - ENABLE_CROSSHAIR=${ENABLE_CROSSHAIR:-true}
+      - DISABLE_STRUCTURE_PLACEMENT_COLLISION=${DISABLE_STRUCTURE_PLACEMENT_COLLISION:-false}
+      - OVERRIDE_DIFFICULTY_OFFSET=${OVERRIDE_DIFFICULTY_OFFSET:-1.0}
+      
+      # Advanced Settings
+      - CUSTOM_ENGINE_INI=${CUSTOM_ENGINE_INI:-}
+      - CUSTOM_GAME_INI=${CUSTOM_GAME_INI:-}
+    ports:
+      - "${SERVER_PORT}:${SERVER_PORT}/tcp"
+      - "${SERVER_PORT}:${SERVER_PORT}/udp"
+      - "${QUERY_PORT}:${QUERY_PORT}/tcp"
+      - "${QUERY_PORT}:${QUERY_PORT}/udp"
+    volumes:
+      - ark-ascended-${SERVER_ID}-data:/data
+      - ark-cluster-${CLUSTER_ID}:/cluster
+    networks:
+      - ark-network
+    restart: unless-stopped
+    mem_limit: ${RAM_MB:-8192}m
+    cpu_shares: 1024
+    labels:
+      - "zed.game=ark-ascended"
+      - "zed.server-id=${SERVER_ID}"
+      - "zed.cluster-id=${CLUSTER_ID:-none}"
+    depends_on:
+      - ark-network-bridge
+
+  # ARK: Survival Evolved Server
+  ark-evolved-${SERVER_ID}:
+    image: zedin-gaming/ark-evolved:latest
+    container_name: ark-evolved-${SERVER_ID}
+    environment:
+      # Server Configuration
+      - SERVER_NAME=${SERVER_NAME}
+      - SERVER_PORT=${SERVER_PORT}
+      - QUERY_PORT=${QUERY_PORT}
+      - STEAM_API_KEY=${STEAM_API_KEY}
+      
+      # Game Settings
+      - MAP_NAME=${MAP_NAME:-TheIsland_P}
+      - MAX_PLAYERS=${MAX_PLAYERS:-70}
+      - DIFFICULTY=${DIFFICULTY:-1.0}
+      - SERVER_PASSWORD=${SERVER_PASSWORD:-}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      
+      # Cluster Configuration (optional)
+      - CLUSTER_ID=${CLUSTER_ID:-}
+      - CLUSTER_MODE=${CLUSTER_MODE:-false}
+      
+      # Server Config
+      - ENABLE_PVP=${ENABLE_PVP:-true}
+      - ENABLE_CROSSHAIR=${ENABLE_CROSSHAIR:-true}
+      - DISABLE_STRUCTURE_PLACEMENT_COLLISION=${DISABLE_STRUCTURE_PLACEMENT_COLLISION:-false}
+      - OVERRIDE_DIFFICULTY_OFFSET=${OVERRIDE_DIFFICULTY_OFFSET:-1.0}
+      
+      # Advanced Settings
+      - CUSTOM_ENGINE_INI=${CUSTOM_ENGINE_INI:-}
+      - CUSTOM_GAME_INI=${CUSTOM_GAME_INI:-}
+    ports:
+      - "${SERVER_PORT}:${SERVER_PORT}/tcp"
+      - "${SERVER_PORT}:${SERVER_PORT}/udp"
+      - "${QUERY_PORT}:${QUERY_PORT}/tcp"
+      - "${QUERY_PORT}:${QUERY_PORT}/udp"
+    volumes:
+      - ark-evolved-${SERVER_ID}-data:/data
+      - ark-cluster-${CLUSTER_ID}:/cluster
+    networks:
+      - ark-network
+    restart: unless-stopped
+    mem_limit: ${RAM_MB:-8192}m
+    cpu_shares: 1024
+    labels:
+      - "zed.game=ark-evolved"
+      - "zed.server-id=${SERVER_ID}"
+      - "zed.cluster-id=${CLUSTER_ID:-none}"
+    depends_on:
+      - ark-network-bridge
+
+  # Network bridge container for cluster communication
+  ark-network-bridge:
+    image: alpine:latest
+    container_name: ark-network-bridge
+    command: sh -c "while true; do sleep 30; done"
+    networks:
+      - ark-network
+    restart: unless-stopped
+
+volumes:
+  ark-ascended-${SERVER_ID}-data:
+    driver: local
+  ark-evolved-${SERVER_ID}-data:
+    driver: local
+  ark-cluster-${CLUSTER_ID}:
+    driver: local
+
+networks:
+  ark-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

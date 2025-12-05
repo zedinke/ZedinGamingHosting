@@ -1,0 +1,302 @@
+version: '3.8'
+
+services:
+  # ARK Ascended Primary Server
+  ark-ascended-primary:
+    build:
+      context: ./docker
+      dockerfile: ./ark-ascended/Dockerfile
+    image: ark-ascended:latest
+    container_name: ark-ascended-primary
+    hostname: ark-ascended-primary
+    
+    ports:
+      - "${HOST_IP:-0.0.0.0}:7777:7777/udp"
+      - "${HOST_IP:-0.0.0.0}:7778:7778/udp"
+      - "${HOST_IP:-0.0.0.0}:27015:27015"
+    
+    environment:
+      ARK_VERSION: ascended
+      SERVER_NAME: "ARK Ascended - Primary"
+      ADMIN_PASSWORD: "${ASCENDED_ADMIN_PASSWORD:-admin123!@#}"
+      SERVER_PASSWORD: "${ASCENDED_SERVER_PASSWORD:-}"
+      MAX_PLAYERS: 70
+      MAP: Genesis1
+      DIFFICULTY: 0.8
+      PVP: 1
+      ENABLE_CROSSPLAY: 1
+      CLUSTER_ENABLED: 1
+      CLUSTER_NAME: "ark-ascended-cluster"
+      DATA_DIR: /ark/data
+      BACKUP_DIR: /ark/backups
+      LOG_DIR: /ark/logs
+      WINE_CPU_TOPOLOGY: "4:2"
+      WINE_SHARED_MEMORY: "1"
+      DXVK_HUD: "memory,fps"
+    
+    volumes:
+      - ark-ascended-primary-data:/ark/server
+      - ark-ascended-primary-game:/ark/data
+      - ark-ascended-primary-backup:/ark/backups
+      - ark-ascended-primary-logs:/ark/logs
+    
+    restart: unless-stopped
+    
+    resources:
+      limits:
+        memory: 16g
+        cpus: '4'
+      reservations:
+        memory: 16g
+        cpus: '4'
+    
+    networks:
+      - ark-network
+    
+    healthcheck:
+      test: ["CMD", "powershell", "-Command", "if ((Get-Process ArkAscendedServer -ErrorAction SilentlyContinue) -ne $null) { exit 0 } else { exit 1 }"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 300s
+    
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+        labels: "service=ark-ascended,role=primary"
+
+  # ARK Ascended Secondary Server (different map)
+  ark-ascended-secondary:
+    build:
+      context: ./docker
+      dockerfile: ./ark-ascended/Dockerfile
+    image: ark-ascended:latest
+    container_name: ark-ascended-secondary
+    hostname: ark-ascended-secondary
+    
+    ports:
+      - "${HOST_IP:-0.0.0.0}:7779:7777/udp"
+      - "${HOST_IP:-0.0.0.0}:7780:7778/udp"
+      - "${HOST_IP:-0.0.0.0}:27016:27015"
+    
+    environment:
+      ARK_VERSION: ascended
+      SERVER_NAME: "ARK Ascended - Secondary"
+      ADMIN_PASSWORD: "${ASCENDED_ADMIN_PASSWORD:-admin123!@#}"
+      SERVER_PASSWORD: "${ASCENDED_SERVER_PASSWORD:-}"
+      MAX_PLAYERS: 70
+      MAP: Extinction
+      DIFFICULTY: 0.9
+      PVP: 0
+      ENABLE_CROSSPLAY: 1
+      CLUSTER_ENABLED: 1
+      CLUSTER_NAME: "ark-ascended-cluster"
+      DATA_DIR: /ark/data
+      BACKUP_DIR: /ark/backups
+      LOG_DIR: /ark/logs
+      WINE_CPU_TOPOLOGY: "4:2"
+      WINE_SHARED_MEMORY: "1"
+      DXVK_HUD: "fps"
+    
+    volumes:
+      - ark-ascended-secondary-data:/ark/server
+      - ark-ascended-secondary-game:/ark/data
+      - ark-ascended-secondary-backup:/ark/backups
+      - ark-ascended-secondary-logs:/ark/logs
+    
+    restart: unless-stopped
+    
+    resources:
+      limits:
+        memory: 16g
+        cpus: '4'
+      reservations:
+        memory: 16g
+        cpus: '4'
+    
+    networks:
+      - ark-network
+    
+    depends_on:
+      - ark-ascended-primary
+    
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+        labels: "service=ark-ascended,role=secondary"
+
+  # ARK Evolved Primary Server
+  ark-evolved-primary:
+    build:
+      context: ./docker
+      dockerfile: ./ark-evolved/Dockerfile
+    image: ark-evolved:latest
+    container_name: ark-evolved-primary
+    hostname: ark-evolved-primary
+    
+    ports:
+      - "${HOST_IP:-0.0.0.0}:7781:7777/udp"
+      - "${HOST_IP:-0.0.0.0}:7782:7778/udp"
+      - "${HOST_IP:-0.0.0.0}:27017:27015"
+    
+    environment:
+      ARK_VERSION: evolved
+      SERVER_NAME: "ARK Evolved - Primary"
+      ADMIN_PASSWORD: "${EVOLVED_ADMIN_PASSWORD:-admin123!@#}"
+      SERVER_PASSWORD: "${EVOLVED_SERVER_PASSWORD:-}"
+      MAX_PLAYERS: 70
+      MAP: TheIsland
+      DIFFICULTY: 0.7
+      PVP: 1
+      ENABLE_CROSSPLAY: 0
+      CLUSTER_ENABLED: 1
+      CLUSTER_NAME: "ark-evolved-cluster"
+      DATA_DIR: /ark/data
+      BACKUP_DIR: /ark/backups
+      LOG_DIR: /ark/logs
+      THREAD_COUNT: 4
+    
+    volumes:
+      - ark-evolved-primary-data:/ark/server
+      - ark-evolved-primary-game:/ark/data
+      - ark-evolved-primary-backup:/ark/backups
+      - ark-evolved-primary-logs:/ark/logs
+    
+    restart: unless-stopped
+    
+    resources:
+      limits:
+        memory: 16g
+        cpus: '4'
+      reservations:
+        memory: 16g
+        cpus: '4'
+    
+    networks:
+      - ark-network
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:27015/health"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 300s
+    
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+        labels: "service=ark-evolved,role=primary"
+
+  # ARK Evolved Secondary Server
+  ark-evolved-secondary:
+    build:
+      context: ./docker
+      dockerfile: ./ark-evolved/Dockerfile
+    image: ark-evolved:latest
+    container_name: ark-evolved-secondary
+    hostname: ark-evolved-secondary
+    
+    ports:
+      - "${HOST_IP:-0.0.0.0}:7783:7777/udp"
+      - "${HOST_IP:-0.0.0.0}:7784:7778/udp"
+      - "${HOST_IP:-0.0.0.0}:27018:27015"
+    
+    environment:
+      ARK_VERSION: evolved
+      SERVER_NAME: "ARK Evolved - Secondary"
+      ADMIN_PASSWORD: "${EVOLVED_ADMIN_PASSWORD:-admin123!@#}"
+      SERVER_PASSWORD: "${EVOLVED_SERVER_PASSWORD:-}"
+      MAX_PLAYERS: 60
+      MAP: LostIsland
+      DIFFICULTY: 0.8
+      PVP: 0
+      ENABLE_CROSSPLAY: 0
+      CLUSTER_ENABLED: 1
+      CLUSTER_NAME: "ark-evolved-cluster"
+      DATA_DIR: /ark/data
+      BACKUP_DIR: /ark/backups
+      LOG_DIR: /ark/logs
+      THREAD_COUNT: 4
+    
+    volumes:
+      - ark-evolved-secondary-data:/ark/server
+      - ark-evolved-secondary-game:/ark/data
+      - ark-evolved-secondary-backup:/ark/backups
+      - ark-evolved-secondary-logs:/ark/logs
+    
+    restart: unless-stopped
+    
+    resources:
+      limits:
+        memory: 16g
+        cpus: '4'
+      reservations:
+        memory: 16g
+        cpus: '4'
+    
+    networks:
+      - ark-network
+    
+    depends_on:
+      - ark-evolved-primary
+    
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+        labels: "service=ark-evolved,role=secondary"
+
+networks:
+  ark-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16
+
+volumes:
+  # ARK Ascended Primary
+  ark-ascended-primary-data:
+    driver: local
+  ark-ascended-primary-game:
+    driver: local
+  ark-ascended-primary-backup:
+    driver: local
+  ark-ascended-primary-logs:
+    driver: local
+  
+  # ARK Ascended Secondary
+  ark-ascended-secondary-data:
+    driver: local
+  ark-ascended-secondary-game:
+    driver: local
+  ark-ascended-secondary-backup:
+    driver: local
+  ark-ascended-secondary-logs:
+    driver: local
+  
+  # ARK Evolved Primary
+  ark-evolved-primary-data:
+    driver: local
+  ark-evolved-primary-game:
+    driver: local
+  ark-evolved-primary-backup:
+    driver: local
+  ark-evolved-primary-logs:
+    driver: local
+  
+  # ARK Evolved Secondary
+  ark-evolved-secondary-data:
+    driver: local
+  ark-evolved-secondary-game:
+    driver: local
+  ark-evolved-secondary-backup:
+    driver: local
+  ark-evolved-secondary-logs:
+    driver: local

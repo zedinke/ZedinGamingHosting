@@ -112,6 +112,84 @@ export async function installGameServer(
       await appendInstallLog(serverId, 'Game szerver telepítés indítása...');
     }
 
+    // ARK Docker-alapú telepítés speciális kezelése
+    if (gameType === 'ARK_ASCENDED' || gameType === 'ARK_EVOLVED') {
+      try {
+        const { ArkDockerInstaller } = await import('./games/ark-docker/installer');
+        
+        if (writeProgress) {
+          await appendInstallLog(serverId, `Docker-alapú ARK telepítés indítása: ${gameType}`);
+        }
+        
+        const installer = new ArkDockerInstaller({
+          serverId,
+          serverName: config.name,
+          gameType: gameType === 'ARK_ASCENDED' ? 'ascended' : 'evolved',
+          mapName: config.map || (gameType === 'ARK_ASCENDED' ? 'TheIsland_WP' : 'TheIsland'),
+          maxPlayers: config.maxPlayers || 70,
+          difficulty: 1.0,
+          serverPort: config.port,
+          queryPort: (config.port || 27015) + 1,
+          steamApiKey: '',
+          adminPassword: config.adminPassword || 'adminpass',
+          serverPassword: config.password,
+          enablePvp: true,
+          enableTaming: true,
+          enableCrossgameTransfer: !!config.clusterId,
+          clusterName: config.clusterId,
+        });
+        
+        // Progress frissítés
+        if (writeProgress) {
+          await appendInstallLog(serverId, `ARK Docker telepítés megkezdődött...`);
+        }
+        
+        // Docker telepítés indítása
+        await installer.install();
+        
+        if (writeProgress) {
+          await writeInstallProgress(serverId, {
+            status: 'completed',
+            message: 'Docker-alapú ARK szerver telepítve',
+            progress: 100,
+          });
+          await appendInstallLog(serverId, `✅ Docker-alapú ARK telepítés sikeres: ${installer.getContainerId()}`);
+        }
+        
+        logger.info('ARK Docker installation successful', {
+          serverId,
+          gameType,
+          containerId: installer.getContainerId(),
+        });
+        
+        return {
+          success: true,
+        };
+      } catch (arkError) {
+        const error = arkError instanceof Error ? arkError.message : String(arkError);
+        logger.error('ARK Docker installation failed', {
+          serverId,
+          gameType,
+          error,
+        });
+        
+        if (writeProgress) {
+          await writeInstallProgress(serverId, {
+            status: 'error',
+            message: `Docker ARK telepítés sikertelen: ${error}`,
+            progress: 0,
+            error,
+          });
+          await appendInstallLog(serverId, `❌ Docker ARK telepítés sikertelen: ${error}`);
+        }
+        
+        return {
+          success: false,
+          error: `Docker ARK telepítés sikertelen: ${error}`,
+        };
+      }
+    }
+
     const server = await prisma.server.findUnique({
       where: { id: serverId },
       include: {

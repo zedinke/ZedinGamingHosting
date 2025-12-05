@@ -1,13 +1,13 @@
 /**
  * Összes játék telepítő scriptjének index fájlja
  * Automatikusan összegyűjti az összes telepítőt
+ * ARK: Docker-alapú implementáció (teljesen új architektúra)
  */
 
 import { GameType } from '@prisma/client';
 
-// Importáljuk az összes telepítőt
-import { installScript as arkEvolvedInstaller } from './ark-evolved';
-import { installScript as arkAscendedInstaller } from './ark-ascended';
+// Docker-alapú ARK installerek
+import { ArkDockerInstaller } from '../ark-docker/installer';
 import { installScript as minecraftInstaller } from './minecraft';
 import { installScript as satisfactoryInstaller } from './satisfactory';
 import { installScript as rustInstaller } from './rust';
@@ -49,9 +49,14 @@ import { installScript as deathStrandingInstaller } from './death-stranding';
 // TODO: További játékok importálása...
 // Játékok listája: lib/games/README.md
 
-export const GAME_INSTALLERS: Partial<Record<GameType, string>> = {
-  ARK_EVOLVED: arkEvolvedInstaller,
-  ARK_ASCENDED: arkAscendedInstaller,
+/**
+ * GAME_INSTALLERS: Minden játékhoz az install script módja
+ * ARK: Most Docker-alapú installereket használunk (ArkDockerInstaller)
+ * Egyéb játékok: String alapú install scriptjei
+ */
+export const GAME_INSTALLERS: Partial<Record<GameType, any>> = {
+  ARK_EVOLVED: ArkDockerInstaller,
+  ARK_ASCENDED: ArkDockerInstaller,
   MINECRAFT: minecraftInstaller,
   SATISFACTORY: satisfactoryInstaller,
   RUST: rustInstaller,
