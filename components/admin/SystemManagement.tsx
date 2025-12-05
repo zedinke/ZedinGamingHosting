@@ -126,13 +126,18 @@ export function SystemManagement({
 
     try {
       // POST a frissítés indításához (10+ perc timeout)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 perc timeout
+      
       const response = await fetch(`/api/admin/system/update`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        signal: AbortSignal.timeout(120000), // 2 perc timeout az indítás request-hez
+        signal: controller.signal,
       });
+      
+      clearTimeout(timeoutId);
 
       const result = await response.json();
 
@@ -164,15 +169,20 @@ export function SystemManagement({
         }
 
         try {
-          // Abort ha 30 másodpercnél hosszabb
+          // Use AbortController for timeout (30 seconds)
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 30000);
+          
           const progressResponse = await fetch(
             `/api/admin/system/update/status?t=${Date.now()}`,
             {
               cache: 'no-store',
               headers: { 'Cache-Control': 'no-cache' },
-              signal: AbortSignal.timeout(30000), // 30 sec timeout
+              signal: controller.signal,
             }
           );
+          
+          clearTimeout(timeoutId);
           
           if (!progressResponse.ok) {
             if (pollCount < 5) {
