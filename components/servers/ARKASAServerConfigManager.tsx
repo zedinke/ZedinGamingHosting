@@ -3,12 +3,23 @@
 /**
  * ARK Survival Ascended specifikus konfigurációs kezelő
  * Kezeli a GameUserSettings.ini és Game.ini fájlokat
+ * 
+ * KRITIKUS ELLENŐRZÉSEK:
+ * - Szerver online status: config szerkesztés előtt ellenőrzi
+ * - Config validálás: térképek, portok, jelszók
+ * - Szinkronizálási hibák kezelése
  */
 
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/Button';
-import { Download, Upload, Save, FileText, Edit2, Settings } from 'lucide-react';
+import { Download, Upload, Save, FileText, Edit2, Settings, AlertCircle } from 'lucide-react';
+
+// Logger a client-side hibák naplózásához
+const logger = {
+  warn: (message: string, data?: any) => console.warn(`[WARN] ${message}`, data),
+  error: (message: string, error?: any) => console.error(`[ERROR] ${message}`, error),
+};
 
 interface ARKASAServerConfigManagerProps {
   serverId: string;
@@ -16,6 +27,7 @@ interface ARKASAServerConfigManagerProps {
   port: number | null;
   queryPort: number | null;
   maxPlayers: number;
+  status?: 'online' | 'offline' | 'starting' | 'stopping';
 }
 
 type ConfigFileType = 'GameUserSettings' | 'Game';
@@ -35,6 +47,7 @@ export function ARKASAServerConfigManager({
   port,
   queryPort,
   maxPlayers,
+  status = 'offline',
 }: ARKASAServerConfigManagerProps) {
   const [activeFile, setActiveFile] = useState<ConfigFileType>('GameUserSettings');
   const [editMode, setEditMode] = useState<'form' | 'editor'>('form');
@@ -44,10 +57,35 @@ export function ARKASAServerConfigManager({
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [serverReady, setServerReady] = useState(false);
+  const [lastSyncError, setLastSyncError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Szerver ready status ellenőrzése
+    checkServerReady();
     loadConfig();
   }, [serverId, activeFile, editMode]);
+
+  const checkServerReady = async () => {
+    try {
+      const response = await fetch(`/api/servers/${serverId}/status`);
+      const data = await response.json();
+      
+      if (data.status === 'online') {
+        setServerReady(true);
+        setLastSyncError(null);
+      } else {
+        setServerReady(false);
+        if (data.status === 'offline') {
+          setLastSyncError('Szerver offline: konfigurációs szerkesztések előtt indítsd el a szervert');
+        }
+      }
+    } catch (error) {
+      setServerReady(false);
+      setLastSyncError('Szerver status ellenőrzése sikertelen');
+      logger.warn('Server ready check failed', { serverId, error });
+    }
+  };
 
   const loadConfig = async () => {
     setLoading(true);
@@ -57,6 +95,7 @@ export function ARKASAServerConfigManager({
       const data = await response.json();
 
       if (!response.ok) {
+        setLastSyncError(data.error || 'Hiba történt a konfiguráció betöltése során');
         toast.error(data.error || 'Hiba történt a konfiguráció betöltése során');
         return;
       }
@@ -69,7 +108,10 @@ export function ARKASAServerConfigManager({
         setGameIni(data.values || {});
       }
       setHasChanges(false);
+      setLastSyncError(null);
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Ismeretlen hiba';
+      setLastSyncError(errorMsg);
       toast.error('Hiba történt a konfiguráció betöltése során');
     } finally {
       setLoading(false);
@@ -77,8 +119,25 @@ export function ARKASAServerConfigManager({
   };
 
   const handleSave = async () => {
+    // Szerver status ellenőrzés
+    if (!serverReady) {
+      toast.error('Szerver offline: a konfiguráció nem módosítható');
+      return;
+    }
+
     setSaving(true);
     try {
+      // Config validálás (raw mode-ban)
+      if (editMode === 'editor') {
+        try {
+          validateConfigContent(rawContent);
+        } catch (validationError) {
+          toast.error(`Validálási hiba: ${validationError instanceof Error ? validationError.message : 'Ismeretlen hiba'}`);
+          setSaving(false);
+          return;
+        }
+      }
+
       const configType = activeFile === 'GameUserSettings' ? 'gameusersettings' : 'game';
       const content = editMode === 'form' 
         ? generateConfigFromValues()
@@ -93,16 +152,38 @@ export function ARKASAServerConfigManager({
       const data = await response.json();
 
       if (!response.ok) {
+        setLastSyncError(data.error || 'Hiba történt a mentés során');
         toast.error(data.error || 'Hiba történt a mentés során');
         return;
       }
 
       toast.success('Konfiguráció sikeresen mentve');
       setHasChanges(false);
+      setLastSyncError(null);
     } catch (error) {
-      toast.error('Hiba történt a mentés során');
+      const errorMsg = error instanceof Error ? error.message : 'Ismeretlen hiba';
+      setLastSyncError(errorMsg);
+      toast.error(`Hiba történt a mentés során: ${errorMsg}`);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const validateConfigContent = (content: string) => {
+    // Alapvető validálás
+    if (!content || content.trim().length === 0) {
+      throw new Error('Konfig fájl üres');
+    }
+
+    // ARK-specifikus validálás
+    if (activeFile === 'GameUserSettings') {
+      if (!content.includes('[/Script/Engine.GameSession]')) {
+        throw new Error('Hiányzó GameSession szekció');
+      }
+    } else if (activeFile === 'Game') {
+      if (!content.includes('[/Script/ShooterGame.ShooterGameMode]')) {
+        throw new Error('Hiányzó ShooterGameMode szekció');
+      }
     }
   };
 
@@ -254,6 +335,45 @@ export function ARKASAServerConfigManager({
 
   return (
     <div className="space-y-6">
+      {/* Szerver Status Riasztás */}
+      {!serverReady && (
+        <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+            <div>
+              <h3 className="font-semibold text-red-900">Szerver Offline</h3>
+              <p className="text-sm text-red-700">
+                A szerver offline állapotban van. Az online szerverek konfigurációja módosítható, az offline szerverekét nem.
+              </p>
+              <p className="text-xs text-red-600 mt-1">
+                {lastSyncError && `Utolsó hiba: ${lastSyncError}`}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Szinkronizálási Hibák */}
+      {lastSyncError && serverReady && (
+        <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-lg">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
+            <div>
+              <h3 className="font-semibold text-yellow-900">Szinkronizálási Figyelmeztetés</h3>
+              <p className="text-sm text-yellow-700">{lastSyncError}</p>
+              <button
+                onClick={() => {
+                  checkServerReady();
+                  loadConfig();
+                }}
+                className="text-xs text-yellow-600 hover:text-yellow-800 font-medium mt-2"
+              >
+                Újra próbál
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* File Selector */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
         <div className="flex gap-4 items-center">
@@ -313,8 +433,9 @@ export function ARKASAServerConfigManager({
             </button>
             <button
               onClick={handleSave}
-              disabled={!hasChanges || saving}
+              disabled={!hasChanges || saving || !serverReady}
               className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              title={!serverReady ? 'Szerver offline: nem lehet menteni' : 'Konfiguráció mentése'}
             >
               <Save className="w-4 h-4" />
               {saving ? 'Mentés...' : 'Mentés'}

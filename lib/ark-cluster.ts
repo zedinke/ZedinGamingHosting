@@ -87,6 +87,14 @@ export async function addServerToCluster(
   serverConfig?: any
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    // Input validálás
+    if (!machine || !machine.ipAddress || !machine.sshPort || !machine.sshUser) {
+      return {
+        success: false,
+        error: 'Szerver gép adatai hiányosak (ipAddress, sshPort, sshUser szükséges)',
+      };
+    }
+
     const server = await prisma.server.findUnique({
       where: { id: serverId },
     });
@@ -100,61 +108,87 @@ export async function addServerToCluster(
 
     // Cluster mappa mount-olása a szerver gépen (ha NFS-t használunk)
     const mountPoint = `${CLUSTER_NFS_PATH}/${clusterId}`;
+    const nfsServer = process.env.ARK_CLUSTER_NFS_SERVER;
     
-    // Ellenőrizzük, hogy már mount-olva van-e
-    const checkMount = await executeSSHCommand(
-      {
-        host: machine.ipAddress,
-        port: machine.sshPort,
-        user: machine.sshUser,
-        keyPath: machine.sshKeyPath || undefined,
-      },
-      `mountpoint -q ${mountPoint} && echo "mounted" || echo "not_mounted"`
-    );
+    logger.info('Adding server to cluster', {
+      serverId,
+      clusterId,
+      machineId: machine.id,
+      mountPoint,
+      hasNFS: !!nfsServer
+    });
+    
+    const sshConfig = {
+      host: machine.ipAddress,
+      port: machine.sshPort || 22,
+      user: machine.sshUser || 'root',
+      keyPath: machine.sshKeyPath || undefined,
+    };
 
-    if (!checkMount.stdout?.includes('mounted')) {
-      // Mount-olás (ha NFS-t használunk)
-      const nfsServer = process.env.ARK_CLUSTER_NFS_SERVER;
-      
-      if (nfsServer) {
+    // Ellenőrizzük, hogy már mount-olva van-e
+    try {
+      const checkMount = await executeSSHCommand(
+        sshConfig,
+        `mountpoint -q "${mountPoint}" && echo "mounted" || echo "not_mounted"`
+      );
+
+      if (!checkMount.stdout?.includes('mounted') && nfsServer) {
+        logger.info('Mounting NFS cluster directory', { clusterId, mountPoint });
+        
         const clusterPath = getARKClusterPath(clusterId);
-        await executeSSHCommand(
-          {
-            host: machine.ipAddress,
-            port: machine.sshPort,
-            user: machine.sshUser,
-            keyPath: machine.sshKeyPath || undefined,
-          },
-          `mkdir -p ${mountPoint} && mount -t nfs ${nfsServer}:${clusterPath} ${mountPoint} || echo "Mount failed, using local path"`
-        );
-      } else {
-        // Ha nincs NFS, lokális path-ot használunk (ugyanaz a gép)
-        logger.warn('NFS server not configured, using local path', { clusterId });
+        
+        // NFS mount attempt
+        try {
+          await executeSSHCommand(
+            sshConfig,
+            `mkdir -p "${mountPoint}" && sudo mount -t nfs -o rw,sync,no_subtree_check "${nfsServer}:${clusterPath}" "${mountPoint}"`
+          );
+          logger.info('NFS mount successful', { clusterId, mountPoint });
+        } catch (mountError) {
+          logger.warn('NFS mount failed, will use local path', { 
+            clusterId,
+            error: mountError instanceof Error ? mountError.message : String(mountError)
+          });
+        }
       }
+    } catch (checkError) {
+      logger.warn('Error checking mount point', { 
+        mountPoint, 
+        error: checkError instanceof Error ? checkError.message : String(checkError)
+      });
     }
 
     // GameUserSettings.ini frissítése cluster beállításokkal
     const currentConfig = (server.configuration as any) || {};
     const machineId = currentConfig.machineId || machine.id;
-    const instancePath = currentConfig.instancePath || getARKSharedPath(server.userId, machineId) + `/instances/${serverId}`;
+    const instancePath = currentConfig.instancePath || 
+      getARKSharedPath(server.userId, machineId) + `/instances/${serverId}`;
     const configPath = `${instancePath}/ShooterGame/Saved/Config/LinuxServer/GameUserSettings.ini`;
     
-    const clusterConfig = `
-[ServerSettings]
+    // Cluster beállítások létrehozása
+    const clusterConfig = `[ServerSettings]
 ClusterDirOverride=${mountPoint}
 ClusterId=${clusterId}
-    `.trim();
+`;
 
-    // Hozzáadjuk a cluster beállításokat a konfigurációhoz
-    await executeSSHCommand(
-      {
-        host: machine.ipAddress,
-        port: machine.sshPort,
-        user: machine.sshUser,
-        keyPath: machine.sshKeyPath || undefined,
-      },
-      `mkdir -p $(dirname ${configPath}) && echo "${clusterConfig}" >> ${configPath}`
-    );
+    // Konfigurációs könyvtár létrehozása és frissítése
+    try {
+      await executeSSHCommand(
+        sshConfig,
+        `mkdir -p "$(dirname "${configPath}")" && echo '${clusterConfig.replace(/'/g, "'\\''")}' >> "${configPath}"`
+      );
+      logger.info('Cluster config added to server', { serverId, clusterId });
+    } catch (configError) {
+      logger.error('Error adding cluster config to server', configError as Error, { 
+        serverId, 
+        clusterId,
+        configPath 
+      });
+      return {
+        success: false,
+        error: `Konfiguráció frissítés sikertelen: ${configError instanceof Error ? configError.message : 'Unknown error'}`,
+      };
+    }
 
     // Szerver konfiguráció frissítése az adatbázisban
     await prisma.server.update({
@@ -164,14 +198,17 @@ ClusterId=${clusterId}
           ...currentConfig,
           clusterId,
           clusterPath: mountPoint,
+          machineId,
+          instancePath,
         },
       },
     });
 
-    logger.info('Server added to ARK cluster', {
+    logger.info('Server successfully added to ARK cluster', {
       serverId,
       clusterId,
       machineId: machine.id,
+      mountPoint,
     });
 
     return { success: true };
@@ -182,7 +219,7 @@ ClusterId=${clusterId}
     });
     return {
       success: false,
-      error: error.message || 'Failed to add server to cluster',
+      error: error.message || 'Cluster-hez való hozzáadás sikertelen',
     };
   }
 }
@@ -291,26 +328,98 @@ export async function checkARKSharedInstallation(
 ): Promise<boolean> {
   const sharedPath = getARKSharedPath(userId, machineId);
   
-  const checkCommand = gameType === 'ARK_EVOLVED'
-    ? `test -f ${sharedPath}/ShooterGame/Binaries/Linux/ShooterGameServer && echo "installed" || echo "not_installed"`
-    : gameType === 'ARK_ASCENDED'
-    ? `test -f ${sharedPath}/ShooterGame/Binaries/Linux/ShooterGameServer && echo "installed" || echo "not_installed"`
-    : `test -d ${sharedPath} && echo "installed" || echo "not_installed"`;
+  // ARK Ascended: Windows bináris Wine-nal futtatódik
+  const checkCommand = gameType === 'ARK_ASCENDED'
+    ? `test -f "${sharedPath}/ShooterGame/Binaries/Win64/ArkAscendedServer.exe" && echo "installed" || echo "not_installed"`
+    : `test -d "${sharedPath}" && echo "installed" || echo "not_installed"`;
   
   logger.debug(`Checking ARK shared installation: ${checkCommand} on machine ${machine.ipAddress}`);
   try {
     const result = await executeSSHCommand(
       {
         host: machine.ipAddress,
-        port: machine.sshPort,
-        user: machine.sshUser,
+        port: machine.sshPort || 22,
+        user: machine.sshUser || 'root',
         keyPath: machine.sshKeyPath || undefined,
       },
       checkCommand
     );
-    return result.stdout.trim() === 'installed';
+    const installed = result.stdout?.trim() === 'installed';
+    logger.info('ARK installation check result', { 
+      userId, 
+      machineId, 
+      gameType, 
+      installed,
+      sharedPath 
+    });
+    return installed;
   } catch (error: any) {
-    logger.error('Error checking ARK shared installation', error as Error, { userId, machineId, sharedPath });
+    logger.error('Error checking ARK shared installation', error as Error, { 
+      userId, 
+      machineId, 
+      sharedPath,
+      error: error.message 
+    });
     return false;
+  }
+}
+
+/**
+ * Cluster szinkronizálási status ellenőrzése
+ * KRITIKUS: Timeout és error handling szükséges NFS megosztásoknál
+ */
+export async function checkClusterSync(
+  clusterId: string,
+  machine: any
+): Promise<{ synced: boolean; error?: string; lastSync?: Date }> {
+  try {
+    const clusterPath = getARKClusterPath(clusterId);
+    const touchFile = `${clusterPath}/.sync-check-${Date.now()}`;
+    
+    // Cluster szinkronizálási ellenőrzés: nyírási és olvasási test
+    const checkCommand = `
+      set -e
+      mkdir -p "${clusterPath}" || exit 1
+      
+      # Írási test
+      touch "${touchFile}" 2>/dev/null || exit 2
+      
+      # Olvasási test
+      test -f "${touchFile}" || exit 3
+      
+      # Cleanup
+      rm -f "${touchFile}" 2>/dev/null || true
+      
+      echo "synced"
+    `;
+
+    const result = await executeSSHCommand(
+      {
+        host: machine.ipAddress,
+        port: machine.sshPort || 22,
+        user: machine.sshUser || 'root',
+        keyPath: machine.sshKeyPath || undefined,
+      },
+      checkCommand
+    );
+
+    if (result.stdout?.includes('synced')) {
+      logger.info('Cluster sync check successful', { clusterId, clusterPath });
+      return { 
+        synced: true, 
+        lastSync: new Date() 
+      };
+    } else {
+      return {
+        synced: false,
+        error: `Cluster szinkronizálás sikertelen: ${result.stderr || 'Unknown error'}`,
+      };
+    }
+  } catch (error: any) {
+    logger.error('Error checking cluster sync', error as Error, { clusterId });
+    return {
+      synced: false,
+      error: error.message || 'Cluster sync check failed',
+    };
   }
 }
