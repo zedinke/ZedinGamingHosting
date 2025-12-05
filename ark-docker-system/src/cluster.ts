@@ -77,8 +77,8 @@ export class ArkClusterManager extends EventEmitter {
   private config: ClusterConfig;
   private nodes: Map<string, ClusterNode> = new Map();
   private migrations: Map<string, MigrationRequest> = new Map();
-  private healthCheckInterval?: NodeJS.Timer;
-  private syncInterval?: NodeJS.Timer;
+  private healthCheckInterval?: ReturnType<typeof setInterval>;
+  private syncInterval?: ReturnType<typeof setInterval>;
   private isRunning: boolean = false;
 
   constructor(config: ClusterConfig) {

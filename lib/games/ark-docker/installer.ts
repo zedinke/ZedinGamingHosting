@@ -147,7 +147,7 @@ export class ArkDockerInstaller extends EventEmitter {
       logger.info(`[ArkDocker] Server installed successfully: ${containerId}`);
       this.emit('server-installed', { serverId: config.serverId, containerId });
 
-      return { success: true, containerId };
+      return { success: true, containerId: containerId || undefined };
     } catch (error: any) {
       const errorMessage = error.message || String(error);
       logger.error(`[ArkDocker] Installation failed for ${config.serverId}`, error as Error);
