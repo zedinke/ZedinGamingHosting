@@ -125,12 +125,13 @@ export function SystemManagement({
     });
 
     try {
-      // WebSocket vagy polling használata a progress követéséhez
+      // POST a frissítés indításához (10+ perc timeout)
       const response = await fetch(`/api/admin/system/update`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        signal: AbortSignal.timeout(120000), // 2 perc timeout az indítás request-hez
       });
 
       const result = await response.json();
@@ -139,19 +140,18 @@ export function SystemManagement({
         throw new Error(result.error || 'Frissítési hiba');
       }
 
-      toast.success('Frissítés elindítva');
+      toast.success('Frissítés elindítva, kérjük várakozz...');
       
       // Redirect to static update status page
       if (result.redirectUrl) {
         window.location.href = result.redirectUrl;
-        return; // Don't start polling, we're redirecting
+        return;
       }
-      
-      toast.success('Frissítés elindítva, követés...');
 
-      // Polling a progress követéséhez
+      // Polling a progress követéséhez - **LASSABB INTERVALLUMMAL**
       let pollCount = 0;
-      const maxPolls = 1200; // 20 perc maximum (1200 * 1 másodperc)
+      const maxPolls = 600; // 20 perc maximum (600 * 2 másodperc)
+      let lastProgressTimestamp = Date.now();
       
       const checkProgress = async () => {
         pollCount++;
@@ -159,84 +159,94 @@ export function SystemManagement({
         if (pollCount > maxPolls) {
           setIsUpdating(false);
           setUpdateProgress(null);
-          toast.error('A frissítés túl sokáig tart, ellenőrizd a logokat');
+          toast.error('A frissítés túl sokáig tart. Ellenőrizd a szerver logokat a /admin/system/health oldalon.');
           return;
         }
 
         try {
-          const progressResponse = await fetch(`/api/admin/system/update/status?t=${Date.now()}`, {
-            cache: 'no-store',
-            headers: {
-              'Cache-Control': 'no-cache',
-            },
-          });
+          // Abort ha 30 másodpercnél hosszabb
+          const progressResponse = await fetch(
+            `/api/admin/system/update/status?t=${Date.now()}`,
+            {
+              cache: 'no-store',
+              headers: { 'Cache-Control': 'no-cache' },
+              signal: AbortSignal.timeout(30000), // 30 sec timeout
+            }
+          );
           
           if (!progressResponse.ok) {
-            // Ha a fájl nem létezik, lehet hogy még nem indult el
             if (pollCount < 5) {
-              console.log(`Progress fájl még nem létezik, várakozás... (poll: ${pollCount})`);
-              setTimeout(checkProgress, 1000);
+              console.log(`Progress fájl még nem létezik (poll: ${pollCount})`);
+              setTimeout(checkProgress, 2000); // 2 sec wait
               return;
             }
-            console.error('Progress fájl nem elérhető:', progressResponse.status);
-            throw new Error(`Nem sikerült lekérni a frissítés állapotát`);
+            console.warn(`Progress API: ${progressResponse.status}, fallback view...`);
+            // Continue polling, server might be busy
+            setTimeout(checkProgress, 5000);
+            return;
           }
           
           const progress = await progressResponse.json();
-          
-          console.log('Progress állapot:', progress.status, 'Progress:', progress.progress, '%');
+          console.log('Progress:', progress.status, `${progress.progress}%`);
 
-          // Mindig frissítjük a progress-t
+          // Cache-busting: ellenőrizzük az új timestamp-et
+          if (progress.timestamp) {
+            lastProgressTimestamp = new Date(progress.timestamp).getTime();
+          }
+
           setUpdateProgress(progress);
 
           if (progress.status === 'completed') {
             setIsUpdating(false);
-            toast.success('Rendszer sikeresen frissítve!');
+            toast.success('✓ Rendszer frissítve! Újraindítás...');
             setUpdateCheck(null);
-            setTimeout(() => {
-              window.location.reload();
-            }, 2000);
+            setTimeout(() => window.location.reload(), 3000);
             return;
           } else if (progress.status === 'error') {
             setIsUpdating(false);
-            toast.error(progress.error || 'Frissítési hiba');
+            toast.error(`✗ Hiba: ${progress.error || 'Ismeretlen'}`);
             return;
-          } else if (progress.status === 'starting' || progress.status === 'in_progress') {
-            // Folytatjuk a polling-ot
-            setTimeout(checkProgress, 1000);
+          } else if (progress.status === 'in_progress' || progress.status === 'starting') {
+            // **LASSABB POLLING: 2 másodperc helyett 3 másodperc**
+            setTimeout(checkProgress, 3000);
           } else if (progress.status === 'idle') {
-            // Ha idle, lehet hogy még nem indult el
-            if (pollCount < 5) {
-              setTimeout(checkProgress, 1000);
+            if (pollCount < 3) {
+              setTimeout(checkProgress, 2000);
             } else {
               setIsUpdating(false);
               setUpdateProgress(null);
-              toast.error('A frissítés nem indult el. Ellenőrizd a konzolt és a szerver logokat.');
+              toast.error('A frissítés nem indult el.');
             }
-          } else {
-            // Más állapot, újra próbáljuk
-            setTimeout(checkProgress, 2000);
           }
         } catch (error: any) {
-          console.error('Progress check error:', error);
-          // Folytatjuk a polling-ot, lehet hogy csak átmeneti hiba
+          if (error.name === 'AbortError') {
+            console.warn('Progress check timeout (30s), retrying...');
+          } else {
+            console.error('Progress check error:', error.message);
+          }
+          
+          // Continue polling despite errors
           if (pollCount < maxPolls) {
-            setTimeout(checkProgress, 2000);
+            setTimeout(checkProgress, 5000); // 5 sec retry
           } else {
             setIsUpdating(false);
-            setUpdateProgress(null);
-            toast.error('Hiba történt a frissítés követése során: ' + (error.message || 'Ismeretlen hiba'));
+            toast.error('Frissítés követés hiba. Kérjük, ellenőrizd manuálisan.');
           }
         }
       };
 
-      // Elindítjuk a progress követést
-      setTimeout(checkProgress, 500);
+      // Elindítjuk a progress követést 1 másodperc után
+      setTimeout(checkProgress, 1000);
     } catch (error: any) {
       setIsUpdating(false);
       setUpdateProgress(null);
-      toast.error(error.message || 'Hiba történt a frissítés során');
-      console.error('Update start error:', error);
+      
+      if (error.name === 'AbortError') {
+        toast.error('Frissítés timeout - a szerver feldolgozza az update-et. Kérjük, frissítsd az oldalt később!');
+      } else {
+        toast.error(error.message || 'Hiba történt');
+      }
+      console.error('Update error:', error);
     }
   };
 
