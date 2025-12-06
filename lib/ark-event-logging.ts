@@ -118,8 +118,8 @@ export async function logGameEvent(event: Omit<GameEvent, 'eventId' | 'timestamp
       data: {
         configuration: {
           ...config,
-          eventHistory: [eventWithMeta, ...eventHistory.slice(0, 9999)], // Keep last 10k
-        },
+          eventHistory: [eventWithMeta as any, ...eventHistory.slice(0, 9999)], // Keep last 10k
+        } as any,
       },
     });
 
@@ -185,8 +185,8 @@ export async function logAdminAction(
       data: {
         configuration: {
           ...config,
-          auditHistory: [auditLog, ...auditHistory.slice(0, 4999)], // Keep last 5k
-        },
+          auditHistory: [auditLog as any, ...(auditHistory.slice(0, 4999) as any[])], // Keep last 5k
+        } as any,
       },
     });
 
@@ -242,7 +242,7 @@ export async function recordPerformanceMetrics(
           ...config,
           metricsHistory: [fullMetrics, ...metricsHistory.slice(0, 287)],
           latestMetrics: fullMetrics,
-        },
+        } as any,
       },
     });
 
@@ -395,13 +395,17 @@ export async function subscribeToEvents(
         '>'
       );
 
-      if (messages) {
-        for (const [, msgList] of messages) {
-          for (const [, data] of msgList) {
-            const idx = data.indexOf('data');
-            if (idx !== -1) {
-              const eventData = JSON.parse(data[idx + 1]);
-              callback(eventData);
+      if (messages && Array.isArray(messages)) {
+        for (const [, msgList] of (messages as any)) {
+          if (Array.isArray(msgList)) {
+            for (const [, data] of (msgList as any)) {
+              if (Array.isArray(data)) {
+                const idx = data.indexOf('data');
+                if (idx !== -1) {
+                  const eventData = JSON.parse(data[idx + 1]);
+                  callback(eventData);
+                }
+              }
             }
           }
         }

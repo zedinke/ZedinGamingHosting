@@ -123,7 +123,7 @@ export async function recordServerHealth(
             lastHealthMetrics: {
               ...healthMetrics,
               timestamp: timestamp.toISOString(),
-            },
+            } as any,
           },
         },
       });

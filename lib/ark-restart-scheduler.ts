@@ -100,7 +100,7 @@ restartQueue.process(async (job) => {
         configuration: {
           ...config,
           lastRestart: new Date(),
-        },
+        } as any,
       },
     });
 
