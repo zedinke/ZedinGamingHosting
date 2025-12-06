@@ -33,5 +33,8 @@ export * from './ark-rcon-scripting';
 // Server Templates
 export * from './ark-server-templates';
 
-export const ARK_ENTERPRISE_VERSION = '1.0.0';
-export const ARK_ENTERPRISE_MODULES = 11;
+// Advanced Mod Manager v2
+export * from './ark-mod-manager-v2';
+
+export const ARK_ENTERPRISE_VERSION = '2.0.0';
+export const ARK_ENTERPRISE_MODULES = 12;
