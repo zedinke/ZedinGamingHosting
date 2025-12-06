@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { randomBytes } from 'crypto';
 import { UserRole } from '@prisma/client';
 
 // POST - Agent regisztráció (amikor egy agent először csatlakozik)
@@ -76,9 +75,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Agent ID generálása
-    const randomId = randomBytes(4).toString('hex');
-    const agentId = `agent-${machine.ipAddress.replace(/\./g, '-')}-${randomId}`;
+    // Az agent által küldött agentId-t használjuk
+    const finalAgentId = agentId;
 
     // API kulcs generálása
     const { generateApiKey } = await import('@/lib/api-key');
@@ -87,8 +85,8 @@ export async function POST(request: NextRequest) {
     // Agent létrehozása
     const agent = await prisma.agent.create({
       data: {
-        machineId,
-        agentId,
+        machineId: machine.id,
+        agentId: finalAgentId,
         apiKey,
         version: version || '1.0.0',
         status: 'ONLINE',
