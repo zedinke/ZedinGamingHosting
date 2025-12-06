@@ -37,6 +37,12 @@ import { config as stardewValleyConfig, generateConfig as generateStardewValleyC
 import { config as warThunderConfig, generateConfig as generateWarThunderConfig } from './war-thunder';
 import { config as blackMythWukongConfig, generateConfig as generateBlackMythWukongConfig } from './black-myth-wukong';
 import { config as callOfDutyWarzoneConfig, generateConfig as generateCallOfDutyWarzoneConfig } from './call-of-duty-warzone';
+import { config as codModernWarfare2024Config, generateConfig as generateCodModernWarfare2024Config } from './cod-modern-warfare-2024';
+import { config as codWarzone2Config, generateConfig as generateCodWarzone2Config } from './cod-warzone-2';
+import { config as codBlackOps6Config, generateConfig as generateCodBlackOps6Config } from './cod-black-ops-6';
+import { config as codColdWarConfig, generateConfig as generateCodColdWarConfig } from './cod-cold-war';
+import { config as codVanguardConfig, generateConfig as generateCodVanguardConfig } from './cod-vanguard';
+import { config as codInfiniteWarfareConfig, generateConfig as generateCodInfiniteWarfareConfig } from './cod-infinite-warfare';
 import { config as apexLegendsConfig, generateConfig as generateApexLegendsConfig } from './apex-legends';
 import { config as pubgBattlegroundsConfig, generateConfig as generatePubgBattlegroundsConfig } from './pubg-battlegrounds';
 import { config as eldenRingConfig, generateConfig as generateEldenRingConfig } from './elden-ring';
@@ -81,6 +87,12 @@ export const GAME_CONFIGS: GameConfigMap = {
   WAR_THUNDER: warThunderConfig,
   BLACK_MYTH_WUKONG: blackMythWukongConfig,
   CALL_OF_DUTY_WARZONE: callOfDutyWarzoneConfig,
+  COD_MODERN_WARFARE_2024: codModernWarfare2024Config,
+  COD_WARZONE_2: codWarzone2Config,
+  COD_BLACK_OPS_6: codBlackOps6Config,
+  COD_COLD_WAR: codColdWarConfig,
+  COD_VANGUARD: codVanguardConfig,
+  COD_INFINITE_WARFARE: codInfiniteWarfareConfig,
   APEX_LEGENDS: apexLegendsConfig,
   PUBG_BATTLEGROUNDS: pubgBattlegroundsConfig,
   ELDEN_RING: eldenRingConfig,
@@ -121,6 +133,12 @@ export const GAME_CONFIG_GENERATORS: Partial<Record<GameType, (config: any) => s
   WAR_THUNDER: generateWarThunderConfig,
   BLACK_MYTH_WUKONG: generateBlackMythWukongConfig,
   CALL_OF_DUTY_WARZONE: generateCallOfDutyWarzoneConfig,
+  COD_MODERN_WARFARE_2024: generateCodModernWarfare2024Config,
+  COD_WARZONE_2: generateCodWarzone2Config,
+  COD_BLACK_OPS_6: generateCodBlackOps6Config,
+  COD_COLD_WAR: generateCodColdWarConfig,
+  COD_VANGUARD: generateCodVanguardConfig,
+  COD_INFINITE_WARFARE: generateCodInfiniteWarfareConfig,
   APEX_LEGENDS: generateApexLegendsConfig,
   PUBG_BATTLEGROUNDS: generatePubgBattlegroundsConfig,
   ELDEN_RING: generateEldenRingConfig,

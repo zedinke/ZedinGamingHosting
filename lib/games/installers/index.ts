@@ -36,6 +36,12 @@ import { installScript as stardewValleyInstaller } from './stardew-valley';
 import { installScript as warThunderInstaller } from './war-thunder';
 import { installScript as blackMythWukongInstaller } from './black-myth-wukong';
 import { installScript as callOfDutyWarzoneInstaller } from './call-of-duty-warzone';
+import { installScript as codModernWarfare2024Installer } from './cod-modern-warfare-2024';
+import { installScript as codWarzone2Installer } from './cod-warzone-2';
+import { installScript as codBlackOps6Installer } from './cod-black-ops-6';
+import { installScript as codColdWarInstaller } from './cod-cold-war';
+import { installScript as codVanguardInstaller } from './cod-vanguard';
+import { installScript as codInfiniteWarfareInstaller } from './cod-infinite-warfare';
 import { installScript as apexLegendsInstaller } from './apex-legends';
 import { installScript as pubgBattlegroundsInstaller } from './pubg-battlegrounds';
 import { installScript as eldenRingInstaller } from './elden-ring';
@@ -85,6 +91,12 @@ export const GAME_INSTALLERS: Partial<Record<GameType, any>> = {
   WAR_THUNDER: warThunderInstaller,
   BLACK_MYTH_WUKONG: blackMythWukongInstaller,
   CALL_OF_DUTY_WARZONE: callOfDutyWarzoneInstaller,
+  COD_MODERN_WARFARE_2024: codModernWarfare2024Installer,
+  COD_WARZONE_2: codWarzone2Installer,
+  COD_BLACK_OPS_6: codBlackOps6Installer,
+  COD_COLD_WAR: codColdWarInstaller,
+  COD_VANGUARD: codVanguardInstaller,
+  COD_INFINITE_WARFARE: codInfiniteWarfareInstaller,
   APEX_LEGENDS: apexLegendsInstaller,
   PUBG_BATTLEGROUNDS: pubgBattlegroundsInstaller,
   ELDEN_RING: eldenRingInstaller,

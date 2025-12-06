@@ -39,22 +39,29 @@ interface ValidationResult {
 /**
  * Telepítési script validálása
  */
-function validateInstallScript(installScript: string | undefined, gameType: GameType): { valid: boolean; errors: string[] } {
+function validateInstallScript(installScript: string | any, gameType: GameType): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
 
-  if (!installScript || installScript.trim() === '') {
+  // Ha objektum (pl. ARK Docker installer), akkor elfogadjuk
+  if (typeof installScript === 'object' && installScript !== null) {
+    return { valid: true, errors: [] };
+  }
+
+  if (!installScript || (typeof installScript === 'string' && installScript.trim() === '')) {
     errors.push('Telepítési script hiányzik vagy üres');
     return { valid: false, errors };
   }
 
-  // Alapvető ellenőrzések
-  if (!installScript.includes('steamcmd') && !installScript.includes('java') && gameType !== 'MINECRAFT') {
-    // Ez csak figyelmeztetés, nem hiba - lehet, hogy a script másképp működik
-  }
+  // Alapvető ellenőrzések - csak string típusú scripteknél
+  if (typeof installScript === 'string') {
+    if (!installScript.includes('steamcmd') && !installScript.includes('java') && gameType !== 'MINECRAFT') {
+      // Ez csak figyelmeztetés, nem hiba - lehet, hogy a script másképp működik
+    }
 
-  // Placeholder-ek ellenőrzése - csak {serverId} kötelező, a többi a game-server-installer.ts-ben kerül be
-  if (!installScript.includes('{serverId}')) {
-    // {serverId} opcionális is lehet, ha a script másképp működik
+    // Placeholder-ek ellenőrzése - csak {serverId} kötelező, a többi a game-server-installer.ts-ben kerül be
+    if (!installScript.includes('{serverId}')) {
+      // {serverId} opcionális is lehet, ha a script másképp működik
+    }
   }
 
   return { valid: errors.length === 0, errors };
