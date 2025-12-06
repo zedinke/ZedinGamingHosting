@@ -318,7 +318,7 @@ export async function GET(
     }
 
     // Válasz config objektum az adatbázisból kinyert portokkal
-    let responseConfig: any = {
+    const responseConfig: any = {
       port: config.port,
       maxPlayers: config.maxPlayers,
       name: config.name,
