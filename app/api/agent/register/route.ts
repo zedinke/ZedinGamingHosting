@@ -36,6 +36,10 @@ export async function POST(request: NextRequest) {
 
     // Machine keresése: előbb agentIp alapján, majd machineId-val
     let machine = null;
+    const clientIp = request.headers.get('x-forwarded-for') || 
+                     request.headers.get('cf-connecting-ip') ||
+                     request.ip ||
+                     '127.0.0.1';
     
     if (agentIp) {
       // Ha van agentIp, azt használjuk
@@ -54,12 +58,6 @@ export async function POST(request: NextRequest) {
     }
     
     if (!machine) {
-      // IP-cím lekérése a request-ből
-      const clientIp = request.headers.get('x-forwarded-for') || 
-                       request.headers.get('cf-connecting-ip') ||
-                       request.ip ||
-                       '127.0.0.1';
-      
       // Machine keresése IP-cím alapján
       machine = await prisma.serverMachine.findFirst({
         where: {
@@ -69,10 +67,22 @@ export async function POST(request: NextRequest) {
     }
 
     if (!machine) {
-      return NextResponse.json(
-        { error: 'Szerver gép nem található az adott IP-cím alapján. Kérjük regisztrálja az admin panelben a gépet!' },
-        { status: 404 }
-      );
+      // Ha a gép nincs az adatbázisban, automatikusan létrehozzuk
+      // Ez lehetővé teszi az agent önregisztrációját
+      const ipForMachine = agentIp || clientIp || '127.0.0.1';
+      const machineName = `GameServer-${ipForMachine.split('.').pop()}`;
+      
+      machine = await prisma.serverMachine.create({
+        data: {
+          name: machineName,
+          ipAddress: ipForMachine,
+          sshPort: 22,
+          sshUser: 'root',
+          status: 'ONLINE',
+        },
+      });
+
+      console.log(`New machine auto-registered: ${machine.id} (${machine.name}, ${machine.ipAddress})`);
     }
 
     // Az agent által küldött agentId-t használjuk
