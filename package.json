@@ -44,7 +44,7 @@
     "node-fetch": "^2.7.0",
     "nodemailer": "^7.0.0",
     "prisma": "^5.7.1",
-    "puppeteer": "^21.6.1",
+    "puppeteer": "^24.32.0",
     "rcon": "^1.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
