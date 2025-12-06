@@ -225,10 +225,12 @@ export async function findBestMachine(
 
   console.log(`Selected machine: ${machine.name} (${machine.id}), agent: ${bestAgent.agentId || bestAgent.id}`);
 
-  return {
+  const result = {
     machineId: machine.id,
     agentId: bestAgent.id,
   };
+  console.log(`[FIND_BEST_MACHINE DEBUG] Returning: machineId=${result.machineId}, agentId=${result.agentId}`);
+  return result;
 }
 
 /**
@@ -288,14 +290,17 @@ export async function provisionServer(
 ): Promise<{ success: boolean; machineId?: string; agentId?: string; error?: string }> {
   try {
     // Legjobb gép és agent keresése
+    console.log(`[PROVISION DEBUG] Finding best machine for serverId=${serverId}, gameType=${options.gameType}`);
     const bestLocation = await findBestMachine(options);
 
     if (!bestLocation) {
+      console.error(`[PROVISION DEBUG] findBestMachine returned NULL for serverId=${serverId}, gameType=${options.gameType}`);
       return {
         success: false,
         error: 'Nincs elérhető gép vagy agent a szerver telepítéséhez',
       };
     }
+    console.log(`[PROVISION DEBUG] Found best location: machineId=${bestLocation.machineId}, agentId=${bestLocation.agentId}`);
 
     // Szerver frissítése
     const server = await prisma.server.update({
@@ -914,6 +919,7 @@ export async function provisionServer(
     };
   } catch (error: any) {
     console.error('Server provisioning error:', error);
+    console.error(`[PROVISION DEBUG] Exception thrown for serverId=${serverId}`);
     return {
       success: false,
       error: error.message || 'Ismeretlen hiba a provisioning során',
