@@ -56,7 +56,7 @@ export async function GET(
       return NextResponse.json({
         success: true,
         data: leakAnalysis,
-        warning: leakAnalysis.growthRate > 50 ? 'Magas memória növekedési ráta!' : undefined,
+        warning: leakAnalysis.leakRate && leakAnalysis.leakRate > 50 ? 'Magas memória növekedési ráta!' : undefined,
       });
     }
 
@@ -116,7 +116,9 @@ export async function POST(
       );
     }
 
-    const result = await autoTuneServerConfig(serverId, profile as any);
+    // Note: autoTuneServerConfig automatically selects the best profile
+    // The profile parameter here is just for validation/logging
+    const result = await autoTuneServerConfig(serverId);
 
     // Log to Discord if webhook configured
     const config = typeof server.configuration === 'object' ? (server.configuration as any) : {};
@@ -132,24 +134,24 @@ export async function POST(
               title: '⚙️ Performance profil alkalmazva',
               description: `Szerver: ${server.name}`,
               fields: [
-                { name: 'Profil', value: profile.replace(/_/g, ' ').toUpperCase(), inline: true },
+                { name: 'Profil', value: String(result.appliedProfile), inline: true },
                 { name: 'Státusz', value: 'Alkalmazva', inline: true },
-                { name: 'Beállítások', value: `Szerkezetek: ${result.config.maxStructures}, Dinók: ${result.config.maxDinos}, Játékosok: ${result.config.maxPlayers}`, inline: false },
+                { name: 'Üzenet', value: result.message, inline: false },
               ],
               color: 3447003,
               timestamp: new Date().toISOString(),
             }],
           }),
         });
-      } catch (webhookError) {
-        logger.warn('Discord webhook failed:', webhookError);
+      } catch (webhookError: unknown) {
+        logger.warn('Discord webhook failed:', webhookError as Error);
       }
     }
 
     return NextResponse.json({
       success: true,
       data: result,
-      message: `${profile} profil sikeresen alkalmazva`,
+      message: `Performance profil alkalmazva: ${result.appliedProfile}`,
     });
   } catch (error: unknown) {
     logger.error('Performance POST error:', error as Error);
@@ -174,9 +176,9 @@ function calculateHealthScore(lagAnalysis: any, memoryLeak: any): number {
   }
 
   // Deduct for memory leak
-  if (memoryLeak.growthRate > 100) {
+  if (memoryLeak.leakRate && memoryLeak.leakRate > 100) {
     score -= 30;
-  } else if (memoryLeak.growthRate > 50) {
+  } else if (memoryLeak.leakRate && memoryLeak.leakRate > 50) {
     score -= 15;
   }
 

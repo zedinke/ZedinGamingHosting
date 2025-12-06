@@ -43,12 +43,13 @@ export async function GET(
     }
 
     if (action === 'export') {
-      const telemetry = await exportEventsTelemetry(serverId, days);
+      const telemetry = await exportEventsTelemetry(serverId, format as any);
       
       if (format === 'csv') {
-        // Convert to CSV
+        // Convert to JSON to CSV
+        const telemetryJson = typeof telemetry === 'string' ? JSON.parse(telemetry) : telemetry;
         let csv = 'Típus,Játékos,Adatok,Timestamp\n';
-        (telemetry.events || []).forEach((event: any) => {
+        (telemetryJson.events || []).forEach((event: any) => {
           csv += `"${event.type}","${event.playerName || 'N/A'}","${JSON.stringify(event.data)}","${event.timestamp}"\n`;
         });
 
@@ -111,7 +112,17 @@ export async function POST(
     }
 
     if (action === 'log-event') {
-      const result = await logGameEvent(serverId, type, eventData);
+      if (!type) {
+        return NextResponse.json({ error: 'Event típus szükséges' }, { status: 400 });
+      }
+
+      const result = await logGameEvent({
+        serverId,
+        eventType: type as any,
+        playerId: (session.user as any).id,
+        playerName: (session.user as any).name || 'Unknown',
+        metadata: eventData || {},
+      });
       
       return NextResponse.json({
         success: true,
@@ -137,7 +148,17 @@ export async function POST(
     }
 
     if (action === 'record-performance') {
-      const result = await recordPerformanceMetrics(serverId, eventData);
+      const result = await recordPerformanceMetrics({
+        serverId,
+        fps: eventData.fps || 60,
+        cpuUsage: eventData.cpuUsage || 0,
+        ramUsage: eventData.ramUsage || 0,
+        playerCount: eventData.playerCount || 0,
+        maxPlayers: eventData.maxPlayers || 70,
+        structures: eventData.structures || 0,
+        dinos: eventData.dinos || 0,
+        lag: eventData.lag || 0,
+      });
 
       return NextResponse.json({
         success: true,

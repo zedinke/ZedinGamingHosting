@@ -159,18 +159,8 @@ export async function POST(
     }
 
     if (action === 'send-status') {
-      const config = typeof server.configuration === 'object' ? (server.configuration as any) : {};
-      const webhookUrl = config.discordWebhooks?.[channel || 'status'];
-
-      if (!webhookUrl) {
-        return NextResponse.json(
-          { error: 'Webhook nincs konfigurálva' },
-          { status: 400 }
-        );
-      }
-
       const status = body.status || 'online'; // online, offline, maintenance, restarting
-      await sendServerStatusUpdate(serverId, webhookUrl, status, body.details);
+      await sendServerStatusUpdate(serverId, status as any);
 
       return NextResponse.json({
         success: true,
@@ -179,17 +169,7 @@ export async function POST(
     }
 
     if (action === 'send-daily-report') {
-      const config = typeof server.configuration === 'object' ? (server.configuration as any) : {};
-      const webhookUrl = config.discordWebhooks?.[channel || 'reports'];
-
-      if (!webhookUrl) {
-        return NextResponse.json(
-          { error: 'Webhook nincs konfigurálva' },
-          { status: 400 }
-        );
-      }
-
-      const report = await sendDailyReport(serverId, webhookUrl);
+      const report = await sendDailyReport(serverId);
 
       return NextResponse.json({
         success: true,

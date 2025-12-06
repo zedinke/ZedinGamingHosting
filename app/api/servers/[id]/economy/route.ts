@@ -124,11 +124,13 @@ export async function POST(
 
       const listing = await listItemForSale(
         serverId,
+        (session.user as any).id,
+        (session.user as any).name || 'Seller',
+        `item_${Date.now()}`,
         itemName,
         quantity,
         price,
-        duration,
-        demandEstimate
+        duration
       );
 
       return NextResponse.json({

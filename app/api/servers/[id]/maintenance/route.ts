@@ -100,10 +100,10 @@ export async function POST(
 
       const maintenance = await scheduleMaintenanceWindow(
         serverId,
-        new Date(scheduledTime),
+        new Date(scheduledTime).getTime(),
         durationMinutes,
-        type as any,
-        description
+        description || '',
+        type as any
       );
 
       return NextResponse.json({
