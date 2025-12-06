@@ -12,6 +12,7 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import os from 'os';
 
 const execAsync = promisify(exec);
 
@@ -50,8 +51,28 @@ const httpClient = axios.create({
  */
 async function registerAgent() {
   try {
+    // IP-cím meghatározása
+    const interfaces = os.networkInterfaces();
+    let agentIp = 'localhost';
+    
+    // Keresünk az első nem-loopback IPv4 címet
+    for (const name of Object.keys(interfaces)) {
+      const iface = interfaces[name];
+      for (const addr of iface) {
+        // IPv4 és nem loopback
+        if (addr.family === 'IPv4' && !addr.address.startsWith('127.')) {
+          agentIp = addr.address;
+          break;
+        }
+      }
+      if (agentIp !== 'localhost') break;
+    }
+
+    console.log(`Agent IP-cím: ${agentIp}`);
+
     const response = await httpClient.post('/register', {
       agentId: config.agentId,
+      agentIp: agentIp,
       version: '1.0.0',
       capabilities: {
         docker: docker !== undefined,

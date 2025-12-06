@@ -26,23 +26,52 @@ export async function POST(request: NextRequest) {
     }
     
     const body = await request.json();
-    const { machineId, version, capabilities } = body;
+    const { agentId, agentIp, machineId, version, capabilities } = body;
 
-    if (!machineId) {
+    if (!agentId) {
       return NextResponse.json(
-        { error: 'machineId szükséges' },
+        { error: 'agentId szükséges' },
         { status: 400 }
       );
     }
 
-    // Machine ellenőrzése
-    const machine = await prisma.serverMachine.findUnique({
-      where: { id: machineId },
-    });
+    // Machine keresése: előbb agentIp alapján, majd machineId-val
+    let machine = null;
+    
+    if (agentIp) {
+      // Ha van agentIp, azt használjuk
+      machine = await prisma.serverMachine.findFirst({
+        where: {
+          ipAddress: agentIp,
+        },
+      });
+    }
+    
+    if (!machine && machineId) {
+      // Ha van machineId, azt használjuk
+      machine = await prisma.serverMachine.findUnique({
+        where: { id: machineId },
+      });
+    }
+    
+    if (!machine) {
+      // IP-cím lekérése a request-ből
+      const clientIp = request.headers.get('x-forwarded-for') || 
+                       request.headers.get('cf-connecting-ip') ||
+                       request.ip ||
+                       '127.0.0.1';
+      
+      // Machine keresése IP-cím alapján
+      machine = await prisma.serverMachine.findFirst({
+        where: {
+          ipAddress: clientIp,
+        },
+      });
+    }
 
     if (!machine) {
       return NextResponse.json(
-        { error: 'Szerver gép nem található' },
+        { error: 'Szerver gép nem található az adott IP-cím alapján. Kérjük regisztrálja az admin panelben a gépet!' },
         { status: 404 }
       );
     }
