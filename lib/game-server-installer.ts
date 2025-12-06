@@ -92,9 +92,13 @@ export async function installGameServer(
   },
   options?: {
     writeProgress?: boolean; // Ha true, akkor progress fájlokat ír
+    machineId?: string; // Dedikált game szerver gép ID
+    agentId?: string; // Agent ID amin fut az install
   }
 ): Promise<{ success: boolean; error?: string }> {
   const writeProgress = options?.writeProgress ?? false;
+  const machineId = options?.machineId;
+  const agentId = options?.agentId;
   
   try {
     logger.info('Installing game server', {
@@ -115,57 +119,104 @@ export async function installGameServer(
     // ARK Docker-alapú telepítés speciális kezelése
     if ((gameType as any) === 'ARK_ASCENDED' || (gameType as any) === 'ARK_EVOLVED') {
       try {
-        const { ArkDockerInstaller } = await import('./games/ark-docker/installer');
-        
         if (writeProgress) {
           await appendInstallLog(serverId, `Docker-alapú ARK telepítés indítása: ${gameType}`);
         }
-        
-        // Use base directory for ARK Docker system
-        const baseDir = `/opt/ark-docker-${serverId}`;
-        const installer = new ArkDockerInstaller(baseDir);
-        
-        // Progress frissítés
-        if (writeProgress) {
-          await appendInstallLog(serverId, `ARK Docker telepítés megkezdődött...`);
-        }
 
-        // Docker telepítés indítása - valódi futtatás
-        const arkConfig: any = {
-          serverId,
-          serverName: config.name,
-          gameType: gameType === 'ARK_ASCENDED' ? 'ark-ascended' : 'ark-evolved',
-          mapName: config.map || (gameType === 'ARK_ASCENDED' ? 'TheIsland_WP' : 'TheIsland'),
-          maxPlayers: config.maxPlayers || 70,
-          difficulty: 1.0,
-          serverPort: config.port || 27015,
-          queryPort: (config.port || 27015) + 1,
-          steamApiKey: '',
-          adminPassword: config.adminPassword || 'adminpass',
-          serverPassword: config.password,
-          clusterId: config.clusterId,
-        };
-        
-        const result = await installer.install(arkConfig);
-        
-        if (writeProgress) {
-          await writeInstallProgress(serverId, {
-            status: 'completed',
-            message: 'Docker-alapú ARK szerver telepítve',
-            progress: 100,
+        // Ha van dedikált machine, SSH-n keresztül telepítünk
+        if (machineId) {
+          if (writeProgress) {
+            await appendInstallLog(serverId, `SSH telepítés dedikált gépre (machineId: ${machineId})`);
+          }
+
+          const { installARKServerRemote } = await import('./ark-ssh-installer');
+          
+          const result = await installARKServerRemote(machineId, {
+            serverId,
+            serverName: config.name,
+            port: config.port || 27015,
+            adminPassword: config.adminPassword || 'adminpass',
+            serverPassword: config.password,
+            maxPlayers: config.maxPlayers || 70,
+            gameType: gameType === 'ARK_ASCENDED' ? 'ark-ascended' : 'ark-evolved',
+            mapName: config.map || (gameType === 'ARK_ASCENDED' ? 'TheIsland_WP' : 'TheIsland'),
           });
-          await appendInstallLog(serverId, `✅ ARK telepítés sikeres (Docker container: ${result.containerId || baseDir})`);
-        }
 
-        logger.info('ARK Docker installation successful', {
-          serverId,
-          gameType,
-          containerId: result.containerId,
-        });
-        
-        return {
-          success: true,
-        };
+          if (!result.success) {
+            throw new Error(result.error || 'SSH installation failed');
+          }
+
+          if (writeProgress) {
+            await writeInstallProgress(serverId, {
+              status: 'completed',
+              message: 'ARK szerver Docker-ben telepítve dedikált gépen',
+              progress: 100,
+            });
+            await appendInstallLog(serverId, `✅ ARK Docker telepítés sikeres dedikált gépen (container: ${result.containerId})`);
+          }
+
+          logger.info('ARK Docker installation successful on remote machine', {
+            serverId,
+            machineId,
+            gameType,
+          });
+
+          return {
+            success: true,
+          };
+        } else {
+          // Lokális telepítés (webszerver gépre - nem ajánlott termelésben!)
+          logger.warn('ARK installation attempted locally without dedicated machine', { serverId });
+          
+          if (writeProgress) {
+            await appendInstallLog(serverId, `⚠️  FIGYELEM: Lokális ARK telepítés a webszerver gépre (nincs dedikált gép)!`);
+          }
+
+          const { ArkDockerInstaller } = await import('./games/ark-docker/installer');
+          
+          const baseDir = `/opt/ark-docker-${serverId}`;
+          const installer = new ArkDockerInstaller(baseDir);
+          
+          if (writeProgress) {
+            await appendInstallLog(serverId, `ARK Docker telepítés megkezdődött lokálisan...`);
+          }
+
+          const arkConfig: any = {
+            serverId,
+            serverName: config.name,
+            gameType: gameType === 'ARK_ASCENDED' ? 'ark-ascended' : 'ark-evolved',
+            mapName: config.map || (gameType === 'ARK_ASCENDED' ? 'TheIsland_WP' : 'TheIsland'),
+            maxPlayers: config.maxPlayers || 70,
+            difficulty: 1.0,
+            serverPort: config.port || 27015,
+            queryPort: (config.port || 27015) + 1,
+            steamApiKey: '',
+            adminPassword: config.adminPassword || 'adminpass',
+            serverPassword: config.password,
+            clusterId: config.clusterId,
+          };
+          
+          const result = await installer.install(arkConfig);
+          
+          if (writeProgress) {
+            await writeInstallProgress(serverId, {
+              status: 'completed',
+              message: 'Docker-alapú ARK szerver telepítve lokálisan',
+              progress: 100,
+            });
+            await appendInstallLog(serverId, `✅ ARK telepítés sikeres (Docker container: ${result.containerId || baseDir})`);
+          }
+
+          logger.info('ARK Docker installation successful locally', {
+            serverId,
+            gameType,
+            containerId: result.containerId,
+          });
+          
+          return {
+            success: true,
+          };
+        }
       } catch (arkError) {
         const error = arkError instanceof Error ? arkError.message : String(arkError);
         logger.error('ARK Docker installation failed', new Error(error));
@@ -179,10 +230,10 @@ export async function installGameServer(
           });
           await appendInstallLog(serverId, `❌ Docker ARK telepítés sikertelen: ${error}`);
         }
-        
+
         return {
           success: false,
-          error: `Docker ARK telepítés sikertelen: ${error}`,
+          error: error,
         };
       }
     }

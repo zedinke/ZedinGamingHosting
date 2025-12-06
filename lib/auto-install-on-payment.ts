@@ -162,13 +162,19 @@ export async function triggerAutoInstallOnPayment(
       }
     }
 
-    // Játékszerver telepítése
+    // Játékszerver telepítése az `installGameServer` függvényt hívva
+    // Ha dedikált gépre telepítünk, átadjuk a machineId-t
     const installResult = await installGameServer(serverId, server.gameType, {
       maxPlayers: server.maxPlayers,
       ram: ram,
       port: server.port || 25565,
       name: server.name,
       adminPassword: `admin_${serverId.substring(0, 8)}`, // Generált admin jelszó
+      map: (server.configuration as any)?.map || undefined,
+    }, {
+      writeProgress: true,
+      machineId: provisioningResult.machineId,
+      agentId: provisioningResult.agentId,
     });
 
     if (!installResult.success) {
