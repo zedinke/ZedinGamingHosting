@@ -123,27 +123,26 @@ export async function installGameServer(
           await appendInstallLog(serverId, `Docker-alapú ARK telepítés indítása: ${gameType}`);
         }
 
-        // Ha van dedikált machine, SSH-n keresztül telepítünk
-        if (machineId) {
+        // Ha van dedikált machine, agent-en keresztül telepítünk
+        if (machineId && agentId) {
           if (writeProgress) {
-            await appendInstallLog(serverId, `SSH telepítés dedikált gépre (machineId: ${machineId})`);
+            await appendInstallLog(serverId, `Agent-alapú telepítés dedikált gépre (agentId: ${agentId})`);
           }
 
-          const { installARKServerRemote } = await import('./ark-ssh-installer');
+          const { provisionServerViaAgent } = await import('./agent-provisioning');
           
-          const result = await installARKServerRemote(machineId, {
-            serverId,
+          const result = await provisionServerViaAgent(agentId, serverId, {
+            gameType: gameType === 'ARK_ASCENDED' ? 'ARK_ASCENDED' : 'ARK_EVOLVED',
             serverName: config.name,
             port: config.port || 27015,
             adminPassword: config.adminPassword || 'adminpass',
             serverPassword: config.password,
             maxPlayers: config.maxPlayers || 70,
-            gameType: gameType === 'ARK_ASCENDED' ? 'ark-ascended' : 'ark-evolved',
             mapName: config.map || (gameType === 'ARK_ASCENDED' ? 'TheIsland_WP' : 'TheIsland'),
           });
 
           if (!result.success) {
-            throw new Error(result.error || 'SSH installation failed');
+            throw new Error(result.error || 'Agent provisioning failed');
           }
 
           if (writeProgress) {
@@ -152,11 +151,12 @@ export async function installGameServer(
               message: 'ARK szerver Docker-ben telepítve dedikált gépen',
               progress: 100,
             });
-            await appendInstallLog(serverId, `✅ ARK Docker telepítés sikeres dedikált gépen (container: ${result.containerId})`);
+            await appendInstallLog(serverId, `✅ ARK Docker telepítés sikeres dedikált gépen - Agent kezeli`);
           }
 
-          logger.info('ARK Docker installation successful on remote machine', {
+          logger.info('ARK Docker installation initiated via agent', {
             serverId,
+            agentId,
             machineId,
             gameType,
           });

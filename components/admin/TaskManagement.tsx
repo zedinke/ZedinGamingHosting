@@ -73,6 +73,9 @@ export function TaskManagement({
       BACKUP: 'Backup',
       DELETE: 'Törlés',
       INSTALL_AGENT: 'Agent Telepítés',
+      DOCKER_START: 'Docker Start',
+      DOCKER_STOP: 'Docker Stop',
+      DOCKER_DELETE: 'Docker Törlés',
     };
     return labels[type] || type;
   };

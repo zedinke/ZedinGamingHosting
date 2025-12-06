@@ -884,6 +884,9 @@ enum TaskType {
   BACKUP
   DELETE
   INSTALL_AGENT
+  DOCKER_START
+  DOCKER_STOP
+  DOCKER_DELETE
 }
 
 enum TaskStatus {

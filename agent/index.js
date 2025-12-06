@@ -130,11 +130,11 @@ async function getSystemResources() {
 }
 
 /**
- * Feladatok lekérdezése
+ * Feladatok lekérdezése az API-ról
  */
 async function getTasks() {
   try {
-    const response = await httpClient.get('/tasks', {
+    const response = await api.get('/api/agent/tasks', {
       params: {
         agentId: config.agentId,
         status: 'PENDING',
@@ -145,6 +145,24 @@ async function getTasks() {
   } catch (error) {
     console.error('Feladatok lekérdezése hiba:', error.message);
     return [];
+  }
+}
+
+/**
+ * Feladat teljesítésének jelzése az API felé
+ */
+async function reportTaskStatus(taskId, status, result = null, error = null) {
+  try {
+    const response = await api.post(`/api/agent/tasks/${taskId}/complete`, {
+      taskId,
+      status,
+      result,
+      error,
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error(`Task status report failed for ${taskId}:`, error.message);
   }
 }
 
@@ -160,6 +178,15 @@ async function executeTask(task) {
     switch (task.type) {
       case 'PROVISION':
         result = await executeProvision(task);
+        break;
+      case 'DOCKER_START':
+        result = await executeDockerStart(task);
+        break;
+      case 'DOCKER_STOP':
+        result = await executeDockerStop(task);
+        break;
+      case 'DOCKER_DELETE':
+        result = await executeDockerDelete(task);
         break;
       case 'START':
         result = await executeStart(task);
@@ -184,18 +211,18 @@ async function executeTask(task) {
     }
 
     // Feladat befejezése
-    await httpClient.post(`/tasks/${task.id}/complete`, {
-      result,
-    });
+    if (result.success) {
+      await reportTaskStatus(task.id, 'COMPLETED', result);
+    } else {
+      await reportTaskStatus(task.id, 'FAILED', result, result.error);
+    }
 
     console.log(`Feladat sikeresen befejezve: ${task.id}`);
   } catch (error) {
     console.error(`Feladat végrehajtási hiba (${task.id}):`, error.message);
 
     // Feladat sikertelenség
-    await httpClient.post(`/tasks/${task.id}/fail`, {
-      error: error.message,
-    });
+    await reportTaskStatus(task.id, 'FAILED', null, error.message);
   }
 }
 
@@ -203,19 +230,164 @@ async function executeTask(task) {
  * Provision feladat
  */
 async function executeProvision(task) {
-  const { serverId, gameType, port } = task.command;
+  const { serverId, gameType, command } = task;
+  const cmdData = command || {};
 
-  // Szerver könyvtár létrehozása
-  const serverPath = join(config.serverDir, serverId);
-  await execAsync(`mkdir -p ${serverPath}`);
+  try {
+    // ARK szerverek speciális kezelése
+    if (gameType === 'ARK_ASCENDED' || gameType === 'ARK_EVOLVED') {
+      return await provisionARKServer(serverId, gameType, cmdData);
+    }
 
-  // TODO: Game szerver telepítése (játék típus alapján)
+    // Egyéb játéktípusok
+    const serverPath = join(config.serverDir, serverId);
+    await execAsync(`mkdir -p ${serverPath}`);
 
-  return {
-    message: 'Szerver sikeresen létrehozva',
-    serverPath,
-    port,
-  };
+    return {
+      success: true,
+      message: 'Szerver sikeresen létrehozva',
+      serverPath,
+      port: cmdData.port,
+      gameType,
+    };
+  } catch (error) {
+    console.error(`Provision failed for ${serverId}:`, error);
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
+}
+
+/**
+ * ARK szerver telepítése Docker-ben
+ */
+async function provisionARKServer(serverId, gameType, cmdData) {
+  try {
+    const imageType = gameType === 'ARK_ASCENDED' ? 'ark-ascended' : 'ark-evolved';
+    const imageName = `zedin-gaming/${imageType}:latest`;
+    const containerName = `ark-${serverId}`;
+    const workDir = join(config.serverDir, `ark-docker-${serverId}`);
+    const serverPort = cmdData.port || 27015;
+    const queryPort = serverPort + 1;
+
+    console.log(`[ARK] Provisioning ${gameType} server: ${serverId}`);
+
+    // 1. Könyvtár létrehozása
+    await execAsync(`mkdir -p ${workDir}`);
+    console.log(`[ARK] Created directory: ${workDir}`);
+
+    // 2. Docker image pull (automatikus, docker-ből)
+    console.log(`[ARK] Pulling Docker image: ${imageName}...`);
+    try {
+      await execAsync(`docker pull ${imageName}`);
+    } catch (pullError) {
+      console.warn(`[ARK] Docker pull warning (image may already exist):`, pullError.message);
+    }
+
+    // 3. docker-compose.yml generálása
+    const dockerCompose = generateARKDockerCompose(serverId, gameType, cmdData, serverPort, queryPort);
+    const composeFile = join(workDir, 'docker-compose.yml');
+    await execAsync(`cat > ${composeFile}`, { input: dockerCompose });
+    console.log(`[ARK] Generated docker-compose.yml`);
+
+    // 4. Container indítása
+    console.log(`[ARK] Starting container: ${containerName}...`);
+    await execAsync(`cd ${workDir} && docker compose up -d`);
+
+    // 5. Healthcheck: várjunk, hogy az ARK process induljon (max 2 perc)
+    console.log(`[ARK] Waiting for game server process to start...`);
+    let processStarted = false;
+    for (let i = 0; i < 24; i++) {
+      try {
+        const { stdout } = await execAsync(`docker exec ${containerName} ps aux | grep -i ArkAscendedServer | grep -v grep`);
+        if (stdout) {
+          processStarted = true;
+          console.log(`[ARK] Game server process detected!`);
+          break;
+        }
+      } catch (e) {
+        // Process nem fut még
+      }
+      await new Promise(r => setTimeout(r, 5000)); // 5 másodperc várakozás
+    }
+
+    if (!processStarted) {
+      console.warn(`[ARK] Warning: Game server process not detected after 2 minutes`);
+    }
+
+    // 6. Port binding ellenőrzése
+    try {
+      const { stdout: ports } = await execAsync(`netstat -tlnup | grep ${serverPort} || ss -tlnup | grep ${serverPort}`);
+      console.log(`[ARK] Port binding verified:`, ports.split('\n')[0]);
+    } catch (e) {
+      console.warn(`[ARK] Port binding verification skipped`);
+    }
+
+    return {
+      success: true,
+      message: `ARK ${gameType} server provisioned successfully`,
+      serverId,
+      gameType,
+      containerName,
+      workDir,
+      serverPort,
+      queryPort,
+      status: processStarted ? 'running' : 'starting',
+    };
+  } catch (error) {
+    console.error(`[ARK] Provision failed:`, error);
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
+}
+
+/**
+ * ARK server docker-compose.yml generálása
+ */
+function generateARKDockerCompose(serverId, gameType, cmdData, serverPort, queryPort) {
+  const imageType = gameType === 'ARK_ASCENDED' ? 'ark-ascended' : 'ark-evolved';
+  const mapName = cmdData.mapName || (gameType === 'ARK_ASCENDED' ? 'TheIsland_WP' : 'TheIsland');
+  const maxPlayers = cmdData.maxPlayers || 70;
+  const serverName = cmdData.serverName || `ARK ${gameType} Server`;
+  const adminPassword = cmdData.adminPassword || `admin_${serverId.substring(0, 8)}`;
+  const serverPassword = cmdData.serverPassword || '';
+
+  return `version: '3.9'
+services:
+  ark-server:
+    image: zedin-gaming/${imageType}:latest
+    container_name: ark-${serverId}
+    ports:
+      - '${serverPort}:${serverPort}/tcp'
+      - '${serverPort}:${serverPort}/udp'
+      - '${queryPort}:${queryPort}/tcp'
+      - '${queryPort}:${queryPort}/udp'
+    environment:
+      SERVER_NAME: '${serverName}'
+      SERVER_PORT: '${serverPort}'
+      QUERY_PORT: '${queryPort}'
+      STEAM_API_KEY: 'placeholder'
+      MAP_NAME: '${mapName}'
+      MAX_PLAYERS: '${maxPlayers}'
+      DIFFICULTY: '1.0'
+      SERVER_PASSWORD: '${serverPassword}'
+      ADMIN_PASSWORD: '${adminPassword}'
+    volumes:
+      - ark-server-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD-SHELL', 'ps aux | grep -i ArkAscendedServer | grep -v grep || exit 1']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+volumes:
+  ark-server-data:
+    driver: local
+`;
 }
 
 /**
@@ -362,6 +534,147 @@ async function main() {
   }, config.taskCheckInterval);
 
   console.log('Agent fut...');
+}
+
+/**
+ * Docker konténer indítása
+ */
+async function executeDockerStart(task) {
+  const { serverId } = task;
+  const containerName = `ark-${serverId}`;
+
+  try {
+    console.log(`[DOCKER_START] Starting container: ${containerName}`);
+
+    // Container indítása
+    await execAsync(`docker start ${containerName}`);
+    console.log(`[DOCKER_START] Container started: ${containerName}`);
+
+    // Healthcheck: 30 másodpercig várunk az ARK processre
+    let processRunning = false;
+    for (let i = 0; i < 6; i++) {
+      try {
+        const { stdout } = await execAsync(`docker exec ${containerName} ps aux | grep -i ArkAscendedServer | grep -v grep`);
+        if (stdout) {
+          processRunning = true;
+          console.log(`[DOCKER_START] Game server process is running`);
+          break;
+        }
+      } catch (e) {
+        // Process nem fut még
+      }
+      await new Promise(r => setTimeout(r, 5000));
+    }
+
+    return {
+      success: true,
+      message: 'Container started successfully',
+      containerName,
+      processRunning,
+    };
+  } catch (error) {
+    console.error(`[DOCKER_START] Error:`, error.message);
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
+}
+
+/**
+ * Docker konténer leállítása
+ */
+async function executeDockerStop(task) {
+  const { serverId } = task;
+  const containerName = `ark-${serverId}`;
+
+  try {
+    console.log(`[DOCKER_STOP] Stopping container: ${containerName}`);
+
+    // Container leállítása (graceful: 30 másodperc timeout)
+    await execAsync(`docker stop -t 30 ${containerName}`);
+    console.log(`[DOCKER_STOP] Container stopped: ${containerName}`);
+
+    return {
+      success: true,
+      message: 'Container stopped successfully',
+      containerName,
+    };
+  } catch (error) {
+    // Ha már leállt a container, ez nem hiba
+    if (error.message.includes('No such container')) {
+      console.warn(`[DOCKER_STOP] Container not found (already stopped?): ${containerName}`);
+      return {
+        success: true,
+        message: 'Container not running',
+        containerName,
+      };
+    }
+
+    console.error(`[DOCKER_STOP] Error:`, error.message);
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
+}
+
+/**
+ * Docker konténer és adatok törlése
+ */
+async function executeDockerDelete(task) {
+  const { serverId } = task;
+  const containerName = `ark-${serverId}`;
+  const volumeName = `ark-server-data`;
+  const workDir = join(config.serverDir, `ark-docker-${serverId}`);
+
+  try {
+    console.log(`[DOCKER_DELETE] Deleting container and data: ${containerName}`);
+
+    // 1. Container leállítása (ha fut)
+    try {
+      await execAsync(`docker stop -t 10 ${containerName}`);
+      console.log(`[DOCKER_DELETE] Container stopped`);
+    } catch (e) {
+      console.warn(`[DOCKER_DELETE] Container already stopped`);
+    }
+
+    // 2. Container törlése
+    try {
+      await execAsync(`docker rm ${containerName}`);
+      console.log(`[DOCKER_DELETE] Container removed`);
+    } catch (e) {
+      console.warn(`[DOCKER_DELETE] Container removal failed (may already be removed)`);
+    }
+
+    // 3. Volume törlése
+    try {
+      await execAsync(`docker volume rm ${containerName}-data`);
+      console.log(`[DOCKER_DELETE] Volume removed`);
+    } catch (e) {
+      console.warn(`[DOCKER_DELETE] Volume removal skipped`);
+    }
+
+    // 4. Könyvtár törlése
+    try {
+      await execAsync(`rm -rf ${workDir}`);
+      console.log(`[DOCKER_DELETE] Work directory removed`);
+    } catch (e) {
+      console.warn(`[DOCKER_DELETE] Directory removal failed`);
+    }
+
+    return {
+      success: true,
+      message: 'Container and data deleted successfully',
+      containerName,
+    };
+  } catch (error) {
+    console.error(`[DOCKER_DELETE] Error:`, error.message);
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
 }
 
 // Signal kezelés
