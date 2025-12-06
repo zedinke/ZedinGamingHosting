@@ -238,7 +238,7 @@ describe('ArkDockerInstaller', () => {
       expect(composeContent).toContain('zedin-gaming/ark-ascended:latest');
       expect(composeContent).toContain('env_file:');
       expect(composeContent).toContain('- .env');
-      expect(composeContent).toContain(`label: "zed.server-id=${testServerId}"`);
+      expect(composeContent).toContain(`- "zed.server-id=${testServerId}"`);
       expect(composeContent).toContain('restart: unless-stopped');
       expect(composeContent).toContain('healthcheck:');
     });
