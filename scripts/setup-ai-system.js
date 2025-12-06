@@ -168,6 +168,13 @@ function installOllama() {
 
 // Fő telepítési függvény
 async function setupAISystem() {
+  // Skip in CI/sandbox environments
+  if (process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true') {
+    console.log('⏭️  CI környezet észlelve, AI rendszer telepítés kihagyása');
+    console.log('💡 Az AI funkciók csak production környezetben érhetők el.');
+    return;
+  }
+
   try {
     // 1. Ellenőrzi, hogy az Ollama elérhető-e
     console.log('🔍 Ollama elérhetőség ellenőrzése...');
