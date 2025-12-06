@@ -136,7 +136,12 @@ export async function triggerAutoInstallOnPayment(
       try {
         const html = getServerInstallationSuccessEmailTemplate(
           server.name,
+          server.gameType,
+          server.ipAddress || '0.0.0.0',
+          server.port || 27015,
+          server.maxPlayers,
           server.user.name || 'Felhasználó',
+          server.id,
           'hu'
         );
 

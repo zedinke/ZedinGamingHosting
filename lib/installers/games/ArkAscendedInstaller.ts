@@ -54,33 +54,44 @@ export class ArkAscendedInstaller extends BaseGameInstaller {
   buildDockerCompose(config: InstallConfig, ports: PortAllocation): string {
     this.logger.debug('Building Docker Compose', { config, ports });
 
-    const compose = `
-version: '3.8'
+    const serverId = config.serverId;
+    const serverName = config.serverName;
+    const serverPassword = config.serverPassword || '';
+    const adminPassword = config.adminPassword;
+    const maxPlayers = config.maxPlayers;
+    const map = config.map || 'TheIsland_WP';
+    const port = ports.port;
+    const queryPort = ports.queryPort;
+    const beaconPort = ports.beaconPort;
+    const steamPeerPort = ports.steamPeerPort;
+    const rconPort = ports.rconPort;
+
+    const compose = `version: '3.8'
 
 services:
   ark-ascended:
     image: zedin-gaming/ark-ascended:latest
-    container_name: ark-${config.serverId}
+    container_name: ark-${serverId}
     restart: unless-stopped
     ports:
-      - "\${DOCKER_HOST_IP}:${ports.port}:${ports.port}/tcp"
-      - "\${DOCKER_HOST_IP}:${ports.port}:${ports.port}/udp"
-      - "\${DOCKER_HOST_IP}:${ports.queryPort}:${ports.queryPort}/tcp"
-      - "\${DOCKER_HOST_IP}:${ports.queryPort}:${ports.queryPort}/udp"
-      - "\${DOCKER_HOST_IP}:${ports.beaconPort}:${ports.beaconPort}/tcp"
-      - "\${DOCKER_HOST_IP}:${ports.steamPeerPort}:${ports.steamPeerPort}/tcp"
-      - "\${DOCKER_HOST_IP}:${ports.steamPeerPort}:${ports.steamPeerPort}/udp"
-      - "\${DOCKER_HOST_IP}:${ports.rconPort}:${ports.rconPort}/tcp"
+      - "\${DOCKER_HOST_IP}:${port}:${port}/tcp"
+      - "\${DOCKER_HOST_IP}:${port}:${port}/udp"
+      - "\${DOCKER_HOST_IP}:${queryPort}:${queryPort}/tcp"
+      - "\${DOCKER_HOST_IP}:${queryPort}:${queryPort}/udp"
+      - "\${DOCKER_HOST_IP}:${beaconPort}:${beaconPort}/tcp"
+      - "\${DOCKER_HOST_IP}:${steamPeerPort}:${steamPeerPort}/tcp"
+      - "\${DOCKER_HOST_IP}:${steamPeerPort}:${steamPeerPort}/udp"
+      - "\${DOCKER_HOST_IP}:${rconPort}:${rconPort}/tcp"
     environment:
-      SERVER_NAME: "${config.serverName}"
-      SERVER_PASSWORD: "${config.password || ''}"
-      ADMIN_PASSWORD: "${config.adminPassword}"
-      MAX_PLAYERS: "${config.maxPlayers}"
-      MAP: "${config.map || 'TheIsland_WP'}"
-      PORT: "${ports.port}"
-      QUERY_PORT: "${ports.queryPort}"
-      RCON_PORT: "${ports.rconPort}"
-      SERVER_ID: "${config.serverId}"
+      SERVER_NAME: "${serverName}"
+      SERVER_PASSWORD: "${serverPassword}"
+      ADMIN_PASSWORD: "${adminPassword}"
+      MAX_PLAYERS: "${maxPlayers}"
+      MAP: "${map}"
+      PORT: "${port}"
+      QUERY_PORT: "${queryPort}"
+      RCON_PORT: "${rconPort}"
+      SERVER_ID: "${serverId}"
     volumes:
       - ark-data:/mnt/ark
       - ark-cluster:/mnt/ark-cluster
@@ -102,9 +113,9 @@ volumes:
 networks:
   ark-network:
     driver: bridge
-`;
+`.trim();
 
-    return compose.trim();
+    return compose;
   }
 
   buildHealthCheck(ports: PortAllocation): string {

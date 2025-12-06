@@ -299,10 +299,25 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
 
   // Automatikus telepítés triggerelése (ha van szerver és még nincs telepítve)
   if (subscription.serverId && subscription.server) {
-    const { triggerAutoInstallOnPayment } = await import('@/lib/auto-install-on-payment');
-    triggerAutoInstallOnPayment(subscription.serverId, updatedInvoice?.id).catch((error) => {
-      console.error('Auto-install error:', error);
-    });
+    // Use new modular installer system
+    try {
+      const { triggerAutoInstallOnPayment } = await import('@/lib/auto-install-on-payment-new');
+      const result = await triggerAutoInstallOnPayment(subscription.serverId, updatedInvoice?.id);
+      if (!result.success) {
+        console.error('Auto-install error:', result.error);
+      }
+    } catch (importError) {
+      // Fallback to old system if new system fails
+      console.error('Modular installer not available, using legacy:', importError);
+      try {
+        const { triggerAutoInstallOnPayment } = await import('@/lib/auto-install-on-payment');
+        triggerAutoInstallOnPayment(subscription.serverId, updatedInvoice?.id).catch((error) => {
+          console.error('Legacy auto-install error:', error);
+        });
+      } catch (error) {
+        console.error('Both installer systems failed:', error);
+      }
+    }
   }
 }
 

@@ -8,3 +8,6 @@ export { DebugLogger, LogLevel } from './utils/DebugLogger';
 export { PortManager, portManager } from './utils/PortManager';
 export { GameInstallerFactory, gameInstallerFactory } from './GameInstallerFactory';
 export { ArkAscendedInstaller } from './games/ArkAscendedInstaller';
+export { MinecraftInstaller } from './games/MinecraftInstaller';
+export { RustInstaller } from './games/RustInstaller';
+export { SatisfactoryInstaller } from './games/SatisfactoryInstaller';

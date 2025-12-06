@@ -11,6 +11,8 @@ export interface PortAllocation {
   queryPort?: number;
   beaconPort?: number;
   steamPeerPort?: number;
+  rconPort?: number;
+  rawSockPort?: number;
   rustPlusPort?: number;
   telnetPort?: number;
   webMapPort?: number;
@@ -86,7 +88,7 @@ export abstract class BaseGameInstaller {
   /**
    * Szerver indítása
    */
-  abstract startServer(config: InstallConfig): Promise<{ success: boolean; error?: string }>;
+  abstract startServer(config: InstallConfig): Promise<{ success: boolean; containerId?: string; error?: string }>;
 
   /**
    * Szerver leállítása
@@ -110,10 +112,10 @@ export abstract class BaseGameInstaller {
       });
 
       // 1. Validáció
-      this.logger.debug('1️⃣ Konfigurációs validáció');
+      this.logger.debug('1. Config validation');
       const validation = await this.validateConfig(config);
       if (!validation.valid) {
-        this.logger.error('Validációs hibák', undefined, { errors: validation.errors });
+        this.logger.error('Validation errors', undefined, { errors: validation.errors });
         return {
           success: false,
           serverId: config.serverId,
@@ -124,53 +126,53 @@ export abstract class BaseGameInstaller {
       }
 
       // 2. Pre-install
-      this.logger.debug('2️⃣ Pre-install cleanup');
+      this.logger.debug('2. Pre-install cleanup');
       await this.preInstall(config);
 
       // 3. Port allocation
-      this.logger.debug('3️⃣ Port allokáció', { basePort: config.port });
+      this.logger.debug('3. Port allocation', { basePort: config.port });
       const ports = await this.allocatePorts(config.port);
-      this.logger.info('✅ Portok allokálva', ports);
+      this.logger.info('[OK] Ports allocated', ports);
 
       // 4. Docker Compose generálás
-      this.logger.debug('4️⃣ Docker Compose generálása');
+      this.logger.debug('4. Docker Compose generation');
       const dockerCompose = this.buildDockerCompose(config, ports);
       this.logger.trace('Generated Docker Compose:', { dockerCompose });
 
       // 5. Pre-install setup
-      this.logger.debug('5️⃣ Pre-install setup');
+      this.logger.debug('5. Pre-install setup');
       await this.preInstall(config);
 
       // 6. Start container
-      this.logger.debug('6️⃣ Docker container indítása');
+      this.logger.debug('6. Starting Docker container');
       const startResult = await this.startServer(config);
       if (!startResult.success) {
         throw new Error(startResult.error || 'Container start failed');
       }
 
       // 7. Post-install setup
-      this.logger.debug('7️⃣ Post-install setup');
+      this.logger.debug('7. Post-install setup');
       await this.postInstall(config, startResult.containerId || '');
 
       // 8. Health check
-      this.logger.debug('8️⃣ Health check (max 5 próba, 10sec timeout)');
+      this.logger.debug('8. Health check (max 5 attempts, 10sec timeout)');
       let healthy = false;
       for (let i = 0; i < 5; i++) {
-        this.logger.debug(`   Próba ${i + 1}/5`, {});
+        this.logger.debug(`   Attempt ${i + 1}/5`);
         healthy = await this.healthCheck(config, ports);
         if (healthy) {
-          this.logger.info('✅ Health check sikeres');
+          this.logger.info('[OK] Health check passed');
           break;
         }
-        this.logger.warn(`   Health check nem válaszol, ${2 - i} próba maradt`);
+        this.logger.warn(`   Health check no response, ${4 - i} attempts remaining`);
         await new Promise((resolve) => setTimeout(resolve, 2000)); // 2sec wait
       }
 
       if (!healthy) {
-        this.logger.warn('⚠️ Health check timeout, de installation folytatódik');
+        this.logger.warn('[WARN] Health check timeout, but continuing');
       }
 
-      this.logger.info(`✅ ${this.gameType} telepítés sikeres!`, {
+      this.logger.info(`[OK] ${this.gameType} installation complete!`, {
         serverId: config.serverId,
         ports,
       });
@@ -180,11 +182,11 @@ export abstract class BaseGameInstaller {
         serverId: config.serverId,
         gameType: this.gameType,
         ports,
-        message: `${this.gameType} szerver sikeresen telepítve`,
+        message: `${this.gameType} server installed successfully`,
         logs: this.logger.getLogsAsString(),
       };
     } catch (error: any) {
-      this.logger.error(`❌ ${this.gameType} telepítés hiba`, error, {
+      this.logger.error(`[ERROR] ${this.gameType} installation failed`, error, {
         serverId: config.serverId,
       });
 

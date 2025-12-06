@@ -251,12 +251,54 @@ A rendszer támogatja az automatikus frissítést git pull-lal:
 - ✅ **Standalone Build**: Önálló build Hestia CP-hez
 - ✅ **PM2 Support**: Process management production környezetben
 
+## 🧪 Tesztelés (2025-12-06 Frissítés)
+
+### 🎮 Új Game Installerek (4 total - LIVE)
+- ✅ **Minecraft Java**: 1 port, RAM scaling, RCON
+- ✅ **Rust**: 3 ports, Oxide framework, plugin support
+- ✅ **Satisfactory**: 3 ports, 8GB min RAM, mod support
+- ✅ **ARK Ascended**: 6 ports, cluster, RCON
+
+### 🚀 Quick Start Testing
+```bash
+# 1. Dev szerver indítása
+npm run dev
+# Navigálj: http://localhost:3000/admin
+
+# 2. Unit tesztek futtatása
+npm test
+npm test -- --coverage
+
+# 3. E2E teszt (manuális)
+# Lásd: docs/E2E_TEST_EXECUTION_GUIDE.md
+
+# 4. Docker build & run
+docker-compose up -d
+docker ps  # Verify containers running
+```
+
+### 📊 Test Coverage
+- **Unit Tests**: 150+ test cases (Jest)
+- **Test Files**: 5 (Minecraft, Rust, Satisfactory, Factory, PortManager)
+- **Coverage Target**: 95%+
+- **E2E Docs**: Complete (11 phases, troubleshooting)
+
+### 📚 Dokumentáció
+- [E2E Test Checklist](./docs/E2E_TEST_CHECKLIST_ARK.md) - Teljes workflow
+- [E2E Execution Guide](./docs/E2E_TEST_EXECUTION_GUIDE.md) - Lépésről-lépésre
+- [Unit Test Framework](./docs/UNIT_TEST_FRAMEWORK.md) - Jest setup
+- [Installers Summary](./docs/INSTALLERS_COMPLETION_2025_12_06.md) - 4 game overview
+- [Project Summary](./docs/PROJECT_COMPLETION_SUMMARY.md) - Full completion
+
+---
+
 ## 🐛 Hibakeresés
 
 - **Build hibák**: Lásd [Build Troubleshooting](./docs/BUILD_TROUBLESHOOTING.md)
 - **Adatbázis problémák**: Lásd [Database Troubleshooting](./docs/DATABASE_TROUBLESHOOTING.md)
 - **Email problémák**: Lásd [Email Setup](./docs/EMAIL_SETUP_COMPLETE.md)
 - **Upload problémák**: Lásd [Upload Troubleshooting](./docs/UPLOAD_TROUBLESHOOTING.md)
+- **Installer hibák**: Lásd [E2E Troubleshooting](./docs/E2E_TEST_EXECUTION_GUIDE.md#-emergency-troubleshooting)
 
 ## 📝 Fejlesztési Fázisok
 

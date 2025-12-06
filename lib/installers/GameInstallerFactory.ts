@@ -7,6 +7,9 @@ import { GameType } from '@prisma/client';
 import { BaseGameInstaller } from './utils/BaseGameInstaller';
 import { DebugLogger } from './utils/DebugLogger';
 import { ArkAscendedInstaller } from './games/ArkAscendedInstaller';
+import { MinecraftInstaller } from './games/MinecraftInstaller';
+import { RustInstaller } from './games/RustInstaller';
+import { SatisfactoryInstaller } from './games/SatisfactoryInstaller';
 
 export class GameInstallerFactory {
   private logger: DebugLogger;
@@ -31,16 +34,13 @@ export class GameInstallerFactory {
         return new ArkAscendedInstaller(machineId);
 
       case 'MINECRAFT':
-        // TODO: Create MinecraftInstaller
-        throw new Error('MINECRAFT installer not yet implemented');
+        return new MinecraftInstaller(machineId);
 
       case 'RUST':
-        // TODO: Create RustInstaller
-        throw new Error('RUST installer not yet implemented');
+        return new RustInstaller(machineId);
 
       case 'SATISFACTORY':
-        // TODO: Create SatisfactoryInstaller
-        throw new Error('SATISFACTORY installer not yet implemented');
+        return new SatisfactoryInstaller(machineId);
 
       default:
         throw new Error(`Unknown game type: ${gameType}`);

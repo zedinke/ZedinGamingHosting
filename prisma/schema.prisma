@@ -38,6 +38,8 @@ model User {
   pushTokens        PushToken[]
   cronJobs          CronJob[]
   cronJobExecutions CronJobExecution[]
+  modPurchases      ModPurchase[]
+  modReviews        ModReview[]
 
   @@map("users")
 }
@@ -143,6 +145,7 @@ model Server {
   premiumPackage PremiumPackage? @relation(fields: [premiumPackageId], references: [id], onDelete: SetNull)
   tasks          Task[]
   cronJobs       CronJob[]
+  modInstallations ModInstallation[]
 
   @@index([premiumPackageId])
   @@map("servers")
@@ -1294,3 +1297,138 @@ enum SaaSOrderStatus {
   CANCELLED
   REFUNDED
 }
+
+// ============================================
+// RUST MOD SYSTEM (Marketplace + Installations)
+// ============================================
+
+model RustMod {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  displayName String // User-friendly name
+  description String    @db.Text
+  author      String
+  version     String    @default("1.0.0")
+  
+  // Mod details
+  category    String    @default("Utility") // Utility, Combat, Quality of Life, Building, Admin
+  imageUrl    String?
+  documentation String? @db.Text
+  requirements Json? // {"oxide": "2.0+", "rust_version": "2024.1+"}
+  
+  // Pricing
+  price       Float     @default(0) // USD, 0 = free
+  currency    String    @default("USD")
+  
+  // Store metadata
+  popularity  Int       @default(0) // Download count
+  rating      Float     @default(0) // 0-5
+  reviews     Int       @default(0)
+  isActive    Boolean   @default(true)
+  isFeatured  Boolean   @default(false)
+  downloadUrl String?   // Direct download link or package URL
+  
+  // Tracking
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Relations
+  installations ModInstallation[]
+  purchases     ModPurchase[]
+  reviews_      ModReview[]
+  
+  @@index([category])
+  @@index([isActive])
+  @@index([isFeatured])
+  @@map("rust_mods")
+}
+
+model ModInstallation {
+  id        String    @id @default(cuid())
+  serverId  String
+  modId     String
+  status    String    @default("INSTALLED") // INSTALLED, INSTALLING, FAILED, UPDATING, UNINSTALLING
+  
+  // Installation tracking
+  installedAt DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  uninstalledAt DateTime?
+  
+  // Error tracking
+  lastError String?
+  errorCount Int @default(0)
+  
+  // Version tracking
+  modVersion String @default("1.0.0")
+  isLatest   Boolean @default(true)
+  
+  server Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  mod    RustMod @relation(fields: [modId], references: [id], onDelete: Cascade)
+  
+  @@unique([serverId, modId])
+  @@index([status])
+  @@map("mod_installations")
+}
+
+model ModPurchase {
+  id          String    @id @default(cuid())
+  userId      String
+  modId       String
+  serverId    String?   // Which server this mod is for (can be null for account-level)
+  
+  // Payment info
+  price       Float
+  currency    String    @default("USD")
+  status      String    @default("COMPLETED") // PENDING, COMPLETED, FAILED, REFUNDED
+  transactionId String? // Payment processor transaction ID
+  
+  // Auto-install
+  autoInstall Boolean   @default(true)
+  installAttempts Int   @default(0)
+  lastInstallError String?
+  
+  purchasedAt DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  expiresAt   DateTime? // For subscription-based mods
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mod  RustMod @relation(fields: [modId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, modId, serverId])
+  @@index([status])
+  @@index([userId])
+  @@map("mod_purchases")
+}
+
+model ModReview {
+  id      String  @id @default(cuid())
+  modId   String
+  userId  String
+  
+  rating  Int     // 1-5 stars
+  title   String?
+  comment String? @db.Text
+  
+  helpful Int @default(0) // Helpful votes
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  mod  RustMod @relation(fields: [modId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([modId, userId])
+  @@map("mod_reviews")
+}
+
+model ModCategory {
+  id    String @id @default(cuid())
+  name  String @unique
+  slug  String @unique
+  description String?
+  icon  String?
+  order Int @default(0)
+  
+  @@map("mod_categories")
+}
+

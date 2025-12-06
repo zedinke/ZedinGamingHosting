@@ -101,16 +101,20 @@ export async function provisionServerViaAgent(
 
     // 5. Task frissítése
     debugLogger.debug('5️⃣ Updating task status');
+    const resultData = result.success
+      ? {
+          gameType: result.gameType,
+          ports: result.ports || {},
+          message: result.message || 'Success',
+        }
+      : {};
+
     await prisma.task.update({
       where: { id: task.id },
       data: {
         status: result.success ? 'COMPLETED' : 'FAILED',
-        result: {
-          gameType: result.gameType,
-          ports: result.ports,
-          message: result.message,
-        },
-        error: result.error,
+        result: resultData as any,
+        error: result.error || null,
         completedAt: new Date(),
       },
     });

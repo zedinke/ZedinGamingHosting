@@ -305,10 +305,23 @@ async function handlePaymentCompleted(payment: any) {
 
   // Automatikus telepítés triggerelése (ha van szerver és még nincs telepítve)
   if (subscription.serverId && subscription.server) {
-    const { triggerAutoInstallOnPayment } = await import('@/lib/auto-install-on-payment');
-    triggerAutoInstallOnPayment(subscription.serverId, invoice.id).catch((error) => {
-      console.error('Auto-install error:', error);
-    });
+    try {
+      const { triggerAutoInstallOnPayment } = await import('@/lib/auto-install-on-payment-new');
+      const result = await triggerAutoInstallOnPayment(subscription.serverId, invoice.id);
+      if (!result.success) {
+        console.error('Auto-install error:', result.error);
+      }
+    } catch (importError) {
+      console.error('Modular installer not available, using legacy:', importError);
+      try {
+        const { triggerAutoInstallOnPayment } = await import('@/lib/auto-install-on-payment');
+        triggerAutoInstallOnPayment(subscription.serverId, invoice.id).catch((error) => {
+          console.error('Legacy auto-install error:', error);
+        });
+      } catch (error) {
+        console.error('Both installer systems failed:', error);
+      }
+    }
   }
 }
 
