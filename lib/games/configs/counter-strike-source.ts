@@ -13,6 +13,7 @@ export const config: GameServerConfig = {
   startCommand: commands.startCommand,
   stopCommand: commands.stopCommand,
   port: 27015,
+  queryPort: 27016, // Source engine query port
 };
 
 /**

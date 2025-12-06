@@ -369,7 +369,8 @@ export async function getTribeStatistics(serverId: string): Promise<TribeStatist
  */
 export async function getLeaderboard(
   serverId: string,
-  category: 'kills' | 'level' | 'playtime' | 'wealth' = 'kills'
+  category: 'kills' | 'level' | 'playtime' | 'wealth' = 'kills',
+  limit: number = 50
 ): Promise<LeaderboardEntry[]> {
   try {
     const server = await prisma.server.findUnique({
@@ -395,7 +396,7 @@ export async function getLeaderboard(
                 : char.wealth || 0,
       }))
       .sort((a: any, b: any) => b.value - a.value)
-      .slice(0, 100)
+      .slice(0, limit)
       .map((entry: any, index: number) => ({
         rank: index + 1,
         ...entry,

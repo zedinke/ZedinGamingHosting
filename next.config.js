@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  output: 'standalone', // Production deployment-hez szükséges
   images: {
     remotePatterns: [
       {
@@ -38,7 +39,6 @@ const nextConfig = {
     unoptimized: false,
   },
   // Server Actions are available by default in Next.js 14+
-  // output: 'standalone', // Ideiglenesen kikapcsolva - standalone build hiányos route fájlokat tartalmaz
   webpack: (config, { isServer }) => {
     // Exclude optional dependencies from build
     if (isServer) {
@@ -51,6 +51,10 @@ const nextConfig = {
         'firebase-admin': 'commonjs firebase-admin',
       });
     }
+
+    // Handle dynamic imports to avoid critical dependency warnings
+    config.module.exprContextCritical = false;
+
     return config;
   },
 };

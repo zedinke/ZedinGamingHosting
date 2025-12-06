@@ -48,7 +48,7 @@ export async function GET(
     }
 
     if (action === 'leaderboard') {
-      const leaderboard = await getLeaderboard(serverId, type as any);
+      const leaderboard = await getLeaderboard(serverId, type as any || 'kills', limit);
       return NextResponse.json({
         success: true,
         data: {
