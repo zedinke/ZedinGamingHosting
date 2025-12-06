@@ -38,7 +38,12 @@ export async function executeSSHCommand(
         '-p', config.port.toString(),
         '-o', 'StrictHostKeyChecking=no',
         '-o', 'UserKnownHostsFile=/dev/null',
-        '-o', 'ConnectTimeout=10',
+        '-o', 'ConnectTimeout=30',
+        '-o', 'ServerAliveInterval=60',
+        '-o', 'ServerAliveCountMax=3',
+        '-o', 'KexAlgorithms=diffie-hellman-group14-sha1,diffie-hellman-group-exchange-sha256,ecdh-sha2-nistp256,ecdh-sha2-nistp384,ecdh-sha2-nistp521,ssh-rsa',
+        `-o`, `PasswordAuthentication=no`,
+        '-v',
         `${config.user}@${config.host}`,
         command
       ];
@@ -51,7 +56,9 @@ export async function executeSSHCommand(
         '-p', config.port.toString(),
         '-o', 'StrictHostKeyChecking=no',
         '-o', 'UserKnownHostsFile=/dev/null',
-        '-o', 'ConnectTimeout=10',
+        '-o', 'ConnectTimeout=30',
+        '-o', 'ServerAliveInterval=60',
+        '-o', 'ServerAliveCountMax=3',
         `${config.user}@${config.host}`,
         command
       ];
