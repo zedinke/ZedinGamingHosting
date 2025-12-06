@@ -121,6 +121,7 @@ export async function installGameServer(
       try {
         if (writeProgress) {
           await appendInstallLog(serverId, `Docker-alapú ARK telepítés indítása: ${gameType}`);
+          await appendInstallLog(serverId, `DEBUG: machineId=${machineId}, agentId=${agentId}`);
         }
 
         // Ha van dedikált machine, agent-en keresztül telepítünk
