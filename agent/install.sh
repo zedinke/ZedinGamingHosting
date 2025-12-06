@@ -8,7 +8,7 @@ set -e
 echo "=== Game Server Agent telepítés kezdete ==="
 
 # Konfigurációs paraméterek
-MANAGER_URL="${1:-http://116.203.226.140:3000/api/agent}"
+MANAGER_URL="${1:-https://zedgaminghosting.hu/api/agent}"
 AGENT_ID="${2:-agent-$(hostname)-$(date +%s)}"
 API_KEY="${3:-}"  # Opcionális - a regisztráció során generálódik
 SERVER_DIR="${4:-/opt/servers}"

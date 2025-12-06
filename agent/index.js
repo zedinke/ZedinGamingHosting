@@ -42,6 +42,7 @@ const httpClient = axios.create({
   baseURL: config.managerUrl,
   headers: {
     'X-API-Key': config.apiKey,
+    'X-Registration-Token': process.env.REGISTRATION_TOKEN || 'zed_gaming_secret_123456789',
     'Content-Type': 'application/json',
   },
 });
