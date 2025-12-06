@@ -41,9 +41,10 @@ export async function executeSSHCommand(
         '-o', 'ConnectTimeout=30',
         '-o', 'ServerAliveInterval=60',
         '-o', 'ServerAliveCountMax=3',
-        '-o', 'KexAlgorithms=diffie-hellman-group14-sha1,diffie-hellman-group-exchange-sha256,ecdh-sha2-nistp256,ecdh-sha2-nistp384,ecdh-sha2-nistp521,ssh-rsa',
+        '-o', 'KexAlgorithms=diffie-hellman-group14-sha1,diffie-hellman-group-exchange-sha256,ecdh-sha2-nistp256,ecdh-sha2-nistp384,ecdh-sha2-nistp521',
+        '-o', 'HostKeyAlgorithms=ssh-rsa,rsa-sha2-512,rsa-sha2-256',
         `-o`, `PasswordAuthentication=no`,
-        '-v',
+        `-o`, `PubkeyAuthentication=yes`,
         `${config.user}@${config.host}`,
         command
       ];
