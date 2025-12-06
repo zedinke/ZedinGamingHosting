@@ -92,9 +92,17 @@ export async function POST(request: NextRequest) {
     const { generateApiKey } = await import('@/lib/api-key');
     const apiKey = generateApiKey();
 
-    // Agent létrehozása
-    const agent = await prisma.agent.create({
-      data: {
+    // Agent CREATE or UPDATE (UPSERT)
+    const agent = await prisma.agent.upsert({
+      where: { agentId: finalAgentId },
+      update: {
+        machineId: machine.id,
+        status: 'ONLINE',
+        lastHeartbeat: new Date(),
+        version: version || '1.0.0',
+        capabilities: capabilities || {},
+      },
+      create: {
         machineId: machine.id,
         agentId: finalAgentId,
         apiKey,
@@ -116,7 +124,7 @@ export async function POST(request: NextRequest) {
 
     // Machine státusz frissítése
     await prisma.serverMachine.update({
-      where: { id: machineId },
+      where: { id: machine.id },
       data: {
         status: 'ONLINE',
         lastHeartbeat: new Date(),
