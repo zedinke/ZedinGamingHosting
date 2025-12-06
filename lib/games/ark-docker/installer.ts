@@ -121,6 +121,9 @@ export class ArkDockerInstaller extends EventEmitter {
       this.validateConfig(config);
       logger.info(`[ArkDocker] Installing ${config.gameType} server: ${config.serverId}`);
 
+      // Initialize directories and build Docker images if needed
+      await this.initialize();
+
       // Create server data directory
       const serverDataDir = join(this.dataDir, config.serverId);
       await mkdir(serverDataDir, { recursive: true });
