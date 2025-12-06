@@ -484,11 +484,11 @@ services:
       - "zed.server-id=${config.serverId}"
       - "zed.cluster-id=\${CLUSTER_ID:-none}"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:27015/health"]
+      test: ["CMD-SHELL", "ps aux | grep -i 'ArkAscendedServer\\|ShooterGameServer' | grep -v grep || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 60s
+      start_period: 120s
 
 volumes:
   ark-data-${volumeSuffix}:
