@@ -87,15 +87,15 @@ export default async function AdminTicketsPage({
     <div>
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Támogatási Ticketek</h1>
-        <p className="text-gray-700">
+        <p className="text-gray-600">
           Összes ticket: <span className="font-semibold text-gray-900">{totalTickets}</span>
         </p>
       </div>
 
       {/* Statisztikák */}
       <div className="grid md:grid-cols-3 gap-6 mb-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">Státusz szerint</h3>
+        <div className="bg-gradient-to-br from-rose-50 to-rose-100 rounded-xl shadow-sm border border-rose-200 p-6 hover:shadow-lg transition-all">
+          <h3 className="text-lg font-semibold text-rose-900 mb-3">Státusz szerint</h3>
           <div className="space-y-2">
             {statusStats.map((stat) => (
               <div key={stat.status} className="flex justify-between">

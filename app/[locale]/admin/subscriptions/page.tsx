@@ -61,7 +61,7 @@ export default async function AdminSubscriptionsPage({
     <div>
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Előfizetéskezelés</h1>
-        <p className="text-gray-700">
+        <p className="text-gray-600">
           Összes előfizetés: <span className="font-semibold text-gray-900">{totalSubscriptions}</span>
         </p>
       </div>
@@ -69,9 +69,9 @@ export default async function AdminSubscriptionsPage({
       {/* Statisztikák */}
       <div className="grid md:grid-cols-5 gap-4 mb-6">
         {stats.map((stat) => (
-          <div key={stat.status} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-            <h3 className="text-sm font-medium text-gray-600 mb-1">{stat.status}</h3>
-            <p className="text-2xl font-bold text-primary-600">{stat._count}</p>
+          <div key={stat.status} className="bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-xl shadow-sm border border-cyan-200 p-6 hover:shadow-lg transition-all transform hover:scale-105">
+            <h3 className="text-sm font-semibold text-cyan-700 mb-1">{stat.status}</h3>
+            <p className="text-2xl font-bold text-cyan-900">{stat._count}</p>
           </div>
         ))}
       </div>

@@ -69,7 +69,7 @@ export default async function AdminServersPage({
     <div>
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Szerverkezelés</h1>
-        <p className="text-gray-700">
+        <p className="text-gray-600">
           Összes szerver: <span className="font-semibold text-gray-900">{totalServers}</span>
         </p>
       </div>
@@ -77,9 +77,9 @@ export default async function AdminServersPage({
       {/* Statisztikák */}
       <div className="grid md:grid-cols-4 gap-4 mb-6">
         {stats.map((stat) => (
-          <div key={stat.status} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-            <h3 className="text-sm font-medium text-gray-600 mb-1">{stat.status}</h3>
-            <p className="text-2xl font-bold text-primary-600">{stat._count}</p>
+          <div key={stat.status} className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl shadow-sm border border-indigo-200 p-6 hover:shadow-lg transition-all transform hover:scale-105">
+            <h3 className="text-sm font-semibold text-indigo-700 mb-1">{stat.status}</h3>
+            <p className="text-2xl font-bold text-indigo-900">{stat._count}</p>
           </div>
         ))}
       </div>

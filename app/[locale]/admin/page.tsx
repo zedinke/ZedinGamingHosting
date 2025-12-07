@@ -42,35 +42,35 @@ export default async function AdminDashboardPage({
       <div>
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Vezérlőpult</h1>
-        <p className="text-gray-700">Üdvözöljük az admin felületen</p>
+        <p className="text-gray-600">Üdvözöljük az admin felületen</p>
       </div>
 
       {/* Statisztikák */}
       <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-          <h3 className="text-sm font-medium text-gray-700 mb-2">Összes Felhasználó</h3>
-          <p className="text-3xl font-bold text-primary-600">{totalUsers}</p>
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-sm border border-blue-200 p-6 hover:shadow-lg transition-all transform hover:scale-105">
+          <h3 className="text-sm font-semibold text-blue-700 mb-2">Összes Felhasználó</h3>
+          <p className="text-3xl font-bold text-blue-900">{totalUsers}</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-          <h3 className="text-sm font-medium text-gray-700 mb-2">Összes Szerver</h3>
-          <p className="text-3xl font-bold text-primary-600">{totalServers}</p>
+        <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl shadow-sm border border-purple-200 p-6 hover:shadow-lg transition-all transform hover:scale-105">
+          <h3 className="text-sm font-semibold text-purple-700 mb-2">Összes Szerver</h3>
+          <p className="text-3xl font-bold text-purple-900">{totalServers}</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-          <h3 className="text-sm font-medium text-gray-700 mb-2">Aktív Előfizetések</h3>
-          <p className="text-3xl font-bold text-green-600">{activeSubscriptions}</p>
+        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-sm border border-green-200 p-6 hover:shadow-lg transition-all transform hover:scale-105">
+          <h3 className="text-sm font-semibold text-green-700 mb-2">Aktív Előfizetések</h3>
+          <p className="text-3xl font-bold text-green-900">{activeSubscriptions}</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-          <h3 className="text-sm font-medium text-gray-700 mb-2">Összes Bevétel</h3>
-          <p className="text-3xl font-bold text-green-600">
+        <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl shadow-sm border border-emerald-200 p-6 hover:shadow-lg transition-all transform hover:scale-105">
+          <h3 className="text-sm font-semibold text-emerald-700 mb-2">Összes Bevétel</h3>
+          <p className="text-3xl font-bold text-emerald-900">
             {new Intl.NumberFormat('hu-HU', {
               style: 'currency',
               currency: 'HUF',
             }).format(revenue)}
           </p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-          <h3 className="text-sm font-medium text-gray-700 mb-2">Nyitott Ticketek</h3>
-          <p className="text-3xl font-bold text-yellow-600">{openTickets}</p>
+        <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl shadow-sm border border-orange-200 p-6 hover:shadow-lg transition-all transform hover:scale-105">
+          <h3 className="text-sm font-semibold text-orange-700 mb-2">Nyitott Ticketek</h3>
+          <p className="text-3xl font-bold text-orange-900">{openTickets}</p>
         </div>
       </div>
 
