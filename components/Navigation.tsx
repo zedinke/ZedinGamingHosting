@@ -29,8 +29,14 @@ export function Navigation({ locale }: NavigationProps) {
     return pathname?.includes(path);
   };
 
-  const toggleLocale = () => {
-    const newLocale = locale === 'hu' ? 'en' : 'hu';
+  const locales = ['hu', 'en', 'es'];
+  const localeNames: Record<string, string> = {
+    hu: 'Magyar',
+    en: 'English',
+    es: 'Español',
+  };
+
+  const changeLocale = (newLocale: string) => {
     const newPath = pathname?.replace(`/${locale}`, `/${newLocale}`) || `/${newLocale}`;
     window.location.href = newPath;
   };
@@ -65,16 +71,6 @@ export function Navigation({ locale }: NavigationProps) {
               }`}
             >
               {t('nav.games')}
-            </Link>
-            <Link
-              href={`/${locale}/zed-gaming-system`}
-              className={`hover:text-gray-900 transition-colors font-medium ${
-                isActive('/zed-gaming-system') 
-                  ? 'text-gray-900 font-semibold' 
-                  : 'text-gray-700'
-              }`}
-            >
-              Zed Gaming System
             </Link>
             <Link
               href={`/${locale}/system`}
@@ -122,13 +118,30 @@ export function Navigation({ locale }: NavigationProps) {
               </>
             )}
 
-            {/* Language Switcher */}
-            <button
-              onClick={toggleLocale}
-              className="px-3 py-1.5 text-sm font-medium text-gray-700 hover:text-gray-900 border border-gray-300 rounded-lg hover:border-gray-400 transition-colors"
-            >
-              {locale === 'hu' ? 'EN' : 'HU'}
-            </button>
+            {/* Language Switcher - 3 languages */}
+            <div className="relative group">
+              <button className="px-3 py-1.5 text-sm font-medium text-gray-700 hover:text-gray-900 border border-gray-300 rounded-lg hover:border-gray-400 transition-colors flex items-center gap-1">
+                {locale.toUpperCase()}
+                <ChevronDown className="w-4 h-4" />
+              </button>
+              <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                {locales.map((loc) => (
+                  <button
+                    key={loc}
+                    onClick={() => changeLocale(loc)}
+                    className={`w-full text-left px-4 py-2 hover:bg-gray-100 transition-colors ${
+                      locale === loc
+                        ? 'bg-gray-100 font-semibold text-gray-900'
+                        : 'text-gray-700'
+                    } ${locales.indexOf(loc) === 0 ? 'rounded-t-lg' : ''} ${
+                      locales.indexOf(loc) === locales.length - 1 ? 'rounded-b-lg' : ''
+                    }`}
+                  >
+                    {localeNames[loc]}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* Mobile Menu Button */}
@@ -165,17 +178,6 @@ export function Navigation({ locale }: NavigationProps) {
                 }`}
               >
                 {t('nav.games')}
-              </Link>
-              <Link
-                href={`/${locale}/zed-gaming-system`}
-                onClick={() => setMobileMenuOpen(false)}
-                className={`hover:text-gray-900 transition-colors font-medium py-2 ${
-                  isActive('/zed-gaming-system') 
-                    ? 'text-gray-900 font-semibold' 
-                    : 'text-gray-700'
-                }`}
-              >
-                Zed Gaming System
               </Link>
               <Link
                 href={`/${locale}/system`}
@@ -229,16 +231,28 @@ export function Navigation({ locale }: NavigationProps) {
                 </>
               )}
 
-              {/* Mobile Language Switcher */}
-              <button
-                onClick={() => {
-                  toggleLocale();
-                  setMobileMenuOpen(false);
-                }}
-                className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 border border-gray-300 rounded-lg hover:border-gray-400 transition-colors text-left"
-              >
-                {locale === 'hu' ? 'English (EN)' : 'Magyar (HU)'}
-              </button>
+              {/* Mobile Language Switcher - 3 languages */}
+              <div className="border-t border-gray-200 pt-4 mt-4">
+                <p className="text-sm font-medium text-gray-700 mb-2">Nyelv / Language / Idioma</p>
+                <div className="flex gap-2">
+                  {locales.map((loc) => (
+                    <button
+                      key={loc}
+                      onClick={() => {
+                        changeLocale(loc);
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                        locale === loc
+                          ? 'bg-gray-900 text-white'
+                          : 'text-gray-700 border border-gray-300 hover:border-gray-400'
+                      }`}
+                    >
+                      {loc.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         )}

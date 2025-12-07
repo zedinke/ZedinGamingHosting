@@ -5,7 +5,7 @@ type TranslationKey = string;
 type Translations = Record<string, any>;
 
 // Érvényes locale-ok listája
-const VALID_LOCALES = ['hu', 'en'];
+const VALID_LOCALES = ['hu', 'en', 'es'];
 
 // Fordítások betöltése
 function loadTranslations(locale: string, namespace: string = 'common'): Translations {
