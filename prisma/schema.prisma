@@ -40,6 +40,7 @@ model User {
   cronJobExecutions CronJobExecution[]
   modPurchases      ModPurchase[]
   modReviews        ModReview[]
+  gameDeployments   GameServerDeployment[] @relation("UserGameDeployments")
 
   @@map("users")
 }
@@ -1431,4 +1432,171 @@ model ModCategory {
   
   @@map("mod_categories")
 }
+
+// ========================================
+// GAME TEMPLATE SYSTEM
+// ========================================
+
+// Game Template Definition
+// Előre kész szerver template-ek (Docker containerek)
+// Verziókezelés és metaadatok tárolása
+model GameTemplate {
+  id                String   @id @default(cuid())
+  
+  // Szerver típusa (ARK_ASCENDED, ARK_EVOLVED, RUST, stb.)
+  templateType      String   @unique // Enum: ARK_ASCENDED, ARK_EVOLVED, RUST, stb.
+  
+  // Template adatok
+  name              String   // "ARK Survival Ascended"
+  description       String?  @db.Text
+  version           String   // "1.0", "2.1", stb.
+  dockerImage       String   // "ark-ascended:latest"
+  
+  // Szerver követelmények
+  minCpuCores       Int      @default(4)
+  minRamGb          Int      @default(16)
+  minDiskGb         Int      @default(100)
+  
+  // Google Drive info
+  gdriveFileId      String?  // File ID a Google Drive-on
+  gdriveFileName    String?  // Template fájl neve
+  gdriveSizeGb      Float    @default(0)
+  gdriveChecksum    String?  // SHA256 checksum
+  gdriveUrl         String?  // Public download link
+  
+  // Port konfigurációk (JSON: {game: 7777, query: 27015, rcon: 27020})
+  ports             Json     @default("{\"game\": 7777}")
+  
+  // Metaadatok
+  steamAppId        Int?     // Steam App ID (frissítésekhez)
+  maxPlayers        Int      @default(10)
+  engine            String?  // UE5, UE4, Unity, stb.
+  metadata          Json?    // Custom metaadatok
+  
+  // Status és kezelés
+  isActive          Boolean  @default(true)
+  isPublic          Boolean  @default(true)
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Relációk
+  deployments       GameServerDeployment[]
+  updates           GameTemplateUpdate[]
+  
+  @@index([templateType])
+  @@index([isActive])
+  @@map("game_templates")
+}
+
+// Game Template Update History
+// Template verziók kezelése és update history
+model GameTemplateUpdate {
+  id                String   @id @default(cuid())
+  templateId        String
+  
+  // Update info
+  version           String   // "1.1", "2.0", stb.
+  description       String?  @db.Text
+  releaseNotes      String?  @db.Text
+  
+  // Google Drive file
+  gdriveFileId      String?
+  gdriveFileName    String?
+  gdriveSizeGb      Float    @default(0)
+  gdriveChecksum    String?
+  
+  // Verzió info
+  isRecommended     Boolean  @default(false)
+  isBreakingChange  Boolean  @default(false)
+  
+  releaseDate       DateTime @default(now())
+  createdAt         DateTime @default(now())
+  
+  // Relációk
+  template          GameTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  
+  @@index([templateId])
+  @@index([version])
+  @@map("game_template_updates")
+}
+
+// Game Server Deployment
+// Szerver deployment session-ök nyomon követése
+model GameServerDeployment {
+  id                String   @id @default(cuid())
+  serverId          String
+  userId            String
+  templateId        String
+  
+  // Deployment session info
+  sessionId         String   @unique
+  phase             String   // DOWNLOADING, EXTRACTING, CONFIGURING, STARTING, COMPLETED, FAILED
+  status            String   // PENDING, IN_PROGRESS, SUCCESS, FAILED
+  
+  // Progress
+  progress          Int      @default(0) // 0-100
+  
+  // Container info (miután elkészült)
+  containerId       String?
+  containerName     String?
+  containerStatus   String?  // running, stopped, paused, etc.
+  
+  // Konfigurációs adatok (JSON)
+  serverName        String   // "My ARK Server"
+  serverConfig      Json?    // Custom konfig (portak, jelszavak, stb.)
+  
+  // Metaadatok
+  downloadedSizeGb  Float    @default(0)
+  extractedPath     String?  // Hol bontottuk ki
+  
+  // Üzenetek
+  messages          Json     @default("[]") // Array of {timestamp, message, level}
+  errorMessage      String?  @db.Text
+  
+  // Timeline
+  startedAt         DateTime @default(now())
+  completedAt       DateTime?
+  
+  // Relációk
+  template          GameTemplate @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  user              User     @relation("UserGameDeployments", fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([serverId])
+  @@index([userId])
+  @@index([templateId])
+  @@index([status])
+  @@map("game_server_deployments")
+}
+
+// Game Server Update Queue
+// Szerver frissítés ütemezésé
+// (SteamCMD alapú frissítések)
+model GameServerUpdate {
+  id                String   @id @default(cuid())
+  serverId          String   @unique
+  
+  // Update info
+  currentVersion    String?  // "282.104", stb.
+  availableVersion  String?  // Elérhető verzió
+  
+  // Update scheduling
+  autoUpdateEnabled Boolean  @default(false)
+  lastUpdateCheck   DateTime?
+  lastUpdateAt      DateTime?
+  nextUpdateCheck   DateTime?
+  
+  // Restart policy
+  restartIfNeeded   Boolean  @default(true)
+  maintenanceTime   String?  // "03:00" (UTC, optional)
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@index([serverId])
+  @@map("game_server_updates")
+}
+
+// Extend User model az új relációkhoz
+
 
