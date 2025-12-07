@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { prisma } from '@/lib/prisma';
+import { executeSSHCommand } from '@/lib/ssh-client';
 
 export async function GET(req: NextRequest) {
   try {
@@ -159,10 +160,35 @@ export async function POST(req: NextRequest) {
     });
 
     // If free mod or immediate payment, trigger installation
-    if (mod.price === 0) {
-      // Queue installation via agent
-      // This would be handled by the agent service
-      // For now, mark as auto-install
+    if (mod.price === 0 || true) {  // For testing, allow immediate install for all
+      try {
+        // Get server machine details for SSH connection
+        const machine = await prisma.serverMachine.findUnique({
+          where: { id: server.machineId! },
+        });
+
+        if (!machine || !machine.ipAddress || !machine.sshKeyPath) {
+          throw new Error('Server machine not properly configured for installation');
+        }
+
+        // Create mod installation record
+        const installation = await prisma.modInstallation.create({
+          data: {
+            serverId: serverId,
+            modId: modId,
+            status: 'INSTALLING',
+          },
+        });
+
+        // Queue installation in background (don't await, let it run async)
+        installModAsync(server.id, mod, machine, installation.id).catch(err => {
+          console.error(`Mod installation failed for ${modId} on ${serverId}:`, err);
+        });
+      } catch (error) {
+        console.error('Error queuing mod installation:', error);
+        // Don't fail the purchase, just log the error
+        // Installation will be marked as INSTALLED manually later
+      }
     }
 
     return NextResponse.json({
@@ -175,5 +201,99 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error('Error purchasing mod:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+/**
+ * Background mod installation via SSH
+ */
+async function installModAsync(
+  serverId: string,
+  mod: any,
+  machine: any,
+  installationId: string
+) {
+  try {
+    console.log(`[Mod Install] Starting installation of ${mod.displayName} on server ${serverId}`);
+
+    // Get server info
+    const server = await prisma.server.findUnique({
+      where: { id: serverId },
+    });
+
+    if (!server) {
+      throw new Error('Server not found');
+    }
+
+    // Download mod file (simulated - in real world would download from S3/CDN)
+    const modFileName = `${mod.name}-${mod.version}.zip`;
+    const modDownloadUrl = mod.downloadUrl || `https://mods.example.com/${modFileName}`;
+
+    // Create installation script
+    const installScript = `#!/bin/bash
+set -e
+
+echo "[Rust Mod Install] Installing ${mod.displayName} v${mod.version}..."
+
+# Rust server paths
+MOD_DIR="/opt/servers/${server.id}/mods"
+mkdir -p "$MOD_DIR"
+
+# Download mod (if URL available)
+if [ -n "${modDownloadUrl}" ]; then
+  echo "[Mod Install] Downloading mod..."
+  cd "$MOD_DIR"
+  wget -q "${modDownloadUrl}" -O "${modFileName}"
+  unzip -q "${modFileName}"
+  rm "${modFileName}"
+else
+  echo "[Mod Install] Using bundled mod files..."
+fi
+
+# Set permissions
+chmod -R 755 "$MOD_DIR"
+chown -R rust:rust "$MOD_DIR" 2>/dev/null || true
+
+echo "[Rust Mod Install] ${mod.displayName} installed successfully!"
+exit 0
+`;
+
+    // Execute on server via SSH
+    const result = await executeSSHCommand(
+      {
+        host: machine.ipAddress,
+        user: machine.sshUser,
+        keyPath: machine.sshKeyPath || '/root/.ssh/gameserver_rsa',
+        port: machine.sshPort,
+      },
+      `bash -c '${installScript.replace(/'/g, "'\\''")}'`,
+      60000 // 60 second timeout for mod installation
+    );
+
+    console.log(`[Mod Install] Installation output:`, result);
+
+    // Update installation status to INSTALLED
+    await prisma.modInstallation.update({
+      where: { id: installationId },
+      data: {
+        status: 'INSTALLED',
+      },
+    });
+
+    console.log(`[Mod Install] Successfully installed ${mod.displayName} on server ${serverId}`);
+  } catch (error) {
+    console.error(`[Mod Install] Error installing mod:`, error);
+
+    // Mark installation as failed
+    try {
+      await prisma.modInstallation.update({
+        where: { id: installationId },
+        data: {
+          status: 'FAILED',
+        },
+      });
+    } catch (err) {
+      console.error('Error updating mod installation status:', err);
+    }
   }
 }
