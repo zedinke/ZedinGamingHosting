@@ -10,42 +10,34 @@ export const installScript = `
 set -e
 SERVER_ID="{serverId}"
 SERVER_DIR="/opt/servers/$SERVER_ID"
-DOCKER_IMAGE="cm2network/steamcmd:wine"
+STEAMCMD_IMAGE="cm2network/steamcmd:latest"
 CONTAINER_NAME="sotf-server-$SERVER_ID"
 
 echo "======================================"
 echo "Sons of the Forest Server Installation"
 echo "AppID: 2465200 (Dedicated Server)"
-echo "Method: Docker + Wine (Windows binary)"
+echo "Method: Direct Installation + Wine"
 echo "======================================"
 echo ""
 
-# Ellenőrizzük, hogy Docker telepítve van-e
-if ! command -v docker &> /dev/null; then
-  echo "⚠️  Docker nincs telepítve. Automatikus telepítés folyamatban..."
-  echo "Ez eltarthat 1-2 percig..."
-  echo ""
+# Wine telepítése
+if ! command -v wine &> /dev/null; then
+  echo "⚠️  Wine nincs telepítve. Automatikus telepítés..."
   
-  # Docker hivatalos telepítő script futtatása
-  curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
-  sh /tmp/get-docker.sh
-  rm -f /tmp/get-docker.sh
+  # Debian/Ubuntu rendszer
+  dpkg --add-architecture i386
+  apt-get update -qq
+  apt-get install -y -qq wine wine64 wine32 winbind xvfb
   
-  # Docker szolgáltatás indítása
-  systemctl start docker
-  systemctl enable docker
-  
-  # Ellenőrzés
-  if ! command -v docker &> /dev/null; then
-    echo "❌ HIBA: Docker telepítés sikertelen!"
-    echo "Kézi telepítés: curl -fsSL https://get.docker.com | sh"
+  if ! command -v wine &> /dev/null; then
+    echo "❌ HIBA: Wine telepítés sikertelen!"
     exit 1
   fi
   
-  echo "✅ Docker sikeresen telepítve: \$(docker --version)"
+  echo "✅ Wine sikeresen telepítve: \$(wine --version)"
   echo ""
 else
-  echo "✅ Docker már telepítve: \$(docker --version)"
+  echo "✅ Wine már telepítve: \$(wine --version)"
   echo ""
 fi
 
@@ -54,13 +46,20 @@ mkdir -p "$SERVER_DIR"
 chmod -R 755 "$SERVER_DIR"
 cd "$SERVER_DIR"
 
-# Docker konténer leállítása ha fut
-echo "🔄 Meglévő konténer ellenőrzése..."
-docker stop "$CONTAINER_NAME" 2>/dev/null || true
-docker rm "$CONTAINER_NAME" 2>/dev/null || true
-echo ""
+# SteamCMD telepítése lokálisan
+STEAMCMD_DIR="$SERVER_DIR/steamcmd"
+mkdir -p "$STEAMCMD_DIR"
 
-# SteamCMD Docker konténerrel telepítés (Wine support)
+if [ ! -f "$STEAMCMD_DIR/steamcmd.sh" ]; then
+  echo "📥 SteamCMD letöltése..."
+  cd "$STEAMCMD_DIR"
+  curl -sqL "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz" | tar zxvf -
+  chmod +x steamcmd.sh
+  echo "✅ SteamCMD telepítve"
+fi
+
+# Sons of the Forest szerver letöltése
+echo ""
 echo "📦 Sons of the Forest szerver letöltése SteamCMD-vel..."
 echo "   AppID: 2465200 (Dedicated Server)"
 echo "   Platform: Windows (Wine emuláció)"
@@ -69,11 +68,10 @@ echo ""
 echo "⏳ Ez eltarthat 5-10 percig a hálózati sebességtől függően..."
 echo ""
 
-docker run --rm \\
-  -v "$SERVER_DIR:/data" \\
-  "$DOCKER_IMAGE" \\
+cd "$STEAMCMD_DIR"
+./steamcmd.sh \\
   +@sSteamCmdForcePlatformType windows \\
-  +force_install_dir /data \\
+  +force_install_dir "$SERVER_DIR/game" \\
   +login anonymous \\
   +app_update 2465200 validate \\
   +quit
@@ -81,12 +79,12 @@ docker run --rm \\
 echo ""
 
 # Ellenőrizzük a telepítést
-if [ ! -f "$SERVER_DIR/SonsOfTheForestDS.exe" ]; then
+if [ ! -f "$SERVER_DIR/game/SonsOfTheForestDS.exe" ]; then
   echo "❌ HIBA: Szerver fájlok nem találhatók!"
   echo "Keresett fájl: SonsOfTheForestDS.exe"
   echo ""
   echo "Könyvtár tartalma:"
-  ls -la "$SERVER_DIR/" | head -20
+  ls -la "$SERVER_DIR/game/" | head -20
   exit 1
 fi
 
@@ -95,13 +93,13 @@ echo ""
 
 # Könyvtárak létrehozása
 echo "📁 Szerver könyvtárak előkészítése..."
-mkdir -p "$SERVER_DIR/userdata"
+mkdir -p "$SERVER_DIR/game/userdata"
 mkdir -p "$SERVER_DIR/logs"
 mkdir -p "$SERVER_DIR/configs"
 chmod -R 777 "$SERVER_DIR"
 
 # Alapértelmezett konfiguráció létrehozása
-cat > "$SERVER_DIR/dedicatedserver.cfg" << 'EOFCFG'
+cat > "$SERVER_DIR/game/dedicatedserver.cfg" << 'EOFCFG'
 {
   "IpAddress": "0.0.0.0",
   "GamePort": 8766,
@@ -120,33 +118,31 @@ EOFCFG
 
 echo "✅ Konfiguráció létrehozva: dedicatedserver.cfg"
 
-# Docker indító script létrehozása
+# Szerver indító script létrehozása (Wine-nal)
 cat > "$SERVER_DIR/start-server.sh" << 'EOFSTART'
 #!/bin/bash
 SERVER_ID="{serverId}"
 SERVER_DIR="/opt/servers/$SERVER_ID"
-CONTAINER_NAME="sotf-server-$SERVER_ID"
 
-echo "🚀 Sons of the Forest szerver indítása..."
+echo "🚀 Sons of the Forest szerver indítása Wine-nal..."
 
-docker run -d \\
-  --name "$CONTAINER_NAME" \\
-  --restart unless-stopped \\
-  -v "$SERVER_DIR:/server" \\
-  -p 8766:8766/udp \\
-  -p 27016:27016/udp \\
-  -p 9700:9700/udp \\
-  cm2network/steamcmd:wine \\
-  wine /server/SonsOfTheForestDS.exe -batchmode -nographics
+cd "$SERVER_DIR/game"
 
-if [ \$? -eq 0 ]; then
-  echo "✅ Szerver sikeresen elindítva!"
-  echo "📊 Státusz: docker ps -f name=$CONTAINER_NAME"
-  echo "📋 Logok: docker logs -f $CONTAINER_NAME"
-else
-  echo "❌ HIBA: Szerver indítás sikertelen!"
-  exit 1
-fi
+# X Virtual Frame Buffer használata (headless módban)
+export DISPLAY=:99
+Xvfb :99 -screen 0 1024x768x16 &
+XVFB_PID=\$!
+
+# Wine indítása
+WINEDEBUG=-all wine SonsOfTheForestDS.exe -batchmode -nographics > "$SERVER_DIR/logs/server.log" 2>&1 &
+WINE_PID=\$!
+
+echo \$WINE_PID > "$SERVER_DIR/server.pid"
+echo \$XVFB_PID > "$SERVER_DIR/xvfb.pid"
+
+echo "✅ Szerver sikeresen elindítva!"
+echo "📊 PID: \$WINE_PID"
+echo "📋 Logok: tail -f $SERVER_DIR/logs/server.log"
 EOFSTART
 
 chmod +x "$SERVER_DIR/start-server.sh"
@@ -155,18 +151,24 @@ chmod +x "$SERVER_DIR/start-server.sh"
 cat > "$SERVER_DIR/stop-server.sh" << 'EOFSTOP'
 #!/bin/bash
 SERVER_ID="{serverId}"
-CONTAINER_NAME="sotf-server-$SERVER_ID"
+SERVER_DIR="/opt/servers/$SERVER_ID"
 
 echo "🛑 Sons of the Forest szerver leállítása..."
 
-docker stop "$CONTAINER_NAME"
-docker rm "$CONTAINER_NAME"
-
-if [ \$? -eq 0 ]; then
-  echo "✅ Szerver sikeresen leállítva!"
-else
-  echo "⚠️  Figyelmeztetés: Konténer leállítás során hiba lépett fel"
+if [ -f "$SERVER_DIR/server.pid" ]; then
+  kill \$(cat "$SERVER_DIR/server.pid") 2>/dev/null || true
+  rm -f "$SERVER_DIR/server.pid"
 fi
+
+if [ -f "$SERVER_DIR/xvfb.pid" ]; then
+  kill \$(cat "$SERVER_DIR/xvfb.pid") 2>/dev/null || true
+  rm -f "$SERVER_DIR/xvfb.pid"
+fi
+
+# Wine processek leállítása
+pkill -f "SonsOfTheForestDS.exe"
+
+echo "✅ Szerver leállítva!"
 EOFSTOP
 
 chmod +x "$SERVER_DIR/stop-server.sh"
@@ -178,6 +180,31 @@ echo "✅ ======================================"
 echo ""
 echo "📋 Szerver információk:"
 echo "   - AppID: 2465200 (Dedicated Server)"
+echo "   - Platform: Windows (Wine emuláció)"
+echo "   - Installációs könyvtár: $SERVER_DIR/game"
+echo "   - Konfiguráció: $SERVER_DIR/game/dedicatedserver.cfg"
+echo ""
+echo "🎮 Portok:"
+echo "   - Game Port: 8766/UDP"
+echo "   - Query Port: 27016/UDP"
+echo "   - Blob Sync: 9700/UDP"
+echo ""
+echo "🚀 Szerver indítása:"
+echo "   bash $SERVER_DIR/start-server.sh"
+echo ""
+echo "🛑 Szerver leállítása:"
+echo "   bash $SERVER_DIR/stop-server.sh"
+echo ""
+echo "📋 Logok megtekintése:"
+echo "   tail -f $SERVER_DIR/logs/server.log"
+echo ""
+echo "⚙️  Konfiguráció szerkesztése:"
+echo "   nano $SERVER_DIR/game/dedicatedserver.cfg"
+echo ""
+echo "✅ Telepítés befejezve!"
+`;
+
+export default installScript;
 echo "   - Platform: Windows (Docker + Wine)"
 echo "   - Port: 8766 (UDP)"
 echo "   - Query Port: 27016 (UDP)"

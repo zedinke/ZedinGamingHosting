@@ -1,17 +1,17 @@
 /**
  * Sons of the Forest szerver parancsok
- * Docker-based Windows server with Wine
+ * Wine-based Windows server (native installation)
  */
 
 export const commands = {
-  // Docker container alapú indítás/leállítás
+  // Wine alapú indítás/leállítás
   startCommand: 'bash /opt/servers/{serverId}/start-server.sh',
   stopCommand: 'bash /opt/servers/{serverId}/stop-server.sh',
   restartCommand: 'bash /opt/servers/{serverId}/stop-server.sh && sleep 2 && bash /opt/servers/{serverId}/start-server.sh',
-  statusCommand: 'docker ps -f name=sotf-server-{serverId} --format "{{.Status}}"',
+  statusCommand: 'pgrep -f "SonsOfTheForestDS.exe" > /dev/null && echo "Running" || echo "Stopped"',
   
   // Szerver logok megtekintése
-  logsCommand: 'docker logs sotf-server-{serverId} --tail 100',
+  logsCommand: 'tail -n 100 /opt/servers/{serverId}/logs/server.log',
   
   // Szerver console parancsok (RCON-on keresztül ha van)
   saveCommand: 'save',
