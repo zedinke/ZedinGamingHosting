@@ -321,4 +321,59 @@
   "tickets": {
     "category": "Category",
     "priority": "Priority"
+  },
+  "pages": {
+    "pricing": {
+      "title": "Pricing",
+      "subtitle": "Choose a plan that fits your needs. Every plan includes DDoS protection and 24/7 support.",
+      "monthly": "Monthly",
+      "yearly": "Yearly"
+    },
+    "games": {
+      "title": "Game Servers",
+      "subtitle": "Choose a game and package to start your own server"
+    },
+    "admin": {
+      "title": "Admin Dashboard",
+      "welcome": "Welcome to admin panel",
+      "allUsers": "All Users",
+      "allServers": "All Servers",
+      "activeSubscriptions": "Active Subscriptions",
+      "totalRevenue": "Total Revenue",
+      "openTickets": "Open Tickets",
+      "licenseInfo": "License Information",
+      "systemHealth": "System Health",
+      "recentUsers": "Recent Users",
+      "recentServers": "Recent Servers"
+    },
+    "dashboard": {
+      "title": "Dashboard",
+      "welcome": "Welcome to your dashboard"
+    },
+    "servers": {
+      "title": "Servers",
+      "subtitle": "Manage all your servers in one place",
+      "create": "Create Server",
+      "noServers": "No servers created yet"
+    },
+    "login": {
+      "title": "Sign In",
+      "welcome": "Welcome back"
+    },
+    "register": {
+      "title": "Create Account",
+      "subtitle": "Join the gaming community"
+    },
+    "forgotPassword": {
+      "title": "Reset Password",
+      "subtitle": "Enter your email to reset your password"
+    },
+    "resetPassword": {
+      "title": "Reset Password"
+    },
+    "verifyEmail": {
+      "title": "Verify Email",
+      "subtitle": "Click the link in your email to verify your account"
+    }
   }
+}

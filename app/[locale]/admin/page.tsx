@@ -3,10 +3,12 @@ import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { SystemHealth } from '@/components/admin/SystemHealth';
 import dynamic from 'next/dynamic';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 
 const LicenseInfo = dynamic(() => import('@/components/admin/LicenseInfo').then(mod => ({ default: mod.LicenseInfo })), {
   ssr: false,
-  loading: () => <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 animate-pulse">Betöltés...</div>
+  loading: () => <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 animate-pulse">{/* Loading */}</div>
 });
 
 export default async function AdminDashboardPage({
@@ -17,6 +19,16 @@ export default async function AdminDashboardPage({
   try {
     await requireAdmin(locale);
     const t = getTranslations(locale, 'common');
+
+    // Load translations server-side
+    let translations: any = {};
+    try {
+      const filePath = join(process.cwd(), 'public', 'locales', locale, 'common.json');
+      const fileContents = readFileSync(filePath, 'utf8');
+      translations = JSON.parse(fileContents);
+    } catch (error) {
+      console.error('Failed to load translations:', error);
+    }
 
     // Statisztikák lekérése
     const [
@@ -41,26 +53,26 @@ export default async function AdminDashboardPage({
     return (
       <div>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Vezérlőpult</h1>
-        <p className="text-gray-600">Üdvözöljük az admin felületen</p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">{translations?.pages?.admin?.title || 'Admin Dashboard'}</h1>
+        <p className="text-gray-600">{translations?.pages?.admin?.welcome || 'Welcome to admin panel'}</p>
       </div>
 
       {/* Statisztikák */}
       <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
         <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-sm border border-blue-200 p-6 hover:shadow-lg transition-all transform hover:scale-105">
-          <h3 className="text-sm font-semibold text-blue-700 mb-2">Összes Felhasználó</h3>
+          <h3 className="text-sm font-semibold text-blue-700 mb-2">{translations?.pages?.admin?.allUsers || 'All Users'}</h3>
           <p className="text-3xl font-bold text-blue-900">{totalUsers}</p>
         </div>
         <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl shadow-sm border border-purple-200 p-6 hover:shadow-lg transition-all transform hover:scale-105">
-          <h3 className="text-sm font-semibold text-purple-700 mb-2">Összes Szerver</h3>
+          <h3 className="text-sm font-semibold text-purple-700 mb-2">{translations?.pages?.admin?.allServers || 'All Servers'}</h3>
           <p className="text-3xl font-bold text-purple-900">{totalServers}</p>
         </div>
         <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-sm border border-green-200 p-6 hover:shadow-lg transition-all transform hover:scale-105">
-          <h3 className="text-sm font-semibold text-green-700 mb-2">Aktív Előfizetések</h3>
+          <h3 className="text-sm font-semibold text-green-700 mb-2">{translations?.pages?.admin?.activeSubscriptions || 'Active Subscriptions'}</h3>
           <p className="text-3xl font-bold text-green-900">{activeSubscriptions}</p>
         </div>
         <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl shadow-sm border border-emerald-200 p-6 hover:shadow-lg transition-all transform hover:scale-105">
-          <h3 className="text-sm font-semibold text-emerald-700 mb-2">Összes Bevétel</h3>
+          <h3 className="text-sm font-semibold text-emerald-700 mb-2">{translations?.pages?.admin?.totalRevenue || 'Total Revenue'}</h3>
           <p className="text-3xl font-bold text-emerald-900">
             {new Intl.NumberFormat('hu-HU', {
               style: 'currency',
@@ -69,7 +81,7 @@ export default async function AdminDashboardPage({
           </p>
         </div>
         <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl shadow-sm border border-orange-200 p-6 hover:shadow-lg transition-all transform hover:scale-105">
-          <h3 className="text-sm font-semibold text-orange-700 mb-2">Nyitott Ticketek</h3>
+          <h3 className="text-sm font-semibold text-orange-700 mb-2">{translations?.pages?.admin?.openTickets || 'Open Tickets'}</h3>
           <p className="text-3xl font-bold text-orange-900">{openTickets}</p>
         </div>
       </div>
@@ -87,11 +99,11 @@ export default async function AdminDashboardPage({
       {/* Legutóbbi aktivitások */}
       <div className="grid md:grid-cols-2 gap-6">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Legutóbbi Felhasználók</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-6">{translations?.pages?.admin?.recentUsers || 'Recent Users'}</h2>
           <RecentUsers />
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Legutóbbi Szerverek</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-6">{translations?.pages?.admin?.recentServers || 'Recent Servers'}</h2>
           <RecentServers />
         </div>
         </div>

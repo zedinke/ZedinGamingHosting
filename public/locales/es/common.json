@@ -268,5 +268,59 @@
       "uptime": "Tiempo de actividad promedio de 99.99%",
       "support": "Soporte 24/7"
     }
+  },
+  "pages": {
+    "pricing": {
+      "title": "Precios",
+      "subtitle": "Elige un plan que se adapte a tus necesidades. Todos los planes incluyen protección DDoS y soporte 24/7.",
+      "monthly": "Mensualmente",
+      "yearly": "Anualmente"
+    },
+    "games": {
+      "title": "Servidores de Juegos",
+      "subtitle": "Elige un juego y paquete para iniciar tu propio servidor"
+    },
+    "admin": {
+      "title": "Panel de Administración",
+      "welcome": "Bienvenido al panel de administración",
+      "allUsers": "Todos los Usuarios",
+      "allServers": "Todos los Servidores",
+      "activeSubscriptions": "Suscripciones Activas",
+      "totalRevenue": "Ingresos Totales",
+      "openTickets": "Tickets Abiertos",
+      "licenseInfo": "Información de Licencia",
+      "systemHealth": "Salud del Sistema",
+      "recentUsers": "Usuarios Recientes",
+      "recentServers": "Servidores Recientes"
+    },
+    "dashboard": {
+      "title": "Panel",
+      "welcome": "Bienvenido a tu panel"
+    },
+    "servers": {
+      "title": "Servidores",
+      "subtitle": "Gestiona todos tus servidores en un solo lugar",
+      "create": "Crear Servidor",
+      "noServers": "Aún no has creado servidores"
+    },
+    "login": {
+      "title": "Iniciar Sesión",
+      "welcome": "Bienvenido de vuelta"
+    },
+    "register": {
+      "title": "Crear Cuenta",
+      "subtitle": "Únete a la comunidad de gaming"
+    },
+    "forgotPassword": {
+      "title": "Restablecer Contraseña",
+      "subtitle": "Ingresa tu correo electrónico para restablecer tu contraseña"
+    },
+    "resetPassword": {
+      "title": "Restablecer Contraseña"
+    },
+    "verifyEmail": {
+      "title": "Verificar Correo Electrónico",
+      "subtitle": "Haz clic en el enlace en tu correo electrónico para verificar tu cuenta"
+    }
   }
 }

@@ -30,7 +30,7 @@ export default async function HomePage({
   const t = getTranslations(validLocale, 'common');
   
   // Load translations server-side
-  let translations = {};
+  let translations: any = {};
   try {
     const filePath = join(process.cwd(), 'public', 'locales', validLocale, 'common.json');
     const fileContents = readFileSync(filePath, 'utf8');
@@ -93,30 +93,30 @@ export default async function HomePage({
                   {/* Badge */}
                   <div className="inline-flex items-center px-4 py-2 mb-6 bg-white/10 backdrop-blur-sm rounded-full border border-white/20">
                     <span className="text-sm font-semibold">
-                      ✨ {t('hero.badge') || 'Gaming Server Hosting'}
+                      ✨ {translations?.hero?.badge || 'Gaming Server Hosting'}
                     </span>
                   </div>
 
                   {/* Main heading */}
                   <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight text-white">
-                    {heroSection?.title || t('hero.title')}
+                    {heroSection?.title || translations?.hero?.title || 'The Best Gaming Server Hosting'}
                   </h1>
 
                   {/* Subtitle */}
                   <p className="text-lg md:text-xl lg:text-2xl mb-10 text-gray-100 max-w-2xl mx-auto leading-relaxed">
-                    {heroSection?.subtitle || t('hero.subtitle')}
+                    {heroSection?.subtitle || translations?.hero?.subtitle || 'Performance, reliability and easy management in one place'}
                   </p>
 
                   {/* CTA Buttons */}
                   <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
                     <Link href={`/${locale}/register`}>
                       <Button size="lg" className="bg-white text-gray-900 hover:bg-gray-100 px-8 py-3 rounded-lg font-semibold transition-colors">
-                        {heroSection?.buttonText || t('hero.cta')} →
+                        {heroSection?.buttonText || translations?.hero?.cta || 'Get Started'} →
                       </Button>
                     </Link>
                     <Link href={`/${locale}/pricing`}>
                       <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white/10 px-8 py-3 rounded-lg font-semibold transition-colors">
-                        {t('hero.learnMore')}
+                        {translations?.hero?.learnMore || 'Learn More'}
                       </Button>
                     </Link>
                   </div>
@@ -124,10 +124,10 @@ export default async function HomePage({
                   {/* Stats */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-16 pt-16 border-t border-white/20">
                     {[
-                      { value: '99.99%', label: t('hero.stats.uptime') || 'Average Uptime' },
-                      { value: '100%', label: t('hero.stats.flexibility') || 'Flexibility' },
-                      { value: '9', label: t('hero.stats.locations') || 'Server Locations' },
-                      { value: '24/7', label: t('hero.stats.support') || 'Support' },
+                      { value: '99.99%', label: translations?.hero?.stats?.uptime || 'Average Uptime' },
+                      { value: '100%', label: translations?.hero?.stats?.flexibility || 'Flexibility' },
+                      { value: '9', label: translations?.hero?.stats?.locations || 'Server Locations' },
+                      { value: '24/7', label: translations?.hero?.stats?.support || 'Support' },
                     ].map((stat, index) => (
                       <div key={index} className="text-center">
                         <div className="text-3xl md:text-4xl font-bold mb-2 text-white">{stat.value}</div>

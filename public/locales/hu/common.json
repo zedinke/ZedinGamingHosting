@@ -318,5 +318,60 @@
       "uptime": "99.99% átlagos uptime",
       "support": "24/7 támogatás"
     }
+  },
+  "pages": {
+    "pricing": {
+      "title": "Árazás",
+      "subtitle": "Válassz egy csomagot, amely megfelel az igényeidnek. Minden csomag tartalmaz DDoS védelmet és 24/7 támogatást.",
+      "monthly": "Havonként",
+      "yearly": "Évente"
+    },
+    "games": {
+      "title": "Játék Szerverek",
+      "subtitle": "Válassz egy játékot és csomagot, hogy elindítsd a saját szerveredet"
+    },
+    "admin": {
+      "title": "Admin Vezérlőpult",
+      "welcome": "Üdvözöljük az admin felületen",
+      "allUsers": "Összes Felhasználó",
+      "allServers": "Összes Szerver",
+      "activeSubscriptions": "Aktív Előfizetések",
+      "totalRevenue": "Összes Bevétel",
+      "openTickets": "Nyitott Ticketek",
+      "licenseInfo": "Licenc Információk",
+      "systemHealth": "Rendszer Egészség",
+      "recentUsers": "Legutóbbi Felhasználók",
+      "recentServers": "Legutóbbi Szerverek"
+    },
+    "dashboard": {
+      "title": "Vezérlőpult",
+      "welcome": "Üdvözöljük a vezérlőpulton"
+    },
+    "servers": {
+      "title": "Szerverek",
+      "subtitle": "Kezelje az összes szerverét egy helyen",
+      "create": "Szerver Létrehozása",
+      "noServers": "Még nem hoztál létre szervereket"
+    },
+    "login": {
+      "title": "Bejelentkezés",
+      "welcome": "Üdvözöljük vissza"
+    },
+    "register": {
+      "title": "Fiók Létrehozása",
+      "subtitle": "Csatlakozz a gaming közösséghez"
+    },
+    "forgotPassword": {
+      "title": "Jelszó Visszaállítása",
+      "subtitle": "Add meg az email címedet a jelszó visszaállításához"
+    },
+    "resetPassword": {
+      "title": "Jelszó Visszaállítása"
+    },
+    "verifyEmail": {
+      "title": "Email Megerősítés",
+      "subtitle": "Kattints az emailedben lévő linkre a fiók megerősítéséhez"
+    }
   }
+}  }
 }
