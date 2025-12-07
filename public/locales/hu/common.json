@@ -59,7 +59,10 @@
     "stop": "Leállítás",
     "manage": "Kezelés",
     "restarting": "Újraindítás...",
-    "error": "Hiba"
+    "error": "Hiba",
+    "console": "Konzol",
+    "config": "Konfiguráció",
+    "fileManager": "Fájlkezelő"
   },
   "common": {
     "save": "Mentés",
@@ -79,8 +82,49 @@
     "next": "Következő",
     "previous": "Előző",
     "submit": "Küldés",
-    "reset": "Visszaállítás"
+    "reset": "Visszaállítás",
+    "download": "Letöltés",
+    "upload": "Feltöltés",
+    "filter": "Szűrés",
+    "showMore": "Mutass többet",
+    "showLess": "Kevesebb",
+    "user": "Felhasználó",
+    "role": "Szerep",
+    "active": "Aktív",
+    "inactive": "Inaktív",
+    "pending": "Függőben",
+    "successful": "Sikeres",
+    "failed": "Sikertelen",
+    "message": "Üzenet",
+    "notAvailable": "Nem elérhető",
+    "months": "Januar,Február,Március,Április,Május,Június,Július,Augusztus,Szeptember,Október,November,December"
   },
+  "support": {
+    "ticket": "Támogatási Ticket",
+    "zedAi": "Zed AI"
+  },
+  "features": {
+    "features": "Funkciók",
+    "videoDemo": "Bemutató Videó"
+  },
+  "testimonials": {
+    "includes": "Tartalmazza:"
+  },
+  "cms": {
+    "pages": "Oldalak"
+  },
+  "mods": {
+    "install": "Telepítés"
+  },
+  "lang": {
+    "hungarian": "Magyar",
+    "english": "English",
+    "spanish": "Español"
+  },
+  "tickets": {
+    "category": "Kategória",
+    "priority": "Prioritás"
+  }
   "billing": {
     "title": "Számlázás",
     "invoices": "Számlák",
@@ -107,18 +151,42 @@
     "selectPackage": "Válassz csomagot",
     "noPackages": "Jelenleg nincs elérhető csomag",
     "loading": "Csomagok betöltése...",
-    "error": "Hiba történt a csomagok betöltése során"
+    "error": "Hiba történt a csomagok betöltése során",
+    "label": "Játékok",
+    "game": "Játék",
+    "slot": "Slot",
+    "slots": "Slotok",
+    "details": "Játék Részletek",
+    "rust": "Rust",
+    "ark": "ARK",
+    "minecraft": "Minecraft"
   },
   "pricing": {
-    "title": "Árazás",
-    "subtitle": "Válassz egy csomagot, amely megfelel az igényeidnek. Minden csomag tartalmaz DDoS védelmet és 24/7 támogatást.",
+  "time": {
     "month": "hó",
-    "year": "év",
-    "noPlans": "Jelenleg nincs elérhető árazási csomag",
-    "showComparison": "Összehasonlítás megjelenítése",
-    "hideComparison": "Összehasonlítás elrejtése"
+    "year": "év"
+  },
+  "pagination": {
+    "page": "Oldal",
+    "previous": "Előző",
+    "next": "Következő"
   },
   "admin": {
+    "title": "Admin",
+    "dashboard": "Vezérlőpult",
+    "servers": "Szerverek",
+    "users": "Felhasználók",
+    "invoices": "Számlák",
+    "settings": "Beállítások",
+    "cms": "Tartalomkezelés",
+    "machines": "Gépek",
+    "statistics": "Statisztikák",
+    "tasks": "Feladatok",
+    "lastHeartbeat": "Utolsó Heartbeat",
+    "capabilities": "Képességek",
+    "systemHealth": "Rendszer Egészség",
+    "recentActivity": "Legutóbbi Aktivitások"
+  },dmin": {
     "title": "Admin",
     "dashboard": "Vezérlőpult",
     "servers": "Szerverek",

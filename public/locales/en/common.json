@@ -39,14 +39,17 @@
     "noAccount": "Don't have an account?",
     "hasAccount": "Already have an account?",
     "resetPassword": "Reset Password",
-    "verifyEmail": "Verify Email"
+    "verifyEmail": "Verify Email",
+    "bejelentkezés": "Sign In",
+    "regisztráció": "Sign Up"
   },
   "dashboard": {
     "title": "Dashboard",
     "servers": "Servers",
     "billing": "Billing",
     "support": "Support",
-    "settings": "Settings"
+    "settings": "Settings",
+    "subscriptions": "Subscriptions"
   },
   "server": {
     "status": "Status",
@@ -59,7 +62,10 @@
     "stop": "Stop",
     "manage": "Manage",
     "restarting": "Restarting...",
-    "error": "Error"
+    "error": "Error",
+    "console": "Console",
+    "config": "Configuration",
+    "fileManager": "Files"
   },
   "common": {
     "save": "Save",
@@ -79,7 +85,22 @@
     "next": "Next",
     "previous": "Previous",
     "submit": "Submit",
-    "reset": "Reset"
+    "reset": "Reset",
+    "download": "Download",
+    "upload": "Upload",
+    "filter": "Filter",
+    "showMore": "Show More",
+    "showLess": "Show Less",
+    "user": "User",
+    "role": "Role",
+    "active": "Active",
+    "inactive": "Inactive",
+    "pending": "Pending",
+    "successful": "Successful",
+    "failed": "Failed",
+    "message": "Message",
+    "notAvailable": "Not Available",
+    "months": "January,February,March,April,May,June,July,August,September,October,November,December"
   },
   "billing": {
     "title": "Billing",
@@ -107,18 +128,42 @@
     "selectPackage": "Select Package",
     "noPackages": "No packages available",
     "loading": "Loading packages...",
-    "error": "Error loading packages"
+    "error": "Error loading packages",
+    "label": "Games",
+    "game": "Game",
+    "slot": "Slot",
+    "slots": "Slots",
+    "details": "Game Details",
+    "rust": "Rust",
+    "ark": "ARK",
+    "minecraft": "Minecraft"
   },
   "pricing": {
-    "title": "Pricing",
-    "subtitle": "Choose a plan that fits your needs. All plans include DDoS protection and 24/7 support.",
+  "time": {
     "month": "mo",
-    "year": "yr",
-    "noPlans": "No pricing plans available",
-    "showComparison": "Show Comparison",
-    "hideComparison": "Hide Comparison"
+    "year": "yr"
+  },
+  "pagination": {
+    "page": "Page",
+    "previous": "Previous",
+    "next": "Next"
   },
   "admin": {
+    "title": "Admin",
+    "dashboard": "Dashboard",
+    "servers": "Servers",
+    "users": "Users",
+    "invoices": "Invoices",
+    "settings": "Settings",
+    "cms": "Content Management",
+    "machines": "Machines",
+    "statistics": "Statistics",
+    "tasks": "Tasks",
+    "lastHeartbeat": "Last Heartbeat",
+    "capabilities": "Capabilities",
+    "systemHealth": "System Health",
+    "recentActivity": "Recent Activity"
+  },dmin": {
     "title": "Admin",
     "dashboard": "Dashboard",
     "servers": "Servers",
@@ -248,7 +293,32 @@
       "games": "20+ supported games",
       "languages": "3 languages (Hungarian, English, Spanish)",
       "uptime": "99.99% average uptime",
-      "support": "24/7 support"
+      "support": "24/7 Support"
     }
+  },
+  "support": {
+    "ticket": "Support Ticket",
+    "zedAi": "Zed AI"
+  },
+  "features": {
+    "features": "Features",
+    "videoDemo": "Video Demo"
+  },
+  "testimonials": {
+    "includes": "Includes"
+  },
+  "cms": {
+    "pages": "Pages"
+  },
+  "mods": {
+    "install": "Install"
+  },
+  "lang": {
+    "hungarian": "Magyar",
+    "english": "English",
+    "spanish": "Español"
+  },
+  "tickets": {
+    "category": "Category",
+    "priority": "Priority"
   }
-}

@@ -59,7 +59,10 @@
     "stop": "Detener",
     "manage": "Gestionar",
     "restarting": "Reiniciando...",
-    "error": "Error"
+    "error": "Error",
+    "console": "Consola",
+    "config": "Configuración",
+    "fileManager": "Archivos"
   },
   "common": {
     "save": "Guardar",
@@ -79,7 +82,22 @@
     "next": "Siguiente",
     "previous": "Anterior",
     "submit": "Enviar",
-    "reset": "Reiniciar"
+    "reset": "Reiniciar",
+    "download": "Descargar",
+    "upload": "Cargar",
+    "filter": "Filtro",
+    "showMore": "Mostrar Más",
+    "showLess": "Mostrar Menos",
+    "user": "Usuario",
+    "role": "Rol",
+    "active": "Activo",
+    "inactive": "Inactivo",
+    "pending": "Pendiente",
+    "successful": "Exitoso",
+    "failed": "Fallido",
+    "message": "Mensaje",
+    "notAvailable": "No Disponible",
+    "months": "Enero,Febrero,Marzo,Abril,Mayo,Junio,Julio,Agosto,Septiembre,Octubre,Noviembre,Diciembre"
   },
   "billing": {
     "title": "Facturación",

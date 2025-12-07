@@ -1,0 +1,117 @@
+File Path,Line Number,Component/Function Name,Hardcoded Text,Language,Suggested Translation Key,Severity
+components/games/PremiumPackageCard.tsx,112,"PremiumPackageCard","hó",HU,time.month_short,HIGH
+components/games/PremiumPackageCard.tsx,112,"PremiumPackageCard","év",HU,time.year_short,HIGH
+components/games/PremiumPackageCard.tsx,112,"PremiumPackageCard","mo",EN,time.month_short,HIGH
+components/games/PremiumPackageCard.tsx,112,"PremiumPackageCard","yr",EN,time.year_short,HIGH
+components/games/PremiumPackageCard.tsx,123,"PremiumPackageCard","hó",HU,time.month_short,HIGH
+components/games/PremiumPackageCard.tsx,123,"PremiumPackageCard","év",HU,time.year_short,HIGH
+components/games/PremiumPackageCard.tsx,123,"PremiumPackageCard","mo",EN,time.month_short,HIGH
+components/games/PremiumPackageCard.tsx,123,"PremiumPackageCard","yr",EN,time.year_short,HIGH
+components/games/PremiumPackageCard.tsx,131,"PremiumPackageCard","Játék",HU,package.games_singular,HIGH
+components/games/PremiumPackageCard.tsx,131,"PremiumPackageCard","Games",EN,package.games_singular,HIGH
+components/games/PremiumPackageCard.tsx,189,"PremiumPackageCard","Kevesebb",HU,common.show_less,HIGH
+components/games/PremiumPackageCard.tsx,189,"PremiumPackageCard","Show less",EN,common.show_less,HIGH
+components/games/PremiumPackageCard.tsx,210,"PremiumPackageCard","Tartalmazza:",HU,package.includes,HIGH
+components/games/PremiumPackageCard.tsx,210,"PremiumPackageCard","Includes:",EN,package.includes,HIGH
+components/games/GamePackageCard.tsx,116,"GamePackageCard","hó",HU,time.month_short,HIGH
+components/games/GamePackageCard.tsx,116,"GamePackageCard","év",HU,time.year_short,HIGH
+components/games/GamePackageCard.tsx,116,"GamePackageCard","mo",EN,time.month_short,HIGH
+components/games/GamePackageCard.tsx,116,"GamePackageCard","yr",EN,time.year_short,HIGH
+components/games/GamePackageCard.tsx,125,"GamePackageCard","hó",HU,time.month_short,HIGH
+components/games/GamePackageCard.tsx,125,"GamePackageCard","év",HU,time.year_short,HIGH
+components/games/GamePackageCard.tsx,125,"GamePackageCard","mo",EN,time.month_short,HIGH
+components/games/GamePackageCard.tsx,125,"GamePackageCard","yr",EN,time.year_short,HIGH
+components/games/GamePackageCard.tsx,132,"GamePackageCard","Slot",HU,server.slots,HIGH
+components/games/GamePackageCard.tsx,132,"GamePackageCard","Slots",EN,server.slots,HIGH
+components/games/GamePackageCard.tsx,155,"GamePackageCard","Slot",HU,server.slots,HIGH
+components/games/GamePackageCard.tsx,155,"GamePackageCard","Slots",EN,server.slots,HIGH
+components/servers/ServerOrderForm.tsx,359,"ServerOrderForm","Bemutató Videó",HU,common.demo_video,HIGH
+components/servers/ServerOrderForm.tsx,427,"ServerOrderForm","Játék",HU,games.singular,HIGH
+components/servers/ServerOrderForm.tsx,427,"ServerOrderForm","Games",EN,games.singular,HIGH
+components/servers/ServerOrderForm.tsx,442,"ServerOrderForm","Slot",HU,server.slots,HIGH
+components/servers/ServerOrderForm.tsx,480,"ServerOrderForm","Slot",HU,server.slots,HIGH
+components/servers/ServerOrderForm.tsx,492,"ServerOrderForm","Játékok",HU,games.plural,HIGH
+components/servers/ServerOrderForm.tsx,492,"ServerOrderForm","Games",EN,games.plural,HIGH
+components/servers/ServerOrderForm.tsx,582,"ServerOrderForm","hó",HU,time.month_short,HIGH
+components/servers/ServerOrderForm.tsx,582,"ServerOrderForm","év",HU,time.year_short,HIGH
+components/admin/MachineDetail.tsx,536,"MachineDetail","Szerverek:",HU,server.servers_label,HIGH
+components/admin/MachineDetail.tsx,540,"MachineDetail","Feladatok:",HU,admin.tasks_label,HIGH
+components/admin/MachineDetail.tsx,544,"MachineDetail","Utolsó Heartbeat:",HU,admin.last_heartbeat,HIGH
+components/admin/MachineDetail.tsx,554,"MachineDetail","Képességek:",HU,admin.capabilities,HIGH
+components/admin/LicenseManagement.tsx,238,"LicenseManagement","hó",HU,time.month_short,HIGH
+components/admin/LicenseManagement.tsx,238,"LicenseManagement","év",HU,time.year_short,HIGH
+components/saas/SaaSPlansSection.tsx,94,"SaaSPlansSection","hónap",HU,time.month_long,MEDIUM
+components/saas/SaaSPlansSection.tsx,94,"SaaSPlansSection","év",HU,time.year_long,MEDIUM
+app/[locale]/admin/theme/page.tsx,25,"Page","Weboldal",HU,common.website,MEDIUM
+app/[locale]/admin/cms/slideshow/page.tsx,41,"Page","Kezdőoldal",HU,common.homepage,MEDIUM
+app/[locale]/admin/cms/page.tsx,64,"Page","Kezdőoldal Szekciók",HU,cms.homepage_sections,MEDIUM
+app/[locale]/admin/cms/page.tsx,72,"Page","Kezdőoldal",HU,common.homepage,MEDIUM
+app/[locale]/admin/servers/[id]/page.tsx,47,"Page","lastHeartbeat",HU,admin.last_heartbeat,MEDIUM
+app/[locale]/admin/cms/pages/[id]/page.tsx,26,"Page","Oldal Szerkesztése",HU,cms.page_edit,MEDIUM
+app/[locale]/admin/cms/pages/new/page.tsx,17,"Page","Oldal hozzáadása",HU,cms.page_add,MEDIUM
+app/[locale]/admin/cms/homepage/page.tsx,27,"Page","Kezdőoldal Szerkesztése",HU,cms.homepage_edit,MEDIUM
+app/[locale]/admin/monitoring/page.tsx,71,"Page","lastHeartbeat",HU,admin.last_heartbeat,MEDIUM
+app/[locale]/admin/machines/page.tsx,39,"Page","lastHeartbeat",HU,admin.last_heartbeat,MEDIUM
+components/ErrorBoundary.tsx,48,"ErrorBoundary","Oldal újratöltése",HU,common.reload_page,MEDIUM
+components/admin/MachineManagement.tsx,165,"MachineManagement","Oldal frissítése",HU,common.refresh_page,MEDIUM
+components/admin/MachineManagement.tsx,453,"MachineManagement","Oldal",HU,common.page,MEDIUM
+components/admin/ServerManagement.tsx,232,"ServerManagement","Oldal",HU,common.page,MEDIUM
+components/admin/ServerDetail.tsx,108,"ServerDetail","Oldal frissítése",HU,common.refresh_page,MEDIUM
+components/admin/ServerMigration.tsx,128,"ServerMigration","Oldal frissítése",HU,common.refresh_page,MEDIUM
+components/admin/SubscriptionManagement.tsx,183,"SubscriptionManagement","Oldal",HU,common.page,MEDIUM
+components/admin/SubscriptionDetail.tsx,156,"SubscriptionDetail","Oldal frissítése",HU,common.refresh_page,MEDIUM
+components/admin/TaskManagement.tsx,219,"TaskManagement","Oldal",HU,common.page,MEDIUM
+components/admin/TicketManagement.tsx,283,"TicketManagement","Oldal",HU,common.page,MEDIUM
+components/admin/UserManagement.tsx,245,"UserManagement","Oldal",HU,common.page,MEDIUM
+components/admin/UpdateProgress.tsx,155,"UpdateProgress","Az oldal hamarosan újratöltődik...",HU,common.page_will_reload,MEDIUM
+components/admin/InvoiceManagement.tsx,202,"InvoiceManagement","Oldal",HU,common.page,MEDIUM
+components/admin/InstallProgress.tsx,163,"InstallProgress","Az oldal hamarosan újratöltődik...",HU,common.page_will_reload,MEDIUM
+components/admin/cms/BlogManagement.tsx,160,"BlogManagement","Oldal",HU,common.page,MEDIUM
+components/admin/cms/PageForm.tsx,134,"PageForm","Oldal frissítve",HU,cms.page_updated,MEDIUM
+components/admin/cms/PageForm.tsx,134,"PageForm","Oldal létrehozva",HU,cms.page_created,MEDIUM
+app/[locale]/admin/games/page.tsx,28,"Page","Játékok Konfigurációja",HU,admin.games_config,MEDIUM
+app/[locale]/admin/games/page.tsx,29,"Page","Játékok telepítési és indítási paramétereinek kezelése",HU,admin.games_config_desc,MEDIUM
+app/[locale]/admin/games/[id]/page.tsx,26,"Page","Játék Konfiguráció Szerkesztése",HU,admin.game_config_edit,MEDIUM
+app/[locale]/admin/games/new/page.tsx,16,"Page","Új Játék Konfiguráció",HU,admin.game_config_new,MEDIUM
+app/[locale]/admin/games/new/page.tsx,17,"Page","Játék telepítési és indítási paramétereinek beállítása",HU,admin.game_config_new_desc,MEDIUM
+app/[locale]/admin/cms/games/new/page.tsx,22,"Page","Új Játék",HU,cms.game_new,MEDIUM
+app/[locale]/admin/cms/games/new/page.tsx,23,"Page","Játék hozzáadása",HU,cms.game_add,MEDIUM
+app/[locale]/admin/cms/games/page.tsx,40,"Page","Játékok Kezelése",HU,cms.games_management,MEDIUM
+app/[locale]/admin/cms/games/page.tsx,41,"Page","Játékok és kategóriák kezelése",HU,cms.games_management_desc,MEDIUM
+app/[locale]/admin/cms/games/[id]/page.tsx,33,"Page","Játék Szerkesztése",HU,cms.game_edit,MEDIUM
+app/[locale]/admin/cms/games/categories/[id]/page.tsx,26,"Page","Játék Kategória Szerkesztése",HU,cms.game_category_edit,MEDIUM
+app/[locale]/admin/cms/games/categories/new/page.tsx,16,"Page","Új Játék Kategória",HU,cms.game_category_new,MEDIUM
+app/[locale]/admin/cms/games/categories/new/page.tsx,17,"Page","Játék kategória hozzáadása",HU,cms.game_category_add,MEDIUM
+app/[locale]/system/page.tsx,470,"Page","Támogatott játék",HU,common.supported_game,LOW
+components/games/GameGrid.tsx,34,"GameGrid","Jelenleg nincs elérhető játék",HU,games.no_available,MEDIUM
+components/games/GameGrid.tsx,95,"GameGrid","Nem találod a játékodat?",HU,games.not_found_question,MEDIUM
+components/home/PriceCalculator.tsx,131,"PriceCalculator","Játék",HU,games.singular,MEDIUM
+components/games/GamesSection.tsx,222,"GamesSection","Játék Csomagok",HU,games.packages,MEDIUM
+components/games/GamesSection.tsx,223,"GamesSection","Válassz egy játékot és csomagot",HU,games.select_game_package,MEDIUM
+components/servers/UserServerDetail.tsx,427,"UserServerDetail","Játék:",HU,games.singular_label,MEDIUM
+components/servers/UserServerDetail.tsx,469,"UserServerDetail","Max Játékosok:",HU,server.max_players_label,MEDIUM
+components/servers/ARKASAServerConfigManager.tsx,719,"ARKASAServerConfigManager","Max Játékosok",HU,server.max_players_label,MEDIUM
+components/admin/ServerReports.tsx,131,"ServerReports","Játék Típus Szerint",HU,admin.by_game_type,MEDIUM
+components/admin/SubscriptionDetail.tsx,266,"SubscriptionDetail","Játék típusa",HU,games.game_type,MEDIUM
+components/admin/ServerManagement.tsx,148,"ServerManagement","Játék",HU,games.singular,MEDIUM
+components/admin/ServerManagement.tsx,152,"ServerManagement","Játékosok",HU,server.players,MEDIUM
+components/admin/ServerDetail.tsx,173,"ServerDetail","Játék",HU,games.singular,MEDIUM
+components/admin/ServerDetail.tsx,199,"ServerDetail","Max Játékosok",HU,server.max_players_label,MEDIUM
+components/admin/MachineDetail.tsx,580,"MachineDetail","Játék",HU,games.singular,MEDIUM
+components/admin/cms/GamesManagement.tsx,62,"GamesManagement","Játékok",HU,games.plural,MEDIUM
+components/admin/cms/GamesManagement.tsx,115,"GamesManagement","Még nincs játék",HU,games.none_yet,MEDIUM
+components/admin/cms/GamePackageManagement.tsx,143,"GamePackageManagement","Játék Csomagok",HU,games.packages,MEDIUM
+components/admin/cms/GamePackageManagement.tsx,144,"GamePackageManagement","Játékokhoz tartozó csomagok kezelése",HU,games.packages_desc,MEDIUM
+components/admin/cms/GamePackageManagement.tsx,224,"GamePackageManagement","Slot",HU,server.slots,MEDIUM
+components/admin/cms/PremiumPackageManagement.tsx,85,"PremiumPackageManagement","Premium Csomagok",HU,package.premium_packages,MEDIUM
+components/admin/cms/PremiumPackageManagement.tsx,86,"PremiumPackageManagement","Több játékot tartalmazó premium csomagok kezelése",HU,package.premium_packages_desc,MEDIUM
+components/admin/cms/PremiumPackageManagement.tsx,201,"PremiumPackageManagement","Még nincs premium csomag",HU,package.none_yet,MEDIUM
+components/billing/InvoiceDetail.tsx,133,"InvoiceDetail","Játék:",HU,games.singular_label,MEDIUM
+components/admin/AgentDetail.tsx,320,"AgentDetail","Játék",HU,games.singular,MEDIUM
+zedingaming-saas/components/admin/LicenseInfo.tsx,121,"LicenseInfo","Max Szerverek",HU,admin.max_servers,MEDIUM
+components/servers/UserServerConfigEditor.tsx,132,"UserServerConfigEditor","Szerver Weboldal URL",HU,server.website_url_label,MEDIUM
+lib/email-templates.ts,345,"formatPrice","hu-HU",HU,config.locale_hu,LOW
+lib/email-templates.ts,404,"email","hu-HU",HU,config.locale_hu,LOW
+lib/invoice-pdf.ts,53,"formatPrice","hu-HU",HU,config.locale_hu,LOW
+lib/invoice-pdf.ts,62,"formatDate","hu-HU",HU,config.locale_hu,LOW
+app/dashboard/servers/[id]/mods/page.tsx,35,"Page","Ez az oldal csak Rust szerverekhez elérhető",HU,mods.rust_only,MEDIUM

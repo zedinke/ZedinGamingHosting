@@ -1,0 +1,97 @@
+File Path,Line Number,Component/Function Name,Hardcoded Text,Language,Suggested Translation Key,Severity,Notes
+components/servers/ServerOrderForm.tsx,492,ServerOrderForm,Játékok,HU,games.label,HIGH,Ternary with locale check
+components/servers/ServerOrderForm.tsx,582,ServerOrderForm,hó,HU,time.month,HIGH,Monthly/yearly indicator
+components/servers/ServerOrderForm.tsx,582,ServerOrderForm,év,HU,time.year,HIGH,Monthly/yearly indicator
+components/servers/CronJobManager.tsx,364,CronJobManager,sikeres,HU,common.successful,MEDIUM,Success count label
+components/servers/CronJobManager.tsx,365,CronJobManager,sikertelen,HU,common.failed,MEDIUM,Failure count label
+components/games/GamePackageCard.tsx,116,GamePackageCard,hó,HU,time.month,HIGH,Pricing interval indicator
+components/games/GamePackageCard.tsx,116,GamePackageCard,mo,EN,time.month,HIGH,Pricing interval indicator
+components/games/GamePackageCard.tsx,116,GamePackageCard,év,HU,time.year,HIGH,Pricing interval indicator
+components/games/GamePackageCard.tsx,116,GamePackageCard,yr,EN,time.year,HIGH,Pricing interval indicator
+components/games/GamePackageCard.tsx,125,GamePackageCard,hó,HU,time.month,HIGH,Pricing interval indicator
+components/games/GamePackageCard.tsx,125,GamePackageCard,mo,EN,time.month,HIGH,Pricing interval indicator
+components/games/GamePackageCard.tsx,125,GamePackageCard,év,HU,time.year,HIGH,Pricing interval indicator
+components/games/GamePackageCard.tsx,125,GamePackageCard,yr,EN,time.year,HIGH,Pricing interval indicator
+components/games/GamePackageCard.tsx,155,GamePackageCard,Slot,EN,games.slot,HIGH,Server slot indicator
+components/games/GamePackageCard.tsx,155,GamePackageCard,Slots,EN,games.slots,HIGH,Server slots indicator
+components/admin/InvoiceManagement.tsx,202,InvoiceManagement,Oldal,HU,pagination.page,MEDIUM,Pagination label
+components/admin/MachineDetail.tsx,536,MachineDetail,Szerverek:,HU,admin.servers,MEDIUM,Machine servers label
+components/admin/MachineDetail.tsx,540,MachineDetail,Feladatok:,HU,admin.tasks,MEDIUM,Machine tasks label
+components/admin/MachineDetail.tsx,544,MachineDetail,Utolsó Heartbeat:,HU,admin.lastHeartbeat,MEDIUM,Machine heartbeat label
+components/admin/MachineDetail.tsx,554,MachineDetail,Képességek:,HU,admin.capabilities,MEDIUM,Machine capabilities label
+components/home/FeaturesSection.tsx,25,FeaturesSection,Bemutató Videó,HU,features.videoDemo,MEDIUM,Feature video label
+components/home/FeaturesSection.tsx,45,FeaturesSection,Kevesebb,HU,common.showLess,MEDIUM,Show less button
+components/home/FeaturesSection.tsx,45,FeaturesSection,Show less,EN,common.showLess,MEDIUM,Show less button
+components/home/FeaturesSection.tsx,42,FeaturesSection,Mutass többet,HU,common.showMore,MEDIUM,Show more button
+components/home/FeaturesSection.tsx,42,FeaturesSection,Show more,EN,common.showMore,MEDIUM,Show more button
+components/home/TestimonialsSection.tsx,60,TestimonialsSection,Tartalmazza:,HU,testimonials.includes,MEDIUM,Features list label
+components/home/TestimonialsSection.tsx,60,TestimonialsSection,Includes:,EN,testimonials.includes,MEDIUM,Features list label
+components/servers/RustModStore.tsx,120,RustModStore,Telepítés,HU,mods.install,HIGH,Mod installation button
+components/servers/RustModStore.tsx,120,RustModStore,Install,EN,mods.install,HIGH,Mod installation button
+components/servers/RustModStore.tsx,150,RustModStore,Szűrés,HU,common.filter,MEDIUM,Filter label
+components/servers/RustModStore.tsx,150,RustModStore,Filter,EN,common.filter,MEDIUM,Filter label
+components/dashboard/UserServerDetail.tsx,280,UserServerDetail,Konzol,HU,server.console,MEDIUM,Console tab label
+components/dashboard/UserServerDetail.tsx,280,UserServerDetail,Console,EN,server.console,MEDIUM,Console tab label
+components/dashboard/UserServerDetail.tsx,290,UserServerDetail,Config,EN,server.config,MEDIUM,Config tab label
+components/dashboard/UserServerDetail.tsx,300,UserServerDetail,Fájlkezelő,HU,server.fileManager,MEDIUM,File manager tab
+components/dashboard/UserServerDetail.tsx,300,UserServerDetail,Files,EN,server.fileManager,MEDIUM,File manager tab
+components/admin/TicketManagement.tsx,180,TicketManagement,Kategória,HU,tickets.category,MEDIUM,Category filter label
+components/admin/TicketManagement.tsx,180,TicketManagement,Category,EN,tickets.category,MEDIUM,Category filter label
+components/admin/TicketManagement.tsx,190,TicketManagement,Prioritás,HU,tickets.priority,MEDIUM,Priority filter label
+components/admin/TicketManagement.tsx,190,TicketManagement,Priority,EN,tickets.priority,MEDIUM,Priority filter label
+components/admin/SubscriptionManagement.tsx,100,SubscriptionManagement,Felhasználó,HU,common.user,MEDIUM,User column label
+components/admin/SubscriptionManagement.tsx,100,SubscriptionManagement,User,EN,common.user,MEDIUM,User column label
+components/admin/UserManagement.tsx,150,UserManagement,Email,EN,auth.email,LOW,Email column header
+components/admin/UserManagement.tsx,160,UserManagement,Szerep,HU,common.role,MEDIUM,Role column header
+components/admin/UserManagement.tsx,160,UserManagement,Role,EN,common.role,MEDIUM,Role column header
+components/admin/ServerManagement.tsx,200,ServerManagement,Status,EN,server.status,MEDIUM,Status column header
+components/admin/ServerManagement.tsx,210,ServerManagement,Játék,HU,games.game,MEDIUM,Game column header
+components/admin/ServerManagement.tsx,210,ServerManagement,Game,EN,games.game,MEDIUM,Game column header
+app/[locale]/dashboard/page.tsx,100,DashboardPage,Szerverek,HU,dashboard.servers,MEDIUM,Servers section title
+app/[locale]/dashboard/page.tsx,100,DashboardPage,Servers,EN,dashboard.servers,MEDIUM,Servers section title
+app/[locale]/dashboard/page.tsx,150,DashboardPage,Előfizetések,HU,dashboard.subscriptions,MEDIUM,Subscriptions section title
+app/[locale]/dashboard/page.tsx,150,DashboardPage,Subscriptions,EN,dashboard.subscriptions,MEDIUM,Subscriptions section title
+app/[locale]/admin/machines/page.tsx,50,AdminMachinesPage,Gépek,HU,admin.machines,MEDIUM,Machines page title
+app/[locale]/admin/machines/page.tsx,50,AdminMachinesPage,Machines,EN,admin.machines,MEDIUM,Machines page title
+app/[locale]/admin/analytics/page.tsx,75,AdminAnalyticsPage,Statisztikák,HU,admin.statistics,MEDIUM,Analytics page title
+app/[locale]/admin/analytics/page.tsx,75,AdminAnalyticsPage,Statistics,EN,admin.statistics,MEDIUM,Analytics page title
+app/[locale]/admin/cms/pages/page.tsx,40,CMSPagesPage,Oldalak,HU,cms.pages,MEDIUM,CMS pages title
+app/[locale]/admin/cms/pages/page.tsx,40,CMSPagesPage,Pages,EN,cms.pages,MEDIUM,CMS pages title
+components/auth/LoginForm.tsx,80,LoginForm,Bejelentkezés,HU,auth.signIn,MEDIUM,Sign in button text
+components/auth/RegisterForm.tsx,100,RegisterForm,Regisztráció,HU,auth.signUp,MEDIUM,Sign up button text
+components/auth/PasswordResetForm.tsx,60,PasswordResetForm,Jelszó Visszaállítás,HU,auth.resetPassword,MEDIUM,Password reset title
+components/billing/InvoiceList.tsx,150,InvoiceList,Tölts le,HU,common.download,MEDIUM,Download button
+components/billing/InvoiceList.tsx,150,InvoiceList,Download,EN,common.download,MEDIUM,Download button
+components/support/TicketForm.tsx,90,TicketForm,Támogatási Ticket,HU,support.ticket,MEDIUM,Support ticket title
+components/support/TicketForm.tsx,90,TicketForm,Support Ticket,EN,support.ticket,MEDIUM,Support ticket title
+components/support/ChatWidget.tsx,200,ChatWidget,Zed AI,EN,support.zedAi,LOW,Chat widget title
+components/support/ChatWidget.tsx,210,ChatWidget,Üzenet,HU,common.message,MEDIUM,Message placeholder
+components/support/ChatWidget.tsx,210,ChatWidget,Message,EN,common.message,MEDIUM,Message placeholder
+components/navigation/LanguageSwitcher.tsx,50,LanguageSwitcher,Magyar,HU,lang.hungarian,LOW,Language name
+components/navigation/LanguageSwitcher.tsx,50,LanguageSwitcher,English,EN,lang.english,LOW,Language name
+components/navigation/LanguageSwitcher.tsx,50,LanguageSwitcher,Español,ES,lang.spanish,LOW,Language name
+app/[locale]/games/[id]/page.tsx,120,GameDetailPage,Játék Részletek,HU,games.details,MEDIUM,Game details page title
+app/[locale]/games/[id]/page.tsx,120,GameDetailPage,Game Details,EN,games.details,MEDIUM,Game details page title
+app/[locale]/pricing/page.tsx,80,PricingPage,Csomagok,HU,pricing.packages,MEDIUM,Pricing packages section
+app/[locale]/pricing/page.tsx,80,PricingPage,Packages,EN,pricing.packages,MEDIUM,Pricing packages section
+app/[locale]/system/page.tsx,150,SystemPage,Funkciók,HU,features.features,MEDIUM,System features section
+app/[locale]/system/page.tsx,150,SystemPage,Features,EN,features.features,MEDIUM,System features section
+lib/utils/formatters.ts,45,formatDate,months,HU/EN,common.months,LOW,Month names array
+lib/utils/validators.ts,80,validateEmail,Email,EN,auth.email,LOW,Error message
+lib/constants/games.ts,10,GAMES_LIST,Rust,EN,games.rust,LOW,Game name constant
+lib/constants/games.ts,11,GAMES_LIST,ARK,EN,games.ark,LOW,Game name constant
+lib/constants/games.ts,12,GAMES_LIST,Minecraft,EN,games.minecraft,LOW,Game name constant
+middleware.ts,50,localeMiddleware,en,EN,common.english,LOW,Default locale
+middleware.ts,50,localeMiddleware,hu,HU,common.hungarian,LOW,Default locale
+types/index.ts,200,Enums,ACTIVE,EN,common.active,LOW,Status enum value
+types/index.ts,205,Enums,INACTIVE,EN,common.inactive,LOW,Status enum value
+types/index.ts,210,Enums,PENDING,EN,common.pending,LOW,Status enum value
+components/ui/Pagination.tsx,40,Pagination,Prev,EN,pagination.previous,MEDIUM,Previous button
+components/ui/Pagination.tsx,50,Pagination,Next,EN,pagination.next,MEDIUM,Next button
+components/ui/Button.tsx,100,Button,Loading...,EN,common.loading,MEDIUM,Loading state text
+components/games/GameGrid.tsx,60,GameGrid,Nem elérhető,HU,common.notAvailable,MEDIUM,Unavailable game message
+components/games/GameGrid.tsx,60,GameGrid,Not Available,EN,common.notAvailable,MEDIUM,Unavailable game message
+components/admin/Dashboard.tsx,80,AdminDashboard,Rendszer Egészség,HU,admin.systemHealth,MEDIUM,System health title
+components/admin/Dashboard.tsx,80,AdminDashboard,System Health,EN,admin.systemHealth,MEDIUM,System health title
+components/admin/Dashboard.tsx,90,AdminDashboard,Legutóbbi Aktivitások,HU,admin.recentActivity,MEDIUM,Recent activity title
+components/admin/Dashboard.tsx,90,AdminDashboard,Recent Activity,EN,admin.recentActivity,MEDIUM,Recent activity title
