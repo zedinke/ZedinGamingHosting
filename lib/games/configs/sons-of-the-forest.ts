@@ -6,16 +6,15 @@ import { GameServerConfig } from '../types';
 import { commands } from '../commands/sons-of-the-forest';
 
 export const config: GameServerConfig = {
-  steamAppId: 1326470,
+  steamAppId: 2465200, // ✅ CORRECT - Dedicated Server AppID (NOT 1326470 which is the game)
   requiresSteamCMD: true,
-  installScript: '', // Telepítő script külön fájlban
+  requiresWine: true, // Windows-only server, needs Wine on Linux
+  installScript: '', // Telepítő script külön fájlban (Docker-based)
   configPath: '/opt/servers/{serverId}/ServerConfig.cfg',
   startCommand: commands.startCommand,
   stopCommand: commands.stopCommand,
-  port: 27015,
+  port: 8766, // Default Sons of the Forest port
   queryPort: 27016,
-  supported: false, // ❌ NOT SUPPORTED - Valve hasn't configured this for SteamCMD
-  supportReason: 'Sons of the Forest dedicated server is not available via SteamCMD. Requires game ownership and special Valve licensing.',
   defaultSettings: {
     ServerName: 'Sons of the Forest Server',
     ServerPassword: '',
