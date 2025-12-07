@@ -20,6 +20,8 @@ export interface GameServerConfig {
   requiresSteamCMD: boolean;
   requiresJava?: boolean;
   requiresWine?: boolean;
+  supported?: boolean; // ❌ Mark as unsupported if server cannot be installed via SteamCMD
+  supportReason?: string; // Explanation why not supported
 }
 
 export type GameConfigMap = Partial<Record<GameType, GameServerConfig>>;
