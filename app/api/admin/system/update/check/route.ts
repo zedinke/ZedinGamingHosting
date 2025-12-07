@@ -19,7 +19,7 @@ function getProjectRoot(): string {
   if (currentDir.includes('.next/standalone')) {
     // .next/standalone -> .next -> public_html (project root)
     // Go up 2 levels to get to public_html
-    let searchDir = resolve(currentDir, '..', '..');
+    const searchDir = resolve(currentDir, '..', '..');
     console.log('getProjectRoot: In standalone, going up 2 levels to:', searchDir);
     
     // Check if this is the project root (has .git and package.json)

@@ -519,7 +519,7 @@ networks:
       const [key, ...valueParts] = trimmed.split('=');
       const value = valueParts.join('=');
 
-      if (key && value) {
+      if (key) {
         env[key] = value;
       }
     }
