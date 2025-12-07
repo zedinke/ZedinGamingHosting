@@ -375,5 +375,66 @@
       "title": "Verify Email",
       "subtitle": "Click the link in your email to verify your account"
     }
+  },
+  "errors": {
+    "serverNotFound": "Server not found",
+    "rustServerOnly": "This page is only available for Rust servers",
+    "loadingServer": "Error loading server",
+    "general": "Error",
+    "occurred": "An error occurred",
+    "unknown": "Unknown error occurred",
+    "licenseActivationFailed": "License activation failed",
+    "licenseActivationError": "Error occurred during license activation",
+    "checkUpdatesError": "Error checking for updates",
+    "noUpdatesAvailable": "No updates available",
+    "installUpdateFailed": "Update installation failed",
+    "installUpdateError": "Error occurred during update installation"
+  },
+  "loading": {
+    "text": "Loading...",
+    "licenseInfo": "Loading license information..."
+  },
+  "empty": {
+    "noNotifications": "No notifications",
+    "noUpdates": "No updates available"
+  },
+  "buttons": {
+    "cancel": "Cancel",
+    "backToDashboard": "Back to dashboard"
+  },
+  "forms": {
+    "createNewAccount": "Create a new account"
+  },
+  "success": {
+    "licenseActivated": "License activated successfully!"
+  },
+  "servers": {
+    "newOrder": {
+      "title": "Order New Server",
+      "subtitle": "Fill in the form below and your server will be ready in minutes"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "System settings"
+  },
+  "cta": {
+    "registerNow": "Register now and get 24 hours free trial!",
+    "freeRegistration": "Free Registration"
+  },
+  "admin": {
+    "mods": {
+      "subtitle": "📌 Install mods on your server with one click",
+      "oxideWarning": "Make sure the Oxide framework is installed on your server."
+    }
+  },
+  "license": {
+    "info": "License Information",
+    "notActivated": "License is not activated",
+    "maxUsers": "Max Users",
+    "maxServers": "Max Servers"
+  },
+  "meta": {
+    "description": "Complete gaming server hosting platform"
   }
 }

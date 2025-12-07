@@ -23,8 +23,8 @@ export function CTASection({ locale, translations, section }: CTASectionProps) {
   const t = (key: string) => getNestedValue(translations, key) || key;
 
   const title = section?.title || 'Készen állsz a kezdésre?';
-  const subtitle = section?.subtitle || 'Regisztrálj most és kapj 24 órás ingyenes próbaidőt!';
-  const buttonText = section?.buttonText || 'Ingyenes Regisztráció';
+  const subtitle = section?.subtitle || t('pages.cta.registerNow') || 'Register now and get 24 hours free trial!';
+  const buttonText = section?.buttonText || t('pages.cta.freeRegistration') || 'Free Registration';
   const buttonLink = section?.buttonLink || `/${locale}/register`;
 
   return (

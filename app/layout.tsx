@@ -7,7 +7,7 @@ const inter = Inter({ subsets: ['latin', 'latin-ext'] });
 
 export const metadata: Metadata = {
   title: 'ZedinGamingHosting - Gaming Server Hosting',
-  description: 'Teljes körű gaming szerver hosting platform',
+  description: 'Complete gaming server hosting platform',
 };
 
 export default function RootLayout({

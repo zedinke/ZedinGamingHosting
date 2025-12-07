@@ -68,7 +68,7 @@ export function NotificationsPanel({ locale }: NotificationsPanelProps) {
         loadNotifications(); // Frissítés
       }
     } catch (error) {
-      toast.error('Hiba történt');
+      toast.error('An error occurred');
     }
   };
 
@@ -81,15 +81,15 @@ export function NotificationsPanel({ locale }: NotificationsPanelProps) {
       if (response.ok) {
         setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
         setUnreadCount(0);
-        toast.success('Összes értesítés olvasottnak jelölve');
+        toast.success('All notifications marked as read');
         loadNotifications(); // Frissítés
       }
     } catch (error) {
-      toast.error('Hiba történt');
+      toast.error('An error occurred');
     }
   };
 
-  // Szűrt értesítések (duplikációk nélkül)
+  // Filter notifications (duplikációk nélkül)
   const filteredNotifications = useMemo(() => {
     return notifications.filter((notification, index, self) =>
       index === self.findIndex((n) => n.id === notification.id)
@@ -131,9 +131,9 @@ export function NotificationsPanel({ locale }: NotificationsPanelProps) {
       </div>
 
       {loading ? (
-        <div className="text-center py-8 text-gray-600">Betöltés...</div>
+        <div className="text-center py-8 text-gray-600">Loading...</div>
       ) : filteredNotifications.length === 0 ? (
-        <div className="text-center py-8 text-gray-600">Nincs értesítés</div>
+        <div className="text-center py-8 text-gray-600">No notifications</div>
       ) : (
         <div className="space-y-2">
           {filteredNotifications.slice(0, 5).map((notification) => (
@@ -175,7 +175,7 @@ export function NotificationsPanel({ locale }: NotificationsPanelProps) {
                 href={`/${locale}/dashboard/notifications`}
                 className="text-sm text-primary-600 hover:text-primary-700 font-medium"
               >
-                További értesítések megtekintése ({filteredNotifications.length - 5})
+                View more notifications ({filteredNotifications.length - 5})
               </Link>
             </div>
           )}

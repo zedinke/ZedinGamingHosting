@@ -67,7 +67,7 @@ export function NotificationsList({ locale }: NotificationsListProps) {
         loadNotifications(); // Frissítés
       }
     } catch (error) {
-      toast.error('Hiba történt');
+      toast.error('An error occurred');
     }
   };
 
@@ -80,15 +80,15 @@ export function NotificationsList({ locale }: NotificationsListProps) {
       if (response.ok) {
         setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
         setUnreadCount(0);
-        toast.success('Összes értesítés olvasottnak jelölve');
-        loadNotifications(); // Frissítés
+        toast.success('All notifications marked as read');
+        loadNotifications(); // Refresh
       }
     } catch (error) {
-      toast.error('Hiba történt');
+      toast.error('An error occurred');
     }
   };
 
-  // Szűrt értesítések (duplikációk nélkül)
+  // Filter notifications (duplikációk nélkül)
   const filteredNotifications = useMemo(() => {
     return notifications.filter((notification, index, self) =>
       index === self.findIndex((n) => n.id === notification.id)
@@ -125,9 +125,9 @@ export function NotificationsList({ locale }: NotificationsListProps) {
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-gray-600">Betöltés...</div>
+        <div className="text-center py-12 text-gray-600">Loading...</div>
       ) : filteredNotifications.length === 0 ? (
-        <div className="text-center py-12 text-gray-600">Nincs értesítés</div>
+        <div className="text-center py-12 text-gray-600">No notifications</div>
       ) : (
         <div className="space-y-3">
           {filteredNotifications.map((notification) => (

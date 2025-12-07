@@ -5,6 +5,8 @@ import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { ServerOrderForm } from '@/components/servers/ServerOrderForm';
 import { Footer } from '@/components/home/Footer';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 
 export default async function NewServerPage({
   params: { locale },
@@ -15,6 +17,16 @@ export default async function NewServerPage({
 }) {
   await requireAuth();
   const t = getTranslations(locale, 'common');
+
+  // Load translations server-side
+  let translations: any = {};
+  try {
+    const filePath = join(process.cwd(), 'public', 'locales', locale, 'common.json');
+    const fileContents = readFileSync(filePath, 'utf8');
+    translations = JSON.parse(fileContents);
+  } catch (error) {
+    console.error('Failed to load translations:', error);
+  }
 
   // Premium package vagy game package ellenőrzése - legalább egy kötelező
   if (!searchParams.package && !searchParams.premiumPackage) {
@@ -83,10 +95,10 @@ export default async function NewServerPage({
             {/* Hero Section */}
             <div className="text-center mb-12">
               <h1 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900">
-                Új Szerver Rendelése
+                {translations?.servers?.newOrder?.title || 'Order New Server'}
               </h1>
               <p className="text-xl text-gray-800 font-medium">
-                Töltsd ki az alábbi űrlapot és szervered percek alatt készen áll
+                {translations?.servers?.newOrder?.subtitle || 'Fill in the form below and your server will be ready in minutes'}
               </p>
             </div>
 
@@ -118,10 +130,10 @@ export default async function NewServerPage({
           {/* Hero Section */}
           <div className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900">
-              Új Szerver Rendelése
+              {translations?.servers?.newOrder?.title || 'Order New Server'}
             </h1>
             <p className="text-xl text-gray-800 font-medium">
-              Töltsd ki az alábbi űrlapot és szervered percek alatt készen áll
+              {translations?.servers?.newOrder?.subtitle || 'Fill in the form below and your server will be ready in minutes'}
             </p>
           </div>
 

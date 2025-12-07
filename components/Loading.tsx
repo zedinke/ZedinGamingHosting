@@ -25,7 +25,7 @@ export function Loading({ size = 'md', text }: LoadingProps) {
 export function LoadingPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <Loading size="lg" text="Betöltés..." />
+      <Loading size="lg" text="Loading..." />
     </div>
   );
 }
@@ -34,7 +34,7 @@ export function LoadingCard() {
   return (
     <div className="card">
       <div className="flex items-center justify-center py-12">
-        <Loading size="md" text="Betöltés..." />
+        <Loading size="md" text="Loading..." />
       </div>
     </div>
   );

@@ -322,5 +322,66 @@
       "title": "Verificar Correo Electrónico",
       "subtitle": "Haz clic en el enlace en tu correo electrónico para verificar tu cuenta"
     }
+  },
+  "errors": {
+    "serverNotFound": "Servidor no encontrado",
+    "rustServerOnly": "Esta página solo está disponible para servidores Rust",
+    "loadingServer": "Error al cargar el servidor",
+    "general": "Error",
+    "occurred": "Ocurrió un error",
+    "unknown": "Ocurrió un error desconocido",
+    "licenseActivationFailed": "Activación de licencia fallida",
+    "licenseActivationError": "Error al activar la licencia",
+    "checkUpdatesError": "Error al verificar actualizaciones",
+    "noUpdatesAvailable": "No hay actualizaciones disponibles",
+    "installUpdateFailed": "Instalación de actualización fallida",
+    "installUpdateError": "Error al instalar la actualización"
+  },
+  "loading": {
+    "text": "Cargando...",
+    "licenseInfo": "Cargando información de licencia..."
+  },
+  "empty": {
+    "noNotifications": "Sin notificaciones",
+    "noUpdates": "No hay actualizaciones disponibles"
+  },
+  "buttons": {
+    "cancel": "Cancelar",
+    "backToDashboard": "Volver al panel"
+  },
+  "forms": {
+    "createNewAccount": "Crear una nueva cuenta"
+  },
+  "success": {
+    "licenseActivated": "¡Licencia activada con éxito!"
+  },
+  "servers": {
+    "newOrder": {
+      "title": "Ordenar Nuevo Servidor",
+      "subtitle": "Completa el formulario a continuación y tu servidor estará listo en minutos"
+    }
+  },
+  "settings": {
+    "title": "Configuración",
+    "description": "Configuración del sistema"
+  },
+  "cta": {
+    "registerNow": "¡Regístrate ahora y obtén 24 horas gratis!",
+    "freeRegistration": "Registro Gratuito"
+  },
+  "admin": {
+    "mods": {
+      "subtitle": "📌 Instala mods en tu servidor con un clic",
+      "oxideWarning": "Asegúrate de que el framework Oxide está instalado en tu servidor."
+    }
+  },
+  "license": {
+    "info": "Información de Licencia",
+    "notActivated": "La licencia no está activada",
+    "maxUsers": "Máximo de Usuarios",
+    "maxServers": "Máximo de Servidores"
+  },
+  "meta": {
+    "description": "Plataforma completa de alojamiento de servidores de juegos"
   }
 }

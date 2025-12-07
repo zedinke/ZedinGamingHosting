@@ -372,6 +372,67 @@
       "title": "Email Megerősítés",
       "subtitle": "Kattints az emailedben lévő linkre a fiók megerősítéséhez"
     }
+  },
+  "errors": {
+    "serverNotFound": "Szerver nem található",
+    "rustServerOnly": "Ez az oldal csak Rust szerverekhez elérhető",
+    "loadingServer": "Hiba a szerver betöltésekor",
+    "general": "Hiba",
+    "occurred": "Hiba történt",
+    "unknown": "Ismeretlen hiba történt",
+    "licenseActivationFailed": "License aktiválás sikertelen",
+    "licenseActivationError": "Hiba történt a license aktiválása során",
+    "checkUpdatesError": "Hiba történt a frissítések ellenőrzése során",
+    "noUpdatesAvailable": "Nincs elérhető frissítés",
+    "installUpdateFailed": "Frissítés telepítés sikertelen",
+    "installUpdateError": "Hiba történt a frissítés telepítése során"
+  },
+  "loading": {
+    "text": "Betöltés...",
+    "licenseInfo": "License információk betöltése..."
+  },
+  "empty": {
+    "noNotifications": "Nincs értesítés",
+    "noUpdates": "Nincs elérhető frissítés"
+  },
+  "buttons": {
+    "cancel": "Mégse",
+    "backToDashboard": "Vissza a dashboard-ra"
+  },
+  "forms": {
+    "createNewAccount": "Hozz létre egy új fiókot"
+  },
+  "success": {
+    "licenseActivated": "License sikeresen aktiválva!"
+  },
+  "servers": {
+    "newOrder": {
+      "title": "Új Szerver Rendelése",
+      "subtitle": "Töltsd ki az alábbi űrlapot és szervered percek alatt készen áll"
+    }
+  },
+  "settings": {
+    "title": "Beállítások",
+    "description": "Rendszer beállítások"
+  },
+  "cta": {
+    "registerNow": "Regisztrálj most és kapj 24 órás ingyenes próbaidőt!",
+    "freeRegistration": "Ingyenes Regisztráció"
+  },
+  "admin": {
+    "mods": {
+      "subtitle": "📌 Egy kattintással telepítsd a modokat a szerveredre",
+      "oxideWarning": "Bizonyosítsd meg, hogy az Oxide framework telepített a szerveren."
+    }
+  },
+  "license": {
+    "info": "License Információk",
+    "notActivated": "License nincs aktiválva",
+    "maxUsers": "Max Felhasználók",
+    "maxServers": "Max Szerverek"
+  },
+  "meta": {
+    "description": "Teljes körű gaming szerver hosting platform"
   }
 }  }
 }
