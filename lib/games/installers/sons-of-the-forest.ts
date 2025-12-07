@@ -42,15 +42,16 @@ while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
   echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
   
   # Sons of the Forest dedicated server installation attempts
+  # NOTE: This server likely requires game ownership and cannot be installed anonymously
   # The server may require Windows platform or specific configuration
   if [ $RETRY_COUNT -eq 0 ]; then
-    # First attempt: Windows platform (like The Forest)
-    echo "Próbálkozás Windows platformmal..."
+    # First attempt: Windows platform (like The Forest) - most likely to work
+    echo "Próbálkozás Windows platformmal (ajánlott)..."
     HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +@sSteamCmdForcePlatformType windows +force_install_dir "$SERVER_DIR" +login anonymous +app_update 1326470 validate +quit
   elif [ $RETRY_COUNT -eq 1 ]; then
-    # Second attempt: Linux platform with beta branch
-    echo "Próbálkozás Linux platformmal beta branch-szel..."
-    HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 1326470 -beta public validate +quit
+    # Second attempt: Windows platform with beta branch
+    echo "Próbálkozás Windows platformmal beta branch-szel..."
+    HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +@sSteamCmdForcePlatformType windows +force_install_dir "$SERVER_DIR" +login anonymous +app_update 1326470 -beta beta validate +quit
   else
     # Third attempt: Linux platform without validate
     echo "Próbálkozás Linux platformmal validate nélkül..."
@@ -89,12 +90,21 @@ rm -rf "$STEAM_HOME" 2>/dev/null || true
 if [ "$INSTALL_SUCCESS" != "true" ]; then
   echo "HIBA: Telepítés nem sikerült $MAX_RETRIES próbálkozás után" >&2
   echo "" >&2
-  echo "Lehetséges okok:" >&2
-  echo "1. A Sons of the Forest dedikált szerver telepítéséhez szükség lehet a játék tulajdonjogára" >&2
-  echo "2. A szerver nem érhető el névtelen (anonymous) SteamCMD bejelentkezéssel" >&2
-  echo "3. A SteamCMD konfigurációja nem megfelelő" >&2
+  echo "=== FONTOS INFORMÁCIÓ ===" >&2
+  echo "A Sons of the Forest dedikált szerver telepítéséhez SZÜKSÉGES a játék tulajdonjoga!" >&2
+  echo "A szerver NEM érhető el névtelen (anonymous) SteamCMD bejelentkezéssel." >&2
   echo "" >&2
-  echo "Ellenőrizd a SteamCMD log fájlokat további részletekért." >&2
+  echo "Megoldás:" >&2
+  echo "1. A Sons of the Forest játékot meg kell vásárolni a Steam-en" >&2
+  echo "2. SteamCMD-ben be kell jelentkezni egy olyan fiókkal, amely birtokolja a játékot:" >&2
+  echo "   steamcmd +login <felhasználónév> <jelszó> +app_update 1326470 validate +quit" >&2
+  echo "" >&2
+  echo "Alternatíva:" >&2
+  echo "Ha kétlépcsős azonosítás (2FA) van bekapcsolva, használd a Steam Guard kódot:" >&2
+  echo "   steamcmd +login <felhasználónév> <jelszó> <steam_guard_code> +app_update 1326470 validate +quit" >&2
+  echo "" >&2
+  echo "Jelenleg a rendszer csak névtelen bejelentkezést támogat, ezért a telepítés sikertelen." >&2
+  echo "A jövőben lehetőség lesz Steam fiók bejelentkezésre a konfigurációban." >&2
   exit 1
 fi
 
