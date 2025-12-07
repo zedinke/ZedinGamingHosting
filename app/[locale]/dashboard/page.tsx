@@ -151,7 +151,7 @@ export default async function DashboardPage({
   const onlineServers = serializableServers.filter((s: { status: string }) => s.status === 'ONLINE').length;
 
   // Biztosítjuk, hogy a locale érvényes legyen
-  const validLocale = locale === 'hu' || locale === 'en' ? locale : 'hu';
+  const validLocale = ['hu', 'en', 'es'].includes(locale) ? locale : 'hu';
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -235,7 +235,7 @@ export default async function DashboardPage({
     // Ha hiba van, próbáljuk meg egy egyszerűbb verziót renderelni
     const resolvedParams = params instanceof Promise ? await params : params;
     const errorLocale = resolvedParams.locale || 'hu';
-    const validErrorLocale = errorLocale === 'hu' || errorLocale === 'en' ? errorLocale : 'hu';
+    const validErrorLocale = ['hu', 'en', 'es'].includes(errorLocale) ? errorLocale : 'hu';
     
     return (
       <div className="min-h-screen bg-gray-100">

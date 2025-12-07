@@ -9,7 +9,7 @@ const faqSchema = z.object({
   question: z.string().min(1, 'Kérdés megadása kötelező'),
   answer: z.string().min(1, 'Válasz megadása kötelező'),
   order: z.number().int().min(0),
-  locale: z.enum(['hu', 'en']),
+  locale: z.enum(['hu', 'en', 'es']),
   isActive: z.boolean(),
 });
 

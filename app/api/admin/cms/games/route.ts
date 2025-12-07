@@ -17,7 +17,7 @@ const gameSchema = z.object({
   categoryId: z.string().optional().nullable(),
   isActive: z.boolean(),
   order: z.number().int().min(0),
-  locale: z.enum(['hu', 'en']),
+  locale: z.enum(['hu', 'en', 'es']),
 });
 
 export async function GET(request: NextRequest) {

@@ -12,7 +12,7 @@ export default async function NewSlideshowSlidePage({
   const t = getTranslations(locale, 'common');
 
   // Ensure locale is valid
-  const validLocale = locale === 'hu' || locale === 'en' ? locale : 'hu';
+  const validLocale = ['hu', 'en', 'es'].includes(locale) ? locale : 'hu';
 
   return (
     <div>

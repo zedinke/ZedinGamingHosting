@@ -19,7 +19,7 @@ const slideshowSlideSchema = z.object({
   buttonText: z.string().optional().nullable(),
   isActive: z.boolean(),
   order: z.number().int().min(0),
-  locale: z.enum(['hu', 'en']),
+  locale: z.enum(['hu', 'en', 'es']),
 }).superRefine((data, ctx) => {
   // Kép validáció
   if (data.mediaType === 'image') {

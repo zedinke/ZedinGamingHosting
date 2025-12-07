@@ -32,7 +32,7 @@ export default async function SystemPage({
 }: {
   params: { locale: string };
 }) {
-  const VALID_LOCALES = ['hu', 'en'];
+  const VALID_LOCALES = ['hu', 'en', 'es'];
   const validLocale = VALID_LOCALES.includes(locale) ? locale : 'en';
   
   const t = getTranslations(validLocale, 'common');

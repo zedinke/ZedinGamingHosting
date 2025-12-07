@@ -11,7 +11,7 @@ const testimonialSchema = z.object({
   content: z.string().min(1, 'Tartalom megadása kötelező'),
   avatar: z.string().url().optional().or(z.literal('')),
   rating: z.number().min(1).max(5),
-  locale: z.enum(['hu', 'en']),
+  locale: z.enum(['hu', 'en', 'es']),
   isActive: z.boolean(),
   order: z.number().int().min(0),
 });

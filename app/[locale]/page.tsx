@@ -20,7 +20,7 @@ export default async function HomePage({
   params: { locale: string };
 }) {
   // Ellenőrizzük, hogy a locale érvényes-e (pl. favicon.ico ne legyen locale)
-  const VALID_LOCALES = ['hu', 'en'];
+  const VALID_LOCALES = ['hu', 'en', 'es'];
   const staticFileExtensions = ['.ico', '.txt', '.xml', '.json', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.css', '.js'];
   const isStaticFile = staticFileExtensions.some(ext => locale.toLowerCase().endsWith(ext));
   

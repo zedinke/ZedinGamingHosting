@@ -10,7 +10,7 @@ const pageSchema = z.object({
   title: z.string().min(1, 'Cím megadása kötelező'),
   content: z.any(),
   isPublished: z.boolean(),
-  locale: z.enum(['hu', 'en']),
+  locale: z.enum(['hu', 'en', 'es']),
   seoTitle: z.string().optional(),
   seoDescription: z.string().optional(),
 });
