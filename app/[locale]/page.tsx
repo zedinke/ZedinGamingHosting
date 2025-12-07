@@ -93,30 +93,30 @@ export default async function HomePage({
                   {/* Badge */}
                   <div className="inline-flex items-center px-4 py-2 mb-6 bg-white/10 backdrop-blur-sm rounded-full border border-white/20">
                     <span className="text-sm font-semibold">
-                      Legjobb Gaming Szerver Hosting
+                      ✨ {t('hero.badge') || 'Gaming Server Hosting'}
                     </span>
                   </div>
 
                   {/* Main heading */}
                   <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight text-white">
-                    A legjobb gaming szerver hosting
+                    {heroSection?.title || t('hero.title')}
                   </h1>
 
                   {/* Subtitle */}
                   <p className="text-lg md:text-xl lg:text-2xl mb-10 text-gray-100 max-w-2xl mx-auto leading-relaxed">
-                    Teljesítmény, megbízhatóság és könnyű kezelés egy helyen
+                    {heroSection?.subtitle || t('hero.subtitle')}
                   </p>
 
                   {/* CTA Buttons */}
                   <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
                     <Link href={`/${locale}/register`}>
                       <Button size="lg" className="bg-white text-gray-900 hover:bg-gray-100 px-8 py-3 rounded-lg font-semibold transition-colors">
-                        Kezdj el most
+                        {heroSection?.buttonText || t('hero.cta')} →
                       </Button>
                     </Link>
                     <Link href={`/${locale}/pricing`}>
                       <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white/10 px-8 py-3 rounded-lg font-semibold transition-colors">
-                        Tudj meg többet
+                        {t('hero.learnMore')}
                       </Button>
                     </Link>
                   </div>
@@ -124,10 +124,10 @@ export default async function HomePage({
                   {/* Stats */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-16 pt-16 border-t border-white/20">
                     {[
-                      { value: '99.99%', label: 'Átlagos Uptime' },
-                      { value: '100%', label: 'Flexibilitás' },
-                      { value: '9', label: 'Szerver Helyszín' },
-                      { value: '24/7', label: 'Támogatás' },
+                      { value: '99.99%', label: t('hero.stats.uptime') || 'Average Uptime' },
+                      { value: '100%', label: t('hero.stats.flexibility') || 'Flexibility' },
+                      { value: '9', label: t('hero.stats.locations') || 'Server Locations' },
+                      { value: '24/7', label: t('hero.stats.support') || 'Support' },
                     ].map((stat, index) => (
                       <div key={index} className="text-center">
                         <div className="text-3xl md:text-4xl font-bold mb-2 text-white">{stat.value}</div>

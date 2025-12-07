@@ -15,7 +15,14 @@
     "title": "A legjobb gaming szerver hosting",
     "subtitle": "Teljesítmény, megbízhatóság és könnyű kezelés egy helyen",
     "cta": "Kezdj el most",
-    "learnMore": "Tudj meg többet"
+    "learnMore": "Tudj meg többet",
+    "badge": "Legjobb Gaming Szerver Hosting",
+    "stats": {
+      "uptime": "Átlagos Uptime",
+      "flexibility": "Flexibilitás",
+      "locations": "Szerver Helyszín",
+      "support": "Támogatás"
+    }
   },
   "auth": {
     "email": "Email cím",

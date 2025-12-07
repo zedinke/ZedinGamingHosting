@@ -15,7 +15,14 @@
     "title": "El mejor alojamiento de servidores de juegos",
     "subtitle": "Rendimiento, confiabilidad y gestión fácil en un solo lugar",
     "cta": "Comenzar",
-    "learnMore": "Aprende Más"
+    "learnMore": "Aprende Más",
+    "badge": "Mejor Alojamiento de Servidores de Juegos",
+    "stats": {
+      "uptime": "Tiempo de Actividad Promedio",
+      "flexibility": "Flexibilidad",
+      "locations": "Ubicaciones de Servidores",
+      "support": "Soporte"
+    }
   },
   "auth": {
     "email": "Correo electrónico",

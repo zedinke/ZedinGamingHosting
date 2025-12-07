@@ -15,7 +15,14 @@
     "title": "The Best Gaming Server Hosting",
     "subtitle": "Performance, reliability and easy management in one place",
     "cta": "Get Started",
-    "learnMore": "Learn More"
+    "learnMore": "Learn More",
+    "badge": "Best Gaming Server Hosting",
+    "stats": {
+      "uptime": "Average Uptime",
+      "flexibility": "Flexibility",
+      "locations": "Server Locations",
+      "support": "Support"
+    }
   },
   "auth": {
     "email": "Email address",
