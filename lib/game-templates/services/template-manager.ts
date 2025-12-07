@@ -5,6 +5,11 @@
 
 import { GameTemplateType, GameTemplate, TemplateDeploySession } from '../types';
 import { getTemplate } from '../models/templates';
+import { getGoogleDriveService } from './google-drive';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
 
 /**
  * Template Manager - Fő service
@@ -50,11 +55,67 @@ export class TemplateManager {
     gdrive: GameTemplate['gdrive'],
     destinationPath: string
   ): Promise<void> {
-    // TODO: Google Drive API implementáció
-    // 1. Autentikáció
-    // 2. File letöltés
-    // 3. Checksum validáció
-    console.log(`Template letöltése: ${gdrive.fileName} → ${destinationPath}`);
+    const gdriveService = getGoogleDriveService();
+
+    console.log(`📥 Template letöltése Google Drive-ról...`);
+    console.log(`   Fájl ID: ${gdrive.fileId}`);
+    console.log(`   Fájl: ${gdrive.fileName}`);
+    console.log(`   Méret: ${gdrive.sizeGb} GB`);
+
+  /**
+   * Template kibontása
+   * @param archivePath - TAR.GZ/ZIP elérési útvonala
+   * @param extractPath - Hova bontsuk ki
+   */
+  static async extractTemplate(
+    archivePath: string,
+    extractPath: string
+  ): Promise<void> {
+    console.log(`📦 Template kibontása...`);
+    console.log(`   Forrás: ${archivePath}`);
+    console.log(`   Cél: ${extractPath}`);
+
+    try {
+      // Fájl típus felismerés
+      let extractCommand = '';
+
+      if (archivePath.endsWith('.tar.gz') || archivePath.endsWith('.tgz')) {
+        extractCommand = `mkdir -p "${extractPath}" && tar -xzf "${archivePath}" -C "${extractPath}"`;
+      } else if (archivePath.endsWith('.zip')) {
+        extractCommand = `mkdir -p "${extractPath}" && unzip -q "${archivePath}" -d "${extractPath}"`;
+      } else if (archivePath.endsWith('.tar')) {
+        extractCommand = `mkdir -p "${extractPath}" && tar -xf "${archivePath}" -C "${extractPath}"`;
+      } else {
+        throw new Error(
+          `Nem támogatott archive formátum: ${archivePath}. Támogatott: .tar.gz, .tar, .zip`
+        );
+      }
+
+      // Kibontás
+      console.log(`   Parancs: ${extractCommand}`);
+      await execAsync(extractCommand);
+
+      // Permissions beállítása
+      await execAsync(`chmod -R 755 "${extractPath}"`);
+
+      console.log(`✅ Template sikeresen kibontva`);
+    } catch (error) {
+      console.error(`❌ Template kibontás hiba:`, error);
+      throw error;
+    }
+  }       gdrive.checksum
+        );
+
+        if (!isValid) {
+          throw new Error('Checksum validáció sikertelen!');
+        }
+      }
+
+      console.log(`✅ Template sikeresen letöltve`);
+    } catch (error) {
+      console.error(`❌ Template letöltés hiba:`, error);
+      throw error;
+    }
   }
 
   /**
@@ -67,27 +128,51 @@ export class TemplateManager {
     extractPath: string
   ): Promise<void> {
     // TODO: Extraction implementáció
-    // 1. Fájl típus felismerés (.tar.gz, .zip)
-    // 2. Kibontás
-    // 3. Permissions beállítás
-    console.log(`Template kibontása: ${archivePath} → ${extractPath}`);
-  }
-
   /**
-   * Server konfiguráció generálása
+   * Docker container indítása
    * @param template - Game template
-   * @param serverName - Szerver neve
-   * @param customConfig - Custom konfigurációs opciók
+   * @param serverId - Szerver ID
+   * @param configPath - Konfig fájl elérési útvonala
    */
-  static generateServerConfig(
+  static async startContainer(
     template: GameTemplate,
-    serverName: string,
-    customConfig?: Record<string, any>
-  ): Record<string, any> {
-    const baseConfig = {
-      serverName,
-      maxPlayers: template.metadata.maxPlayers || 10,
-      ports: template.ports,
+    serverId: string,
+    configPath: string
+  ): Promise<string> {
+    console.log(`🐳 Docker container indítása...`);
+    console.log(`   Image: ${template.dockerImage}`);
+    console.log(`   Szerver: ${serverId}`);
+    console.log(`   Config: ${configPath}`);
+
+    try {
+      const containerName = `game-${serverId}`;
+      const serverDir = `/opt/servers/${serverId}`;
+
+      // Port binding string generálása
+      const portBindings = Object.entries(template.ports)
+        .map(([_, port]) => `-p ${port}:${port}/udp`)
+        .join(' ');
+
+      // Container run parancs
+      const runCommand = `docker run -d \\
+        --name ${containerName} \\
+        --restart unless-stopped \\
+        -v ${serverDir}:/data \\
+        ${portBindings} \\
+        ${template.dockerImage}`;
+
+      console.log(`   Parancs: docker run ...`);
+      const { stdout } = await execAsync(runCommand);
+
+      const containerId = stdout.trim();
+      console.log(`✅ Container elindítva: ${containerId.substring(0, 12)}`);
+
+      return containerId;
+    } catch (error) {
+      console.error(`❌ Container indítás hiba:`, error);
+      throw error;
+    }
+  }   ports: template.ports,
       ...customConfig,
     };
     
