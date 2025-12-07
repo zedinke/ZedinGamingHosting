@@ -14,6 +14,7 @@ import { CronJobManager } from './CronJobManager';
 import { SFTPInfo } from './SFTPInfo';
 import { UserServerBackupManager } from './UserServerBackupManager';
 import { UserGameConsoleManager } from './UserGameConsoleManager';
+import RustModStore from '@/components/games/RustModStore';
 
 interface Server {
   id: string;
@@ -50,7 +51,7 @@ export function UserServerDetail({ server, locale }: UserServerDetailProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [serverStatus, setServerStatus] = useState(server.status);
-  const [activeTab, setActiveTab] = useState<'info' | 'console' | 'config' | 'config-file' | 'cron' | 'sftp' | 'backup'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'console' | 'config' | 'config-file' | 'cron' | 'sftp' | 'backup' | 'mods'>('info');
   const [isInstalled, setIsInstalled] = useState<boolean | null>(null);
   const [installProgress, setInstallProgress] = useState<any>(null);
   const [serverData, setServerData] = useState<Server>(server);
@@ -395,6 +396,18 @@ export function UserServerDetail({ server, locale }: UserServerDetailProps) {
             >
               Backup Mentések
             </button>
+            {server.gameType === 'RUST' && (
+              <button
+                onClick={() => setActiveTab('mods')}
+                className={`px-4 py-3 border-b-2 font-medium transition-colors ${
+                  activeTab === 'mods'
+                    ? 'border-primary-600 text-primary-600'
+                    : 'border-transparent text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Modulok
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -688,6 +701,12 @@ export function UserServerDetail({ server, locale }: UserServerDetailProps) {
       {activeTab === 'backup' && (
         <div className="space-y-6">
           <UserServerBackupManager serverId={server.id} locale={locale} />
+        </div>
+      )}
+
+      {activeTab === 'mods' && server.gameType === 'RUST' && (
+        <div className="space-y-6">
+          <RustModStore serverId={server.id} serverName={server.name} />
         </div>
       )}
     </div>
