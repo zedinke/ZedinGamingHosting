@@ -14,6 +14,8 @@ export const config: GameServerConfig = {
   stopCommand: commands.stopCommand,
   port: 27015,
   queryPort: 27016,
+  supported: false, // ❌ NOT SUPPORTED - Valve hasn't configured this for SteamCMD
+  supportReason: 'Sons of the Forest dedicated server is not available via SteamCMD. Requires game ownership and special Valve licensing.',
   defaultSettings: {
     ServerName: 'Sons of the Forest Server',
     ServerPassword: '',

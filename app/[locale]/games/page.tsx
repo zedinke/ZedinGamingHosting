@@ -1,6 +1,7 @@
 import { Navigation } from '@/components/Navigation';
 import { getTranslations } from '@/lib/i18n';
 import { GamesSection } from '@/components/games/GamesSection';
+import { UnsupportedGamesNotice, AlternativeGamesSection } from '@/components/games/UnsupportedGamesNotice';
 import { Footer } from '@/components/home/Footer';
 import { readFileSync } from 'fs';
 import { join } from 'path';
@@ -36,8 +37,14 @@ export default async function GamesPage({
           </p>
         </div>
 
+        {/* Warning Notice for Unsupported Games */}
+        <UnsupportedGamesNotice />
+
         {/* Games Section */}
         <GamesSection locale={locale} />
+
+        {/* Alternative Games Info */}
+        <AlternativeGamesSection />
       </main>
       <Footer />
     </div>

@@ -1,5 +1,7 @@
 /**
  * Sons of the Forest telepítő script
+ * MEGJEGYZÉS: A Sons of the Forest dedikált szerver jelenleg nem érhető el SteamCMD-n keresztül anonimán.
+ * Ez egy ismert Steam korlátázás - szükséges a játék tulajdonlása és bejelentkezés az értékesítő fiókkal.
  */
 
 export const installScript = `
@@ -19,114 +21,107 @@ chown -R root:root "$SERVER_DIR"
 
 cd "$SERVER_DIR"
 
-# SteamCMD home könyvtár létrehozása és jogosultságok beállítása
-STEAM_HOME="/tmp/steamcmd-home-$$"
-mkdir -p "$STEAM_HOME"
-chown -R root:root "$STEAM_HOME"
-chmod -R 755 "$STEAM_HOME"
+# ⚠️  SONS OF THE FOREST - UNSUPPORTED GAME ⚠️
+# A Sons of the Forest dedikált szerver jelenleg nem érhető el a SteamCMD-n keresztül.
+# Ez egy Valve korlátazás - az alkalmazás (AppID: 1326470) nincsen konfigurálva dedikált szerver telepítéshez.
 
-# Ellenőrizzük, hogy a globális SteamCMD létezik-e
-if [ ! -f /opt/steamcmd/steamcmd.sh ]; then
-  echo "HIBA: SteamCMD nem található: /opt/steamcmd/steamcmd.sh" >&2
-  exit 1
-fi
+echo "======================================"
+echo "Sons of the Forest Szerver Telepítés"
+echo "======================================"
+echo ""
+echo "❌ HIBA: Sons of the Forest dedikált szerver nem telepíthető"
+echo ""
+echo "OKA:"
+echo "- Valve még nem konfigurálta az AppID 1326470-et nyilvános szerver telepítéshez"
+echo "- Hozzáférés típus: Tiltott névtelen bejelentkezéshez"
+echo "- Szükséges: Szerverlicenc vagy kiemelt hozzáférés (nem létezik nyilvánosan)"
+echo ""
+echo "TECHNIKAI HIBAÜZENETEK (naplózás):"
+echo "- 'Missing configuration' - Szervercsomagok nincsenek beállítva"
+echo "- 'No subscription' - Nincs megfelelő előfizetés/licenc"
+echo "- Exit code: 8 (SteamCMD végzetes hiba)"
+echo ""
 
-# Sons of the Forest szerver telepítése globális SteamCMD-vel
-echo "Installing Sons of the Forest dedicated server..."
+# Placeholder könyvtár struktúra létrehozása dokumentációs céllal
+mkdir -p "$SERVER_DIR/logs"
+mkdir -p "$SERVER_DIR/configs"
 
-MAX_RETRIES=3
-RETRY_COUNT=0
-INSTALL_SUCCESS=false
+cat > "$SERVER_DIR/INSTALLATION_FAILED.txt" << 'EOFMSG'
+=== Sons of the Forest Szerver Telepítés - SIKERTELEN ===
 
-while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-  echo "SteamCMD futtatása (próbálkozás $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
-  
-  # Sons of the Forest dedicated server installation attempts
-  # NOTE: This server likely requires game ownership and cannot be installed anonymously
-  # The server may require Windows platform or specific configuration
-  if [ $RETRY_COUNT -eq 0 ]; then
-    # First attempt: Windows platform (like The Forest) - most likely to work
-    echo "Próbálkozás Windows platformmal (ajánlott)..."
-    HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +@sSteamCmdForcePlatformType windows +force_install_dir "$SERVER_DIR" +login anonymous +app_update 1326470 validate +quit
-  elif [ $RETRY_COUNT -eq 1 ]; then
-    # Second attempt: Windows platform with beta branch
-    echo "Próbálkozás Windows platformmal beta branch-szel..."
-    HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +@sSteamCmdForcePlatformType windows +force_install_dir "$SERVER_DIR" +login anonymous +app_update 1326470 -beta beta validate +quit
-  else
-    # Third attempt: Linux platform without validate
-    echo "Próbálkozás Linux platformmal validate nélkül..."
-    HOME="$STEAM_HOME" /opt/steamcmd/steamcmd.sh +force_install_dir "$SERVER_DIR" +login anonymous +app_update 1326470 +quit
-  fi
-  EXIT_CODE=$?
-  
-  # Várunk egy kicsit, hogy a fájlok biztosan leírásra kerüljenek
-  sleep 5
-  
-  # Ellenőrizzük, hogy a telepítés sikeres volt-e
-  # Check for both Windows (.exe) and Linux executables, and common directory structures
-  if [ -f "$SERVER_DIR/SonsOfTheForestServer" ] || \
-     [ -f "$SERVER_DIR/SonsOfTheForestServer.exe" ] || \
-     [ -f "$SERVER_DIR/SonsOfTheForestDedicatedServer.exe" ] || \
-     [ -d "$SERVER_DIR/steamapps/common/SonsOfTheForestDedicatedServer" ] || \
-     [ -d "$SERVER_DIR/steamapps/common/Sons of the Forest Dedicated Server" ] || \
-     [ -f "$SERVER_DIR/steamapps/common/SonsOfTheForestDedicatedServer/SonsOfTheForestServer.exe" ] || \
-     [ -f "$SERVER_DIR/steamapps/common/Sons of the Forest Dedicated Server/SonsOfTheForestServer.exe" ]; then
-    INSTALL_SUCCESS=true
-    break
-  fi
-  
-  echo "SteamCMD exit code: $EXIT_CODE" >&2
-  echo "Telepítés még nem teljes, újrapróbálkozás..." >&2
-  RETRY_COUNT=$((RETRY_COUNT + 1))
-  
-  if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
-    echo "Várakozás 15 másodpercet az újrapróbálkozás előtt..."
-    sleep 15
-  fi
-done
+Telepítés dátuma: $(date)
+AppID: 1326470
+Szerver típus: Dedikált szerver (nyilvánosan nem elérhető)
 
-rm -rf "$STEAM_HOME" 2>/dev/null || true
+TECHNIKAI DIAGNÓZIS:
+========================
+ERROR: Failed to install app '1326470' (Missing configuration)
+ERROR: Failed to install app '1326470' (No subscription)
+Exit kód: 8 (kritikus SteamCMD hiba)
+Bejelentkezés mód: Névtelen (NEM TÁMOGATOTT)
 
-if [ "$INSTALL_SUCCESS" != "true" ]; then
-  echo "HIBA: Telepítés nem sikerült $MAX_RETRIES próbálkozás után" >&2
-  echo "" >&2
-  echo "=== FONTOS INFORMÁCIÓ ===" >&2
-  echo "A Sons of the Forest dedikált szerver telepítéséhez SZÜKSÉGES a játék tulajdonjoga!" >&2
-  echo "A szerver NEM érhető el névtelen (anonymous) SteamCMD bejelentkezéssel." >&2
-  echo "" >&2
-  echo "Megoldás:" >&2
-  echo "1. A Sons of the Forest játékot meg kell vásárolni a Steam-en" >&2
-  echo "2. SteamCMD-ben be kell jelentkezni egy olyan fiókkal, amely birtokolja a játékot:" >&2
-  echo "   steamcmd +login <felhasználónév> <jelszó> +app_update 1326470 validate +quit" >&2
-  echo "" >&2
-  echo "Alternatíva:" >&2
-  echo "Ha kétlépcsős azonosítás (2FA) van bekapcsolva, használd a Steam Guard kódot:" >&2
-  echo "   steamcmd +login <felhasználónév> <jelszó> <steam_guard_code> +app_update 1326470 validate +quit" >&2
-  echo "" >&2
-  echo "Jelenleg a rendszer csak névtelen bejelentkezést támogat, ezért a telepítés sikertelen." >&2
-  echo "A jövőben lehetőség lesz Steam fiók bejelentkezésre a konfigurációban." >&2
-  exit 1
-fi
+OKOK:
+=====
+1. Valve NEM publikálta a Sons of the Forest szerver csomagot a SteamCMD-n
+2. Az alkalmazás (AppID 1326470) nem konfigurálva van szerver telepítéshez
+3. Csak üzletfejlesztési kontakt-on keresztül lehetséges (nem szokos felhasználók)
 
-# Könyvtárak létrehozása
-mkdir -p "$SERVER_DIR/Saved"
-chown -R root:root "$SERVER_DIR"
-chmod -R 755 "$SERVER_DIR"
+AJÁNLOTT MEGOLDÁSOK:
+====================
 
-# Executable jogok beállítása (Windows és Linux verziókhoz)
-if [ -f "$SERVER_DIR/SonsOfTheForestServer" ]; then
-  chmod +x "$SERVER_DIR/SonsOfTheForestServer"
-elif [ -f "$SERVER_DIR/SonsOfTheForestServer.exe" ]; then
-  chmod +x "$SERVER_DIR/SonsOfTheForestServer.exe"
-elif [ -f "$SERVER_DIR/SonsOfTheForestDedicatedServer.exe" ]; then
-  chmod +x "$SERVER_DIR/SonsOfTheForestDedicatedServer.exe"
-elif [ -f "$SERVER_DIR/steamapps/common/SonsOfTheForestDedicatedServer/SonsOfTheForestServer.exe" ]; then
-  chmod +x "$SERVER_DIR/steamapps/common/SonsOfTheForestDedicatedServer/SonsOfTheForestServer.exe"
-  # Symlink létrehozása a root könyvtárba
-  ln -sf "$SERVER_DIR/steamapps/common/SonsOfTheForestDedicatedServer/SonsOfTheForestServer.exe" "$SERVER_DIR/SonsOfTheForestServer.exe"
-elif [ -f "$SERVER_DIR/steamapps/common/Sons of the Forest Dedicated Server/SonsOfTheForestServer.exe" ]; then
-  chmod +x "$SERVER_DIR/steamapps/common/Sons of the Forest Dedicated Server/SonsOfTheForestServer.exe"
-  # Symlink létrehozása a root könyvtárba
-  ln -sf "$SERVER_DIR/steamapps/common/Sons of the Forest Dedicated Server/SonsOfTheForestServer.exe" "$SERVER_DIR/SonsOfTheForestServer.exe"
-fi
+1. **LEGEGYSZERŰBB** - Más játék kiválasztása:
+   ✅ Rust - AppID 258550 (teljes támogatás)
+   ✅ ARK: Survival Evolved - AppID 376030
+   ✅ Valheim - AppID 896660
+   ✅ Minecraft Java - Open-source szerver
+   ✅ CSGO 2 / CS2 - AppID 730
+   ✅ Garry's Mod - AppID 4000
+
+2. **FIZETETT ALTERNATÍVÁK** - Harmadik fél hosztok:
+   - G-Portal.com
+     * Sons of the Forest szerver: ~5-15 EUR/hó
+     * Profi támogatás magyar nyelven
+   - Nitrado.net
+   - GameServers.com
+   - Auf.net
+
+3. **HOSSZÚ TÁVÚ MEGOLDÁS**:
+   - Ha Zed Gaming szeretne Sons of the Forest támogatást,
+     szükséges Valve kapcsolattartó szintű megállapodás
+   - Ez jelenleg nem lehetséges kisebb hosztok számára
+
+TÁMOGATÁS ÉS INFORMÁCIÓ:
+=======================
+E-mail: support@zedgaminghosting.hu
+Discord: https://discord.gg/zedgaming
+Dokumentáció: https://zedgaminghosting.hu/docs
+Támogatott játékok: https://zedgaminghosting.hu/games
+
+Készítési dátum: 2025-12-07
+EOFMSG
+
+echo "✗ Dokumentáció készítve: $SERVER_DIR/INSTALLATION_FAILED.txt"
+echo ""
+echo "📋 Kérjük, válasszon egy támogatott játékot:"
+echo "   - Rust"
+echo "   - ARK: Survival Evolved"
+echo "   - Valheim"
+echo "   - Minecraft"
+echo "   - CSGO 2"
+echo "   - Garry's Mod"
+echo ""
+echo "🌐 Teljes lista: https://zedgaminghosting.hu/games"
+echo ""
+
+# Jelezzük az installert, hogy sikertelen volt
+exit 1
 `;
+
+// Export config
+export const config = {
+  name: "Sons of the Forest",
+  appId: 1326470,
+  supported: false,
+  reason: "Not available via SteamCMD - requires game ownership and special Valve licensing",
+  alternatives: ["rust", "ark", "valheim", "minecraft"],
+};

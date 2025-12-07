@@ -142,6 +142,12 @@ export function GamesSection({ locale }: GamesSectionProps) {
   });
 
   const handlePackageSelect = (pkg: GamePackage) => {
+    // Sons of the Forest nem támogatott
+    if (pkg.gameType === 'SONS_OF_THE_FOREST') {
+      toast.error('Sons of the Forest jelenleg nem támogatott. Kérjük, válasszon másik játékot!');
+      return;
+    }
+
     if (!session) {
       router.push(`/${locale}/login?redirect=/${locale}/servers/new?package=${pkg.id}`);
       toast.error('Bejelentkezés szükséges');
@@ -153,6 +159,12 @@ export function GamesSection({ locale }: GamesSectionProps) {
   };
 
   const handlePremiumPackageSelect = (pkg: PremiumPackage) => {
+    // Ellenőrizzük, hogy van-e Sons of the Forest a prémium csomagban
+    if (pkg.games.some(g => g.gameType === 'SONS_OF_THE_FOREST' && pkg.games.length === 1)) {
+      toast.error('Sons of the Forest jelenleg nem támogatott. Kérjük, válasszon másik játékot!');
+      return;
+    }
+
     if (!session) {
       router.push(`/${locale}/login?redirect=/${locale}/servers/new?premiumPackage=${pkg.id}`);
       toast.error('Bejelentkezés szükséges');
@@ -164,6 +176,12 @@ export function GamesSection({ locale }: GamesSectionProps) {
   };
 
   const handleGameClick = (gameGroup: GameGroup) => {
+    // Sons of the Forest nem támogatott
+    if (gameGroup.gameType === 'SONS_OF_THE_FOREST') {
+      toast.error('Sons of the Forest jelenleg nem támogatott. Kérjük, válasszon másik játékot!');
+      return;
+    }
+
     if (gameGroup.packages.length === 1) {
       // Ha csak egy csomag van, közvetlenül kiválasztjuk
       handlePackageSelect(gameGroup.packages[0]);

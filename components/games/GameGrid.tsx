@@ -23,9 +23,10 @@ interface Game {
 interface GameGridProps {
   games: Game[];
   locale: string;
+  unsupportedGames?: string[];
 }
 
-export function GameGrid({ games, locale }: GameGridProps) {
+export function GameGrid({ games, locale, unsupportedGames = [] }: GameGridProps) {
   const { data: session } = useSession();
 
   if (games.length === 0) {
@@ -43,16 +44,20 @@ export function GameGrid({ games, locale }: GameGridProps) {
     <div>
       <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {games.map((game) => {
+          const isUnsupported = unsupportedGames.includes(game.slug.toUpperCase());
           const gameLink = `/${locale}/servers/new?gameType=${game.slug.toUpperCase()}`;
           const gameImage = game.image || '/images/games/default.jpg';
 
           return (
-            <Link 
-              key={game.id} 
-              href={session ? gameLink : `/${locale}/register`}
+            <div
+              key={game.id}
               className="group block"
             >
-              <div className="relative overflow-hidden bg-white rounded-lg border border-gray-200 hover:border-gray-300 hover:shadow-lg transition-all duration-300">
+              <div className={`relative overflow-hidden rounded-lg border transition-all duration-300 ${
+                isUnsupported 
+                  ? 'bg-gray-100 border-gray-300 opacity-70 cursor-not-allowed' 
+                  : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-lg'
+              }`}>
                 {game.category && (
                   <Badge
                     variant="outline"
@@ -62,12 +67,22 @@ export function GameGrid({ games, locale }: GameGridProps) {
                     {game.category.name}
                   </Badge>
                 )}
+                
+                {isUnsupported && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/60 z-20">
+                    <div className="text-center">
+                      <div className="text-3xl mb-2">⚠️</div>
+                      <p className="text-white font-semibold text-sm px-2">Jelenleg nem támogatott</p>
+                    </div>
+                  </div>
+                )}
+
                 <div className="relative w-full h-48 overflow-hidden bg-gray-100">
                   <Image
                     src={gameImage}
                     alt={game.name}
                     fill
-                    className="object-cover transition-transform duration-300 group-hover:scale-110"
+                    className={`object-cover transition-transform duration-300 ${!isUnsupported && 'group-hover:scale-110'}`}
                   />
                 </div>
                 <div className="p-5">
@@ -79,12 +94,23 @@ export function GameGrid({ games, locale }: GameGridProps) {
                       {game.description}
                     </p>
                   )}
-                  <div className="text-sm font-medium text-primary-600 group-hover:text-primary-700">
-                    Szerver létrehozása →
+                  <div className="text-sm font-medium">
+                    {isUnsupported ? (
+                      <Link href={`/${locale}/docs/SONS_OF_THE_FOREST_UNSUPPORTED`} className="text-red-600 hover:text-red-700">
+                        Tudj meg többet →
+                      </Link>
+                    ) : (
+                      <Link 
+                        href={session ? gameLink : `/${locale}/register`}
+                        className="text-primary-600 group-hover:text-primary-700"
+                      >
+                        Szerver létrehozása →
+                      </Link>
+                    )}
                   </div>
                 </div>
               </div>
-            </Link>
+            </div>
           );
         })}
       </div>
