@@ -43,9 +43,40 @@ async function testPortManager() {
     console.log(`✅ Teszt gép található: ${testMachine.name} (${testMachine.ipAddress})`);
     console.log(`   Agent: ${testMachine.agents[0].agentId}\n`);
 
-    // 2. Port allokáció teszt (7 Days to Die)
-    console.log('📌 1. Port allokáció teszt (7 Days to Die)...');
+    // 2. Teszt szerver létrehozása (ha nincs)
+    console.log('📌 1. Teszt szerver létrehozása...');
     const testServerId = `test-${Date.now()}`;
+    
+    // Ellenőrizzük, hogy van-e már teszt szerver
+    const existingServer = await prisma.server.findUnique({
+      where: { id: testServerId },
+    });
+
+    if (!existingServer) {
+      // Teszt szerver létrehozása
+      const firstUser = await prisma.user.findFirst();
+      if (!firstUser) {
+        throw new Error('Nincs felhasználó az adatbázisban');
+      }
+
+      await prisma.server.create({
+        data: {
+          id: testServerId,
+          name: 'Test Server',
+          gameType: GameType.SEVEN_DAYS_TO_DIE,
+          status: 'PROVISIONING',
+          machineId: testMachine.id,
+          agentId: testMachine.agents[0].id,
+          userId: firstUser.id,
+        },
+      });
+      console.log(`✅ Teszt szerver létrehozva: ${testServerId}\n`);
+    } else {
+      console.log(`⚠️  Teszt szerver már létezik: ${testServerId}\n`);
+    }
+
+    // 3. Port allokáció teszt (7 Days to Die)
+    console.log('📌 2. Port allokáció teszt (7 Days to Die)...');
     
     const allocatedPorts = await PortManager.allocatePorts(
       testMachine.id,
@@ -58,8 +89,8 @@ async function testPortManager() {
     console.log(`   Telnet Port: ${allocatedPorts.telnetPort}`);
     console.log(`   WebMap Port: ${allocatedPorts.webMapPort}\n`);
 
-    // 3. Port elérhetőség ellenőrzés
-    console.log('📌 2. Port elérhetőség ellenőrzés...');
+    // 4. Port elérhetőség ellenőrzés
+    console.log('📌 3. Port elérhetőség ellenőrzés...');
     const availability = await PortManager.checkPortAvailability(
       testMachine.id,
       allocatedPorts.port
@@ -71,23 +102,39 @@ async function testPortManager() {
       console.log(`⚠️  Port ${allocatedPorts.port} foglalt: ${availability.reason}\n`);
     }
 
-    // 4. Port felszabadítás teszt
-    console.log('📌 3. Port felszabadítás teszt...');
+    // 5. Port felszabadítás teszt
+    console.log('📌 4. Port felszabadítás teszt...');
     await PortManager.deallocatePorts(testServerId);
     console.log('✅ Portok felszabadítva\n');
 
-    // 5. Konfliktus teszt (ugyanaz a port újra)
-    console.log('📌 4. Konfliktus teszt (ugyanaz a port újra)...');
-    const testServerId2 = `test-${Date.now()}-2`;
-    
-    try {
-      // Próbáljuk ugyanazt a portot allokálni
-      await PortManager.allocatePorts(
-        testMachine.id,
-        GameType.SEVEN_DAYS_TO_DIE,
-        testServerId2,
-        allocatedPorts.port
-      );
+    // 6. Konfliktus teszt (ugyanaz a port újra)
+    console.log('📌 5. Konfliktus teszt (ugyanaz a port újra)...');
+      const testServerId2 = `test-${Date.now()}-2`;
+      
+      // Teszt szerver 2 létrehozása
+      const firstUser = await prisma.user.findFirst();
+      if (firstUser) {
+        await prisma.server.create({
+          data: {
+            id: testServerId2,
+            name: 'Test Server 2',
+            gameType: GameType.SEVEN_DAYS_TO_DIE,
+            status: 'PROVISIONING',
+            machineId: testMachine.id,
+            agentId: testMachine.agents[0].id,
+            userId: firstUser.id,
+          },
+        });
+      }
+      
+      try {
+        // Próbáljuk ugyanazt a portot allokálni
+        await PortManager.allocatePorts(
+          testMachine.id,
+          GameType.SEVEN_DAYS_TO_DIE,
+          testServerId2,
+          allocatedPorts.port
+        );
       
       // Ellenőrizzük, hogy valóban ugyanaz a port lett-e
       const allocation = await prisma.portAllocation.findUnique({
@@ -106,8 +153,8 @@ async function testPortManager() {
       console.log(`❌ Konfliktus teszt hiba: ${error.message}\n`);
     }
 
-    // 6. Több port allokáció teszt
-    console.log('📌 5. Több port allokáció teszt...');
+    // 7. Több port allokáció teszt
+    console.log('📌 6. Több port allokáció teszt...');
     const testServers: string[] = [];
     
     for (let i = 0; i < 3; i++) {
