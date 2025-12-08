@@ -90,7 +90,7 @@ async function testTemplateDeployment() {
         id: testServerId,
         name: '7DTD Test Server',
         gameType: 'SEVEN_DAYS_TO_DIE',
-        status: 'PROVISIONING',
+        status: 'STARTING',
         machineId: testMachine.id,
         agentId: testMachine.agents[0].id,
         userId: (await prisma.user.findFirst())?.id || '',
