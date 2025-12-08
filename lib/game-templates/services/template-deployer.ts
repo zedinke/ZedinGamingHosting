@@ -9,7 +9,7 @@ import { TemplateManager } from './template-manager';
 import { PortManager, PortAllocationResult } from '@/lib/port-manager';
 import { ContainerManager } from './container-manager';
 import { prisma } from '@/lib/prisma';
-import { GameType } from '@prisma/client';
+import { GameType, ServerStatus } from '@prisma/client';
 import { logger } from '@/lib/logger';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
@@ -111,7 +111,6 @@ export class TemplateDeployer {
       const containerId = await this.startGameContainer(
         containerName,
         template,
-        templateId,
         serverId,
         serverDir,
         ports
@@ -121,12 +120,11 @@ export class TemplateDeployer {
       await prisma.server.update({
         where: { id: serverId },
         data: {
-          status: 'ONLINE',
+          status: ServerStatus.ONLINE,
           port: ports.port,
           queryPort: ports.queryPort ?? null,
           telnetPort: ports.telnetPort ?? null,
           webMapPort: ports.webMapPort ?? null,
-          rconPort: ports.rconPort ?? null,
         },
       });
 
@@ -257,15 +255,15 @@ export class TemplateDeployer {
 
     // Volume mount meghatározása játék típus alapján
     let volumeMount = '';
-    switch (templateId) {
-      case 'SEVEN_DAYS_TO_DIE':
+    switch (template.id) {
+      case GameTemplateType.SEVEN_DAYS_TO_DIE:
         volumeMount = `-v ${serverDir}/server:/opt/7days2die`;
         break;
-      case 'ARK_EVOLVED':
-      case 'ARK_ASCENDED':
+      case GameTemplateType.ARK_EVOLVED:
+      case GameTemplateType.ARK_ASCENDED:
         volumeMount = `-v ${serverDir}/server:/opt/ark-server`;
         break;
-      case 'RUST':
+      case GameTemplateType.RUST:
         volumeMount = `-v ${serverDir}/server:/opt/rust-server`;
         break;
       default:
