@@ -1,6 +1,6 @@
 import { Navigation } from '@/components/Navigation';
 import { getTranslations } from '@/lib/i18n';
-// import { GamesSection } from '@/components/games/GamesSection';
+import { GamesSection } from '@/components/games/GamesSection';
 import { Footer } from '@/components/home/Footer';
 import { readFileSync } from 'fs';
 import { join } from 'path';
@@ -37,10 +37,7 @@ export default async function GamesPage({
         </div>
 
         {/* Games Section */}
-        {/* <GamesSection locale={locale} /> */}
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">{translations?.pages?.games?.comingSoon || 'Games section coming soon...'}</p>
-        </div>
+        <GamesSection locale={locale} />
       </main>
       <Footer locale={locale} />
     </div>
