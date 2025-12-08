@@ -169,15 +169,34 @@ export class TemplateUpdater {
    * Steam App ID meghatározása játék típus alapján
    */
   private static getSteamAppId(gameType: GameType): number | null {
-    const appIds: Record<GameType, number> = {
-      SEVEN_DAYS_TO_DIE: 251570,
+    const appIds: Partial<Record<GameType, number>> = {
+      SEVEN_DAYS_TO_DIE: 294420,
       ARK_EVOLVED: 376030,
       ARK_ASCENDED: 2430930,
       RUST: 258550,
       VALHEIM: 896660,
       SATISFACTORY: 1690800,
-      // További játékok...
-      OTHER: 0,
+      CONAN_EXILES: 440900,
+      DAYZ: 221100,
+      PROJECT_ZOMBOID: 108600,
+      CS2: 730,
+      CSGO: 730,
+      LEFT_4_DEAD_2: 550,
+      KILLING_FLOOR_2: 232090,
+      INSURGENCY_SANDSTORM: 581320,
+      SQUAD: 393380,
+      HELL_LET_LOOSE: 686810,
+      POST_SCRIPTUM: 736220,
+      ARMA_3: 107410,
+      TERRARIA: 105600,
+      STARBOUND: 211820,
+      SPACE_ENGINEERS: 244850,
+      GARRYS_MOD: 4000,
+      UNTURNED: 304930,
+      TEAM_FORTRESS_2: 440,
+      HALF_LIFE_2_DEATHMATCH: 320,
+      COUNTER_STRIKE_SOURCE: 240,
+      DAY_OF_DEFEAT_SOURCE: 300,
     };
 
     const appId = appIds[gameType];
