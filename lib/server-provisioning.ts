@@ -886,113 +886,13 @@ export async function provisionServer(
       });
     }
 
-    // Template-alapú deployment ellenőrzése
-    const { GameTemplateType } = await import('@/lib/game-templates/types');
-    const { getTemplate } = await import('@/lib/game-templates/models/templates');
-    
-    // Játék típus -> Template Type mapping
-    const gameTypeToTemplateType: Partial<Record<GameType, GameTemplateType>> = {
-      SEVEN_DAYS_TO_DIE: GameTemplateType.SEVEN_DAYS_TO_DIE,
-      ARK_EVOLVED: GameTemplateType.ARK_EVOLVED,
-      ARK_ASCENDED: GameTemplateType.ARK_ASCENDED,
-      RUST: GameTemplateType.RUST,
-    };
-
-    const templateType = gameTypeToTemplateType[options.gameType];
-
-    // Ha van template, használjuk a template-alapú deployment-et
-    if (templateType && server.agent) {
-      try {
-        const template = getTemplate(templateType);
-        
-        // Ellenőrizzük, hogy van-e fileId (template feltöltve van)
-        if (template.gdrive.fileId) {
-          logger.info('Using template-based deployment', {
-            serverId,
-            templateId: templateType,
-            gameType: options.gameType,
-          });
-
-          // Agent API-n keresztül template deployment (HTTP hívás)
-          const agent = server.agent;
-          const machine = agent.machine;
-          const { validateApiKey } = await import('@/lib/api-key');
-          
-          // Agent API key lekérése
-          if (!agent.apiKey) {
-            throw new Error('Agent API key not found');
-          }
-
-          const managerUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
-          const agentApiUrl = `http://${machine.ipAddress}:3000`; // Agent API URL (feltételezzük, hogy a manager URL-t használja)
-
-          // Template deployment HTTP hívás
-          const deployResponse = await fetch(`${managerUrl}/api/agent/templates/deploy`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${agent.apiKey}`,
-            },
-            body: JSON.stringify({
-              serverId,
-              templateId: templateType,
-              serverName: server.name,
-              maxPlayers: options.maxPlayers,
-              config: configurationUpdate,
-            }),
-          });
-
-          if (!deployResponse.ok) {
-            const errorData = await deployResponse.json();
-            throw new Error(errorData.error || 'Template deployment failed');
-          }
-
-          const deployResult = await deployResponse.json();
-
-          if (deployResult.success) {
-            logger.info('Template deployment successful', { serverId, templateId: templateType });
-            
-            // SteamCMD update futtatása (legfrissebb verzió)
-            const updateResponse = await fetch(`${managerUrl}/api/agent/templates/update`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${agent.apiKey}`,
-              },
-              body: JSON.stringify({
-                serverId,
-                gameType: options.gameType,
-              }),
-            });
-
-            if (!updateResponse.ok) {
-              logger.warn('SteamCMD update failed, but deployment succeeded', { serverId });
-            } else {
-              logger.info('SteamCMD update successful', { serverId });
-            }
-
-            return {
-              success: true,
-              machineId: bestLocation.machineId,
-              agentId: bestLocation.agentId,
-            };
-          } else {
-            throw new Error(deployResult.error || 'Template deployment failed');
-          }
-        } else {
-          logger.warn('Template exists but fileId not set, falling back to traditional deployment', {
-            serverId,
-            templateId: templateType,
-          });
-        }
-      } catch (templateError: any) {
-        logger.warn('Template deployment failed, falling back to traditional deployment', {
-          serverId,
-          error: templateError.message,
-        });
-        // Folytatjuk a hagyományos deployment-tel
-      }
-    }
+    // Template-alapú deployment KIKAPCSOLVA
+    // Visszatérünk a SteamCMD-alapú telepítéshez, mert a template fájlok túl nagyok (15GB+)
+    // és a telepítés gyorsabb, mint a template letöltése/feltöltése
+    logger.info('Using SteamCMD-based installation (template deployment disabled)', {
+      serverId,
+      gameType: options.gameType,
+    });
 
     // Task végrehajtása háttérben (ez telepíti a szervert)
     // A task executor hívja meg az installGameServer-t
