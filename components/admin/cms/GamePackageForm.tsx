@@ -102,9 +102,14 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
         const response = await fetch('/api/games/available');
         if (response.ok) {
           const data = await response.json();
-          setGameTypes(data.gameTypes || []);
+          console.log('Game types API response:', data); // Debug log
+          const gameTypesList = data.gameTypes || [];
+          console.log('Game types list:', gameTypesList); // Debug log
+          console.log('7 Days to Die in list:', gameTypesList.find((g: any) => g.value === 'SEVEN_DAYS_TO_DIE')); // Debug log
+          setGameTypes(gameTypesList);
         } else {
-          console.error('Hiba az elérhető játékok lekérése során');
+          const errorText = await response.text();
+          console.error('Hiba az elérhető játékok lekérése során:', response.status, errorText);
           // Fallback: üres lista
           setGameTypes([]);
         }
@@ -309,11 +314,14 @@ export function GamePackageForm({ locale, package: packageData }: GamePackageFor
                 ) : gameTypes.length === 0 ? (
                   <option>Nincs elérhető játék</option>
                 ) : (
-                  gameTypes.map((game) => (
-                    <option key={game.value} value={game.value}>
-                      {game.label}
-                    </option>
-                  ))
+                  <>
+                    {!packageData && <option value="">Válassz játékot...</option>}
+                    {gameTypes.map((game) => (
+                      <option key={game.value} value={game.value}>
+                        {game.label}
+                      </option>
+                    ))}
+                  </>
                 )}
               </select>
               {errors.gameType && (
