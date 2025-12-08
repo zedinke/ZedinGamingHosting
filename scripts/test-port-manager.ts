@@ -43,6 +43,12 @@ async function testPortManager() {
     console.log(`✅ Teszt gép található: ${testMachine.name} (${testMachine.ipAddress})`);
     console.log(`   Agent: ${testMachine.agents[0].agentId}\n`);
 
+    // Felhasználó lekérése (egyszer, a függvény elején)
+    const firstUser = await prisma.user.findFirst();
+    if (!firstUser) {
+      throw new Error('Nincs felhasználó az adatbázisban');
+    }
+
     // 2. Teszt szerver létrehozása (ha nincs)
     console.log('📌 1. Teszt szerver létrehozása...');
     const testServerId = `test-${Date.now()}`;
@@ -54,10 +60,6 @@ async function testPortManager() {
 
     if (!existingServer) {
       // Teszt szerver létrehozása
-      const firstUser = await prisma.user.findFirst();
-      if (!firstUser) {
-        throw new Error('Nincs felhasználó az adatbázisban');
-      }
 
       await prisma.server.create({
         data: {
@@ -112,20 +114,17 @@ async function testPortManager() {
       const testServerId2 = `test-${Date.now()}-2`;
       
       // Teszt szerver 2 létrehozása
-      const firstUser = await prisma.user.findFirst();
-      if (firstUser) {
-        await prisma.server.create({
-          data: {
-            id: testServerId2,
-            name: 'Test Server 2',
-            gameType: GameType.SEVEN_DAYS_TO_DIE,
-            status: ServerStatus.PROVISIONING,
-            machineId: testMachine.id,
-            agentId: testMachine.agents[0].id,
-            userId: firstUser.id,
-          },
-        });
-      }
+      await prisma.server.create({
+        data: {
+          id: testServerId2,
+          name: 'Test Server 2',
+          gameType: GameType.SEVEN_DAYS_TO_DIE,
+          status: ServerStatus.PROVISIONING,
+          machineId: testMachine.id,
+          agentId: testMachine.agents[0].id,
+          userId: firstUser.id,
+        },
+      });
       
       try {
         // Próbáljuk ugyanazt a portot allokálni
@@ -156,10 +155,6 @@ async function testPortManager() {
     // 7. Több port allokáció teszt
     console.log('📌 6. Több port allokáció teszt...');
     const testServers: string[] = [];
-    const firstUser = await prisma.user.findFirst();
-    if (!firstUser) {
-      throw new Error('Nincs felhasználó az adatbázisban');
-    }
     
     for (let i = 0; i < 3; i++) {
       const testServerId = `test-${Date.now()}-${i}`;
