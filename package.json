@@ -20,6 +20,7 @@
     "test:game-configs": "tsx scripts/test-game-installations-dry-run.ts",
     "test:port-manager": "tsx scripts/test-port-manager.ts",
     "test:template-deployment": "tsx scripts/test-template-deployment.ts",
+    "test:7days-config": "tsx scripts/test-7days-config.ts",
     "test": "jest"
   },
   "dependencies": {
