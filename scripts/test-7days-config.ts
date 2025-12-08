@@ -103,7 +103,7 @@ async function test7DaysConfig() {
     }
 
     // Max players ellenőrzés
-    if (serverConfigContent.includes('MaxPlayers') && serverConfigContent.includes('8')) {
+    if (serverConfigContent.includes('ServerMaxPlayerCount') && serverConfigContent.includes('8')) {
       console.log('✅ Max players helyesen beállítva\n');
     } else {
       throw new Error('Max players nem található a konfigurációban');
