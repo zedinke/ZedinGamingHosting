@@ -57,12 +57,16 @@ MAX_PLAYERS=$(jq -r '.maxPlayers // 100' "$CONFIG_FILE")
 SEED=$(jq -r '.seed // 12345' "$CONFIG_FILE")
 WORLD_SIZE=$(jq -r '.worldSize // 3500' "$CONFIG_FILE")
 RCON_PASS=$(jq -r '.rconPassword // "password"' "$CONFIG_FILE")
+GAME_PORT=$(jq -r '.ports.game // 28015' "$CONFIG_FILE")
+QUERY_PORT=$(jq -r '.ports.query // 28016' "$CONFIG_FILE")
+RCON_PORT=$(jq -r '.ports.rcon // 28017' "$CONFIG_FILE")
 
 echo "🎮 Szerver indítása:"
 echo "   Név: $SERVER_NAME"
 echo "   Max játékosok: $MAX_PLAYERS"
 echo "   World seed: $SEED"
 echo "   World size: $WORLD_SIZE"
+echo "   Portok: game=$GAME_PORT query=$QUERY_PORT rcon=$RCON_PORT"
 echo ""
 
 # 3. Szerver indítása
@@ -73,9 +77,9 @@ cd "$RUST_DIR"
     -nographics \
     +server.hostname "$SERVER_NAME" \
     +server.maxplayers $MAX_PLAYERS \
-    +server.port 28015 \
-    +server.queryport 28016 \
-    +rcon.port 28017 \
+    +server.port $GAME_PORT \
+    +server.queryport $QUERY_PORT \
+    +rcon.port $RCON_PORT \
     +rcon.password $RCON_PASS \
     +server.seed $SEED \
     +server.worldsize $WORLD_SIZE \

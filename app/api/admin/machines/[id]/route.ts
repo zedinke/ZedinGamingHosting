@@ -82,7 +82,7 @@ export async function PUT(
 
     const { id } = params;
     const body = await request.json();
-    const { name, sshPort, sshUser, sshKeyPath, notes, status } = body;
+    const { name, sshPort, sshUser, sshKeyPath, sshPassword, notes, status } = body;
 
     const machine = await prisma.serverMachine.findUnique({
       where: { id },
@@ -95,13 +95,76 @@ export async function PUT(
       );
     }
 
+    let finalSshKeyPath = sshKeyPath !== undefined ? sshKeyPath : machine.sshKeyPath;
+
+    // Ha nincs SSH kulcs megadva, de van jelszó, generáljunk kulcsot és másoljuk át
+    if (!finalSshKeyPath && sshPassword) {
+      try {
+        const { generateSSHKey, copyPublicKeyToServer, testSSHKeyConnection } = await import('@/lib/ssh-key-manager');
+
+        // SSH kulcs generálása
+        const keyResult = await generateSSHKey(machine.id, machine.ipAddress);
+        
+        if (!keyResult.success || !keyResult.keyPath || !keyResult.publicKey) {
+          return NextResponse.json(
+            { error: keyResult.error || 'SSH kulcs generálás sikertelen' },
+            { status: 500 }
+          );
+        }
+
+        // Publikus kulcs másolása a cél szerverre
+        const copyResult = await copyPublicKeyToServer(
+          keyResult.publicKey,
+          machine.ipAddress,
+          sshPort || machine.sshPort,
+          sshUser || machine.sshUser,
+          sshPassword
+        );
+
+        if (!copyResult.success) {
+          // Kulcs törlése, ha a másolás sikertelen
+          try {
+            const { unlink } = await import('fs/promises');
+            await unlink(keyResult.keyPath);
+            await unlink(`${keyResult.keyPath}.pub`);
+          } catch (unlinkError) {
+            // Kulcs törlési hiba nem kritikus
+          }
+          return NextResponse.json(
+            { error: copyResult.error || 'Publikus kulcs másolás sikertelen. Ellenőrizd az SSH jelszót és a kapcsolatot.' },
+            { status: 500 }
+          );
+        }
+
+        // SSH kapcsolat tesztelése kulcs alapú autentikációval
+        const testResult = await testSSHKeyConnection(
+          keyResult.keyPath,
+          machine.ipAddress,
+          sshPort || machine.sshPort,
+          sshUser || machine.sshUser
+        );
+
+        if (!testResult) {
+          console.warn('SSH kulcs másolva, de a kapcsolat tesztelése sikertelen');
+        }
+
+        finalSshKeyPath = keyResult.keyPath;
+      } catch (error: any) {
+        console.error('SSH kulcs automatikus beállítási hiba:', error);
+        return NextResponse.json(
+          { error: error.message || 'Hiba történt az SSH kulcs automatikus beállítása során' },
+          { status: 500 }
+        );
+      }
+    }
+
     const updated = await prisma.serverMachine.update({
       where: { id },
       data: {
         ...(name && { name }),
         ...(sshPort && { sshPort }),
         ...(sshUser && { sshUser }),
-        ...(sshKeyPath !== undefined && { sshKeyPath }),
+        ...(finalSshKeyPath !== undefined && { sshKeyPath: finalSshKeyPath }),
         ...(notes !== undefined && { notes }),
         ...(status && { status }),
       },
@@ -118,7 +181,9 @@ export async function PUT(
     return NextResponse.json({
       success: true,
       machine: updated,
-      message: 'Szerver gép sikeresen frissítve',
+      message: finalSshKeyPath && finalSshKeyPath !== machine.sshKeyPath 
+        ? 'Szerver gép sikeresen frissítve. SSH kulcs automatikusan generálva és beállítva.'
+        : 'Szerver gép sikeresen frissítve',
     });
   } catch (error) {
     console.error('Machine update error:', error);

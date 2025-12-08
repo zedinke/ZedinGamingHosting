@@ -43,7 +43,7 @@ export class ServerUpdateManager {
   private agentService: GameAgentService;
   private updateJobs: Map<string, UpdateJob> = new Map();
   private updateSchedules: Map<string, UpdateScheduleConfig> = new Map();
-  private updateIntervals: Map<string, NodeJS.Timer> = new Map();
+  private updateIntervals: Map<string, ReturnType<typeof setInterval>> = new Map();
 
   constructor() {
     this.agentService = getGameAgentService();

@@ -84,10 +84,10 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // Automatikus telepítés triggerelése
-      const { triggerAutoInstallOnPayment } = await import('@/lib/auto-install-on-payment');
-      triggerAutoInstallOnPayment(serverId, invoice.id).catch((error) => {
-        console.error('Auto-install error:', error);
+      // Automatikus docker provisioning triggerelése
+      const { triggerServerProvisioning } = await import('@/lib/provisioning/trigger-provisioning');
+      triggerServerProvisioning(serverId).catch((error) => {
+        console.error('[Proba Checkout] Provisioning error:', error);
       });
 
       return NextResponse.json({

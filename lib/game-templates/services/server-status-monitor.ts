@@ -77,7 +77,7 @@ export class ServerStatusMonitor {
   private monitorConfigs: Map<string, MonitorConfig> = new Map();
   private healthStatuses: Map<string, ServerHealthStatus> = new Map();
   private alerts: Map<string, ServerAlert[]> = new Map();
-  private monitorIntervals: Map<string, NodeJS.Timer> = new Map();
+  private monitorIntervals: Map<string, ReturnType<typeof setInterval>> = new Map();
   private failureCounters: Map<string, number> = new Map();
 
   constructor() {

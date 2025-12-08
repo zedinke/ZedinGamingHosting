@@ -53,7 +53,8 @@ export class TemplateManager {
    */
   static async downloadTemplate(
     gdrive: GameTemplate['gdrive'],
-    destinationPath: string
+    destinationPath: string,
+    onProgress?: (loaded: number, total: number) => void
   ): Promise<void> {
     const gdriveService = getGoogleDriveService();
 
@@ -61,6 +62,24 @@ export class TemplateManager {
     console.log(`   Fájl ID: ${gdrive.fileId}`);
     console.log(`   Fájl: ${gdrive.fileName}`);
     console.log(`   Méret: ${gdrive.sizeGb} GB`);
+    
+    if (!gdrive.fileId) {
+      throw new Error('Template fileId is not set. Please upload the template to Google Drive first.');
+    }
+
+    // Template letöltése
+    await gdriveService.downloadTemplate(
+      {
+        fileId: gdrive.fileId,
+        fileName: gdrive.fileName,
+        checksum: gdrive.checksum,
+      },
+      destinationPath,
+      onProgress
+    );
+
+    console.log(`✅ Template letöltve: ${destinationPath}`);
+  }
 
   /**
    * Template kibontása
@@ -103,31 +122,8 @@ export class TemplateManager {
       console.error(`❌ Template kibontás hiba:`, error);
       throw error;
     }
-  }       gdrive.checksum
-        );
-
-        if (!isValid) {
-          throw new Error('Checksum validáció sikertelen!');
-        }
-      }
-
-      console.log(`✅ Template sikeresen letöltve`);
-    } catch (error) {
-      console.error(`❌ Template letöltés hiba:`, error);
-      throw error;
-    }
   }
 
-  /**
-   * Template kibontása
-   * @param archivePath - TAR.GZ/ZIP elérési útvonala
-   * @param extractPath - Hova bontsuk ki
-   */
-  static async extractTemplate(
-    archivePath: string,
-    extractPath: string
-  ): Promise<void> {
-    // TODO: Extraction implementáció
   /**
    * Docker container indítása
    * @param template - Game template
@@ -172,33 +168,24 @@ export class TemplateManager {
       console.error(`❌ Container indítás hiba:`, error);
       throw error;
     }
-  }   ports: template.ports,
+  }
+
+  /**
+   * Konfiguráció létrehozása template-hez
+   */
+  static createConfig(
+    template: GameTemplate,
+    customConfig: any
+  ): any {
+    const baseConfig = {
+      templateId: template.id,
+      name: template.name,
+      version: template.version,
+      ports: template.ports,
       ...customConfig,
     };
     
     return baseConfig;
-  }
-
-  /**
-   * Docker container indítása
-   * @param template - Game template
-   * @param serverId - Szerver ID
-   * @param configPath - Konfig fájl elérési útvonala
-   */
-  static async startContainer(
-    template: GameTemplate,
-    serverId: string,
-    configPath: string
-  ): Promise<string> {
-    // TODO: Docker container start
-    // 1. Image pull (ha szükséges)
-    // 2. Container létrehozása
-    // 3. Volumes mounting
-    // 4. Port binding
-    // 5. Start
-    console.log(`Container indítása: ${template.dockerImage} (szerver: ${serverId})`);
-    
-    return `container-${serverId}`;
   }
 
   /**
@@ -242,7 +229,7 @@ export class TemplateManager {
       // 3. Konfigurálás
       session.phase = 'CONFIGURING';
       session.progress = 60;
-      const config = this.generateServerConfig(template, serverName);
+      const config = this.createConfig(template, { name: serverName });
       
       session.messages.push({
         timestamp: new Date(),

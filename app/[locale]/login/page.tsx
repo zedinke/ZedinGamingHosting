@@ -17,7 +17,7 @@ export default async function LoginPage({
           <div className="card-glow p-8">
             <div className="text-center mb-8">
               <h1 className="text-3xl font-bold text-gray-100 mb-2">{t('auth.signIn')}</h1>
-              <p className="text-gray-400 text-sm">Jelentkezz be a fiókodba</p>
+              <p className="text-gray-400 text-sm">{t('auth.signInSubtitle')}</p>
             </div>
             <LoginForm locale={locale} />
           </div>

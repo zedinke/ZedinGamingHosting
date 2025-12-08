@@ -147,6 +147,7 @@ model Server {
   tasks          Task[]
   cronJobs       CronJob[]
   modInstallations ModInstallation[]
+  portAllocation PortAllocation?
 
   @@index([premiumPackageId])
   @@map("servers")
@@ -733,8 +734,9 @@ model ServerMachine {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
-  agents  Agent[]
-  servers Server[]
+  agents          Agent[]
+  servers         Server[]
+  portAllocations PortAllocation[]
 
   @@map("server_machines")
 }
@@ -744,6 +746,31 @@ enum MachineStatus {
   OFFLINE
   ERROR
   MAINTENANCE
+}
+
+// Port Allokáció
+model PortAllocation {
+  id        String   @id @default(cuid())
+  machineId String
+  serverId  String?  @unique
+  gameType  GameType
+  port      Int      // Alap game port
+  queryPort Int?     // Query port
+  rconPort  Int?     // RCON port
+  telnetPort Int?    // Telnet port (7 Days to Die)
+  webMapPort Int?    // WebMap port (7 Days to Die)
+  beaconPort Int?    // Beacon port (Satisfactory)
+  steamPeerPort Int? // Steam peer port
+  rustPlusPort Int?  // Rust Plus port
+  createdAt DateTime @default(now())
+  
+  machine ServerMachine @relation(fields: [machineId], references: [id], onDelete: Cascade)
+  server  Server?       @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  
+  @@unique([machineId, port])
+  @@index([machineId])
+  @@index([serverId])
+  @@map("port_allocations")
 }
 
 // Game Server Agents

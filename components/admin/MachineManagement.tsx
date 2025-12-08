@@ -48,8 +48,10 @@ export function MachineManagement({
     sshPort: '22',
     sshUser: 'root', // Alapértelmezett root
     sshKeyPath: '',
+    sshPassword: '', // Opcionális: SSH jelszó automatikus kulcs generáláshoz
     notes: '',
   });
+  const [autoGenerateKey, setAutoGenerateKey] = useState(true); // Alapértelmezetten automatikus kulcs generálás
 
   const handleAddMachine = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,8 +62,13 @@ export function MachineManagement({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...formData,
+          name: formData.name,
+          ipAddress: formData.ipAddress,
           sshPort: parseInt(formData.sshPort),
+          sshUser: formData.sshUser,
+          sshKeyPath: autoGenerateKey ? undefined : formData.sshKeyPath || undefined,
+          sshPassword: autoGenerateKey ? formData.sshPassword : undefined, // Csak akkor küldjük, ha automatikus generálás
+          notes: formData.notes || undefined,
         }),
       });
 
@@ -80,8 +87,10 @@ export function MachineManagement({
         sshPort: '22',
         sshUser: 'root', // Alapértelmezett root
         sshKeyPath: '',
+        sshPassword: '',
         notes: '',
       });
+      setAutoGenerateKey(true);
       window.location.reload();
     } catch (error) {
       toast.error('Hiba történt');
@@ -292,15 +301,47 @@ export function MachineManagement({
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">SSH Kulcs Elérési Út</label>
-                <input
-                  type="text"
-                  value={formData.sshKeyPath}
-                  onChange={(e) => setFormData({ ...formData, sshKeyPath: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 font-mono text-sm text-gray-900 bg-white placeholder:text-gray-400"
-                  placeholder="/root/.ssh/gameserver_key"
-                />
-                <p className="text-xs text-gray-500 mt-1">A webszerveren lévő SSH privát kulcs elérési útja</p>
+                <div className="flex items-center gap-2 mb-2">
+                  <input
+                    type="checkbox"
+                    id="autoGenerateKey"
+                    checked={autoGenerateKey}
+                    onChange={(e) => setAutoGenerateKey(e.target.checked)}
+                    className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                  />
+                  <label htmlFor="autoGenerateKey" className="text-sm font-medium text-gray-700">
+                    Automatikus SSH kulcs generálás és beállítás
+                  </label>
+                </div>
+                {autoGenerateKey ? (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      SSH Jelszó (egyszeri használat)
+                    </label>
+                    <input
+                      type="password"
+                      value={formData.sshPassword}
+                      onChange={(e) => setFormData({ ...formData, sshPassword: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-400"
+                      placeholder="A cél szerver SSH jelszava (egyszeri használat)"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      A rendszer automatikusan generál SSH kulcsot és beállítja a cél szerveren. A jelszót csak egyszer kell megadni.
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">SSH Kulcs Elérési Út</label>
+                    <input
+                      type="text"
+                      value={formData.sshKeyPath}
+                      onChange={(e) => setFormData({ ...formData, sshKeyPath: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 font-mono text-sm text-gray-900 bg-white placeholder:text-gray-400"
+                      placeholder="/root/.ssh/gameserver_key"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">A webszerveren lévő SSH privát kulcs elérési útja</p>
+                  </div>
+                )}
               </div>
             </div>
             <div>

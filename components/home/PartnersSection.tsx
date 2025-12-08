@@ -1,5 +1,8 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+import { loadTranslations, getNestedValue } from '@/lib/translations';
+
 interface Partner {
   name: string;
   logo: string;
@@ -23,15 +26,23 @@ const defaultPartners: Partner[] = [
 ];
 
 export function PartnersSection({ partners = defaultPartners, locale }: PartnersSectionProps) {
+  const [translations, setTranslations] = useState<any>({});
+
+  useEffect(() => {
+    loadTranslations(locale, 'common').then(setTranslations);
+  }, [locale]);
+
+  const t = (key: string) => getNestedValue(translations, key) || key;
+
   return (
     <section className="py-16 bg-gray-50">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
           <h2 className="text-2xl md:text-3xl font-bold mb-2 text-gray-900">
-            Offizieller Partner
+            {t('home.partners.title') || 'Official Partners'}
           </h2>
           <p className="text-gray-600">
-            Von Gamestudios empfohlen
+            {t('home.partners.subtitle') || 'Recommended by game studios'}
           </p>
         </div>
         

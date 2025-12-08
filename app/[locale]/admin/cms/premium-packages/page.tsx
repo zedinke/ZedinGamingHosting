@@ -3,7 +3,6 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { UserRole } from '@prisma/client';
 import { redirect } from 'next/navigation';
-import { AdminNavigation } from '@/components/admin/AdminNavigation';
 import { PremiumPackageManagement } from '@/components/admin/cms/PremiumPackageManagement';
 
 export default async function PremiumPackagesPage({
@@ -35,13 +34,6 @@ export default async function PremiumPackagesPage({
     },
   });
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <AdminNavigation locale={locale} />
-      <main className="container mx-auto px-4 py-8">
-        <PremiumPackageManagement packages={packages} locale={locale} />
-      </main>
-    </div>
-  );
+  return <PremiumPackageManagement packages={packages} locale={locale} />;
 }
 

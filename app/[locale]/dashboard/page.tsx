@@ -55,12 +55,15 @@ export default async function DashboardPage({
   // Translation betöltése - biztonságos módon
   // Fontos: A függvényt nem lehet Client Component-nek átadni, csak az eredményt
   let dashboardTitle: string;
+  let t: (key: string) => string;
   try {
-    const t = getTranslations(locale, 'common');
+    t = getTranslations(locale, 'common');
     dashboardTitle = t('dashboard.title');
   } catch (error) {
     console.error('Error loading translations:', error);
     dashboardTitle = 'Dashboard';
+    // Fallback t function
+    t = (key: string) => key;
   }
 
   // Felhasználó szervereinek lekérése (subscription és invoice adatokkal)
@@ -151,7 +154,7 @@ export default async function DashboardPage({
   const onlineServers = serializableServers.filter((s: { status: string }) => s.status === 'ONLINE').length;
 
   // Biztosítjuk, hogy a locale érvényes legyen
-  const validLocale = ['hu', 'en', 'es'].includes(locale) ? locale : 'hu';
+  const validLocale = ['hu', 'en', 'es', 'fr'].includes(locale) ? locale : 'hu';
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -162,7 +165,8 @@ export default async function DashboardPage({
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 lg:p-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">{dashboardTitle}</h1>
             <p className="text-gray-700">
-              Üdvözöljük, <span className="font-semibold text-gray-900">{userName || userEmail || 'Felhasználó'}</span>!
+              {(t('pages.dashboard.greeting') || 'Welcome')},{' '}
+              <span className="font-semibold text-gray-900">{userName || userEmail || t('pages.dashboard.userFallback') || 'User'}</span>!
             </p>
           </div>
         </div>
@@ -170,25 +174,25 @@ export default async function DashboardPage({
         {/* Statisztikák */}
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <StatCard
-            title="Szervereim"
+            title={t('pages.dashboard.stats.myServers') || 'My Servers'}
             value={serializableServers.length}
             iconName="Server"
             color="primary"
           />
           <StatCard
-            title="Aktív Előfizetések"
+            title={t('pages.dashboard.stats.activeSubscriptions') || 'Active Subscriptions'}
             value={subscriptions.length}
             iconName="CreditCard"
             color="info"
           />
           <StatCard
-            title="Online Szerverek"
+            title={t('pages.dashboard.stats.onlineServers') || 'Online Servers'}
             value={onlineServers}
             iconName="TrendingUp"
             color="success"
           />
           <StatCard
-            title="Offline Szerverek"
+            title={t('pages.dashboard.stats.offlineServers') || 'Offline Servers'}
             value={serializableServers.length - onlineServers}
             iconName="Server"
             color="warning"
@@ -198,22 +202,22 @@ export default async function DashboardPage({
         {/* Gyors linkek */}
         <div className="grid md:grid-cols-3 gap-6 mb-8">
           <QuickActionCard
-            title="Új Szerver"
-            description="Rendelj egy új gaming szervert"
+            title={t('pages.dashboard.quickActions.newServer.title') || 'New Server'}
+            description={t('pages.dashboard.quickActions.newServer.description') || 'Order a new gaming server'}
             href={`/${locale}/servers/new`}
             iconName="Server"
             color="primary"
           />
           <QuickActionCard
-            title="Számlázás"
-            description="Számlák és előfizetések kezelése"
+            title={t('pages.dashboard.quickActions.billing.title') || 'Billing'}
+            description={t('pages.dashboard.quickActions.billing.description') || 'Manage invoices and subscriptions'}
             href={`/${locale}/dashboard/billing`}
             iconName="CreditCard"
             color="secondary"
           />
           <QuickActionCard
-            title="Támogatás"
-            description="Support ticketek kezelése"
+            title={t('pages.dashboard.quickActions.support.title') || 'Support'}
+            description={t('pages.dashboard.quickActions.support.description') || 'Manage support tickets'}
             href={`/${locale}/dashboard/support`}
             iconName="Headphones"
             color="success"
@@ -235,7 +239,13 @@ export default async function DashboardPage({
     // Ha hiba van, próbáljuk meg egy egyszerűbb verziót renderelni
     const resolvedParams = params instanceof Promise ? await params : params;
     const errorLocale = resolvedParams.locale || 'hu';
-    const validErrorLocale = ['hu', 'en', 'es'].includes(errorLocale) ? errorLocale : 'hu';
+    const validErrorLocale = ['hu', 'en', 'es', 'fr'].includes(errorLocale) ? errorLocale : 'hu';
+    let errorT: any = (key: string) => key;
+    try {
+      errorT = getTranslations(validErrorLocale, 'common');
+    } catch (translatorError) {
+      console.error('Error loading fallback translations:', translatorError);
+    }
     
     return (
       <div className="min-h-screen bg-gray-100">
@@ -244,10 +254,10 @@ export default async function DashboardPage({
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h1 className="text-2xl font-bold mb-4 text-gray-900">Dashboard</h1>
             <p className="text-red-600">
-              Hiba történt a dashboard betöltése során. Kérjük, próbáld újra később.
+              {errorT('pages.dashboard.errorMessage') || 'An error occurred while loading the dashboard. Please try again later.'}
             </p>
             <p className="text-sm text-gray-500 mt-2">
-              {error?.message || 'Ismeretlen hiba'}
+              {error?.message || errorT('errors.unknown') || 'Unknown error'}
             </p>
           </div>
         </div>

@@ -165,24 +165,7 @@ async function handleOrderCompleted(order: any) {
     },
   });
 
-  // Automatikus telepítés triggerelése
-  try {
-    const { triggerAutoInstallOnPayment } = await import('@/lib/auto-install-on-payment-new');
-    const result = await triggerAutoInstallOnPayment(serverId, invoice.id);
-    if (!result.success) {
-      console.error('Auto-install error:', result.error);
-    }
-  } catch (importError) {
-    console.error('Modular installer not available, using legacy:', importError);
-    try {
-      const { triggerAutoInstallOnPayment } = await import('@/lib/auto-install-on-payment');
-      triggerAutoInstallOnPayment(serverId, invoice.id).catch((error) => {
-        console.error('Legacy auto-install error:', error);
-      });
-    } catch (error) {
-      console.error('Both installer systems failed:', error);
-    }
-  }
+  // Auto-install kikapcsolva: a régi installer rendszer eltávolítva
 }
 
 async function handleOrderAuthorised(order: any) {

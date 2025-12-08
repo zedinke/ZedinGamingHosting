@@ -145,7 +145,7 @@ export default async function SAASOrderSuccessPage({
         </div>
       </main>
 
-      <Footer />
+      <Footer locale={locale} />
     </div>
   );
 }

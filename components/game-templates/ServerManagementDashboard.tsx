@@ -7,6 +7,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
+import { ServerLifecycleState } from '@/lib/game-templates/services/game-server-lifecycle';
 
 interface ServerStatus {
   serverId: string;
@@ -169,56 +170,43 @@ export const ServerManagementDashboard: React.FC<{ userId: string }> = ({ userId
   const [action, setAction] = useState<string | null>(null);
   const [actionInProgress, setActionInProgress] = useState(false);
 
+  const mapStateToServer = useCallback((state: ServerLifecycleState): ServerStatus => {
+    const health = (state as any).healthStatus;
+    const disk = health?.diskSpace ?? { used: 0, total: 0, percentUsed: 0 };
+    const perf = health?.performance ?? { cpu: '0%', memory: '0%', uptime: 0 };
+
+    return {
+      serverId: state.serverId,
+      gameName: (state as any).gameName || 'Ismeretlen',
+      status: health?.status ?? 'offline',
+      containerStatus: health?.containerStatus ?? 'unknown',
+      uptime: Number(perf.uptime) || 0,
+      cpu: perf.cpu || '0%',
+      memory: perf.memory || '0%',
+      disk: {
+        used: Number(disk.used ?? 0),
+        total: Number(disk.total ?? 0),
+        percentUsed: Number(disk.percentUsed ?? 0),
+      },
+      lastCheck: health?.lastCheck
+        ? format(new Date(health.lastCheck), 'HH:mm:ss')
+        : '-',
+      alerts: 0,
+      updateAvailable: true, // manuális update indítható
+      lastUpdate: state.lastUpdate ? format(new Date(state.lastUpdate), 'yyyy-MM-dd') : undefined,
+    };
+  }, []);
+
   // Load servers
   const loadServers = useCallback(async () => {
     try {
-      // Mock data - valóságban API-ból jönne
-      const mockServers: ServerStatus[] = [
-        {
-          serverId: 'srv-ark-01',
-          gameName: 'ARK Survival Ascended',
-          status: 'healthy',
-          containerStatus: 'running',
-          uptime: 172800, // 2 days
-          cpu: '45%',
-          memory: '62%',
-          disk: { used: 58, total: 100, percentUsed: 58 },
-          lastCheck: format(new Date(), 'HH:mm:ss'),
-          alerts: 0,
-          updateAvailable: false,
-          lastUpdate: format(new Date(Date.now() - 7 * 24 * 3600 * 1000), 'yyyy-MM-dd'),
-        },
-        {
-          serverId: 'srv-rust-01',
-          gameName: 'Rust',
-          status: 'degraded',
-          containerStatus: 'running',
-          uptime: 86400,
-          cpu: '78%',
-          memory: '85%',
-          disk: { used: 22, total: 40, percentUsed: 55 },
-          lastCheck: format(new Date(), 'HH:mm:ss'),
-          alerts: 2,
-          updateAvailable: true,
-          lastUpdate: format(new Date(Date.now() - 14 * 24 * 3600 * 1000), 'yyyy-MM-dd'),
-        },
-        {
-          serverId: 'srv-ark-evolved-01',
-          gameName: 'ARK Survival Evolved',
-          status: 'healthy',
-          containerStatus: 'running',
-          uptime: 345600,
-          cpu: '32%',
-          memory: '48%',
-          disk: { used: 45, total: 80, percentUsed: 56 },
-          lastCheck: format(new Date(), 'HH:mm:ss'),
-          alerts: 1,
-          updateAvailable: false,
-          lastUpdate: format(new Date(Date.now() - 3 * 24 * 3600 * 1000), 'yyyy-MM-dd'),
-        },
-      ];
-
-      setServers(mockServers);
+      const res = await fetch('/api/servers/lifecycle', { cache: 'no-store' });
+      if (!res.ok) {
+        throw new Error(`API hiba: ${res.status}`);
+      }
+      const data = await res.json();
+      const items: ServerLifecycleState[] = data.servers ?? [];
+      setServers(items.map(mapStateToServer));
       setLoading(false);
     } catch (error) {
       console.error('Server load hiba:', error);
@@ -229,19 +217,20 @@ export const ServerManagementDashboard: React.FC<{ userId: string }> = ({ userId
   // Load alerts for selected server
   const loadAlerts = useCallback(async (serverId: string) => {
     try {
-      // Mock alerts
-      const mockAlerts: Alert[] = [
-        {
-          id: 'alert-1',
-          severity: 'warning',
-          type: 'cpu_high',
-          message: 'CPU utilization magas',
-          createdAt: format(new Date(Date.now() - 1800 * 1000), 'HH:mm:ss'),
-          resolved: false,
-        },
-      ];
-
-      setAlerts(mockAlerts);
+      const res = await fetch(`/api/servers/${serverId}/alerts`);
+      if (!res.ok) throw new Error(`Alerts API hiba: ${res.status}`);
+      const data = await res.json();
+      const fetchedAlerts: Alert[] = (data.alerts ?? []).map((a: any) => ({
+        id: a.id,
+        severity: a.severity,
+        type: a.type,
+        message: a.message,
+        createdAt: a.createdAt
+          ? format(new Date(a.createdAt), 'yyyy-MM-dd HH:mm:ss')
+          : '',
+        resolved: a.resolved,
+      }));
+      setAlerts(fetchedAlerts);
     } catch (error) {
       console.error('Alerts load hiba:', error);
     }
@@ -261,10 +250,10 @@ export const ServerManagementDashboard: React.FC<{ userId: string }> = ({ userId
   const handleRestart = async (server: ServerStatus) => {
     setActionInProgress(true);
     try {
-      // API call would go here
-      console.log(`Restarting ${server.serverId}`);
-      // await fetch(`/api/servers/${server.serverId}/restart`, { method: 'POST' });
+      const res = await fetch(`/api/servers/${server.serverId}/restart`, { method: 'POST' });
+      if (!res.ok) throw new Error('Restart hiba');
       setAction(`✅ ${server.gameName} újraindítása megkezdődött...`);
+      loadServers();
       setTimeout(() => setAction(null), 5000);
     } catch (error) {
       setAction(`❌ Hiba: ${error instanceof Error ? error.message : 'Ismeretlen hiba'}`);
@@ -276,7 +265,10 @@ export const ServerManagementDashboard: React.FC<{ userId: string }> = ({ userId
   const handleUpdate = async (server: ServerStatus) => {
     setActionInProgress(true);
     try {
-      console.log(`Updating ${server.serverId}`);
+      const res = await fetch(`/api/servers/${server.serverId}/updates/status`, {
+        method: 'POST',
+      });
+      if (!res.ok) throw new Error('Update hiba');
       setAction(`📥 ${server.gameName} frissítése megkezdődött...`);
       setTimeout(() => setAction(null), 5000);
     } catch (error) {

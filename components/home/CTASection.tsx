@@ -22,7 +22,7 @@ interface CTASectionProps {
 export function CTASection({ locale, translations, section }: CTASectionProps) {
   const t = (key: string) => getNestedValue(translations, key) || key;
 
-  const title = section?.title || 'Készen állsz a kezdésre?';
+  const title = section?.title || t('pages.cta.title') || 'Ready to start?';
   const subtitle = section?.subtitle || t('pages.cta.registerNow') || 'Register now and get 24 hours free trial!';
   const buttonText = section?.buttonText || t('pages.cta.freeRegistration') || 'Free Registration';
   const buttonLink = section?.buttonLink || `/${locale}/register`;
@@ -45,7 +45,7 @@ export function CTASection({ locale, translations, section }: CTASectionProps) {
             </Link>
             <Link href={`/${locale}/pricing`}>
               <Button size="lg" variant="outline" className="w-full sm:w-auto border-2 border-white text-white hover:bg-white/10 px-8 py-3 rounded-lg font-semibold transition-colors">
-                Árazás Megtekintése
+                {t('pages.cta.viewPricing') || 'View Pricing'}
               </Button>
             </Link>
           </div>

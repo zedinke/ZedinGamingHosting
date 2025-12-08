@@ -54,11 +54,14 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
   const [isInstallingAI, setIsInstallingAI] = useState(false);
   const [isReinstallingAgent, setIsReinstallingAgent] = useState(false);
   const [isTestingSSH, setIsTestingSSH] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [autoGenerateKey, setAutoGenerateKey] = useState(false); // Szerkesztésnél alapértelmezetten false
   const [formData, setFormData] = useState({
     name: machine.name,
     sshPort: machine.sshPort.toString(),
     sshUser: machine.sshUser,
     sshKeyPath: machine.sshKeyPath || '',
+    sshPassword: '', // Opcionális: SSH jelszó automatikus kulcs generáláshoz
     notes: machine.notes || '',
     status: machine.status,
   });
@@ -70,8 +73,13 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...formData,
+          name: formData.name,
           sshPort: parseInt(formData.sshPort),
+          sshUser: formData.sshUser,
+          sshKeyPath: autoGenerateKey ? undefined : formData.sshKeyPath || undefined,
+          sshPassword: autoGenerateKey ? formData.sshPassword : undefined, // Csak akkor küldjük, ha automatikus generálás
+          notes: formData.notes || undefined,
+          status: formData.status,
         }),
       });
 
@@ -82,11 +90,40 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
         return;
       }
 
-      toast.success('Szerver gép sikeresen frissítve');
+      toast.success(result.message || 'Szerver gép sikeresen frissítve');
       setIsEditing(false);
       window.location.reload();
     } catch (error) {
       toast.error('Hiba történt');
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!confirm('Biztosan törölni szeretnéd ezt a szerver gépet? Ez a művelet nem vonható vissza!')) {
+      return;
+    }
+
+    setIsDeleting(true);
+
+    try {
+      const response = await fetch(`/api/admin/machines/${machine.id}`, {
+        method: 'DELETE',
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        toast.error(result.error || 'Hiba történt a törlés során');
+        return;
+      }
+
+      toast.success('Szerver gép sikeresen törölve');
+      // Vissza a gépek listájához
+      window.location.href = `/${locale}/admin/machines`;
+    } catch (error) {
+      toast.error('Hiba történt a törlés során');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -295,14 +332,48 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">SSH Kulcs Elérési Út</label>
-                <input
-                  type="text"
-                  value={formData.sshKeyPath}
-                  onChange={(e) => setFormData({ ...formData, sshKeyPath: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 font-mono text-sm text-gray-900 bg-white"
-                />
+              <div className="md:col-span-2">
+                <div className="flex items-center gap-2 mb-2">
+                  <input
+                    type="checkbox"
+                    id="autoGenerateKeyEdit"
+                    checked={autoGenerateKey}
+                    onChange={(e) => setAutoGenerateKey(e.target.checked)}
+                    className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                  />
+                  <label htmlFor="autoGenerateKeyEdit" className="text-sm font-medium text-gray-700">
+                    Automatikus SSH kulcs generálás és beállítás
+                  </label>
+                </div>
+                {autoGenerateKey ? (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      SSH Jelszó (egyszeri használat)
+                    </label>
+                    <input
+                      type="password"
+                      value={formData.sshPassword}
+                      onChange={(e) => setFormData({ ...formData, sshPassword: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white placeholder:text-gray-400"
+                      placeholder="A cél szerver SSH jelszava (egyszeri használat)"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      A rendszer automatikusan generál SSH kulcsot és beállítja a cél szerveren. A jelszót csak egyszer kell megadni.
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">SSH Kulcs Elérési Út</label>
+                    <input
+                      type="text"
+                      value={formData.sshKeyPath}
+                      onChange={(e) => setFormData({ ...formData, sshKeyPath: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 font-mono text-sm text-gray-900 bg-white"
+                      placeholder="/root/.ssh/gameserver_key"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">A webszerveren lévő SSH privát kulcs elérési útja</p>
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Státusz</label>
@@ -412,6 +483,15 @@ export function MachineDetail({ machine, locale }: MachineDetailProps) {
                 className="w-full bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isInstallingAgent ? 'Telepítés...' : 'Agent Telepítés'}
+              </button>
+            )}
+            {machine.agents.length === 0 && machine.servers.length === 0 && (
+              <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isDeleting ? 'Törlés...' : 'Gép Törlése'}
               </button>
             )}
           </div>

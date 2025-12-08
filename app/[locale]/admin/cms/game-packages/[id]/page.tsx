@@ -3,7 +3,6 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { UserRole } from '@prisma/client';
 import { redirect, notFound } from 'next/navigation';
-import { AdminNavigation } from '@/components/admin/AdminNavigation';
 import { GamePackageForm } from '@/components/admin/cms/GamePackageForm';
 
 export default async function EditGamePackagePage({
@@ -25,13 +24,6 @@ export default async function EditGamePackagePage({
     notFound();
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <AdminNavigation locale={locale} />
-      <main className="container mx-auto px-4 py-8">
-        <GamePackageForm locale={locale} package={packageData} />
-      </main>
-    </div>
-  );
+  return <GamePackageForm locale={locale} package={packageData} />;
 }
 

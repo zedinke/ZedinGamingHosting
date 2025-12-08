@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { GameType } from '@prisma/client';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { loadTranslations, getNestedValue } from '@/lib/translations';
 
 interface GameConfig {
   id: string;
@@ -39,8 +40,11 @@ export function PriceCalculator({ locale }: { locale: string }) {
   const [vCpu, setVCpu] = useState(2);
   const [ramGB, setRamGB] = useState(4);
   const [loading, setLoading] = useState(true);
+  const [translations, setTranslations] = useState<any>({});
 
   useEffect(() => {
+    loadTranslations(locale, 'common').then(setTranslations);
+
     const fetchGameConfigs = async () => {
       try {
         const response = await fetch('/api/game-configs');
@@ -68,7 +72,9 @@ export function PriceCalculator({ locale }: { locale: string }) {
     };
 
     fetchGameConfigs();
-  }, []);
+  }, [locale]);
+
+  const t = (key: string) => getNestedValue(translations, key) || key;
 
   const selectedConfig = gameConfigs.find((gc) => gc.gameType === selectedGameType);
   const pricing = selectedConfig?.pricingConfig;
@@ -107,7 +113,7 @@ export function PriceCalculator({ locale }: { locale: string }) {
     return (
       <div className="py-16 text-center">
         <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-        <p className="mt-4 text-gray-600">Árkalkulátor betöltése...</p>
+        <p className="mt-4 text-gray-600">{t('priceCalculator.loading') || 'Loading price calculator...'}</p>
       </div>
     );
   }
@@ -119,16 +125,16 @@ export function PriceCalculator({ locale }: { locale: string }) {
   return (
     <Card padding="lg" className="max-w-4xl mx-auto">
       <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">Árkalkulátor</h2>
+        <h2 className="text-3xl font-bold text-gray-900 mb-2">{t('priceCalculator.title') || 'Price Calculator'}</h2>
         <p className="text-gray-600">
-          Válaszd ki a játékot és az erőforrásokat, hogy megtudd a pontos árat
+          {t('priceCalculator.subtitle') || 'Choose the game and resources to see your price'}
         </p>
       </div>
 
       <div className="space-y-6">
         {/* Játék választás */}
         <div>
-          <label className="block text-sm font-semibold text-gray-900 mb-2">Játék</label>
+          <label className="block text-sm font-semibold text-gray-900 mb-2">{t('priceCalculator.labels.game') || 'Game'}</label>
           <select
             value={selectedGameType}
             onChange={(e) => {
@@ -158,10 +164,10 @@ export function PriceCalculator({ locale }: { locale: string }) {
             <div>
               <div className="flex justify-between items-center mb-2">
                 <label className="block text-sm font-semibold text-gray-900">
-                  Slot: {slots}
+                  {t('priceCalculator.labels.slot') || 'Slot'}: {slots}
                 </label>
                 <span className="text-sm text-gray-600">
-                  {pricing.minSlots} - {pricing.maxSlots} (lépésköz: {pricing.slotStep})
+                  {pricing.minSlots} - {pricing.maxSlots} ({t('priceCalculator.step') || 'step'}: {pricing.slotStep})
                 </span>
               </div>
               <div className="flex gap-2 items-center">
@@ -212,7 +218,7 @@ export function PriceCalculator({ locale }: { locale: string }) {
                   vCPU: {vCpu}
                 </label>
                 <span className="text-sm text-gray-600">
-                  {pricing.minVCpu} - {pricing.maxVCpu} (lépésköz: {pricing.vCpuStep})
+                  {pricing.minVCpu} - {pricing.maxVCpu} ({t('priceCalculator.step') || 'step'}: {pricing.vCpuStep})
                 </span>
               </div>
               <div className="flex gap-2 items-center">
@@ -263,7 +269,7 @@ export function PriceCalculator({ locale }: { locale: string }) {
                   RAM: {ramGB} GB
                 </label>
                 <span className="text-sm text-gray-600">
-                  {pricing.minRamGB} - {pricing.maxRamGB} GB (lépésköz: {pricing.ramStep})
+                  {pricing.minRamGB} - {pricing.maxRamGB} GB ({t('priceCalculator.step') || 'step'}: {pricing.ramStep})
                 </span>
               </div>
               <div className="flex gap-2 items-center">
@@ -311,19 +317,21 @@ export function PriceCalculator({ locale }: { locale: string }) {
             <div className="pt-6 border-t border-gray-200">
               <div className="bg-primary-50 rounded-lg p-6">
                 <div className="flex justify-between items-center mb-4">
-                  <span className="text-lg font-semibold text-gray-900">Havi ár:</span>
+                  <span className="text-lg font-semibold text-gray-900">{t('priceCalculator.priceLabel') || 'Monthly price'}:</span>
                   <span className="text-3xl font-bold text-primary-600">
                     {formatPrice(calculatePrice(), pricing.currency)}
                   </span>
                 </div>
                 <div className="text-sm text-gray-600 space-y-1">
                   <div className="flex justify-between">
-                    <span>Alapár:</span>
+                    <span>{t('priceCalculator.basePrice') || 'Base price'}:</span>
                     <span>{formatPrice(pricing.basePrice, pricing.currency)}</span>
                   </div>
                   {pricing.pricePerSlot > 0 && (
                     <div className="flex justify-between">
-                      <span>Slot ({slots} × {formatPrice(pricing.pricePerSlot, pricing.currency)}):</span>
+                      <span>
+                        {t('priceCalculator.labels.slot') || 'Slot'} ({slots} × {formatPrice(pricing.pricePerSlot, pricing.currency)}):
+                      </span>
                       <span>{formatPrice(slots * pricing.pricePerSlot, pricing.currency)}</span>
                     </div>
                   )}
@@ -352,7 +360,7 @@ export function PriceCalculator({ locale }: { locale: string }) {
                   window.location.href = `/${locale}/servers/new?gameType=${selectedGameType}&slots=${slots}&vCpu=${vCpu}&ramGB=${ramGB}`;
                 }}
               >
-                Rendelés
+                {t('priceCalculator.order') || 'Order now'}
               </Button>
             </div>
           </>

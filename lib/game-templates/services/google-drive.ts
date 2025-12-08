@@ -99,6 +99,39 @@ export class GoogleDriveService {
   }
 
   /**
+   * Template letöltése Google Drive-ról
+   * @param gdrive - Template Google Drive információ
+   * @param destinationPath - Hova mentjük a fájlt
+   * @param onProgress - Progress callback
+   */
+  async downloadTemplate(
+    gdrive: { fileId: string; fileName: string; checksum?: string },
+    destinationPath: string,
+    onProgress?: (loaded: number, total: number) => void
+  ): Promise<void> {
+    try {
+      console.log(`📥 Template letöltése: ${gdrive.fileName} (${gdrive.fileId})`);
+
+      // Fájl letöltése
+      await this.downloadFile(gdrive.fileId, destinationPath, onProgress);
+
+      // Checksum validáció, ha van
+      if (gdrive.checksum) {
+        const isValid = await this.validateChecksum(destinationPath, gdrive.checksum);
+        if (!isValid) {
+          throw new Error('Template checksum validation failed');
+        }
+        console.log(`✅ Template checksum validated`);
+      }
+
+      console.log(`✅ Template letöltve: ${destinationPath}`);
+    } catch (error) {
+      console.error('Template download error:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Fájl letöltése Google Drive-ról
    */
   async downloadFile(

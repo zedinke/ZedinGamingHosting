@@ -96,15 +96,15 @@ export default async function AdminDashboardPage({
         <SystemHealth locale={locale} />
       </div>
 
-      {/* Legutóbbi aktivitások */}
+      {/* Recent activity */}
       <div className="grid md:grid-cols-2 gap-6">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h2 className="text-xl font-bold text-gray-900 mb-6">{translations?.pages?.admin?.recentUsers || 'Recent Users'}</h2>
-          <RecentUsers />
+          <RecentUsers translations={translations} locale={locale} />
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h2 className="text-xl font-bold text-gray-900 mb-6">{translations?.pages?.admin?.recentServers || 'Recent Servers'}</h2>
-          <RecentServers />
+          <RecentServers translations={translations} locale={locale} />
         </div>
         </div>
       </div>
@@ -115,7 +115,7 @@ export default async function AdminDashboardPage({
   }
 }
 
-async function RecentUsers() {
+async function RecentUsers({ translations, locale }: { translations: any; locale: string }) {
   try {
     const users = await prisma.user.findMany({
       take: 5,
@@ -139,7 +139,7 @@ async function RecentUsers() {
           </div>
           <div className="text-right">
             <span className="text-xs text-gray-500">
-              {new Date(user.createdAt).toLocaleDateString('hu-HU')}
+              {new Date(user.createdAt).toLocaleDateString(locale)}
             </span>
             <span className="ml-2 px-2 py-1 bg-primary-100 text-primary-800 text-xs rounded">
               {user.role}
@@ -153,13 +153,13 @@ async function RecentUsers() {
     console.error('RecentUsers error:', error);
     return (
       <div className="text-center text-gray-500 py-4">
-        Nem sikerült betölteni a felhasználókat
+        {translations?.pages?.admin?.loadUsersError || 'Failed to load users'}
       </div>
     );
   }
 }
 
-async function RecentServers() {
+async function RecentServers({ translations, locale }: { translations: any; locale: string }) {
   try {
     const servers = await prisma.server.findMany({
       take: 5,
@@ -192,7 +192,7 @@ async function RecentServers() {
                   : 'bg-gray-100 text-gray-800'
               }`}
             >
-              {server.status}
+              {translations?.server?.[String(server.status).toLowerCase()] || server.status}
             </span>
             </div>
           </div>
@@ -203,7 +203,7 @@ async function RecentServers() {
     console.error('RecentServers error:', error);
     return (
       <div className="text-center text-gray-500 py-4">
-        Nem sikerült betölteni a szervereket
+        {translations?.pages?.admin?.loadServersError || 'Failed to load servers'}
       </div>
     );
   }

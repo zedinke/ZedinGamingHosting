@@ -5,6 +5,8 @@ import { prisma } from '@/lib/prisma';
 import { SaaSPlansSection } from '@/components/saas/SaaSPlansSection';
 import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 
 export default async function ZedGamingSystemPage({
   params: { locale },
@@ -12,6 +14,15 @@ export default async function ZedGamingSystemPage({
   params: { locale: string };
 }) {
   const t = getTranslations(locale, 'common');
+
+  let translations: any = {};
+  try {
+    const filePath = join(process.cwd(), 'public', 'locales', locale, 'common.json');
+    const fileContents = readFileSync(filePath, 'utf8');
+    translations = JSON.parse(fileContents);
+  } catch (error) {
+    console.error('Failed to load translations:', error);
+  }
 
   // SaaS csomagok lekérése
   const plans = await prisma.saaSPlan.findMany({
@@ -29,14 +40,13 @@ export default async function ZedGamingSystemPage({
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto text-center">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
-                Zed Gaming System
+                {translations?.pages?.zedSystem?.title || 'Zed Gaming System'}
               </h1>
               <p className="text-xl md:text-2xl mb-8 text-primary-100">
-                Teljes körű gaming szerver hosting platform SaaS megoldás
+                {translations?.pages?.zedSystem?.subtitle || 'Full-stack gaming server hosting platform SaaS'}
               </p>
               <p className="text-lg text-primary-200 max-w-2xl mx-auto">
-                Bérelje ki a teljes rendszert havidíjasan. Minden funkció egy helyen: 
-                szerver kezelés, fizetési rendszer, CMS, admin vezérlőpult és még sok más.
+                {translations?.pages?.zedSystem?.description || 'Rent the complete platform monthly. All-in-one: server management, payments, CMS, admin panel and more.'}
               </p>
             </div>
           </div>
@@ -47,40 +57,40 @@ export default async function ZedGamingSystemPage({
           <div className="container mx-auto px-4">
             <div className="max-w-6xl mx-auto">
               <h2 className="text-3xl font-bold text-center mb-12 text-gray-900">
-                Miért válassza a Zed Gaming System-et?
+                {translations?.pages?.zedSystem?.featuresTitle || 'Why choose Zed Gaming System?'}
               </h2>
               
               <div className="grid md:grid-cols-3 gap-8">
                 {[
                   {
                     icon: '🎮',
-                    title: '60+ Játék Támogatás',
-                    description: 'Több mint 60 játék automatikus telepítése és kezelése',
+                    title: translations?.pages?.zedSystem?.features?.games?.title || '60+ Game Support',
+                    description: translations?.pages?.zedSystem?.features?.games?.description || 'Automated install and management for 60+ games',
                   },
                   {
                     icon: '💳',
-                    title: 'Integrált Fizetési Rendszer',
-                    description: 'Stripe, PayPal, Revolut integráció beépítve',
+                    title: translations?.pages?.zedSystem?.features?.payments?.title || 'Integrated Payments',
+                    description: translations?.pages?.zedSystem?.features?.payments?.description || 'Stripe, PayPal, Revolut built-in',
                   },
                   {
                     icon: '📝',
-                    title: 'Teljes CMS Rendszer',
-                    description: 'Blog, FAQ, oldalépítő, árazási táblázat és még sok más',
+                    title: translations?.pages?.zedSystem?.features?.cms?.title || 'Full CMS',
+                    description: translations?.pages?.zedSystem?.features?.cms?.description || 'Blog, FAQ, page builder, pricing tables and more',
                   },
                   {
                     icon: '🤖',
-                    title: 'AI Chat Támogatás',
-                    description: 'Helyben futó AI chat rendszer magyar nyelvű válaszokkal',
+                    title: translations?.pages?.zedSystem?.features?.ai?.title || 'AI Chat Support',
+                    description: translations?.pages?.zedSystem?.features?.ai?.description || 'On-prem AI chat with localized responses',
                   },
                   {
                     icon: '📊',
-                    title: 'Fejlett Monitoring',
-                    description: 'Real-time monitoring, analytics és teljesítmény metrikák',
+                    title: translations?.pages?.zedSystem?.features?.monitoring?.title || 'Advanced Monitoring',
+                    description: translations?.pages?.zedSystem?.features?.monitoring?.description || 'Real-time monitoring, analytics, performance metrics',
                   },
                   {
                     icon: '🔒',
-                    title: 'Biztonságos és Skálázható',
-                    description: 'Agent-based architektúra, automatikus terheléselosztás',
+                    title: translations?.pages?.zedSystem?.features?.security?.title || 'Secure & Scalable',
+                    description: translations?.pages?.zedSystem?.features?.security?.description || 'Agent-based architecture, automatic load balancing',
                   },
                 ].map((feature, index) => (
                   <div
@@ -103,10 +113,10 @@ export default async function ZedGamingSystemPage({
             <div className="max-w-6xl mx-auto">
               <div className="text-center mb-12">
                 <h2 className="text-3xl font-bold mb-4 text-gray-900">
-                  Válasszon egy csomagot
+                  {translations?.pages?.zedSystem?.pricing?.title || 'Choose a plan'}
                 </h2>
                 <p className="text-lg text-gray-600">
-                  Minden csomag tartalmazza a teljes rendszert és frissítéseket
+                  {translations?.pages?.zedSystem?.pricing?.subtitle || 'Every plan includes the full system and updates'}
                 </p>
               </div>
 
@@ -120,14 +130,14 @@ export default async function ZedGamingSystemPage({
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto text-center">
               <h2 className="text-3xl font-bold mb-4">
-                Készen áll a saját gaming hosting platformjára?
+                {translations?.pages?.zedSystem?.cta?.title || 'Ready for your own gaming hosting platform?'}
               </h2>
               <p className="text-xl mb-8 text-primary-100">
-                Válasszon egy csomagot és kezdje el még ma!
+                {translations?.pages?.zedSystem?.cta?.subtitle || 'Choose a plan and start today!'}
               </p>
               <Link href={`/${locale}/zed-gaming-system#pricing`}>
                 <Button size="lg" className="bg-white text-primary-600 hover:bg-gray-100">
-                  Csomagok megtekintése
+                  {translations?.pages?.zedSystem?.cta?.button || 'View plans'}
                 </Button>
               </Link>
             </div>
@@ -135,7 +145,7 @@ export default async function ZedGamingSystemPage({
         </section>
       </main>
 
-      <Footer />
+      <Footer locale={locale} />
     </div>
   );
 }

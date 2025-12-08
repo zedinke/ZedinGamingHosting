@@ -123,8 +123,13 @@ export function AdminNavigation({ locale }: AdminNavigationProps) {
     },
   ];
 
+  // Scroll to top when pathname changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [pathname]);
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <>
       {/* Sidebar */}
       <aside className="fixed left-0 top-0 h-full w-64 bg-gradient-to-b from-gray-900 to-gray-800 text-white shadow-xl z-50">
         <div className="flex flex-col h-full">
@@ -155,6 +160,10 @@ export function AdminNavigation({ locale }: AdminNavigationProps) {
                     <Link
                       key={item.href}
                       href={item.href}
+                      onClick={() => {
+                        // Scroll to top when navigating
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
                       className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
                         active
                           ? 'bg-primary-600 text-white shadow-lg'
@@ -239,7 +248,11 @@ export function AdminNavigation({ locale }: AdminNavigationProps) {
                     <Link
                       key={item.href}
                       href={item.href}
-                      onClick={() => setMobileMenuOpen(false)}
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        // Scroll to top when navigating
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
                       className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
                         active
                           ? 'bg-primary-600 text-white shadow-lg'
@@ -273,7 +286,7 @@ export function AdminNavigation({ locale }: AdminNavigationProps) {
           </div>
         </div>
       </aside>
-    </div>
+    </>
   );
 }
 

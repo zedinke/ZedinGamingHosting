@@ -66,7 +66,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // NextAuth login/register/error oldalak átirányítása locale-re
-  const validLocales = ['hu', 'en'];
+  const validLocales = ['hu', 'en', 'es', 'fr'];
   const defaultLocale = 'hu';
   
   // Ha a pathname /login, /register, /auth/error, stb. és nincs locale, átirányítjuk
@@ -128,7 +128,7 @@ export async function middleware(request: NextRequest) {
           }
           
           // Ha nem admin, átirányítjuk a karbantartási oldalra
-          const validLocales = ['hu', 'en'];
+          const validLocales = ['hu', 'en', 'es', 'fr'];
           let locale = 'hu';
           
           // Próbáljuk meg kinyerni a locale-t az útvonalból

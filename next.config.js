@@ -2,6 +2,12 @@
 const nextConfig = {
   reactStrictMode: true,
   output: 'standalone', // Production deployment-hez szükséges
+  // Teljesítmény optimalizálások
+  swcMinify: true, // SWC minifier használata (gyorsabb)
+  compress: true, // Gzip compression
+  poweredByHeader: false, // X-Powered-By header eltávolítása
+  // Production optimalizálások
+  productionBrowserSourceMaps: false, // Source maps kikapcsolása production-ben
   images: {
     remotePatterns: [
       {

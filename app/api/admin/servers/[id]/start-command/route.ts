@@ -109,7 +109,7 @@ export async function GET(
     });
 
     const config = {
-      port: serverWithPorts?.port || server.port || gameConfig.port,
+      port: serverWithPorts?.port || server.port || gameConfig.ports?.game || 27015,
       maxPlayers: server.maxPlayers,
       ram: 2048, // Alapértelmezett, mert nincs a szerverben
       name: server.name,
@@ -121,10 +121,10 @@ export async function GET(
     };
 
     // Generáljuk az indító sort - az összes portot az adatbázisból kinyerjük
-    let startCommand = gameConfig.startCommand;
+    let startCommand: string = gameConfig.startCommand || '';
     
     // Satisfactory esetén az adatbázisból kinyerjük az összes portot
-    if (server.gameType === 'SATISFACTORY') {
+    if (server.gameType === 'SATISFACTORY' && startCommand) {
       const gamePort = serverWithPorts?.port || config.port || 7777;
       const queryPort = serverWithPorts?.queryPort || (gamePort + 2);
       const beaconPort = serverWithPorts?.beaconPort || (queryPort + 2);
@@ -136,7 +136,7 @@ export async function GET(
         .replace(/{queryPort}/g, queryPort.toString())
         .replace(/{beaconPort}/g, beaconPort.toString())
         .replace(/{multihome}/g, multihomeIp);
-    } else if (server.gameType === 'VALHEIM') {
+    } else if (server.gameType === 'VALHEIM' && startCommand) {
       // Valheim: port és queryPort az adatbázisból
       const port = serverWithPorts?.port || config.port || 2456;
       const queryPort = serverWithPorts?.queryPort || (port + 1);
@@ -149,7 +149,7 @@ export async function GET(
         .replace(/{world}/g, config.world)
         .replace(/{queryPort}/g, queryPort.toString())
         .replace(/{password}/g, config.password);
-    } else if (server.gameType === 'THE_FOREST') {
+    } else if (server.gameType === 'THE_FOREST' && startCommand) {
       // The Forest: port, queryPort, steamPeerPort az adatbázisból
       const port = serverWithPorts?.port || config.port || 27015;
       const queryPort = serverWithPorts?.queryPort || (port + 1);
@@ -178,7 +178,7 @@ export async function GET(
         .replace(/{enableVAC}/g, enableVAC)
         .replace(/{slot}/g, slot.toString())
         .replace(/{serverip}/g, serverip);
-    } else if (server.gameType === 'RUST') {
+    } else if (server.gameType === 'RUST' && startCommand) {
       // Rust: port, queryPort, rustPlusPort az adatbázisból
       const port = serverWithPorts?.port || config.port || 28015;
       const queryPort = serverWithPorts?.queryPort || (port + 1);
@@ -191,7 +191,7 @@ export async function GET(
         .replace(/{name}/g, config.name)
         .replace(/{queryPort}/g, queryPort.toString())
         .replace(/{rustPlusPort}/g, rustPlusPort.toString());
-    } else if (server.gameType === 'SEVEN_DAYS_TO_DIE') {
+    } else if (server.gameType === 'SEVEN_DAYS_TO_DIE' && startCommand) {
       // 7 Days to Die: portok az adatbázisból (mint a többi játéknál)
       const port = serverWithPorts?.port || config.port || 26900;
       const telnetPort = (serverWithPorts as any)?.telnetPort || (port + 2);
@@ -201,21 +201,21 @@ export async function GET(
         .replace(/{telnetPort}/g, telnetPort.toString())
         .replace(/{name}/g, config.name)
         .replace(/{maxPlayers}/g, config.maxPlayers.toString());
-    } else if (server.gameType === 'PALWORLD') {
+    } else if (server.gameType === 'PALWORLD' && startCommand) {
       // Palworld: port az adatbázisból
       const port = serverWithPorts?.port || config.port || 8211;
       
       startCommand = startCommand
         .replace(/{port}/g, port.toString())
         .replace(/{maxPlayers}/g, config.maxPlayers.toString());
-    } else if (server.gameType === 'ENSHROUDED') {
+    } else if (server.gameType === 'ENSHROUDED' && startCommand) {
       // Enshrouded: port az adatbázisból
       const port = serverWithPorts?.port || config.port || 15636;
       
       startCommand = startCommand
         .replace(/{port}/g, port.toString())
         .replace(/{ServerName}/g, config.name);
-    } else if (server.gameType === 'ARK_EVOLVED' || server.gameType === 'ARK_ASCENDED') {
+    } else if ((server.gameType === 'ARK_EVOLVED' || server.gameType === 'ARK_ASCENDED') && startCommand) {
       // ARK: port és queryPort az adatbázisból
       const port = serverWithPorts?.port || config.port || 7777;
       const queryPort = serverWithPorts?.queryPort || (port + 1);
@@ -223,10 +223,10 @@ export async function GET(
       startCommand = startCommand
         .replace(/{port}/g, port.toString())
         .replace(/{queryPort}/g, queryPort.toString())
-        .replace(/{adminPassword}/g, config.adminPassword)
+        .replace(/{adminPassword}/g, config.adminPassword || '')
         .replace(/{name}/g, config.name)
         .replace(/{maxPlayers}/g, config.maxPlayers.toString());
-    } else if (server.gameType === 'CONAN_EXILES') {
+    } else if (server.gameType === 'CONAN_EXILES' && startCommand) {
       // Conan Exiles: port és queryPort az adatbázisból
       const port = serverWithPorts?.port || config.port || 7777;
       const queryPort = serverWithPorts?.queryPort || (port + 1);
@@ -234,19 +234,19 @@ export async function GET(
       startCommand = startCommand
         .replace(/{port}/g, port.toString())
         .replace(/{queryPort}/g, queryPort.toString());
-    } else if (server.gameType === 'DAYZ') {
+    } else if (server.gameType === 'DAYZ' && startCommand) {
       // DayZ: port az adatbázisból
       const port = serverWithPorts?.port || config.port || 2302;
       
       startCommand = startCommand
         .replace(/{port}/g, port.toString());
-    } else if (server.gameType === 'CS2') {
+    } else if (server.gameType === 'CS2' && startCommand) {
       // CS2: port az adatbázisból
       const port = serverWithPorts?.port || config.port || 27015;
       
       startCommand = startCommand
         .replace(/{port}/g, port.toString());
-    } else if (server.gameType === 'KILLING_FLOOR_2') {
+    } else if (server.gameType === 'KILLING_FLOOR_2' && startCommand) {
       // Killing Floor 2: port és queryPort az adatbázisból
       const port = serverWithPorts?.port || config.port || 7777;
       const queryPort = serverWithPorts?.queryPort || (port + 1);
@@ -255,22 +255,22 @@ export async function GET(
         .replace(/{port}/g, port.toString())
         .replace(/{queryPort}/g, queryPort.toString())
         .replace(/{maxPlayers}/g, config.maxPlayers.toString());
-    } else if (server.gameType === 'TERRARIA') {
+    } else if (server.gameType === 'TERRARIA' && startCommand) {
       // Terraria: port az adatbázisból
       const port = serverWithPorts?.port || config.port || 7777;
       
       startCommand = startCommand
         .replace(/{port}/g, port.toString())
-        .replace(/{world}/g, config.world)
+        .replace(/{world}/g, config.world || '')
         .replace(/{maxPlayers}/g, config.maxPlayers.toString());
-    } else if (server.gameType === 'V_RISING') {
+    } else if (server.gameType === 'V_RISING' && startCommand) {
       // V Rising: port az adatbázisból
       const port = serverWithPorts?.port || config.port || 27015;
       
       startCommand = startCommand
         .replace(/{port}/g, port.toString())
         .replace(/{name}/g, config.name);
-    } else if (server.gameType === 'GROUNDED') {
+    } else if (server.gameType === 'GROUNDED' && startCommand) {
       // Grounded: port és queryPort az adatbázisból
       const port = serverWithPorts?.port || config.port || 7777;
       const queryPort = serverWithPorts?.queryPort || (port + 1);
@@ -292,29 +292,29 @@ export async function GET(
       
       startCommand = startCommand
         .replace(/{port}/g, port.toString());
-    } else if (server.gameType === 'DONT_STARVE_TOGETHER') {
+    } else if (server.gameType === 'DONT_STARVE_TOGETHER' && startCommand) {
       // Don't Starve Together: port az adatbázisból
       const port = serverWithPorts?.port || config.port || 10999;
       
       startCommand = startCommand
         .replace(/{port}/g, port.toString());
-    } else {
+    } else if (startCommand) {
       // Más játékok: alapértelmezett logika, de az adatbázisból kinyert portokat használjuk
       const port = serverWithPorts?.port || config.port;
-      const queryPort = serverWithPorts?.queryPort || (gameConfig.queryPort || port + 1);
-      const beaconPort = serverWithPorts?.beaconPort || (gameConfig.beaconPort || (gameConfig.queryPort ? gameConfig.queryPort + 1 : port + 2));
+      const queryPort = serverWithPorts?.queryPort || (gameConfig.ports?.query || port + 1);
+      const beaconPort = serverWithPorts?.beaconPort || (port + 2);
       
       startCommand = startCommand
         .replace(/{port}/g, port.toString())
         .replace(/{maxPlayers}/g, config.maxPlayers.toString())
         .replace(/{ram}/g, config.ram.toString())
         .replace(/{name}/g, config.name)
-        .replace(/{world}/g, config.world)
-        .replace(/{adminPassword}/g, config.adminPassword)
+        .replace(/{world}/g, config.world || '')
+        .replace(/{adminPassword}/g, config.adminPassword || '')
         .replace(/{queryPort}/g, queryPort.toString())
         .replace(/{beaconPort}/g, beaconPort.toString())
-        .replace(/{map}/g, config.map)
-        .replace(/{password}/g, config.password);
+        .replace(/{map}/g, config.map || '')
+        .replace(/{password}/g, config.password || '');
     }
 
     // Válasz config objektum az adatbázisból kinyert portokkal
@@ -377,8 +377,8 @@ export async function GET(
     } else if (server.gameType === 'DONT_STARVE_TOGETHER') {
       responseConfig.port = serverWithPorts?.port || config.port || 10999;
     } else {
-      responseConfig.queryPort = serverWithPorts?.queryPort || (gameConfig.queryPort || config.port + 1);
-      responseConfig.beaconPort = serverWithPorts?.beaconPort || (gameConfig.beaconPort || (gameConfig.queryPort ? gameConfig.queryPort + 1 : config.port + 2));
+      responseConfig.queryPort = serverWithPorts?.queryPort || (gameConfig.ports?.query || config.port + 1);
+      responseConfig.beaconPort = serverWithPorts?.beaconPort || (config.port + 2);
     }
 
     return NextResponse.json({

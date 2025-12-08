@@ -18,42 +18,45 @@ interface FeaturesSectionProps {
   section?: HomepageSection;
 }
 
-const defaultFeatures = [
-  {
-    icon: Zap,
-    title: 'Gyors & Megbízható',
-    description: 'SSD tárhely és erős processzorok garantálják a zökkenőmentes játékélményt. Alacsony latency, magas teljesítmény.',
-  },
-  {
-    icon: Shield,
-    title: 'DDoS Védelem',
-    description: 'Automatikus DDoS védelem minden szerverünkön. Játssz bátran, mi gondoskodunk a biztonságról.',
-  },
-  {
-    icon: Server,
-    title: 'Könnyű Kezelés',
-    description: 'Intuitív vezérlőpult, ahol mindent egy helyen kezelhetsz. Fájlkezelés, konzol, backup - minden kéznél.',
-  },
-  {
-    icon: Headphones,
-    title: '24/7 Támogatás',
-    description: 'Szakértő csapatunk mindig elérhető, ha segítségre van szükséged. Discord, email, ticket rendszer.',
-  },
-  {
-    icon: Clock,
-    title: 'Azonnali Telepítés',
-    description: 'Szervered percek alatt készen áll. Automatikus telepítés, konfiguráció és indítás.',
-  },
-  {
-    icon: Globe,
-    title: 'Többnyelvű Támogatás',
-    description: 'Magyar és angol nyelvű felület, dokumentáció és támogatás. Könnyű használat bárhol.',
-  },
-];
-
 export function FeaturesSection({ locale, translations, section }: FeaturesSectionProps) {
+  const t = (key: string) => getNestedValue(translations, key) || key;
+
+  // Default features sourced from translations to avoid hardcoded strings
+  const translatedDefaults = [
+    {
+      icon: Zap,
+      title: t('home.features.items.fast.title') || 'Fast & Reliable',
+      description: t('home.features.items.fast.description') || 'SSD storage and powerful CPUs keep performance smooth.',
+    },
+    {
+      icon: Shield,
+      title: t('home.features.items.ddos.title') || 'DDoS Protection',
+      description: t('home.features.items.ddos.description') || 'Automatic DDoS protection on every server.',
+    },
+    {
+      icon: Server,
+      title: t('home.features.items.management.title') || 'Easy Management',
+      description: t('home.features.items.management.description') || 'Intuitive panel with console, file manager, backups.',
+    },
+    {
+      icon: Headphones,
+      title: t('home.features.items.support.title') || '24/7 Support',
+      description: t('home.features.items.support.description') || 'Expert team via Discord, email, and tickets.',
+    },
+    {
+      icon: Clock,
+      title: t('home.features.items.instant.title') || 'Instant Setup',
+      description: t('home.features.items.instant.description') || 'Servers ready in minutes with automated install.',
+    },
+    {
+      icon: Globe,
+      title: t('home.features.items.multilang.title') || 'Multilingual',
+      description: t('home.features.items.multilang.description') || 'Interfaces, docs, and support in multiple languages.',
+    },
+  ];
+
   // Parse features from section content if available
-  let features = defaultFeatures;
+  let features = translatedDefaults;
   if (section?.content && typeof section.content === 'object') {
     if (Array.isArray(section.content)) {
       features = section.content;
@@ -62,8 +65,8 @@ export function FeaturesSection({ locale, translations, section }: FeaturesSecti
     }
   }
 
-  const title = section?.title || 'Miért válassz minket?';
-  const subtitle = section?.subtitle || 'Minden, amire szükséged van egy professzionális gaming szerverhez';
+  const title = section?.title || t('home.features.title') || 'Why choose us?';
+  const subtitle = section?.subtitle || t('home.features.subtitle') || 'Everything you need for a professional gaming server';
 
   return (
     <section className="py-20 bg-white">

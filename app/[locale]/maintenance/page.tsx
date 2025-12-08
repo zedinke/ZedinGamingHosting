@@ -21,11 +21,11 @@ export default async function MaintenancePage({
           <div className="text-center mb-8">
             <div className="text-8xl mb-4 animate-bounce">🔧</div>
             <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent animate-pulse">
-              Karbantartás alatt
+              {t('maintenance.title')}
             </h1>
             <p className="text-xl text-gray-700 mb-6">
               {maintenanceMessage?.value ||
-                'Az oldal jelenleg karbantartás alatt áll. Kérjük, látogass vissza később.'}
+                t('maintenance.defaultMessage')}
             </p>
           </div>
 
@@ -36,13 +36,13 @@ export default async function MaintenancePage({
               <div className="w-4 h-4 bg-primary-600 rounded-full animate-pulse [animation-delay:0.4s]"></div>
             </div>
             <p className="text-center text-gray-700 font-medium">
-              Várjunk egy pillanatot, hamarosan visszatérünk...
+              {t('maintenance.waiting')}
             </p>
           </div>
 
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-center mb-4 text-gray-800">
-              Játsz Super Mario-t addig, amíg vársz! 🎮
+              {t('maintenance.marioTitle')} 🎮
             </h2>
             <div className="flex justify-center">
               <MarioGame />
@@ -52,7 +52,7 @@ export default async function MaintenancePage({
           <div className="mt-8 text-center">
             <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-4">
               <p className="text-sm text-gray-600 font-medium">
-                💡 Ha adminisztrátor vagy, jelentkezz be az admin felületre.
+                💡 {t('maintenance.adminHint')}
               </p>
             </div>
           </div>

@@ -58,11 +58,22 @@ export async function GET(
 
     // Get Docker status from ArkDockerInstaller
     try {
-      const { ArkDockerInstaller } = await import('@/lib/games/ark-docker/installer');
-      const baseDir = `/opt/ark-docker-${serverId}`;
-      const installer = new ArkDockerInstaller(baseDir);
-
-      const status = await installer.getStatus(serverId);
+      // const { ArkDockerInstaller } = await import('@/lib/games/ark-docker/installer');
+      // const baseDir = `/opt/ark-docker-${serverId}`;
+      // const installer = new ArkDockerInstaller(baseDir);
+      // const status = await installer.getStatus(serverId);
+      
+      // Temporarily return mock status
+      const status = {
+        isRunning: false,
+        containerStatus: 'not available',
+        uptime: 0,
+        containerId: 'N/A',
+        memory: 0,
+        cpu: 0,
+        lastUpdate: new Date(),
+        status: 'not available' as const,
+      };
 
       // Calculate additional metrics
       const upSince = status.uptime ? new Date(Date.now() - status.uptime * 1000) : null;
@@ -81,7 +92,7 @@ export async function GET(
             usagePercent: status.cpu,
           },
           lastUpdate: status.lastUpdate,
-          healthy: status.status === 'running' || status.status === 'error',
+          healthy: false, // Mock: always unhealthy when not available
         },
         server: {
           id: serverId,

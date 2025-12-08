@@ -120,12 +120,51 @@ export const RUST_TEMPLATE: GameTemplate = {
 };
 
 /**
+ * 7 Days to Die Template
+ * Docker image: 7days2die:latest
+ */
+export const SEVEN_DAYS_TO_DIE_TEMPLATE: GameTemplate = {
+  id: GameTemplateType.SEVEN_DAYS_TO_DIE,
+  name: '7 Days to Die',
+  version: '1.0',
+  description: '7 Days to Die dedikált szerver (zombie survival)',
+  dockerImage: '7days2die:latest',
+  
+  ports: {
+    game: 26900,
+    telnet: 8081,
+    webMap: 8080,
+  },
+  
+  requirements: {
+    cpuCores: 4,
+    ramGb: 8,
+    diskGb: 30,
+  },
+  
+  gdrive: {
+    fileId: '', // Majd feltöltéskor kitöltjük
+    fileName: '7days2die-template-v1.0.tar.gz',
+    sizeGb: 20,
+  },
+  
+  updatedAt: new Date(),
+  
+  metadata: {
+    steamAppId: 251570, // 7 Days to Die App ID
+    maxPlayers: 32,
+    engine: 'Unity',
+  },
+};
+
+/**
  * Összes elérhető template
  */
 export const ALL_TEMPLATES: Record<GameTemplateType, GameTemplate> = {
   [GameTemplateType.ARK_ASCENDED]: ARK_ASCENDED_TEMPLATE,
   [GameTemplateType.ARK_EVOLVED]: ARK_EVOLVED_TEMPLATE,
   [GameTemplateType.RUST]: RUST_TEMPLATE,
+  [GameTemplateType.SEVEN_DAYS_TO_DIE]: SEVEN_DAYS_TO_DIE_TEMPLATE,
 };
 
 /**

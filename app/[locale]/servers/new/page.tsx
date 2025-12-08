@@ -108,7 +108,7 @@ export default async function NewServerPage({
             />
           </div>
         </main>
-        <Footer />
+        <Footer locale={locale} />
       </div>
     );
   }
@@ -143,7 +143,7 @@ export default async function NewServerPage({
           />
         </div>
       </main>
-      <Footer />
+      <Footer locale={locale} />
     </div>
   );
 }

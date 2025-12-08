@@ -119,7 +119,7 @@ export const POST = withPerformanceMonitoring(
           await configureFirewallPorts(
             server.id,
             server.gameType,
-            { port: server.port || gameConfig.port },
+            { port: server.port || gameConfig.ports?.game || 27015 },
             machine,
             gameConfig,
             false

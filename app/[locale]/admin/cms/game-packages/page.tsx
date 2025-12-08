@@ -3,7 +3,6 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { UserRole } from '@prisma/client';
 import { redirect } from 'next/navigation';
-import { AdminNavigation } from '@/components/admin/AdminNavigation';
 import { GamePackageManagement } from '@/components/admin/cms/GamePackageManagement';
 
 export default async function GamePackagesPage({
@@ -25,13 +24,6 @@ export default async function GamePackagesPage({
     ],
   });
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <AdminNavigation locale={locale} />
-      <main className="container mx-auto px-4 py-8">
-        <GamePackageManagement packages={packages} locale={locale} />
-      </main>
-    </div>
-  );
+  return <GamePackageManagement packages={packages} locale={locale} />;
 }
 

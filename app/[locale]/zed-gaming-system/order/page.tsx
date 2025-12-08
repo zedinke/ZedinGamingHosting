@@ -45,7 +45,7 @@ export default async function SaaSOrderPage({
         </div>
       </main>
 
-      <Footer />
+      <Footer locale={locale} />
     </div>
   );
 }

@@ -8,7 +8,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/auth';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
 
 // Mock storage (valós implementációban: database)
 const deploymentSessions = new Map<string, any>();
@@ -16,7 +17,7 @@ const deploymentSessions = new Map<string, any>();
 export async function GET(req: NextRequest) {
   try {
     // Autentikáció
-    const session = await auth();
+    const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json(
         { success: false, error: 'Not authenticated' },

@@ -127,7 +127,7 @@ export async function PUT(
             updatedServer.gameType,
             gameConfig,
             {
-              port: updatedServer.port || gameConfig.port,
+              port: updatedServer.port || gameConfig.ports?.game || 27015,
               maxPlayers: updatedServer.maxPlayers,
               ram: limits.ram.max, // MB-ban
               cpuCores: cpuCores,

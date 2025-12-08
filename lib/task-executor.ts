@@ -653,8 +653,10 @@ async function executeStartTask(task: any): Promise<any> {
         try {
           const { ALL_GAME_SERVER_CONFIGS } = await import('./game-server-configs');
           const { executeSSHCommand } = await import('./ssh-client');
-          const { GAME_CONFIG_GENERATORS } = await import('./games/configs');
+          // const { GAME_CONFIG_GENERATORS } = await import('./games/configs');
+          throw new Error('Legacy game configs temporarily disabled');
           
+          /* Legacy code - disabled
           const satisGameConfig = ALL_GAME_SERVER_CONFIGS[server.gameType as keyof typeof ALL_GAME_SERVER_CONFIGS];
           if (satisGameConfig && satisGameConfig.configPath) {
             // Konfigurációs fájl path
@@ -701,6 +703,7 @@ MinDynamicBandwidth=1000
               gamePort: finalConfig.gamePort || (finalConfig.queryPort + 10000),
             });
           }
+          */ // End of legacy code block
         } catch (configUpdateError: any) {
           logger.warn('Failed to update Satisfactory configuration files on start', {
             serverId: server.id,

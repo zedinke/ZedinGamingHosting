@@ -13,8 +13,8 @@ import { logger } from './logger';
 import { writeFile, appendFile, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
 import { join } from 'path';
-import { GAME_INSTALLERS } from './games/installers';
-import { GAME_CONFIG_GENERATORS } from './games/configs';
+// import { GAME_INSTALLERS } from './games/installers';
+// import { GAME_CONFIG_GENERATORS } from './games/configs';
 
 // Progress fájl elérési út
 function getProgressFilePath(serverId: string): string {
@@ -173,11 +173,11 @@ export async function installGameServer(
             await appendInstallLog(serverId, `⚠️  FIGYELEM: Lokális ARK telepítés a webszerver gépre (nincs dedikált gép)!`);
           }
 
-          const { ArkDockerInstaller } = await import('./games/ark-docker/installer');
-          
-          const baseDir = `/opt/ark-docker-${serverId}`;
-          const installer = new ArkDockerInstaller(baseDir);
-          
+          // const { ArkDockerInstaller } = await import('./games/ark-docker/installer');
+          // const baseDir = `/opt/ark-docker-${serverId}`;
+          // const installer = new ArkDockerInstaller(baseDir);
+          throw new Error('ARK Docker installer temporarily disabled');
+          /*
           if (writeProgress) {
             await appendInstallLog(serverId, `ARK Docker telepítés megkezdődött lokálisan...`);
           }
@@ -217,6 +217,7 @@ export async function installGameServer(
           return {
             success: true,
           };
+          */
         }
       } catch (arkError) {
         const error = arkError instanceof Error ? arkError.message : String(arkError);
@@ -395,8 +396,8 @@ export async function installGameServer(
     }
     
     if (!isARK || !sharedFilesInstalled) {
-      // Ha a gameConfig.installScript üres, betöltjük a GAME_INSTALLERS-ből
-      let installScript = gameConfig.installScript || GAME_INSTALLERS[gameType] || '';
+      // Ha a gameConfig.installScript üres, alapértelmezett üres scripttel dolgozunk (legacy rendszer ki van kapcsolva)
+      let installScript = gameConfig.installScript || '';
       
       // SteamCMD elérési út beállítása (globális SteamCMD használata)
       const globalSteamCMD = '/opt/steamcmd/steamcmd.sh';
@@ -462,7 +463,7 @@ fi
           .replace(/{serverId}/g, serverId)
           .replace(/{port}/g, port.toString())
           .replace(/{queryPort}/g, queryPort.toString())
-          .replace(/{steamPeerPort}/g, steamPeerPort.toString())
+          .replace(/{steamPeerPort}/g, (steamPeerPort || port + 2).toString())
           .replace(/{maxPlayers}/g, (config.maxPlayers || 10).toString())
           .replace(/{ram}/g, (config.ram || 2048).toString())
           .replace(/{name}/g, config.name || `Server-${serverId}`)
@@ -764,16 +765,15 @@ fi
       ...(gameType === 'SATISFACTORY' && serverConfiguration.beaconPort ? { beaconPort: serverConfiguration.beaconPort } : {}),
     };
     
-    // Moduláris config generátor használata
-    const configGenerator = GAME_CONFIG_GENERATORS[gameType];
-    const configContent = configGenerator ? configGenerator(configWithPort) : '';
+    // Moduláris config generátor használata (legacy kikapcsolva)
+    const configContent = ''; // GAME_CONFIG_GENERATORS legacy rendszer kikapcsolva
     if (configContent) {
-      let configPath = gameConfig.configPath;
+      let configPath = gameConfig.configPath || '';
       
       // ARK-nál az instance path-ot használjuk a konfigurációhoz
       if (isARK && sharedPath) {
         configPath = `${serverPath}/ShooterGame/Saved/Config/LinuxServer/GameUserSettings.ini`;
-      } else {
+      } else if (configPath) {
         configPath = configPath.replace(/{serverId}/g, serverId);
       }
       
@@ -854,7 +854,7 @@ MinDynamicBandwidth=1000
           await appendInstallLog(serverId, `Jogosultságok beállítva a konfigurációs mappán: ${configDir}`);
         }
       }
-      } else if (gameType === 'SEVEN_DAYS_TO_DIE') {
+      } else if (gameType === 'SEVEN_DAYS_TO_DIE' && gameConfig.configPath) {
         // 7 Days to Die-nál a serverconfig.xml fájlt hozzuk létre
         // A szerver felhasználó neve: seven{serverId}
         const serverUser = `seven${serverId}`;
@@ -872,7 +872,7 @@ MinDynamicBandwidth=1000
         if (writeProgress) {
           await appendInstallLog(serverId, `Konfigurációs fájl létrehozva: ${sevenDaysConfigPath}`);
         }
-    } else if (gameType === 'THE_FOREST') {
+    } else if (gameType === 'THE_FOREST' && gameConfig.configPath) {
       // The Forest-nál a configfilepath kötelező, de ha nincs configContent,
       // akkor is létrehozunk egy üres fájlt, hogy a szerver generáljon egy alapértelmezettet
       let configPath = gameConfig.configPath.replace(/{serverId}/g, serverId);

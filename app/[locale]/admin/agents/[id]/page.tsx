@@ -3,7 +3,6 @@ import { requireAdmin } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import { AgentDetail } from '@/components/admin/AgentDetail';
-import { AdminNavigation } from '@/components/admin/AdminNavigation';
 
 export default async function AgentDetailPage({
   params: { locale, id },
@@ -68,17 +67,12 @@ export default async function AgentDetailPage({
   });
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <AdminNavigation locale={locale} />
-      <main className="container mx-auto px-4 py-8">
-        <AgentDetail
-          agent={agent}
-          servers={servers}
-          recentTasks={recentTasks}
-          locale={locale}
-        />
-      </main>
-    </div>
+    <AgentDetail
+      agent={agent}
+      servers={servers}
+      recentTasks={recentTasks}
+      locale={locale}
+    />
   );
 }
 

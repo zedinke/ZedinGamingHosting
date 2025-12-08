@@ -48,7 +48,7 @@ export function HeroSection({ locale, translations, section }: HeroSectionProps)
           {/* Premium badge */}
           <div className="inline-flex items-center px-4 py-2 mb-8 bg-white/10 backdrop-blur-md rounded-full border border-white/20 hover:bg-white/20 transition-colors">
             <span className="text-sm font-medium text-white/90">
-              ✨ Legjobb Gaming Szerver Hosting
+              ✨ {t('hero.badge') || 'Best Gaming Server Hosting'}
             </span>
           </div>
 
@@ -79,11 +79,11 @@ export function HeroSection({ locale, translations, section }: HeroSectionProps)
 
           {/* Stats - premium layout */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mt-16 pt-16 border-t border-white/10">
-            {[
-              { value: '99.99%', label: 'Átlagos Uptime' },
-              { value: '100%', label: 'Flexibilitás' },
-              { value: '9', label: 'Szerver Helyszín' },
-              { value: '24/7', label: 'Támogatás' },
+            {[ 
+              { value: '99.99%', label: t('hero.stats.uptime') || 'Average Uptime' },
+              { value: '100%', label: t('hero.stats.flexibility') || 'Flexibility' },
+              { value: '9', label: t('hero.stats.locations') || 'Server Locations' },
+              { value: '24/7', label: t('hero.stats.support') || 'Support' },
             ].map((stat, index) => (
               <div
                 key={index}

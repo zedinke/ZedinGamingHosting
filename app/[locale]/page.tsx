@@ -20,7 +20,7 @@ export default async function HomePage({
   params: { locale: string };
 }) {
   // Ellenőrizzük, hogy a locale érvényes-e (pl. favicon.ico ne legyen locale)
-  const VALID_LOCALES = ['hu', 'en', 'es'];
+  const VALID_LOCALES = ['hu', 'en', 'es', 'fr'];
   const staticFileExtensions = ['.ico', '.txt', '.xml', '.json', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.css', '.js'];
   const isStaticFile = staticFileExtensions.some(ext => locale.toLowerCase().endsWith(ext));
   
@@ -154,9 +154,9 @@ export default async function HomePage({
 
         {/* Stats Section */}
         {statsSection ? (
-          <StatsSection section={statsSection} />
+          <StatsSection section={statsSection} locale={validLocale} />
         ) : (
-          <StatsSection />
+          <StatsSection locale={validLocale} />
         )}
 
         {/* Partners Section */}
@@ -181,7 +181,7 @@ export default async function HomePage({
         )}
       </main>
 
-      <Footer />
+      <Footer locale={validLocale} />
     </div>
   );
 }

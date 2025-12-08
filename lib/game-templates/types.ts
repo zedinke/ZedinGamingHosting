@@ -16,6 +16,7 @@ export enum GameTemplateType {
   ARK_ASCENDED = 'ARK_ASCENDED',
   ARK_EVOLVED = 'ARK_EVOLVED',
   RUST = 'RUST',
+  SEVEN_DAYS_TO_DIE = 'SEVEN_DAYS_TO_DIE',
 }
 
 /**

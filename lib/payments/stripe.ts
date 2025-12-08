@@ -136,7 +136,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   }
 
   // Előfizetés létrehozása
-  const subscription = await prisma.subscription.create({
+  await prisma.subscription.create({
     data: {
       userId,
       serverId,
@@ -148,12 +148,6 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
       currentPeriodStart: new Date(),
       currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     },
-  });
-
-  // Automatikus telepítés triggerelése
-  const { triggerAutoInstallOnPayment } = await import('@/lib/auto-install-on-payment');
-  triggerAutoInstallOnPayment(serverId).catch((error) => {
-    console.error('Auto-install error:', error);
   });
 }
 
@@ -297,27 +291,12 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
     });
   }
 
-  // Automatikus telepítés triggerelése (ha van szerver és még nincs telepítve)
-  if (subscription.serverId && subscription.server) {
-    // Use new modular installer system
-    try {
-      const { triggerAutoInstallOnPayment } = await import('@/lib/auto-install-on-payment-new');
-      const result = await triggerAutoInstallOnPayment(subscription.serverId, updatedInvoice?.id);
-      if (!result.success) {
-        console.error('Auto-install error:', result.error);
-      }
-    } catch (importError) {
-      // Fallback to old system if new system fails
-      console.error('Modular installer not available, using legacy:', importError);
-      try {
-        const { triggerAutoInstallOnPayment } = await import('@/lib/auto-install-on-payment');
-        triggerAutoInstallOnPayment(subscription.serverId, updatedInvoice?.id).catch((error) => {
-          console.error('Legacy auto-install error:', error);
-        });
-      } catch (error) {
-        console.error('Both installer systems failed:', error);
-      }
-    }
+  // Docker szerver provisioning triggerelése
+  if (subscription.serverId) {
+    const { triggerServerProvisioning } = await import('@/lib/provisioning/trigger-provisioning');
+    triggerServerProvisioning(subscription.serverId).catch((error) => {
+      console.error('[Stripe Webhook] Provisioning error:', error);
+    });
   }
 }
 

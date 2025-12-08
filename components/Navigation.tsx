@@ -18,22 +18,56 @@ export function Navigation({ locale }: NavigationProps) {
   const [translations, setTranslations] = useState<any>({});
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
+  const [translationsLoaded, setTranslationsLoaded] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [hasSession, setHasSession] = useState(false);
 
   useEffect(() => {
-    loadTranslations(locale, 'common').then(setTranslations);
-  }, [locale]);
+    setMounted(true);
+    // Set session state after mount to prevent hydration mismatch
+    if (session) {
+      setHasSession(true);
+    }
+    loadTranslations(locale, 'common')
+      .then((loadedTranslations) => {
+        setTranslations(loadedTranslations);
+        setTranslationsLoaded(true);
+      })
+      .catch((error) => {
+        console.error('Failed to load translations:', error);
+        setTranslationsLoaded(true); // Still set to true to prevent infinite loading
+      });
+  }, [locale, session]);
 
-  const t = (key: string) => getNestedValue(translations, key) || key;
+  const t = (key: string, fallback?: string) => {
+    // During initial render (server and first client render), always use fallback
+    // This prevents hydration mismatches
+    if (!translationsLoaded) {
+      return fallback || key;
+    }
+    
+    const value = getNestedValue(translations, key);
+    
+    // If translations are loaded and value exists and is different from key, return it
+    if (value && value !== key) {
+      return value;
+    }
+    
+    // If translations are loaded but key not found, return fallback or key
+    return fallback || key;
+  };
 
   const isActive = (path: string) => {
     return pathname?.includes(path);
   };
 
-  const locales = ['hu', 'en', 'es'];
+  const locales = ['hu', 'en', 'es', 'fr'];
+  // Use static fallback values to prevent hydration mismatches
   const localeNames: Record<string, string> = {
     hu: 'Magyar',
     en: 'English',
     es: 'Español',
+    fr: 'Français',
   };
 
   const changeLocale = (newLocale: string) => {
@@ -41,13 +75,17 @@ export function Navigation({ locale }: NavigationProps) {
     window.location.href = newPath;
   };
 
+  // Prevent hydration mismatch by ensuring consistent initial render
+  // Show login/register by default, then update after mount
+  const showAuthButtons = mounted ? hasSession : false;
+
   return (
-    <header className="border-b border-gray-200 bg-white sticky top-0 z-50 shadow-sm">
+    <header className="border-b border-gray-200 bg-white sticky top-0 z-50 shadow-sm" suppressHydrationWarning>
       <nav className="container mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
           {/* Logo */}
           <Link href={`/${locale}`} className="text-2xl font-bold text-gray-900 hover:text-gray-700 transition-colors">
-            ZedinGamingHosting
+            {t('nav.brand', 'ZedinGamingHosting')}
           </Link>
           
           {/* Desktop Navigation */}
@@ -60,7 +98,7 @@ export function Navigation({ locale }: NavigationProps) {
                   : 'text-gray-700'
               }`}
             >
-              {t('nav.pricing')}
+              {t('nav.pricing', 'Árazás')}
             </Link>
             <Link
               href={`/${locale}/games`}
@@ -70,7 +108,7 @@ export function Navigation({ locale }: NavigationProps) {
                   : 'text-gray-700'
               }`}
             >
-              {t('nav.games')}
+              {t('nav.games', 'Játékok')}
             </Link>
             <Link
               href={`/${locale}/system`}
@@ -80,10 +118,11 @@ export function Navigation({ locale }: NavigationProps) {
                   : 'text-gray-700'
               }`}
             >
-              {t('nav.system')}
+              {t('nav.system', 'Zed Gaming System')}
             </Link>
             
-            {session ? (
+            {/* Use showAuthButtons to prevent hydration mismatch */}
+            {showAuthButtons ? (
               <>
                 <Link
                   href={`/${locale}/dashboard`}
@@ -93,13 +132,13 @@ export function Navigation({ locale }: NavigationProps) {
                       : 'text-gray-700'
                   }`}
                 >
-                  {t('nav.dashboard')}
+                  {t('nav.dashboard', 'Vezérlőpult')}
                 </Link>
                 <button
                   onClick={() => signOut()}
                   className="text-gray-700 hover:text-gray-900 transition-colors font-medium"
                 >
-                  {t('nav.logout')}
+                  {t('nav.logout', 'Kijelentkezés')}
                 </button>
               </>
             ) : (
@@ -108,11 +147,11 @@ export function Navigation({ locale }: NavigationProps) {
                   href={`/${locale}/login`}
                   className="text-gray-700 hover:text-gray-900 transition-colors font-medium"
                 >
-                  {t('nav.login')}
+                  {t('nav.login', 'Bejelentkezés')}
                 </Link>
                 <Link href={`/${locale}/register`}>
                   <Button size="sm" className="bg-gray-900 text-white hover:bg-gray-800">
-                    {t('nav.register')}
+                    {t('nav.register', 'Regisztráció')}
                   </Button>
                 </Link>
               </>
@@ -120,7 +159,7 @@ export function Navigation({ locale }: NavigationProps) {
 
             {/* Language Switcher - 3 languages */}
             <div className="relative group">
-              <button className="px-3 py-1.5 text-sm font-medium text-gray-700 hover:text-gray-900 border border-gray-300 rounded-lg hover:border-gray-400 transition-colors flex items-center gap-1">
+              <button className="px-3 py-1.5 text-sm font-medium text-gray-700 hover:text-gray-900 border border-gray-300 rounded-lg hover:border-gray-400 transition-colors flex items-center gap-1" aria-label={t('nav.changeLanguage', 'Nyelv váltása')}>
                 {locale.toUpperCase()}
                 <ChevronDown className="w-4 h-4" />
               </button>
@@ -166,7 +205,7 @@ export function Navigation({ locale }: NavigationProps) {
                     : 'text-gray-700'
                 }`}
               >
-                {t('nav.pricing')}
+                {t('nav.pricing', 'Árazás')}
               </Link>
               <Link
                 href={`/${locale}/games`}
@@ -177,7 +216,7 @@ export function Navigation({ locale }: NavigationProps) {
                     : 'text-gray-700'
                 }`}
               >
-                {t('nav.games')}
+                {t('nav.games', 'Játékok')}
               </Link>
               <Link
                 href={`/${locale}/system`}
@@ -188,10 +227,10 @@ export function Navigation({ locale }: NavigationProps) {
                     : 'text-gray-700'
                 }`}
               >
-                {t('nav.system')}
+                {t('nav.system', 'Zed Gaming System')}
               </Link>
               
-              {session ? (
+              {showAuthButtons ? (
                 <>
                   <Link
                     href={`/${locale}/dashboard`}
@@ -202,7 +241,7 @@ export function Navigation({ locale }: NavigationProps) {
                         : 'text-gray-700'
                     }`}
                   >
-                    {t('nav.dashboard')}
+                    {t('nav.dashboard', 'Vezérlőpult')}
                   </Link>
                   <button
                     onClick={() => {
@@ -211,7 +250,7 @@ export function Navigation({ locale }: NavigationProps) {
                     }}
                     className="text-left text-gray-700 hover:text-gray-900 transition-colors font-medium py-2"
                   >
-                    {t('nav.logout')}
+                    {t('nav.logout', 'Kijelentkezés')}
                   </button>
                 </>
               ) : (
@@ -221,11 +260,11 @@ export function Navigation({ locale }: NavigationProps) {
                     onClick={() => setMobileMenuOpen(false)}
                     className="text-gray-700 hover:text-gray-900 transition-colors font-medium py-2"
                   >
-                    {t('nav.login')}
+                    {t('nav.login', 'Bejelentkezés')}
                   </Link>
                   <Link href={`/${locale}/register`} onClick={() => setMobileMenuOpen(false)}>
                     <Button size="sm" className="w-full bg-gray-900 text-white hover:bg-gray-800">
-                      {t('nav.register')}
+                      {t('nav.register', 'Regisztráció')}
                     </Button>
                   </Link>
                 </>
@@ -233,7 +272,7 @@ export function Navigation({ locale }: NavigationProps) {
 
               {/* Mobile Language Switcher - 3 languages */}
               <div className="border-t border-gray-200 pt-4 mt-4">
-                <p className="text-sm font-medium text-gray-700 mb-2">Nyelv / Language / Idioma</p>
+                <p className="text-sm font-medium text-gray-700 mb-2">{t('nav.languageLabel', 'Nyelv')}</p>
                 <div className="flex gap-2">
                   {locales.map((loc) => (
                     <button

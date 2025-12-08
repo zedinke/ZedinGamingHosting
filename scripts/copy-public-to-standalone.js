@@ -59,8 +59,22 @@ try {
     fs.mkdirSync(standaloneUploadsDir, { recursive: true });
     console.log('✓ Created standalone uploads directory');
   }
+  
+  // Copy .next/static to standalone/.next/static
+  const staticDir = path.join(workingDir, '.next/static');
+  const standaloneStaticDir = path.join(workingDir, '.next/standalone/.next/static');
+  
+  if (fs.existsSync(staticDir)) {
+    if (!fs.existsSync(standaloneStaticDir)) {
+      fs.mkdirSync(standaloneStaticDir, { recursive: true });
+    }
+    copyRecursive(staticDir, standaloneStaticDir);
+    console.log('✓ Static files copied to standalone build');
+  } else {
+    console.log('⚠️  Static directory not found, skipping');
+  }
 } catch (error) {
-  console.error('✗ Error copying public folder:', error);
+  console.error('✗ Error copying files:', error);
   process.exit(1);
 }
 

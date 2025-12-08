@@ -32,7 +32,7 @@ export default async function SystemPage({
 }: {
   params: { locale: string };
 }) {
-  const VALID_LOCALES = ['hu', 'en', 'es'];
+  const VALID_LOCALES = ['hu', 'en', 'es', 'fr'];
   const validLocale = VALID_LOCALES.includes(locale) ? locale : 'en';
   
   const t = getTranslations(validLocale, 'common');
@@ -435,7 +435,7 @@ export default async function SystemPage({
                 <div className="text-3xl font-bold text-gray-900 mb-2">
                   {t_system('stats.models')}
                 </div>
-                <div className="text-sm text-gray-600">Adatbázis modell</div>
+                <div className="text-sm text-gray-600">{t_system('stats.labels.models') || 'Database models'}</div>
               </div>
 
               <div className="text-center bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-6 shadow-lg">
@@ -443,7 +443,7 @@ export default async function SystemPage({
                 <div className="text-3xl font-bold text-gray-900 mb-2">
                   {t_system('stats.endpoints')}
                 </div>
-                <div className="text-sm text-gray-600">API endpoint</div>
+                <div className="text-sm text-gray-600">{t_system('stats.labels.endpoints') || 'API endpoints'}</div>
               </div>
 
               <div className="text-center bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-6 shadow-lg">
@@ -451,7 +451,7 @@ export default async function SystemPage({
                 <div className="text-3xl font-bold text-gray-900 mb-2">
                   {t_system('stats.components')}
                 </div>
-                <div className="text-sm text-gray-600">React komponens</div>
+                <div className="text-sm text-gray-600">{t_system('stats.labels.components') || 'React components'}</div>
               </div>
 
               <div className="text-center bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-6 shadow-lg">
@@ -459,7 +459,7 @@ export default async function SystemPage({
                 <div className="text-3xl font-bold text-gray-900 mb-2">
                   {t_system('stats.pages')}
                 </div>
-                <div className="text-sm text-gray-600">Oldal</div>
+                <div className="text-sm text-gray-600">{t_system('stats.labels.pages') || 'Pages'}</div>
               </div>
 
               <div className="text-center bg-gradient-to-br from-pink-50 to-pink-100 rounded-2xl p-6 shadow-lg">
@@ -467,7 +467,7 @@ export default async function SystemPage({
                 <div className="text-3xl font-bold text-gray-900 mb-2">
                   {t_system('stats.games')}
                 </div>
-                <div className="text-sm text-gray-600">Támogatott játék</div>
+                <div className="text-sm text-gray-600">{t_system('stats.labels.games') || 'Supported games'}</div>
               </div>
 
               <div className="text-center bg-gradient-to-br from-teal-50 to-teal-100 rounded-2xl p-6 shadow-lg">
@@ -475,7 +475,7 @@ export default async function SystemPage({
                 <div className="text-3xl font-bold text-gray-900 mb-2">
                   {t_system('stats.languages')}
                 </div>
-                <div className="text-sm text-gray-600">Nyelv</div>
+                <div className="text-sm text-gray-600">{t_system('stats.labels.languages') || 'Languages'}</div>
               </div>
 
               <div className="text-center bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-2xl p-6 shadow-lg">
@@ -483,7 +483,7 @@ export default async function SystemPage({
                 <div className="text-3xl font-bold text-gray-900 mb-2">
                   {t_system('stats.uptime')}
                 </div>
-                <div className="text-sm text-gray-600">Átlagos uptime</div>
+                <div className="text-sm text-gray-600">{t_system('stats.labels.uptime') || 'Average uptime'}</div>
               </div>
 
               <div className="text-center bg-gradient-to-br from-red-50 to-red-100 rounded-2xl p-6 shadow-lg">
@@ -491,7 +491,7 @@ export default async function SystemPage({
                 <div className="text-3xl font-bold text-gray-900 mb-2">
                   {t_system('stats.support')}
                 </div>
-                <div className="text-sm text-gray-600">Támogatás</div>
+                <div className="text-sm text-gray-600">{t_system('stats.labels.support') || 'Support'}</div>
               </div>
             </div>
           </div>
@@ -531,7 +531,7 @@ export default async function SystemPage({
         </section>
       </main>
 
-      <Footer />
+      <Footer locale={locale} />
     </div>
   );
 }

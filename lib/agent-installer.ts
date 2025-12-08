@@ -43,6 +43,15 @@ export async function installAgentViaSSH(
       }
 
       // SSH kapcsolat ellenőrzése
+      if (!config.keyPath && !config.password) {
+        logs.push('SSH kulcs vagy jelszó szükséges');
+        return {
+          success: false,
+          error: 'SSH kulcs vagy jelszó szükséges a kapcsolathoz',
+          logs,
+        };
+      }
+
       const sshTestCommand = config.keyPath
         ? `ssh -i ${config.keyPath} -p ${config.port} -o StrictHostKeyChecking=no ${config.user}@${config.host} "echo 'SSH connection successful'"`
         : `sshpass -p '${config.password}' ssh -p ${config.port} -o StrictHostKeyChecking=no ${config.user}@${config.host} "echo 'SSH connection successful'"`;

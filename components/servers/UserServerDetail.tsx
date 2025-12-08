@@ -14,7 +14,7 @@ import { CronJobManager } from './CronJobManager';
 import { SFTPInfo } from './SFTPInfo';
 import { UserServerBackupManager } from './UserServerBackupManager';
 import { UserGameConsoleManager } from './UserGameConsoleManager';
-import RustModStore from '@/components/games/RustModStore';
+// import RustModStore from '@/components/games/RustModStore';
 
 interface Server {
   id: string;
@@ -706,7 +706,8 @@ export function UserServerDetail({ server, locale }: UserServerDetailProps) {
 
       {activeTab === 'mods' && server.gameType === 'RUST' && (
         <div className="space-y-6">
-          <RustModStore serverId={server.id} serverName={server.name} />
+          {/* <RustModStore serverId={server.id} serverName={server.name} /> */}
+          <p className="text-muted-foreground">Mod store coming soon...</p>
         </div>
       )}
     </div>

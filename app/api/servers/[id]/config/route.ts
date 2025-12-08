@@ -66,7 +66,7 @@ export async function GET(
       try {
         const { ALL_GAME_SERVER_CONFIGS } = await import('@/lib/game-server-configs');
         const gameConfig = ALL_GAME_SERVER_CONFIGS[server.gameType];
-        if (gameConfig) {
+        if (gameConfig && gameConfig.configPath) {
           const configPath = gameConfig.configPath.replace(/{serverId}/g, server.id);
           const machine = server.agent.machine;
           

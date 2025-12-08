@@ -14,12 +14,13 @@
 import { TemplateManager } from '@/lib/game-templates/services/template-manager';
 import { GameTemplateType } from '@/lib/game-templates/types';
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/auth';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
     // Autentikáció
-    const session = await auth();
+    const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json(
         { success: false, error: 'Not authenticated' },
