@@ -10,7 +10,7 @@ config({ path: resolve(process.cwd(), '.env') });
 
 import { PortManager } from '@/lib/port-manager';
 import { prisma } from '@/lib/prisma';
-import { GameType } from '@prisma/client';
+import { GameType, ServerStatus } from '@prisma/client';
 import { logger } from '@/lib/logger';
 
 async function testPortManager() {
@@ -64,7 +64,7 @@ async function testPortManager() {
           id: testServerId,
           name: 'Test Server',
           gameType: GameType.SEVEN_DAYS_TO_DIE,
-          status: 'PROVISIONING',
+          status: ServerStatus.PROVISIONING,
           machineId: testMachine.id,
           agentId: testMachine.agents[0].id,
           userId: firstUser.id,
@@ -119,7 +119,7 @@ async function testPortManager() {
             id: testServerId2,
             name: 'Test Server 2',
             gameType: GameType.SEVEN_DAYS_TO_DIE,
-            status: 'PROVISIONING',
+            status: ServerStatus.PROVISIONING,
             machineId: testMachine.id,
             agentId: testMachine.agents[0].id,
             userId: firstUser.id,
