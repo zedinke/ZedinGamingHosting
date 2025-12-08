@@ -63,6 +63,16 @@ export class TemplateDeployer {
       // 3. Szerver könyvtár létrehozása
       const serverDir = `/opt/servers/${serverId}`;
       logger.info('Creating server directory', { serverId, serverDir });
+      
+      // Könyvtár létrehozása (ha még nincs)
+      try {
+        await mkdir(serverDir, { recursive: true });
+      } catch (error: any) {
+        // Ha már létezik, nem probléma
+        if (error.code !== 'EEXIST') {
+          throw error;
+        }
+      }
 
       // 4. Template letöltés (ha nincs lokálisan)
       const templateArchivePath = `/tmp/${template.id}-${template.version}.tar.gz`;
@@ -101,6 +111,7 @@ export class TemplateDeployer {
       const containerId = await this.startGameContainer(
         containerName,
         template,
+        templateId,
         serverId,
         serverDir,
         ports
@@ -244,11 +255,28 @@ export class TemplateDeployer {
 
     const portBindingStr = portBindings.join(' ');
 
+    // Volume mount meghatározása játék típus alapján
+    let volumeMount = '';
+    switch (templateId) {
+      case 'SEVEN_DAYS_TO_DIE':
+        volumeMount = `-v ${serverDir}/server:/opt/7days2die`;
+        break;
+      case 'ARK_EVOLVED':
+      case 'ARK_ASCENDED':
+        volumeMount = `-v ${serverDir}/server:/opt/ark-server`;
+        break;
+      case 'RUST':
+        volumeMount = `-v ${serverDir}/server:/opt/rust-server`;
+        break;
+      default:
+        volumeMount = `-v ${serverDir}/server:/opt/game-server`;
+    }
+
     // Container run parancs
     const runCommand = `docker run -d \\
       --name ${containerName} \\
       --restart unless-stopped \\
-      -v ${serverDir}/server:/opt/7days2die \\
+      ${volumeMount} \\
       ${portBindingStr} \\
       ${template.dockerImage}`;
 

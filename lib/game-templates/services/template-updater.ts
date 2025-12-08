@@ -5,7 +5,6 @@
 
 import { prisma } from '@/lib/prisma';
 import { GameType } from '@prisma/client';
-import { executeSSHCommand } from '@/lib/ssh-client';
 import { ContainerManager } from './container-manager';
 import { logger } from '@/lib/logger';
 
@@ -79,7 +78,6 @@ export class TemplateUpdater {
       logs.push('SteamCMD update futtatása...');
       const serverDir = `/opt/servers/${serverId}/server`;
       const updateResult = await this.runSteamCMDUpdate(
-        server.machine,
         serverDir,
         steamAppId,
         logs
@@ -130,39 +128,33 @@ export class TemplateUpdater {
   }
 
   /**
-   * SteamCMD update futtatása SSH-n keresztül
+   * SteamCMD update futtatása (agent gépen közvetlenül)
    */
   private static async runSteamCMDUpdate(
-    machine: any,
     serverDir: string,
     steamAppId: number,
     logs: string[]
   ): Promise<{ success: boolean; error?: string }> {
     try {
-      const sshConfig = {
-        host: machine.ipAddress,
-        port: machine.sshPort,
-        user: machine.sshUser,
-        keyPath: machine.sshKeyPath || undefined,
-      };
-
-      if (!sshConfig.keyPath) {
-        throw new Error('SSH key path is required');
-      }
-
-      // SteamCMD update parancs
+      // SteamCMD update parancs (agent gépen közvetlenül fut, nem SSH-n keresztül)
       const updateCommand = `cd /opt/steamcmd && ./steamcmd.sh +force_install_dir ${serverDir} +login anonymous +app_update ${steamAppId} validate +quit`;
 
       logs.push(`SteamCMD parancs: ${updateCommand}`);
 
-      const result = await executeSSHCommand(sshConfig, updateCommand, 600000); // 10 perc timeout
+      const { exec } = await import('child_process');
+      const { promisify } = await import('util');
+      const execAsync = promisify(exec);
 
-      if (result.exitCode !== 0) {
-        return {
-          success: false,
-          error: `SteamCMD update failed: ${result.stderr}`,
-        };
+      const { stdout, stderr } = await execAsync(updateCommand, {
+        timeout: 600000, // 10 perc timeout
+      });
+
+      if (stderr && !stderr.includes('Success')) {
+        // SteamCMD néha stderr-re írja a kimenetet, de az nem feltétlenül hiba
+        logs.push(`SteamCMD stderr: ${stderr}`);
       }
+
+      logs.push(`SteamCMD stdout: ${stdout}`);
 
       return { success: true };
     } catch (error: any) {
