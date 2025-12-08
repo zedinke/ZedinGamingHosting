@@ -66,7 +66,7 @@ async function testPortManager() {
           id: testServerId,
           name: 'Test Server',
           gameType: GameType.SEVEN_DAYS_TO_DIE,
-          status: ServerStatus.PROVISIONING,
+          status: ServerStatus.STARTING,
           machineId: testMachine.id,
           agentId: testMachine.agents[0].id,
           userId: firstUser.id,
