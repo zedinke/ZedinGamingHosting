@@ -243,7 +243,7 @@ export class PortManager {
     maxPort?: number;
     ports: string[];
   } {
-    const requirements: Record<GameType, { minPort?: number; maxPort?: number; ports: string[] }> = {
+    const requirements: Partial<Record<GameType, { minPort?: number; maxPort?: number; ports: string[] }>> = {
       // 7 Days to Die
       SEVEN_DAYS_TO_DIE: {
         minPort: 26900,
@@ -267,15 +267,34 @@ export class PortManager {
         maxPort: 29000,
         ports: ['port', 'queryPort', 'rconPort', 'rustPlusPort'],
       },
-      // Alapértelmezett
-      OTHER: {
+      // Valheim
+      VALHEIM: {
+        minPort: 2456,
+        maxPort: 2500,
+        ports: ['port', 'queryPort'],
+      },
+      // Minecraft
+      MINECRAFT: {
+        minPort: 25565,
+        maxPort: 25600,
+        ports: ['port', 'queryPort', 'rconPort'],
+      },
+      // CS2
+      CS2: {
         minPort: 27015,
-        maxPort: 30000,
-        ports: ['port'],
+        maxPort: 27100,
+        ports: ['port', 'queryPort', 'rconPort'],
       },
     };
 
-    return requirements[gameType] || requirements.OTHER;
+    // Default értékek minden más játékhoz
+    const defaultRequirements = {
+      minPort: 27015,
+      maxPort: 30000,
+      ports: ['port'],
+    };
+
+    return requirements[gameType] || defaultRequirements;
   }
 
   /**
