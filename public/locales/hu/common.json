@@ -1,4 +1,4 @@
-{
+﻿{
   "nav": {
     "home": "Kezdőlap",
     "pricing": "Árazás",
@@ -9,19 +9,66 @@
     "login": "Bejelentkezés",
     "register": "Regisztráció",
     "logout": "Kijelentkezés",
-    "system": "Zed Gaming System"
+    "system": "Zed Gaming System",
+    "brand": "ZedinGamingHosting",
+    "changeLanguage": "Nyelv váltása",
+    "languageLabel": "Nyelv"
   },
   "hero": {
     "title": "A legjobb gaming szerver hosting",
-    "subtitle": "Teljesítmény, megbízhatóság és könnyű kezelés egy helyen",
-    "cta": "Kezdj el most",
+    "subtitle": "Teljesítmény, megbízhatóság és egyszerű kezelés egy helyen",
+    "cta": "Kezdd el",
     "learnMore": "Tudj meg többet",
-    "badge": "Legjobb Gaming Szerver Hosting",
+    "badge": "Legjobb gaming szerver hosting",
     "stats": {
-      "uptime": "Átlagos Uptime",
-      "flexibility": "Flexibilitás",
-      "locations": "Szerver Helyszín",
+      "uptime": "Átlagos rendelkezésre állás",
+      "flexibility": "Rugalmasság",
+      "locations": "Szerver helyszínek",
       "support": "Támogatás"
+    }
+  },
+  "home": {
+    "features": {
+      "title": "Miért válassz minket?",
+      "subtitle": "Minden, ami egy profi gaming szerverhez kell",
+      "items": {
+        "fast": {
+          "title": "Gyors és megbízható",
+          "description": "SSD tárhely és erős CPU-k a sima teljesítményért."
+        },
+        "ddos": {
+          "title": "DDoS védelem",
+          "description": "Automatikus DDoS védelem minden szerveren."
+        },
+        "management": {
+          "title": "Egyszerű kezelés",
+          "description": "Intuitív panel konzollal, fájlkezelővel és backupokkal."
+        },
+        "support": {
+          "title": "0-24 támogatás",
+          "description": "Szakértő csapat Discordon, emailben és ticketen."
+        },
+        "instant": {
+          "title": "Azonnali indulás",
+          "description": "Percek alatt kész szerver automatizált telepítéssel."
+        },
+        "multilang": {
+          "title": "Többnyelvű",
+          "description": "Felületek, dokumentáció és support több nyelven."
+        }
+      }
+    },
+    "stats": {
+      "title": "Számok, amik számítanak",
+      "subtitle": "Játékosok és partnerek ezrei bíznak bennünk",
+      "satisfiedUsers": "Elégedett felhasználó",
+      "activeServers": "Aktív szerver",
+      "countries": "Ország",
+      "uptime": "Uptime garancia"
+    },
+    "partners": {
+      "title": "Hivatalos partnerek",
+      "subtitle": "Játékstúdiók ajánlásával"
     }
   },
   "auth": {
@@ -31,22 +78,26 @@
     "forgotPassword": "Elfelejtetted a jelszavad?",
     "rememberMe": "Emlékezz rám",
     "signIn": "Bejelentkezés",
+    "signInSubtitle": "Jelentkezz be a fiókodba",
     "signUp": "Regisztráció",
     "signInWith": "Bejelentkezés {{provider}} segítségével",
     "signInWithGoogle": "Bejelentkezés Google-lal",
-    "signInWithDiscord": "Bejelentkezés Discord-dal",
+    "signInWithDiscord": "Bejelentkezés Discorddal",
     "orContinueWith": "vagy folytasd email/jelszóval",
     "noAccount": "Nincs még fiókod?",
     "hasAccount": "Van már fiókod?",
     "resetPassword": "Jelszó visszaállítása",
-    "verifyEmail": "Email megerősítése"
+    "verifyEmail": "Email megerősítése",
+    "bejelentkezés": "Bejelentkezés",
+    "regisztráció": "Regisztráció"
   },
   "dashboard": {
     "title": "Vezérlőpult",
     "servers": "Szerverek",
     "billing": "Számlázás",
     "support": "Támogatás",
-    "settings": "Beállítások"
+    "settings": "Beállítások",
+    "subscriptions": "Előfizetések"
   },
   "server": {
     "status": "Státusz",
@@ -64,6 +115,13 @@
     "config": "Konfiguráció",
     "fileManager": "Fájlkezelő"
   },
+  "maintenance": {
+    "title": "Karbantartás alatt",
+    "defaultMessage": "Az oldal jelenleg karbantartás alatt áll. Kérjük, látogass vissza később.",
+    "waiting": "Pillanat, hamarosan visszatérünk...",
+    "marioTitle": "Játssz Super Mario-t, amíg vársz!",
+    "adminHint": "Ha admin vagy, jelentkezz be az admin felületre."
+  },
   "common": {
     "save": "Mentés",
     "cancel": "Mégse",
@@ -73,7 +131,7 @@
     "search": "Keresés",
     "loading": "Betöltés...",
     "error": "Hiba történt",
-    "success": "Sikeres művelet",
+    "success": "Siker",
     "yes": "Igen",
     "no": "Nem",
     "confirm": "Megerősítés",
@@ -86,7 +144,7 @@
     "download": "Letöltés",
     "upload": "Feltöltés",
     "filter": "Szűrés",
-    "showMore": "Mutass többet",
+    "showMore": "Több",
     "showLess": "Kevesebb",
     "user": "Felhasználó",
     "role": "Szerep",
@@ -97,34 +155,8 @@
     "failed": "Sikertelen",
     "message": "Üzenet",
     "notAvailable": "Nem elérhető",
-    "months": "Januar,Február,Március,Április,Május,Június,Július,Augusztus,Szeptember,Október,November,December"
+    "months": "Január,Február,Március,Április,Május,Június,Július,Augusztus,Szeptember,Október,November,December"
   },
-  "support": {
-    "ticket": "Támogatási Ticket",
-    "zedAi": "Zed AI"
-  },
-  "features": {
-    "features": "Funkciók",
-    "videoDemo": "Bemutató Videó"
-  },
-  "testimonials": {
-    "includes": "Tartalmazza:"
-  },
-  "cms": {
-    "pages": "Oldalak"
-  },
-  "mods": {
-    "install": "Telepítés"
-  },
-  "lang": {
-    "hungarian": "Magyar",
-    "english": "English",
-    "spanish": "Español"
-  },
-  "tickets": {
-    "category": "Kategória",
-    "priority": "Prioritás"
-  }
   "billing": {
     "title": "Számlázás",
     "invoices": "Számlák",
@@ -149,27 +181,28 @@
   "games": {
     "title": "Játékok",
     "selectPackage": "Válassz csomagot",
-    "noPackages": "Jelenleg nincs elérhető csomag",
+    "noPackages": "Nincs elérhető csomag",
     "loading": "Csomagok betöltése...",
-    "error": "Hiba történt a csomagok betöltése során",
+    "error": "Hiba a csomagok betöltésekor",
     "label": "Játékok",
     "game": "Játék",
     "slot": "Slot",
     "slots": "Slotok",
-    "details": "Játék Részletek",
+    "details": "Játék részletek",
     "rust": "Rust",
     "ark": "ARK",
     "minecraft": "Minecraft"
   },
   "pricing": {
-  "time": {
-    "month": "hó",
-    "year": "év"
-  },
-  "pagination": {
-    "page": "Oldal",
-    "previous": "Előző",
-    "next": "Következő"
+    "time": {
+      "month": "hó",
+      "year": "év"
+    },
+    "pagination": {
+      "page": "Oldal",
+      "previous": "Előző",
+      "next": "Következő"
+    }
   },
   "admin": {
     "title": "Admin",
@@ -182,214 +215,326 @@
     "machines": "Gépek",
     "statistics": "Statisztikák",
     "tasks": "Feladatok",
-    "lastHeartbeat": "Utolsó Heartbeat",
+    "lastHeartbeat": "Utolsó heartbeat",
     "capabilities": "Képességek",
-    "systemHealth": "Rendszer Egészség",
-    "recentActivity": "Legutóbbi Aktivitások"
-  },dmin": {
-    "title": "Admin",
-    "dashboard": "Vezérlőpult",
-    "servers": "Szerverek",
-    "users": "Felhasználók",
-    "invoices": "Számlák",
-    "settings": "Beállítások",
-    "cms": "Tartalomkezelés"
+    "systemHealth": "Rendszer egészség",
+    "recentActivity": "Legutóbbi aktivitások",
+    "loadUsersError": "Felhasználók betöltése sikertelen",
+    "loadServersError": "Szerverek betöltése sikertelen",
+    "mods": {
+      "subtitle": " Modok telepítése egy kattintással",
+      "oxideWarning": "Győződj meg róla, hogy az Oxide keretrendszer telepítve van."
+    }
   },
   "system": {
     "title": "Zed Gaming System",
     "subtitle": "Fedezd fel a jövő gaming szerver hosting technológiáját",
     "intro": {
       "title": "Üdvözöl a Zed Gaming System",
-      "description": "A Zed Gaming System egy forradalmi gaming szerver hosting platform, amely mindent megold, amire egy szerver tulajdonosnak szüksége lehet. Nem csak egy egyszerű hosting szolgáltatás – ez egy teljes körű rendszer, amely gondoskodik mindenről, a szerver létrehozásától a számlázásig, a monitoringtól a támogatásig. Modern technológiákkal, skálázható architektúrával és felhasználóbarát felülettel rendelkezik, amely lehetővé teszi, hogy percek alatt létrehozd és kezeld szervereidet."
+      "description": "A Zed Gaming System egy forradalmi gaming szerver hosting platform, amely mindent megold, amire egy szerver tulajdonosnak szüksége lehet. Nem csak egy egyszerű hosting szolgáltatás  ez egy teljes körű rendszer a szerver létrehozásától a számlázáson át a monitoringig és támogatásig."
     },
     "games": {
-      "title": "Támogatott Játékok",
-      "subtitle": "A Zed Gaming System több mint 20 népszerű játékot támogat, és folyamatosan bővül",
+      "title": "Támogatott játékok",
+      "subtitle": "20+ népszerű játék és folyamatosan bővül",
       "ark": {
         "title": "ARK: Survival Evolved & ARK: Survival Ascended",
-        "description": "Építsd fel a saját dinoszaurusz birodalmadat! Mindkét ARK verziót támogatjuk, teljes mod támogatással és egyedi konfigurációval. Automatikus frissítések, backup kezelés és teljes konzol hozzáférés biztosított."
+        "description": "Építsd fel a saját dinoszaurusz birodalmadat teljes mod támogatással."
       },
       "survival": {
-        "title": "Survival Játékok",
-        "description": "Rust, Valheim, 7 Days to Die, Conan Exiles, DayZ, Project Zomboid, Palworld, Enshrouded, Sons of the Forest, The Forest, Grounded, V Rising, Don't Starve Together – minden kedvenc survival játékod egy helyen! Minden játékhoz optimalizált konfiguráció és teljes fájlkezelő hozzáférés."
+        "title": "Survival játékok",
+        "description": "Rust, Valheim, 7 Days to Die, Conan Exiles és még sok más optimalizált konfigurációval."
       },
       "minecraft": {
         "title": "Minecraft",
-        "description": "Java és Bedrock szerverek, mod támogatás, plugin kezelés – a Minecraft szervered tökéletes otthona. Támogatjuk a Paper, Spigot, Forge és Fabric szervereket is, teljes plugin és mod kompatibilitással."
+        "description": "Java és Bedrock, mod támogatás, plugin kezelés  minden egyben."
       },
       "fps": {
-        "title": "FPS Játékok",
-        "description": "CS2, CS:GO, Left 4 Dead 2, Killing Floor 2, Insurgency: Sandstorm, Squad, Hell Let Loose, Post Scriptum – intenzív akció minden percben. Alacsony késleltetés, magas teljesítmény és stabil kapcsolat garantálva."
+        "title": "FPS játékok",
+        "description": "CS2, CS:GO, Squad és társai alacsony késleltetéssel."
       },
       "other": {
-        "title": "És még sok más!",
-        "description": "Terraria, Satisfactory, és még sok más játék. Ha a játékod támogat szerver hostingot, valószínűleg mi is támogatjuk! Folyamatosan bővítjük a támogatott játékok listáját, hogy minden játékos megtalálja a számára megfelelő szervert."
+        "title": "És még sok más",
+        "description": "Terraria, Satisfactory és további játékok, folyamatos bővítés mellett."
       }
     },
     "features": {
-      "title": "Rendszer Funkciók",
-      "subtitle": "Tekintsd meg, mire képes a Zed Gaming System",
+      "title": "Rendszer funkciók",
+      "subtitle": "Nézd meg, mire képes a Zed Gaming System",
       "serverManagement": {
-        "title": "Teljes Szerver Kezelés",
-        "description": "Indítsd, állítsd le vagy indítsd újra szervereidet egy kattintással. Valós idejű monitoring, fájlkezelő, konzol hozzáférés, szerver konfiguráció szerkesztése, backup kezelés és szerver sablonok – minden, amire szükséged van, egy helyen. Több mint 100+ API endpoint biztosítja a teljes kontrollt."
+        "title": "Teljes szerverkezelés",
+        "description": "Indítás, leállítás, újraindítás, valós idejű monitoring, fájlkezelő, konzol, backup és sablonok egy helyen."
       },
       "billing": {
-        "title": "Intelligens Számlázás",
-        "description": "Több fizetési mód támogatás (Stripe, PayPal, Revolut), automatikus számlázás, kuponok, előfizetések kezelése, PDF számla generálás, ÁFA kezelés, számlázási adatok kezelése – a pénzügyek soha nem voltak ilyen egyszerűek. Automatikus webhook kezelés és fizetési események feldolgozása."
+        "title": "Okos számlázás",
+        "description": "Stripe, PayPal, Revolut, automatikus számlák, kuponok, előfizetések és PDF számlák."
       },
       "monitoring": {
-        "title": "Valós Idejű Monitoring",
-        "description": "Kövesd szervereid teljesítményét valós időben Server-Sent Events (SSE) technológiával. CPU, RAM, Disk használat, játékosok száma, szerver státusz, logok streamelése, metrikák és health check endpoint – minden információ az ujjaid hegyén, valós időben."
+        "title": "Valós idejű monitoring",
+        "description": "CPU, RAM, tárhely, játékosszám és log streamelés SSE technológiával."
       },
       "automation": {
         "title": "Automatizáció",
-        "description": "Automatikus szerver provisioning, backup kezelés, frissítések, port kezelés, cron job végrehajtás, task feldolgozás, automatikus terheléselosztás – a rendszer gondoskodik mindenről, hogy te csak játszhass. Agent-based architektúra biztosítja a skálázhatóságot és megbízhatóságot."
+        "description": "Provisioning, backup, frissítések, portkezelés, cron és terheléselosztás automatizálva."
       },
       "support": {
-        "title": "24/7 Támogatás",
-        "description": "Integrált ticket rendszer kategóriákkal és prioritásokkal, AI chat támogatás magyar nyelvű válaszokkal (Ollama integráció), gyors válaszidő, ticket státusz követés, üzenetkezelés – segítünk, amikor szükséged van rá. Többnyelvű támogatás magyar és angol nyelven."
+        "title": "0-24 támogatás",
+        "description": "Ticket rendszer kategóriákkal és prioritással, AI chat támogatás."
       },
       "cms": {
-        "title": "Teljes CMS Rendszer",
-        "description": "Blog és hírek kezelése kategóriákkal és címkékkel, FAQ rendszer, slideshow kezelés képek és videókkal, dinamikus árazási táblázatok, vásárlói vélemények (testimonials), csapat tagok kezelése, játékok és kategóriák kezelése, statikus oldalak építő, SEO beállítások – minden, amit egy modern weboldalhoz szükséges, beépítve."
+        "title": "Teljes CMS",
+        "description": "Blog, hírek, FAQ, slideshow, dinamikus árak, testimonialok és SEO beállítások."
       },
       "security": {
         "title": "Biztonság",
-        "description": "Szerepkör alapú hozzáférés-vezérlés (RBAC) USER, MODERATOR, ADMIN szerepkörökkel, audit logok minden rendszereseményhez, email verifikáció, kétfaktoros autentikáció (2FA) támogatás, biztonságos jelszó hashelés (bcrypt), session kezelés (JWT, 30 napos érvényesség), OAuth integráció (Google, Discord), IP cím és user agent naplózás – adataid biztonságban."
+        "description": "RBAC szerepkörök, audit logok, email verifikáció, 2FA, biztonságos jelszó és OAuth integráció."
       },
       "scalability": {
         "title": "Skálázhatóság",
-        "description": "Agent-based architektúra több szerver gép támogatással, automatikus terheléselosztás, SSH kapcsolat kezelés, agent heartbeat monitoring, task feldolgozás háttérben, resource kapacitás követés, szerver gépek (machines) kezelése – a rendszer növekszik veled, akár több ezer szerver kezelésére is képes."
+        "description": "Agent alapú architektúra több géppel, automatikus terheléselosztással."
       },
       "userManagement": {
         "title": "Felhasználókezelés",
-        "description": "Email/jelszó és OAuth alapú regisztráció (Google, Discord), email verifikáció, jelszó visszaállítás, profil kezelés avatar feltöltéssel, szerepkör kezelés, felhasználói dashboard statisztikákkal, beállítások kezelése – minden felhasználói funkció egy helyen."
+        "description": "Email/OAuth regisztráció, jelszó reset, avatar, szerepkörök és statisztikák."
       },
       "adminPanel": {
-        "title": "Admin Vezérlőpult",
-        "description": "Teljes admin vezérlőpult statisztikákkal, felhasználókezelés kereséssel és szűréssel, szerver kezelés minden szerverhez, előfizetés és számlázás kezelés, support ticket rendszer, CMS kezelés, rendszerbeállítások, analytics dashboard, audit logok, webhook kezelés, téma szerkesztő – teljes rendszerirányítás egy helyen."
+        "title": "Admin vezérlőpult",
+        "description": "Statisztikák, felhasználókezelés, szerverek, előfizetések, ticketek, CMS és beállítások egy helyen."
       },
       "api": {
-        "title": "API és Integrációk",
-        "description": "100+ RESTful API endpoint, Server-Sent Events (SSE) támogatás valós idejű adatokhoz, webhook rendszer eseményekhez, API dokumentáció, több fizetési provider integráció (Stripe, PayPal, Revolut), email rendszer (Nodemailer, Hestia CP SMTP), PDF generálás (Puppeteer) – minden integráció egy helyen."
+        "title": "API és integrációk",
+        "description": "100+ REST API, SSE, webhookok, dokumentáció és fizetési integrációk."
       },
       "multilanguage": {
         "title": "Többnyelvűség",
-        "description": "Teljes magyar és angol nyelvi támogatás, automatikus nyelvváltás URL alapján, server-side és client-side fordítások, lokalizált email sablonok, dinamikus tartalom több nyelven – a rendszer tökéletesen működik mindkét nyelven."
+        "description": "Teljes magyar, angol, spanyol és francia támogatás, automatikus nyelvváltás URL alapján."
       }
     },
     "why": {
       "title": "Miért a Zed Gaming System?",
-      "description": "Mert ez nem csak egy hosting szolgáltatás – ez egy teljes rendszer, amely gondoskodik mindenről. Nem kell különböző szolgáltatásokat kombinálnod, nem kell bonyolult konfigurációkkal bajlódnod. Minden egy helyen, egyszerűen, gyorsan, megbízhatóan. Modern technológiákkal épített rendszer (Next.js 14, TypeScript, Prisma ORM), amely garantálja a teljesítményt és a megbízhatóságot. Agent-based architektúrával skálázható, és folyamatosan fejlesztjük, hogy mindig a legjobb élményt nyújtsuk."
+      "description": "Mert ez nem csak hosting, hanem egy teljes rendszer modern technológiákkal és skálázható architektúrával."
     },
     "technical": {
-      "title": "Technikai Részletek",
-      "subtitle": "A rendszer mögött álló technológiák",
+      "title": "Technikai részletek",
+      "subtitle": "A rendszer mögötti technológiák",
       "frontend": {
         "title": "Frontend",
-        "description": "Next.js 14 App Router, React, TypeScript, Tailwind CSS – modern, gyors és reszponzív felület minden eszközön."
+        "description": "Next.js 14 App Router, React, TypeScript, Tailwind CSS."
       },
       "backend": {
         "title": "Backend",
-        "description": "Next.js API Routes, Server Actions, Prisma ORM, MySQL/PostgreSQL – robusztus és skálázható backend architektúra."
+        "description": "Next.js API Routes, Server Actions, Prisma ORM, MySQL/PostgreSQL."
       },
       "database": {
         "title": "Adatbázis",
-        "description": "25+ adatbázis modell, 10+ enum típus, teljes kapcsolatok kezelése, automatikus migrációk – strukturált és megbízható adatkezelés."
+        "description": "25+ modell, 10+ enum, teljes kapcsolatkezelés és automatikus migrációk."
       },
       "deployment": {
         "title": "Telepítés",
-        "description": "Docker támogatás, Standalone Build, PM2 process manager, Hestia CP integráció – könnyű telepítés és karbantartás."
+        "description": "Docker, standalone build, PM2, Hestia CP integráció könnyű üzemeltetéssel."
       }
     },
     "cta": {
       "title": "Készen állsz?",
       "description": "Csatlakozz a jövő gaming szerver hosting technológiájához",
-      "button": "Kezdj el most"
+      "button": "Kezdd el most"
     },
     "stats": {
-      "title": "Rendszer Statisztikák",
+      "title": "Rendszer statisztikák",
       "models": "25+ adatbázis modell",
       "endpoints": "100+ API endpoint",
       "components": "80+ React komponens",
       "pages": "50+ oldal",
       "games": "20+ támogatott játék",
-      "languages": "3 nyelv (magyar, angol, spanyol)",
+      "languages": "4 nyelv",
       "uptime": "99.99% átlagos uptime",
-      "support": "24/7 támogatás"
+      "support": "0-24 támogatás",
+      "labels": {
+        "models": "Adatbázis modellek",
+        "endpoints": "API endpointok",
+        "components": "React komponensek",
+        "pages": "Oldalak",
+        "games": "Támogatott játékok",
+        "languages": "Nyelvek",
+        "uptime": "Átlagos uptime",
+        "support": "Támogatás"
+      }
     }
+  },
+  "support": {
+    "ticket": "Támogatási ticket",
+    "zedAi": "Zed AI"
+  },
+  "features": {
+    "features": "Funkciók",
+    "videoDemo": "Bemutató videó"
+  },
+  "testimonials": {
+    "includes": "Tartalmazza"
+  },
+  "cms": {
+    "pages": "Oldalak"
+  },
+  "mods": {
+    "install": "Telepítés"
+  },
+  "lang": {
+    "hungarian": "Magyar",
+    "english": "English",
+    "spanish": "Español",
+    "french": "Français"
+  },
+  "tickets": {
+    "category": "Kategória",
+    "priority": "Prioritás"
   },
   "pages": {
     "pricing": {
       "title": "Árazás",
-      "subtitle": "Válassz egy csomagot, amely megfelel az igényeidnek. Minden csomag tartalmaz DDoS védelmet és 24/7 támogatást.",
-      "monthly": "Havonként",
-      "yearly": "Évente"
+      "subtitle": "Válassz csomagot DDoS védelemmel és 0-24 támogatással.",
+      "monthly": "Havi",
+      "yearly": "Éves",
+      "noPlans": "Nincs elérhető árazási csomag",
+      "showComparison": "Összehasonlítás megjelenítése",
+      "hideComparison": "Összehasonlítás elrejtése",
+      "faqTitle": "Kérdések?",
+      "faqSubtitle": "Nem tudod melyik csomag a megfelelő? Írj nekünk!",
+      "contactSupport": "Lépj kapcsolatba a támogatással"
     },
     "games": {
-      "title": "Játék Szerverek",
-      "subtitle": "Válassz egy játékot és csomagot, hogy elindítsd a saját szerveredet"
+      "title": "Játékszerverek",
+      "subtitle": "Válassz játékot és csomagot a saját szerveredhez",
+      "comingSoon": "A játékok szekció hamarosan érkezik..."
+    },
+    "cta": {
+      "title": "Készen állsz?",
+      "viewPricing": "Árak megtekintése"
+    },
+    "zedSystem": {
+      "title": "Zed Gaming System",
+      "subtitle": "Teljes gaming szerver hosting SaaS",
+      "description": "Béreld a teljes platformot havidíjért: szerverkezelés, fizetések, CMS, admin és még több.",
+      "featuresTitle": "Miért válaszd a Zed Gaming System-et?",
+      "features": {
+        "games": {
+          "title": "60+ játék támogatás",
+          "description": "Automatizált telepítés és kezelés 60+ játékhoz"
+        },
+        "payments": {
+          "title": "Integrált fizetések",
+          "description": "Stripe, PayPal, Revolut beépítve"
+        },
+        "cms": {
+          "title": "Teljes CMS",
+          "description": "Blog, GYIK, oldalépítő, ár táblák és több"
+        },
+        "ai": {
+          "title": "AI chat támogatás",
+          "description": "Helyben futó AI chat lokalizált válaszokkal"
+        },
+        "monitoring": {
+          "title": "Fejlett monitoring",
+          "description": "Valós idejű monitoring, analitika, teljesítménymetrikák"
+        },
+        "security": {
+          "title": "Biztonságos és skálázható",
+          "description": "Agent alapú architektúra, automatikus terheléselosztás"
+        }
+      },
+      "pricing": {
+        "title": "Válassz csomagot",
+        "subtitle": "Minden csomag tartalmazza a teljes rendszert és frissítéseket"
+      },
+      "cta": {
+        "title": "Készen állsz a saját hosting platformodra?",
+        "subtitle": "Válassz csomagot és kezdd el még ma!",
+        "button": "Csomagok megtekintése"
+      }
     },
     "admin": {
-      "title": "Admin Vezérlőpult",
-      "welcome": "Üdvözöljük az admin felületen",
-      "allUsers": "Összes Felhasználó",
-      "allServers": "Összes Szerver",
-      "activeSubscriptions": "Aktív Előfizetések",
-      "totalRevenue": "Összes Bevétel",
-      "openTickets": "Nyitott Ticketek",
-      "licenseInfo": "Licenc Információk",
-      "systemHealth": "Rendszer Egészség",
-      "recentUsers": "Legutóbbi Felhasználók",
-      "recentServers": "Legutóbbi Szerverek"
+      "title": "Admin vezérlőpult",
+      "welcome": "Üdvözlünk az admin felületen",
+      "allUsers": "Összes felhasználó",
+      "allServers": "Összes szerver",
+      "activeSubscriptions": "Aktív előfizetések",
+      "totalRevenue": "Összes bevétel",
+      "openTickets": "Nyitott ticketek",
+      "licenseInfo": "Licenc információk",
+      "systemHealth": "Rendszer egészség",
+      "recentUsers": "Legutóbbi felhasználók",
+      "recentServers": "Legutóbbi szerverek",
+      "loadUsersError": "Felhasználók betöltése sikertelen",
+      "loadServersError": "Szerverek betöltése sikertelen"
     },
     "dashboard": {
       "title": "Vezérlőpult",
-      "welcome": "Üdvözöljük a vezérlőpulton"
+      "welcome": "Üdvözlünk a vezérlőpulton",
+      "greeting": "Üdv",
+      "userFallback": "Felhasználó",
+      "stats": {
+        "myServers": "Szervereim",
+        "activeSubscriptions": "Aktív előfizetések",
+        "onlineServers": "Online szerverek",
+        "offlineServers": "Offline szerverek"
+      },
+      "quickActions": {
+        "newServer": {
+          "title": "Új szerver",
+          "description": "Rendelj új játékszervert"
+        },
+        "billing": {
+          "title": "Számlázás",
+          "description": "Számlák és előfizetések kezelése"
+        },
+        "support": {
+          "title": "Támogatás",
+          "description": "Support ticketek kezelése"
+        }
+      },
+      "errorMessage": "Hiba történt a vezérlőpult betöltésekor. Próbáld újra később."
     },
     "servers": {
       "title": "Szerverek",
-      "subtitle": "Kezelje az összes szerverét egy helyen",
-      "create": "Szerver Létrehozása",
-      "noServers": "Még nem hoztál létre szervereket"
+      "subtitle": "Kezeld az összes szervered egy helyen",
+      "create": "Szerver létrehozása",
+      "noServers": "Még nincs szervered"
     },
     "login": {
       "title": "Bejelentkezés",
-      "welcome": "Üdvözöljük vissza"
+      "welcome": "Üdv újra"
     },
     "register": {
-      "title": "Fiók Létrehozása",
+      "title": "Fiók létrehozása",
       "subtitle": "Csatlakozz a gaming közösséghez"
     },
     "forgotPassword": {
-      "title": "Jelszó Visszaállítása",
-      "subtitle": "Add meg az email címedet a jelszó visszaállításához"
+      "title": "Jelszó visszaállítása",
+      "subtitle": "Add meg email címed a visszaállításhoz"
     },
     "resetPassword": {
-      "title": "Jelszó Visszaállítása"
+      "title": "Jelszó visszaállítása"
     },
     "verifyEmail": {
-      "title": "Email Megerősítés",
-      "subtitle": "Kattints az emailedben lévő linkre a fiók megerősítéséhez"
+      "title": "Email megerősítése",
+      "subtitle": "Kattints az emailedben lévő linkre a megerősítéshez"
     }
   },
   "errors": {
     "serverNotFound": "Szerver nem található",
-    "rustServerOnly": "Ez az oldal csak Rust szerverekhez elérhető",
+    "rustServerOnly": "Ez az oldal csak Rust szerverekhez érhető el",
     "loadingServer": "Hiba a szerver betöltésekor",
     "general": "Hiba",
     "occurred": "Hiba történt",
     "unknown": "Ismeretlen hiba történt",
-    "licenseActivationFailed": "License aktiválás sikertelen",
-    "licenseActivationError": "Hiba történt a license aktiválása során",
-    "checkUpdatesError": "Hiba történt a frissítések ellenőrzése során",
+    "licenseActivationFailed": "Licenc aktiválása sikertelen",
+    "licenseActivationError": "Hiba a licenc aktiválásakor",
+    "checkUpdatesError": "Hiba a frissítések ellenőrzésekor",
     "noUpdatesAvailable": "Nincs elérhető frissítés",
-    "installUpdateFailed": "Frissítés telepítés sikertelen",
-    "installUpdateError": "Hiba történt a frissítés telepítése során"
+    "installUpdateFailed": "Frissítés telepítése sikertelen",
+    "installUpdateError": "Hiba a frissítés telepítésekor"
   },
   "loading": {
     "text": "Betöltés...",
-    "licenseInfo": "License információk betöltése..."
+    "licenseInfo": "Licenc információk betöltése..."
   },
   "empty": {
     "noNotifications": "Nincs értesítés",
@@ -397,42 +542,99 @@
   },
   "buttons": {
     "cancel": "Mégse",
-    "backToDashboard": "Vissza a dashboard-ra"
+    "backToDashboard": "Vissza a vezérlőpultra"
   },
   "forms": {
-    "createNewAccount": "Hozz létre egy új fiókot"
+    "createNewAccount": "Hozz létre új fiókot"
   },
   "success": {
-    "licenseActivated": "License sikeresen aktiválva!"
+    "licenseActivated": "Licenc sikeresen aktiválva!"
   },
-  "servers": {
+  "serversExtra": {
     "newOrder": {
-      "title": "Új Szerver Rendelése",
-      "subtitle": "Töltsd ki az alábbi űrlapot és szervered percek alatt készen áll"
+      "title": "Új szerver rendelése",
+      "subtitle": "Töltsd ki az űrlapot, és percek alatt kész a szerver"
     }
   },
   "settings": {
     "title": "Beállítások",
     "description": "Rendszer beállítások"
   },
-  "cta": {
-    "registerNow": "Regisztrálj most és kapj 24 órás ingyenes próbaidőt!",
-    "freeRegistration": "Ingyenes Regisztráció"
+  "priceCalculator": {
+    "loading": "Árkalkulátor betöltése...",
+    "title": "Árkalkulátor",
+    "subtitle": "Válaszd ki a játékot és erőforrásokat az árhoz",
+    "labels": {
+      "game": "Játék",
+      "slot": "Slot"
+    },
+    "step": "lépés",
+    "priceLabel": "Havi ár",
+    "basePrice": "Alapár",
+    "order": "Rendelés"
   },
-  "admin": {
-    "mods": {
-      "subtitle": "📌 Egy kattintással telepítsd a modokat a szerveredre",
-      "oxideWarning": "Bizonyosítsd meg, hogy az Oxide framework telepített a szerveren."
-    }
+  "cta": {
+    "registerNow": "Regisztrálj most és kapj 24 órás próbát!",
+    "freeRegistration": "Ingyenes regisztráció"
   },
   "license": {
-    "info": "License Információk",
-    "notActivated": "License nincs aktiválva",
-    "maxUsers": "Max Felhasználók",
-    "maxServers": "Max Szerverek"
+    "info": "Licenc információk",
+    "notActivated": "Licenc nincs aktiválva",
+    "maxUsers": "Max felhasználó",
+    "maxServers": "Max szerver"
+  },
+  "footer": {
+    "brand": "ZedinGamingHosting",
+    "description": "A legjobb gaming szerver hosting szolgáltatás. Teljesítmény, megbízhatóság és egyszerű kezelés egy helyen.",
+    "socialLabel": "Közösségi linkek",
+    "sections": {
+      "product": {
+        "title": "Termék",
+        "links": {
+          "pricing": "Árazás",
+          "games": "Játékok",
+          "features": "Funkciók",
+          "api": "API"
+        }
+      },
+      "company": {
+        "title": "Cég",
+        "links": {
+          "about": "Rólunk",
+          "blog": "Blog",
+          "careers": "Karrier",
+          "contact": "Kapcsolat"
+        }
+      },
+      "support": {
+        "title": "Támogatás",
+        "links": {
+          "docs": "Dokumentáció",
+          "support": "Support",
+          "faq": "GYIK",
+          "status": "Státusz"
+        }
+      },
+      "legal": {
+        "title": "Jogi",
+        "links": {
+          "terms": "Felhasználási feltételek",
+          "privacy": "Adatvédelem",
+          "cookies": "Cookie szabályzat"
+        }
+      },
+      "contact": {
+        "title": "Kapcsolat"
+      }
+    },
+    "contact": {
+      "email": "info@zedgaminghosting.hu",
+      "phone": "+36 XX XXX XXXX",
+      "location": "Magyarország"
+    },
+    "copyright": " {{year}} ZedinGamingHosting. Minden jog fenntartva."
   },
   "meta": {
     "description": "Teljes körű gaming szerver hosting platform"
   }
-}  }
 }
