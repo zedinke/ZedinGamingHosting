@@ -1,4 +1,4 @@
-{
+﻿{
   "nav": {
     "home": "Inicio",
     "pricing": "Precios",
@@ -24,34 +24,66 @@
       "support": "Soporte"
     }
   },
+  "home": {
+    "features": {
+      "title": "Características Principales",
+      "subtitle": "Todo lo que necesitas para gestionar tus servidores de juegos",
+      "performance": {
+        "title": "Alto Rendimiento",
+        "description": "Hardware de última generación para un rendimiento óptimo"
+      },
+      "support": {
+        "title": "Soporte 24/7",
+        "description": "Nuestro equipo está disponible las 24 horas"
+      },
+      "easy": {
+        "title": "Fácil de Usar",
+        "description": "Panel intuitivo con configuración de un clic"
+      }
+    },
+    "stats": {
+      "uptime": "99.9% de Tiempo de Actividad",
+      "servers": "10,000+ Servidores",
+      "customers": "5,000+ Clientes",
+      "support": "Soporte 24/7"
+    },
+    "partners": {
+      "title": "Nuestros Socios de Confianza",
+      "subtitle": "Trabajamos con las mejores empresas de la industria"
+    }
+  },
   "auth": {
     "email": "Correo electrónico",
     "password": "Contraseña",
     "confirmPassword": "Confirmar contraseña",
-    "forgotPassword": "¿Olvidó su contraseña?",
+    "forgotPassword": "Olvidó su contraseña?",
     "rememberMe": "Recuérdame",
     "signIn": "Iniciar Sesión",
+    "signInSubtitle": "Inicia sesión en tu cuenta",
     "signUp": "Registrarse",
     "signInWith": "Iniciar sesión con {{provider}}",
     "signInWithGoogle": "Iniciar sesión con Google",
     "signInWithDiscord": "Iniciar sesión con Discord",
     "orContinueWith": "o continuar con correo electrónico/contraseña",
-    "noAccount": "¿No tienes una cuenta?",
-    "hasAccount": "¿Ya tienes una cuenta?",
+    "noAccount": "No tienes una cuenta?",
+    "hasAccount": "Ya tienes una cuenta?",
     "resetPassword": "Restablecer Contraseña",
-    "verifyEmail": "Verificar Correo Electrónico"
+    "verifyEmail": "Verificar Correo Electrónico",
+    "bejelentkezés": "Iniciar Sesión",
+    "regisztráció": "Registrarse"
   },
   "dashboard": {
     "title": "Panel",
     "servers": "Servidores",
     "billing": "Facturación",
     "support": "Soporte",
-    "settings": "Configuración"
+    "settings": "Configuración",
+    "subscriptions": "Suscripciones"
   },
   "server": {
     "status": "Estado",
     "online": "En línea",
-    "offline": "Desconectado",
+    "offline": "Fuera de línea",
     "starting": "Iniciando...",
     "stopping": "Deteniendo...",
     "restart": "Reiniciar",
@@ -63,6 +95,13 @@
     "console": "Consola",
     "config": "Configuración",
     "fileManager": "Archivos"
+  },
+  "maintenance": {
+    "title": "En mantenimiento",
+    "defaultMessage": "El sitio está actualmente en mantenimiento. Por favor, vuelva más tarde.",
+    "waiting": "Espera un momento, volveremos muy pronto...",
+    "marioTitle": "Juega a Super Mario mientras esperas!",
+    "adminHint": "Si eres administrador, inicia sesión en el panel de administración."
   },
   "common": {
     "save": "Guardar",
@@ -82,10 +121,10 @@
     "next": "Siguiente",
     "previous": "Anterior",
     "submit": "Enviar",
-    "reset": "Reiniciar",
+    "reset": "Restablecer",
     "download": "Descargar",
-    "upload": "Cargar",
-    "filter": "Filtro",
+    "upload": "Subir",
+    "filter": "Filtrar",
     "showMore": "Mostrar Más",
     "showLess": "Mostrar Menos",
     "user": "Usuario",
@@ -116,7 +155,7 @@
     "active": "Activo",
     "inactive": "Inactivo",
     "totalPaid": "Total Pagado",
-    "pendingAmount": "Monto Pendiente",
+    "pendingAmount": "Cantidad Pendiente",
     "noInvoices": "Sin facturas",
     "noSubscriptions": "Sin suscripciones"
   },
@@ -125,160 +164,259 @@
     "selectPackage": "Seleccionar Paquete",
     "noPackages": "No hay paquetes disponibles",
     "loading": "Cargando paquetes...",
-    "error": "Error al cargar paquetes"
+    "error": "Error al cargar paquetes",
+    "label": "Juegos",
+    "game": "Juego",
+    "slot": "Ranura",
+    "slots": "Ranuras",
+    "details": "Detalles del Juego",
+    "rust": "Rust",
+    "ark": "ARK",
+    "minecraft": "Minecraft"
   },
   "pricing": {
     "title": "Precios",
-    "subtitle": "Elige un plan que se adapte a tus necesidades. Todos los planes incluyen protección DDoS y soporte 24/7.",
+    "subtitle": "Elige un plan que se ajuste a tus necesidades",
+    "monthly": "Mensual",
+    "yearly": "Anual",
+    "perMonth": "/mes",
+    "perYear": "/año",
+    "selectPlan": "Seleccionar Plan",
+    "popular": "Popular",
+    "features": "Características",
+    "unlimited": "Ilimitado"
+  },
+  "time": {
     "month": "mes",
-    "year": "año",
-    "noPlans": "No hay planes de precios disponibles",
-    "showComparison": "Mostrar Comparación",
-    "hideComparison": "Ocultar Comparación"
+    "year": "año"
+  },
+  "pagination": {
+    "page": "Página",
+    "previous": "Anterior",
+    "next": "Siguiente"
   },
   "admin": {
-    "title": "Administrador",
+    "title": "Administración",
     "dashboard": "Panel",
     "servers": "Servidores",
     "users": "Usuarios",
     "invoices": "Facturas",
     "settings": "Configuración",
-    "cms": "Gestión de Contenidos"
+    "cms": "Gestión de Contenido",
+    "machines": "Máquinas",
+    "statistics": "Estadísticas",
+    "tasks": "Tareas",
+    "lastHeartbeat": "Último Latido",
+    "capabilities": "Capacidades",
+    "systemHealth": "Salud del Sistema",
+    "recentActivity": "Actividad Reciente",
+    "mods": {
+      "subtitle": " Instala mods en tu servidor con un clic",
+      "oxideWarning": "Asegúrate de que el framework Oxide está instalado en tu servidor."
+    }
   },
   "system": {
     "title": "Sistema Zed Gaming",
     "subtitle": "Descubre el futuro de la tecnología de alojamiento de servidores de juegos",
     "intro": {
       "title": "Bienvenido al Sistema Zed Gaming",
-      "description": "Sistema Zed Gaming es una plataforma revolucionaria de alojamiento de servidores de juegos que maneja todo lo que un propietario de servidor necesita. No es solo un servicio de alojamiento simple – es un sistema completo que se encarga de todo, desde la creación del servidor hasta la facturación, desde el monitoreo hasta el soporte. Construido con tecnologías modernas, arquitectura escalable e interfaz fácil de usar que te permite crear y gestionar tus servidores en minutos."
+      "description": "Zed Gaming System es una plataforma revolucionaria de alojamiento de servidores de juegos que maneja todo lo que necesita un propietario de servidor."
     },
     "games": {
-      "title": "Juegos Compatibles",
-      "subtitle": "Sistema Zed Gaming soporta más de 20 juegos populares y está en constante expansión",
+      "title": "Juegos Soportados",
+      "subtitle": "Zed Gaming System soporta más de 20 juegos populares",
       "ark": {
         "title": "ARK: Survival Evolved & ARK: Survival Ascended",
-        "description": "¡Construye tu propio imperio de dinosaurios! Soportamos ambas versiones de ARK con soporte completo de mods y configuración personalizada. Actualizaciones automáticas, gestión de copias de seguridad y acceso completo a la consola incluidos."
+        "description": "Construye tu propio imperio de dinosaurios!"
       },
       "survival": {
         "title": "Juegos de Supervivencia",
-        "description": "Rust, Valheim, 7 Days to Die, Conan Exiles, DayZ, Project Zomboid, Palworld, Enshrouded, Sons of the Forest, The Forest, Grounded, V Rising, Don't Starve Together – ¡todos tus juegos de supervivencia favoritos en un solo lugar! Configuración optimizada para cada juego y acceso completo al gestor de archivos."
+        "description": "Rust, Valheim, 7 Days to Die, Conan Exiles y más"
       },
       "minecraft": {
         "title": "Minecraft",
-        "description": "Servidores Java y Bedrock, soporte de mods, gestión de plugins – el hogar perfecto para tu servidor de Minecraft. Soportamos servidores Paper, Spigot, Forge y Fabric con compatibilidad completa de plugins y mods."
+        "description": "Servidores Java y Bedrock con soporte completo de mods"
       },
       "fps": {
         "title": "Juegos FPS",
-        "description": "CS2, CS:GO, Left 4 Dead 2, Killing Floor 2, Insurgency: Sandstorm, Squad, Hell Let Loose, Post Scriptum – acción intensa cada minuto. Baja latencia, alto rendimiento y conexión estable garantizados."
+        "description": "CS2, CS:GO, Left 4 Dead 2 y más"
       },
       "other": {
-        "title": "¡Y Mucho Más!",
-        "description": "Terraria, Satisfactory y muchos otros juegos. Si tu juego soporta alojamiento de servidores, probablemente lo soportemos también. Continuamente expandimos nuestra lista de juegos soportados para que cada jugador pueda encontrar el servidor perfecto para ellos."
+        "title": "Y mucho más!",
+        "description": "Terraria, Satisfactory y muchos otros juegos"
       }
     },
     "features": {
       "title": "Características del Sistema",
-      "subtitle": "Mira de qué es capaz Sistema Zed Gaming",
+      "subtitle": "Mira de lo que es capaz Zed Gaming System",
       "serverManagement": {
         "title": "Gestión Completa de Servidores",
-        "description": "Inicia, detén o reinicia tus servidores con un solo clic. Monitoreo en tiempo real, gestor de archivos, acceso a consola, edición de configuración de servidores, gestión de copias de seguridad y plantillas de servidores – todo lo que necesitas en un solo lugar. Más de 100 puntos finales de API garantizan control total."
+        "description": "Inicia, detén o reinicia tus servidores con un solo clic"
       },
       "billing": {
         "title": "Facturación Inteligente",
-        "description": "Múltiples métodos de pago (Stripe, PayPal, Revolut), facturación automática, cupones, gestión de suscripciones, generación de facturas en PDF, manejo de impuestos, gestión de datos de facturación – las finanzas nunca han sido tan simples. Manejo automático de webhooks y procesamiento de eventos de pago."
+        "description": "Múltiples métodos de pago y facturación automática"
       },
       "monitoring": {
         "title": "Monitoreo en Tiempo Real",
-        "description": "Rastrea el rendimiento de tus servidores en tiempo real utilizando tecnología Server-Sent Events (SSE). Uso de CPU, RAM, Disco, recuento de jugadores, estado del servidor, transmisión de registros, métricas y punto final de verificación de salud – toda la información al alcance de tu mano, en tiempo real."
+        "description": "Rastrea el rendimiento de tus servidores en tiempo real"
       },
       "automation": {
         "title": "Automatización",
-        "description": "Aprovisionamiento automático de servidores, gestión de copias de seguridad, actualizaciones, gestión de puertos, ejecución de trabajos cron, procesamiento de tareas, equilibrio de carga automático – el sistema se encarga de todo para que solo juegues. La arquitectura basada en agentes garantiza escalabilidad y confiabilidad."
+        "description": "Aprovisionamiento automático de servidores y gestión de copias de seguridad"
       },
       "support": {
         "title": "Soporte 24/7",
-        "description": "Sistema de tickets integrado con categorías y prioridades, soporte de chat IA con respuestas en idioma español (integración Ollama), tiempo de respuesta rápido, seguimiento del estado de tickets, gestión de mensajes – estamos aquí cuando nos necesitas. Soporte multilingüe en español e inglés."
+        "description": "Sistema de tickets integrado con soporte de chat AI"
       },
       "cms": {
         "title": "Sistema CMS Completo",
-        "description": "Gestión de blog y noticias con categorías y etiquetas, sistema de preguntas frecuentes, gestión de presentaciones de diapositivas con imágenes y videos, tablas de precios dinámicos, testimonios de clientes, gestión de miembros del equipo, gestión de juegos y categorías, constructor de páginas estáticas, configuración de SEO – todo lo que necesitas para un sitio web moderno, integrado."
+        "description": "Gestión de blog, FAQ, galerías y más"
       },
       "security": {
         "title": "Seguridad",
-        "description": "Control de acceso basado en roles (RBAC) con roles USER, MODERATOR, ADMIN, registros de auditoría para todos los eventos del sistema, verificación de correo electrónico, soporte de autenticación de dos factores (2FA), hash seguro de contraseña (bcrypt), gestión de sesiones (JWT, validez de 30 días), integración de OAuth (Google, Discord), registro de dirección IP y agente de usuario – tus datos están seguros."
+        "description": "Control de acceso basado en roles y registros de auditoría"
       },
       "scalability": {
         "title": "Escalabilidad",
-        "description": "Arquitectura basada en agentes con soporte para múltiples máquinas de servidor, equilibrio de carga automático, gestión de conexiones SSH, monitoreo de latidos cardíacos de agentes, procesamiento de tareas en segundo plano, seguimiento de capacidad de recursos, gestión de máquinas de servidor – el sistema crece contigo, capaz de gestionar miles de servidores."
+        "description": "Arquitectura basada en agentes con balanceo automático de carga"
       },
       "userManagement": {
         "title": "Gestión de Usuarios",
-        "description": "Registro basado en correo electrónico/contraseña e OAuth (Google, Discord), verificación de correo electrónico, restablecimiento de contraseña, gestión de perfil con carga de avatar, gestión de roles, panel de usuario con estadísticas, gestión de configuración – todas las funciones de usuario en un solo lugar."
+        "description": "Registro basado en correo electrónico/contraseña y OAuth"
       },
       "adminPanel": {
-        "title": "Panel de Administrador",
-        "description": "Panel de administrador completo con estadísticas, gestión de usuarios con búsqueda y filtrado, gestión de servidores para todos los servidores, gestión de suscripciones y facturación, sistema de tickets de soporte, gestión de CMS, configuración del sistema, panel de análisis, registros de auditoría, gestión de webhooks, editor de temas – control completo del sistema en un solo lugar."
+        "title": "Panel de Administración",
+        "description": "Panel completo con estadísticas y gestión de usuarios"
       },
       "api": {
         "title": "API e Integraciones",
-        "description": "Más de 100 puntos finales de API RESTful, soporte de eventos enviados por servidor (SSE) para datos en tiempo real, sistema de webhooks para eventos, documentación de API, integraciones de múltiples proveedores de pago (Stripe, PayPal, Revolut), sistema de correo electrónico (Nodemailer, SMTP de Hestia CP), generación de PDF (Puppeteer) – todas las integraciones en un solo lugar."
+        "description": "100+ endpoints de API RESTful y soporte de webhooks"
       },
       "multilanguage": {
         "title": "Multilingüe",
-        "description": "Soporte completo de idioma español, inglés y húngaro, cambio automático de idioma según URL, traducciones del lado del servidor y del cliente, plantillas de correo electrónico localizadas, contenido dinámico en múltiples idiomas – el sistema funciona perfectamente en los tres idiomas."
+        "description": "Soporte completo en húngaro, inglés, español y francés"
       }
     },
     "why": {
-      "title": "¿Por Qué Sistema Zed Gaming?",
-      "description": "Porque no es solo un servicio de alojamiento – es un sistema completo que se encarga de todo. No hay necesidad de combinar diferentes servicios, no hay necesidad de lidiar con configuraciones complejas. Todo en un solo lugar, simplemente, rápidamente, confiablemente. Un sistema construido con tecnologías modernas (Next.js 14, TypeScript, Prisma ORM) que garantiza rendimiento y confiabilidad. Escalable con arquitectura basada en agentes, y continuamente lo mejoramos para siempre proporcionar la mejor experiencia."
+      "title": "Por qué Sistema Zed Gaming?",
+      "description": "Porque no es solo un servicio de alojamiento, es un sistema completo"
     },
     "technical": {
       "title": "Detalles Técnicos",
       "subtitle": "Tecnologías detrás del sistema",
       "frontend": {
-        "title": "Interfaz de Usuario",
-        "description": "Next.js 14 App Router, React, TypeScript, Tailwind CSS – interfaz moderna, rápida y receptiva en todos los dispositivos."
+        "title": "Frontend",
+        "description": "Next.js 14, React, TypeScript, Tailwind CSS"
       },
       "backend": {
         "title": "Backend",
-        "description": "Rutas de API de Next.js, Acciones del Servidor, Prisma ORM, MySQL/PostgreSQL – arquitectura de backend sólida y escalable."
+        "description": "Next.js API Routes, Prisma ORM, MySQL/PostgreSQL"
       },
       "database": {
         "title": "Base de Datos",
-        "description": "Más de 25 modelos de base de datos, 10+ tipos de enumeración, gestión completa de relaciones, migraciones automáticas – gestión de datos estructurada y confiable."
+        "description": "25+ modelos de base de datos con gestión completa de relaciones"
       },
       "deployment": {
-        "title": "Implementación",
-        "description": "Soporte de Docker, Compilación Independiente, gestor de procesos PM2, integración de Hestia CP – instalación y mantenimiento fáciles."
+        "title": "Despliegue",
+        "description": "Soporte Docker, PM2, integración con Hestia CP"
       }
     },
     "cta": {
-      "title": "¿Listo para comenzar?",
+      "title": "Listo para comenzar?",
       "description": "Únete al futuro de la tecnología de alojamiento de servidores de juegos",
       "button": "Comenzar Ahora"
     },
     "stats": {
       "title": "Estadísticas del Sistema",
-      "models": "Más de 25 modelos de base de datos",
-      "endpoints": "Más de 100 puntos finales de API",
-      "components": "Más de 80 componentes React",
-      "pages": "Más de 50 páginas",
-      "games": "Más de 20 juegos soportados",
-      "languages": "3 idiomas (Húngaro, Inglés, Español)",
-      "uptime": "Tiempo de actividad promedio de 99.99%",
+      "models": "25+ modelos de base de datos",
+      "endpoints": "100+ endpoints de API",
+      "components": "80+ componentes React",
+      "pages": "50+ páginas",
+      "games": "20+ juegos soportados",
+      "languages": "4 idiomas (Húngaro, Inglés, Español, Francés)",
+      "uptime": "99.99% de tiempo de actividad promedio",
       "support": "Soporte 24/7"
     }
+  },
+  "support": {
+    "ticket": "Ticket de Soporte",
+    "zedAi": "Zed AI"
+  },
+  "features": {
+    "features": "Características",
+    "videoDemo": "Demo en Video"
+  },
+  "testimonials": {
+    "includes": "Incluye"
+  },
+  "cms": {
+    "pages": "Páginas"
+  },
+  "mods": {
+    "install": "Instalar"
+  },
+  "lang": {
+    "hungarian": "Húngaro",
+    "english": "Inglés",
+    "spanish": "Español",
+    "french": "Francés"
+  },
+  "tickets": {
+    "category": "Categoría",
+    "priority": "Prioridad"
   },
   "pages": {
     "pricing": {
       "title": "Precios",
-      "subtitle": "Elige un plan que se adapte a tus necesidades. Todos los planes incluyen protección DDoS y soporte 24/7.",
-      "monthly": "Mensualmente",
-      "yearly": "Anualmente"
+      "subtitle": "Elige un plan que se ajuste a tus necesidades. Cada plan incluye protección DDoS y soporte 24/7.",
+      "monthly": "Mensual",
+      "yearly": "Anual"
     },
     "games": {
       "title": "Servidores de Juegos",
       "subtitle": "Elige un juego y paquete para iniciar tu propio servidor"
+    },
+    "cta": {
+      "title": "Listo para tu propia plataforma de alojamiento?",
+      "subtitle": "Elige un plan y comienza hoy!",
+      "button": "Ver Planes"
+    },
+    "zedSystem": {
+      "title": "Sistema Zed Gaming",
+      "subtitle": "Plataforma SaaS completa de alojamiento de servidores de juegos",
+      "description": "Alquila la plataforma completa mensualmente. Todo en uno: gestión de servidores, pagos, CMS, panel de administración y más.",
+      "featuresTitle": "Por qué elegir Zed Gaming System?",
+      "features": {
+        "games": {
+          "title": "Soporte para 60+ juegos",
+          "description": "Instalación y gestión automatizada para más de 60 juegos"
+        },
+        "payments": {
+          "title": "Pagos Integrados",
+          "description": "Stripe, PayPal, Revolut integrados"
+        },
+        "cms": {
+          "title": "CMS Completo",
+          "description": "Blog, FAQ, constructor de páginas, tablas de precios y más"
+        },
+        "ai": {
+          "title": "Soporte de Chat AI",
+          "description": "Chat AI en el sitio con respuestas localizadas"
+        },
+        "monitoring": {
+          "title": "Monitoreo Avanzado",
+          "description": "Monitoreo en tiempo real, análisis y métricas de rendimiento"
+        },
+        "security": {
+          "title": "Seguro y Escalable",
+          "description": "Arquitectura basada en agentes, balanceo automático de carga"
+        }
+      },
+      "pricing": {
+        "title": "Elige un plan",
+        "subtitle": "Cada plan incluye el sistema completo y actualizaciones"
+      }
     },
     "admin": {
       "title": "Panel de Administración",
@@ -301,15 +439,15 @@
       "title": "Servidores",
       "subtitle": "Gestiona todos tus servidores en un solo lugar",
       "create": "Crear Servidor",
-      "noServers": "Aún no has creado servidores"
+      "noServers": "Aún no se han creado servidores"
     },
     "login": {
       "title": "Iniciar Sesión",
-      "welcome": "Bienvenido de vuelta"
+      "welcome": "Bienvenido de nuevo"
     },
     "register": {
       "title": "Crear Cuenta",
-      "subtitle": "Únete a la comunidad de gaming"
+      "subtitle": "Únete a la comunidad de juegos"
     },
     "forgotPassword": {
       "title": "Restablecer Contraseña",
@@ -320,7 +458,7 @@
     },
     "verifyEmail": {
       "title": "Verificar Correo Electrónico",
-      "subtitle": "Haz clic en el enlace en tu correo electrónico para verificar tu cuenta"
+      "subtitle": "Haz clic en el enlace de tu correo electrónico para verificar tu cuenta"
     }
   },
   "errors": {
@@ -330,12 +468,12 @@
     "general": "Error",
     "occurred": "Ocurrió un error",
     "unknown": "Ocurrió un error desconocido",
-    "licenseActivationFailed": "Activación de licencia fallida",
-    "licenseActivationError": "Error al activar la licencia",
+    "licenseActivationFailed": "Falló la activación de la licencia",
+    "licenseActivationError": "Ocurrió un error durante la activación de la licencia",
     "checkUpdatesError": "Error al verificar actualizaciones",
     "noUpdatesAvailable": "No hay actualizaciones disponibles",
-    "installUpdateFailed": "Instalación de actualización fallida",
-    "installUpdateError": "Error al instalar la actualización"
+    "installUpdateFailed": "Falló la instalación de la actualización",
+    "installUpdateError": "Ocurrió un error durante la instalación de la actualización"
   },
   "loading": {
     "text": "Cargando...",
@@ -350,10 +488,10 @@
     "backToDashboard": "Volver al panel"
   },
   "forms": {
-    "createNewAccount": "Crear una nueva cuenta"
+    "createNewAccount": "Crear una cuenta nueva"
   },
   "success": {
-    "licenseActivated": "¡Licencia activada con éxito!"
+    "licenseActivated": "Licencia activada con éxito!"
   },
   "servers": {
     "newOrder": {
@@ -361,25 +499,42 @@
       "subtitle": "Completa el formulario a continuación y tu servidor estará listo en minutos"
     }
   },
+  "serversExtra": {
+    "configuration": "Configuración del Servidor"
+  },
   "settings": {
     "title": "Configuración",
     "description": "Configuración del sistema"
   },
-  "cta": {
-    "registerNow": "¡Regístrate ahora y obtén 24 horas gratis!",
-    "freeRegistration": "Registro Gratuito"
+  "priceCalculator": {
+    "title": "Calculadora de Precios",
+    "subtitle": "Calcula el costo de tu servidor"
   },
-  "admin": {
-    "mods": {
-      "subtitle": "📌 Instala mods en tu servidor con un clic",
-      "oxideWarning": "Asegúrate de que el framework Oxide está instalado en tu servidor."
-    }
+  "cta": {
+    "registerNow": "Regístrate ahora y obtén 24 horas de prueba gratis!",
+    "freeRegistration": "Registro Gratuito"
   },
   "license": {
     "info": "Información de Licencia",
     "notActivated": "La licencia no está activada",
     "maxUsers": "Máximo de Usuarios",
     "maxServers": "Máximo de Servidores"
+  },
+  "footer": {
+    "company": "Empresa",
+    "about": "Acerca de",
+    "contact": "Contacto",
+    "terms": "Términos de Servicio",
+    "privacy": "Política de Privacidad",
+    "products": "Productos",
+    "gameServers": "Servidores de Juegos",
+    "vpsHosting": "Hosting VPS",
+    "dedicatedServers": "Servidores Dedicados",
+    "support": "Soporte",
+    "documentation": "Documentación",
+    "helpCenter": "Centro de Ayuda",
+    "status": "Estado del Servicio",
+    "copyright": " 2025 Zed Gaming Hosting. Todos los derechos reservados."
   },
   "meta": {
     "description": "Plataforma completa de alojamiento de servidores de juegos"
