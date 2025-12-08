@@ -156,10 +156,27 @@ async function testPortManager() {
     // 7. Több port allokáció teszt
     console.log('📌 6. Több port allokáció teszt...');
     const testServers: string[] = [];
+    const firstUser = await prisma.user.findFirst();
+    if (!firstUser) {
+      throw new Error('Nincs felhasználó az adatbázisban');
+    }
     
     for (let i = 0; i < 3; i++) {
       const testServerId = `test-${Date.now()}-${i}`;
       testServers.push(testServerId);
+      
+      // Teszt szerver létrehozása
+      await prisma.server.create({
+        data: {
+          id: testServerId,
+          name: `Test Server ${i + 1}`,
+          gameType: GameType.SEVEN_DAYS_TO_DIE,
+          status: ServerStatus.PROVISIONING,
+          machineId: testMachine.id,
+          agentId: testMachine.agents[0].id,
+          userId: firstUser.id,
+        },
+      });
       
       const ports = await PortManager.allocatePorts(
         testMachine.id,
@@ -172,9 +189,15 @@ async function testPortManager() {
 
     console.log('✅ Több port allokáció sikeres\n');
 
-    // Felszabadítás
+    // Felszabadítás és szerver törlés
     for (const serverId of testServers) {
       await PortManager.deallocatePorts(serverId);
+      // Teszt szerver törlése
+      try {
+        await prisma.server.delete({ where: { id: serverId } });
+      } catch (error) {
+        // Ignoráljuk, ha már törölve van
+      }
     }
     console.log('✅ Teszt portok felszabadítva\n');
 
