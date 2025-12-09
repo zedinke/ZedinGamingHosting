@@ -955,10 +955,11 @@ MinDynamicBandwidth=1000
       // Sons of The Forest dedicatedserver.cfg
       const sotfUser = `sotf${serverId}`;
       const sotfConfigPath = gameConfig.configPath.replace(/{serverId}/g, serverId);
+      const sotfQueryPort = 27016; // Fixed query port
       const sotfConfig = `{\n` +
         `  "IpAddress": "0.0.0.0",\n` +
-        `  "GamePort": ${finalPort},\n` +
-        `  "QueryPort": ${finalQueryPort},\n` +
+        `  "GamePort": ${config.port},\n` +
+        `  "QueryPort": ${sotfQueryPort},\n` +
         `  "BlobSyncPort": 9700,\n` +
         `  "ServerName": "${config.name || 'Sons of The Forest Server'}",\n` +
         `  "MaxPlayers": ${config.maxPlayers || 8},\n` +
