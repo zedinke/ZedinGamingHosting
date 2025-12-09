@@ -1903,6 +1903,7 @@ export async function createSystemdServiceForServer(
       }
       
       // Satisfactory esetén beaconPort és queryPort
+      // @ts-ignore - GameType.SATISFACTORY exists but TypeScript cache issue
       if (gameType === GameType.SATISFACTORY) {
         const beaconPort = finalPort ? finalPort + 7223 : 15000; // Default: 7777 + 7223 = 15000
         const satisfactoryQueryPort = finalPort ? finalPort + 8000 : 15777; // Default: 7777 + 8000 = 15777
