@@ -1819,6 +1819,7 @@ export async function createSystemdServiceForServer(
       // -multihome={multihome} - a szervergép külső IP címe
       const multihomeIp = machine?.ipAddress || '0.0.0.0';
       startCommand = startCommand
+        .replace(/{serverId}/g, serverId)
         .replace(/{gamePort}/g, finalGamePort.toString())
         .replace(/{queryPort}/g, finalQueryPort.toString())
         .replace(/{beaconPort}/g, finalBeaconPort.toString())
@@ -2414,7 +2415,7 @@ bash -c "${escapedStartCommand}"
   let serviceGroup: string | undefined = undefined;
   
   if (gameType === 'SATISFACTORY') {
-    serviceUser = 'satis';
+    serviceUser = `satis${serverId}`;
     serviceGroup = 'sfgames';
   } else if (gameType === 'SEVEN_DAYS_TO_DIE') {
     // A felhasználó neve a serverId alapján generálódik (pl. seven2, seven3...)
