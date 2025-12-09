@@ -159,7 +159,14 @@ export const POST = withPerformanceMonitoring(
       });
 
       // Task létrehozása a művelethez
-      if (server.agentId) {
+      if (!server.agentId) {
+        throw new AppError(
+          ErrorCodes.VALIDATION_ERROR,
+          'A szervernek nincs hozzárendelt agent - telepítés szükséges',
+          400
+        );
+      }
+
       const task = await prisma.task.create({
         data: {
           agentId: server.agentId,
@@ -180,8 +187,7 @@ export const POST = withPerformanceMonitoring(
           taskId: task.id,
           serverId: server.id,
         });
-        });
-      }
+      });
 
       // Audit log
       const auditAction =
