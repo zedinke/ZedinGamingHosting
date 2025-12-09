@@ -928,6 +928,120 @@ MinDynamicBandwidth=1000
         if (writeProgress) {
           await appendInstallLog(serverId, `Konfigurációs fájl létrehozva: ${sevenDaysConfigPath}`);
         }
+    } else if (gameType === 'RUST' && gameConfig.configPath) {
+      // Rust server config (server.cfg)
+      const rustUser = `rust${serverId}`;
+      const rustConfigPath = gameConfig.configPath.replace(/{serverId}/g, serverId);
+      const rustConfig = `server.hostname "${serverName || 'Rust Server'}"\n` +
+        `server.maxplayers ${config.maxPlayers || 50}\n` +
+        `server.worldsize 4000\n` +
+        `server.seed ${Math.floor(Math.random() * 2147483647)}\n` +
+        `server.saveinterval 300\n`;
+      
+      await executeSSHCommand(
+        {
+          host: machine.ipAddress,
+          port: machine.sshPort,
+          user: machine.sshUser,
+          keyPath: machine.sshKeyPath || undefined,
+        },
+        `mkdir -p $(dirname ${rustConfigPath}) && echo '${rustConfig}' > ${rustConfigPath} && chown ${rustUser}:sfgames ${rustConfigPath} && chmod 644 ${rustConfigPath}`
+      );
+      
+      if (writeProgress) {
+        await appendInstallLog(serverId, `Rust konfigurációs fájl létrehozva: ${rustConfigPath}`);
+      }
+    } else if (gameType === 'SONS_OF_THE_FOREST' && gameConfig.configPath) {
+      // Sons of The Forest dedicatedserver.cfg
+      const sotfUser = `sotf${serverId}`;
+      const sotfConfigPath = gameConfig.configPath.replace(/{serverId}/g, serverId);
+      const sotfConfig = `{\n` +
+        `  "IpAddress": "0.0.0.0",\n` +
+        `  "GamePort": ${finalPort},\n` +
+        `  "QueryPort": ${finalQueryPort},\n` +
+        `  "BlobSyncPort": 9700,\n` +
+        `  "ServerName": "${serverName || 'Sons of The Forest Server'}",\n` +
+        `  "MaxPlayers": ${config.maxPlayers || 8},\n` +
+        `  "Password": "",\n` +
+        `  "SaveSlot": 1,\n` +
+        `  "SaveMode": "Continue",\n` +
+        `  "GameMode": "Normal",\n` +
+        `  "SaveInterval": 600\n` +
+        `}\n`;
+      
+      await executeSSHCommand(
+        {
+          host: machine.ipAddress,
+          port: machine.sshPort,
+          user: machine.sshUser,
+          keyPath: machine.sshKeyPath || undefined,
+        },
+        `mkdir -p $(dirname ${sotfConfigPath}) && echo '${sotfConfig}' > ${sotfConfigPath} && chown ${sotfUser}:sfgames ${sotfConfigPath} && chmod 644 ${sotfConfigPath}`
+      );
+      
+      if (writeProgress) {
+        await appendInstallLog(serverId, `Sons of The Forest config létrehozva: ${sotfConfigPath}`);
+      }
+    } else if (gameType === 'SATISFACTORY' && gameConfig.configPath) {
+      // Satisfactory Game.ini
+      const satisUser = `satis${serverId}`;
+      const satisConfigPath = gameConfig.configPath.replace(/{serverId}/g, serverId);
+      const satisConfig = `[/Script/FactoryGame.FGServerSubsystem]\n` +
+        `mServerName=${serverName || 'Satisfactory Server'}\n` +
+        `mMaxPlayers=${config.maxPlayers || 4}\n` +
+        `mServerPassword=\n` +
+        `mAdminPassword=${config.adminPassword || ''}\n` +
+        `mAutoSaveInterval=300\n`;
+      
+      await executeSSHCommand(
+        {
+          host: machine.ipAddress,
+          port: machine.sshPort,
+          user: machine.sshUser,
+          keyPath: machine.sshKeyPath || undefined,
+        },
+        `mkdir -p $(dirname ${satisConfigPath}) && echo '${satisConfig}' > ${satisConfigPath} && chown ${satisUser}:sfgames ${satisConfigPath} && chmod 644 ${satisConfigPath}`
+      );
+      
+      if (writeProgress) {
+        await appendInstallLog(serverId, `Satisfactory config létrehozva: ${satisConfigPath}`);
+      }
+    } else if (gameType === 'DAYZ' && gameConfig.configPath) {
+      // DayZ serverDZ.cfg
+      const dayzUser = `dayz${serverId}`;
+      const dayzConfigPath = gameConfig.configPath.replace(/{serverId}/g, serverId);
+      const dayzConfig = `hostname = "${serverName || 'DayZ Server'}";\n` +
+        `password = "";\n` +
+        `passwordAdmin = "${config.adminPassword || 'changeme'}";\n` +
+        `maxPlayers = ${config.maxPlayers || 60};\n` +
+        `verifySignatures = 2;\n` +
+        `forceSameBuild = 1;\n` +
+        `disableVoN = 0;\n` +
+        `vonCodecQuality = 7;\n` +
+        `disable3rdPerson = 0;\n` +
+        `disableCrosshair = 0;\n` +
+        `serverTime = "SystemTime";\n` +
+        `serverTimeAcceleration = 12;\n` +
+        `serverNightTimeAcceleration = 4;\n` +
+        `guaranteedUpdates = 1;\n` +
+        `loginQueueConcurrentPlayers = 5;\n` +
+        `loginQueueMaxPlayers = 500;\n` +
+        `instanceId = 1;\n` +
+        `storageAutoFix = 1;\n`;
+      
+      await executeSSHCommand(
+        {
+          host: machine.ipAddress,
+          port: machine.sshPort,
+          user: machine.sshUser,
+          keyPath: machine.sshKeyPath || undefined,
+        },
+        `mkdir -p $(dirname ${dayzConfigPath}) && echo '${dayzConfig}' > ${dayzConfigPath} && chown ${dayzUser}:sfgames ${dayzConfigPath} && chmod 644 ${dayzConfigPath}`
+      );
+      
+      if (writeProgress) {
+        await appendInstallLog(serverId, `DayZ config létrehozva: ${dayzConfigPath}`);
+      }
     } else if (gameType === 'THE_FOREST' && gameConfig.configPath) {
       // The Forest-nál a configfilepath kötelező, de ha nincs configContent,
       // akkor is létrehozunk egy üres fájlt, hogy a szerver generáljon egy alapértelmezettet
@@ -1775,6 +1889,46 @@ export async function createSystemdServiceForServer(
       // 7 Days to Die esetén webMapPort placeholder (ha van a startCommand-ban)
       if (gameType === 'SEVEN_DAYS_TO_DIE' && finalWebMapPort) {
         startCommand = startCommand.replace(/{webMapPort}/g, finalWebMapPort.toString());
+      }
+      
+      // Rust esetén rconPort és rconPassword placeholder
+      if (gameType === 'RUST') {
+        const rconPort = finalPort ? finalPort + 1 : 28016;
+        const rconPassword = config.rconPassword || 'changeme';
+        startCommand = startCommand
+          .replace(/{rconPort}/g, rconPort.toString())
+          .replace(/{rconPassword}/g, rconPassword)
+          .replace(/{serverName}/g, name);
+      }
+      
+      // Satisfactory esetén beaconPort és queryPort
+      if (gameType === 'SATISFACTORY') {
+        const beaconPort = finalPort ? finalPort + 7223 : 15000; // Default: 7777 + 7223 = 15000
+        const satisfactoryQueryPort = finalPort ? finalPort + 8000 : 15777; // Default: 7777 + 8000 = 15777
+        startCommand = startCommand
+          .replace(/{beaconPort}/g, beaconPort.toString())
+          .replace(/{queryPort}/g, satisfactoryQueryPort.toString());
+      }
+      
+      // Sons of The Forest esetén queryPort
+      if (gameType === 'SONS_OF_THE_FOREST') {
+        const sotfQueryPort = 27016; // Fixed query port
+        startCommand = startCommand.replace(/{queryPort}/g, sotfQueryPort.toString());
+      }
+      
+      // DayZ esetén queryPort és steamPort
+      if (gameType === 'DAYZ') {
+        const dayzQueryPort = finalPort ? finalPort + 1 : 2303;
+        const dayzSteamPort = finalPort ? finalPort + 2 : 2304;
+        startCommand = startCommand
+          .replace(/{queryPort}/g, dayzQueryPort.toString())
+          .replace(/{steamPort}/g, dayzSteamPort.toString());
+      }
+      
+      // The Forest esetén steamPort
+      if (gameType === 'THE_FOREST') {
+        const forestSteamPort = 8766; // Fixed steam port
+        startCommand = startCommand.replace(/{steamPort}/g, forestSteamPort.toString());
       }
       
       logger.info(`${gameType} start command generated with ports from database`, {
