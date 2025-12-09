@@ -766,7 +766,63 @@ fi
     };
     
     // Moduláris config generátor használata (legacy kikapcsolva)
-    const configContent = ''; // GAME_CONFIG_GENERATORS legacy rendszer kikapcsolva
+    // 7 Days to Die esetén alapértelmezett serverconfig.xml-t generálunk
+    let configContent = '';
+    if (gameType === 'SEVEN_DAYS_TO_DIE') {
+      // 7 Days to Die alapértelmezett serverconfig.xml
+      // A port, max players és szerver név dinamikusan kerülnek beállításra
+      const maxPlayersForConfig = configWithPort.maxPlayers || 4;
+      configContent = `<?xml version="1.0" encoding="utf-8"?>
+<ServerSettings>
+  <!-- Game server settings -->
+  <property name="ServerPort" value="${configWithPort.port || 26900}"/>
+  <property name="ServerMaxPlayerCount" value="${maxPlayersForConfig}"/>
+  <property name="ServerName" value="${configWithPort.name || `Server-${serverId}`}"/>
+  <property name="ServerDescription" value="7 Days to Die Server"/>
+  <property name="ServerWebsiteURL" value=""/>
+  <property name="GameWorld" value="RWG"/>
+  <property name="WorldGenSeed" value="$(date +%s)"/>
+  <property name="GameDifficulty" value="2"/>
+  <property name="BlockDurabilityModifier" value="100"/>
+  <property name="LootAbundance" value="100"/>
+  <property name="LootRespawnDays" value="30"/>
+  <property name="AirDropFrequency" value="72"/>
+  <property name="AirDropMarker" value="true"/>
+  <property name="DayNightLength" value="60"/>
+  <property name="DayLightLength" value="18"/>
+  <property name="BloodMoonFrequency" value="7"/>
+  <property name="BloodMoonRange" value="0"/>
+  <property name="ZombieMove" value="0"/>
+  <property name="ZombieMoveNight" value="3"/>
+  <property name="RelentlessNight" value="false"/>
+  <property name="BedrollDeadZoneSize" value="45"/>
+  <property name="AllowNonAdminKilling" value="false"/>
+  <property name="AllowNonAdminLand" value="false"/>
+  <property name="AdminOpensAllDoors" value="true"/>
+  <property name="PersistentPlayerProfiles" value="true"/>
+  <property name="PvP" value="false"/>
+  <property name="ClaimSize" value="41"/>
+  <property name="ClaimDeadZone" value="30"/>
+  <property name="ClaimOfflineDelay" value="0"/>
+  <property name="ClaimOfflineDaysDelay" value="5"/>
+  <property name="UnlimitedRaiding" value="false"/>
+  <property name="P2PPassthrough" value="false"/>
+  <property name="EnableMapMarkers" value="false"/>
+  <property name="BanningSystemEnabled" value="true"/>
+  <property name="PlayerKillingMode" value="3"/>
+  <property name="RewardLevel" value="4"/>
+  <property name="MaxSpawnedZombies" value="60"/>
+  <property name="EnemySenseMemory" value="60"/>
+  <property name="TelnetEnabled" value="true"/>
+  <property name="TelnetPort" value="${configWithPort.port + 2 || 8083}"/>
+  <property name="TelnetPassword" value=""/>
+  <property name="TerminalWindowEnabled" value="true"/>
+  <property name="WebDashboardEnabled" value="true"/>
+  <property name="WebDashboardPort" value="${configWithPort.port + 3 || 8084}"/>
+  <property name="MaxConcurrentLogins" value="2"/>
+  <property name="MaxInactiveTime" value="0"/>
+</ServerSettings>`;
+    }
     if (configContent) {
       let configPath = gameConfig.configPath || '';
       

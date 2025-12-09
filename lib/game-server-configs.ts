@@ -24,10 +24,36 @@ export type GameServerConfig = {
  * Legacy function - Üres map-et ad vissza
  */
 function combineConfigsAndInstallers(): Partial<Record<GameType, GameServerConfig>> {
-  const combined: Partial<Record<GameType, GameServerConfig>> = {};
+  const combined: Partial<Record<GameType, GameServerConfig>> = {
+    // 7 Days to Die - Docker-alapú szerver
+    SEVEN_DAYS_TO_DIE: {
+      name: 'SEVEN_DAYS_TO_DIE',
+      displayName: '7 Days to Die',
+      dockerImage: '7days2die:latest',
+      ports: {
+        game: 26900, // UDP - Game port
+        query: 26901, // UDP - Query port (GamePort + 1)
+        rcon: 8081, // TCP - Telnet port (GamePort + 2)
+      },
+    // Docker run parancs a 7DTD szerverhez
+      // A port mappinget az agent-provisioning vagy systemd service végzi
+      // Az /opt/servers/{serverId} mappát mount-oljuk /opt/7days2die-ba a containerben
+      // Fontos: NINCS -d flag, mert a systemd Type=simple-nek szüksége van foreground process-re
+      // A container futása a foreground процess lesz, a systemd követni tudja
+      startCommand: `docker run --rm --name server-{serverId} \
+        -p {port}:26900/udp \
+        -p {queryPort}:26901/udp \
+        -p {telnetPort}:8081/tcp \
+        -p {webMapPort}:8080/tcp \
+        -v /opt/servers/{serverId}:/opt/7days2die \
+        7days2die:latest`,
+      configPath: '/opt/servers/{serverId}/serverconfig.xml',
+      requiresSteamCMD: false, // Docker image már tartalmazza a SteamCMD-t
+    },
+  };
   return combined;
 }
 
-// Üres konfigurációk (legacy kompatibilitáshoz)
+// Üres konfigurációk (legacy kompatibilitáshoz) + 7DTD
 export const GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = combineConfigsAndInstallers();
 export const ALL_GAME_SERVER_CONFIGS: Partial<Record<GameType, GameServerConfig>> = GAME_SERVER_CONFIGS;
