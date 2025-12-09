@@ -2441,14 +2441,16 @@ Type=simple
 User=${serviceUser}
 ${groupLine}WorkingDirectory=${execDir}
 ${environmentVars}ExecStart=${escapedStartCommand}
+ExecStop=docker stop -t 30 server-${serverId}
+ExecStopPost=docker rm -f server-${serverId}
 Restart=on-failure
 RestartSec=10
 StandardOutput=journal
 StandardError=journal
 LimitNOFILE=100000
-# Graceful shutdown for Docker containers
-TimeoutStopSec=120
-KillMode=mixed
+# Graceful shutdown for Docker containers - 30s for container stop, then systemd will force kill after 31s
+TimeoutStopSec=35
+KillMode=process
 # CPU limitáció (100% = 1 CPU core, 200% = 2 CPU core, stb.)
 CPUQuota=${cpuQuota}
 ${memoryLimit ? `# RAM limitáció (pl. "2G" = 2 GB RAM) - MemoryLimit deprecated, csak MemoryMax
