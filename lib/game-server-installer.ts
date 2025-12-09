@@ -1730,17 +1730,23 @@ export async function createSystemdServiceForServer(
       
       // 7 Days to Die esetén telnetPort és webMapPort az adatbázisból (mint a többi játéknál)
       let finalTelnetPort: number | undefined;
+      let finalWebMapPort: number | undefined;
       if (gameType === 'SEVEN_DAYS_TO_DIE') {
         const serverWithPortsTyped = serverWithPorts as any;
         finalTelnetPort = serverWithPortsTyped.telnetPort;
+        finalWebMapPort = serverWithPortsTyped.webMapPort;
         // Ha nincs az adatbázisban, számoljuk ki
         if (!finalTelnetPort && finalPort) {
           finalTelnetPort = finalPort + 2; // TelnetPort = GamePort + 2
+        }
+        if (!finalWebMapPort && finalPort) {
+          finalWebMapPort = finalPort + 3; // WebMapPort = GamePort + 3
         }
       }
       
       // Placeholder-ek cseréje az adatbázisból kinyert portokkal
       startCommand = startCommand
+        .replace(/{serverId}/g, serverId)
         .replace(/{port}/g, finalPort.toString())
         .replace(/{maxPlayers}/g, maxPlayers.toString())
         .replace(/{ram}/g, ram.toString())
@@ -1764,6 +1770,11 @@ export async function createSystemdServiceForServer(
       // 7 Days to Die esetén telnetPort placeholder (ha van a startCommand-ban)
       if (gameType === 'SEVEN_DAYS_TO_DIE' && finalTelnetPort) {
         startCommand = startCommand.replace(/{telnetPort}/g, finalTelnetPort.toString());
+      }
+      
+      // 7 Days to Die esetén webMapPort placeholder (ha van a startCommand-ban)
+      if (gameType === 'SEVEN_DAYS_TO_DIE' && finalWebMapPort) {
+        startCommand = startCommand.replace(/{webMapPort}/g, finalWebMapPort.toString());
       }
       
       logger.info(`${gameType} start command generated with ports from database`, {
