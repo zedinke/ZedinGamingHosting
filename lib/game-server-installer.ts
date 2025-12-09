@@ -932,7 +932,7 @@ MinDynamicBandwidth=1000
       // Rust server config (server.cfg)
       const rustUser = `rust${serverId}`;
       const rustConfigPath = gameConfig.configPath.replace(/{serverId}/g, serverId);
-      const rustConfig = `server.hostname "${serverName || 'Rust Server'}"\n` +
+      const rustConfig = `server.hostname "${config.name || 'Rust Server'}"\n` +
         `server.maxplayers ${config.maxPlayers || 50}\n` +
         `server.worldsize 4000\n` +
         `server.seed ${Math.floor(Math.random() * 2147483647)}\n` +
@@ -960,7 +960,7 @@ MinDynamicBandwidth=1000
         `  "GamePort": ${finalPort},\n` +
         `  "QueryPort": ${finalQueryPort},\n` +
         `  "BlobSyncPort": 9700,\n` +
-        `  "ServerName": "${serverName || 'Sons of The Forest Server'}",\n` +
+        `  "ServerName": "${config.name || 'Sons of The Forest Server'}",\n` +
         `  "MaxPlayers": ${config.maxPlayers || 8},\n` +
         `  "Password": "",\n` +
         `  "SaveSlot": 1,\n` +
@@ -987,7 +987,7 @@ MinDynamicBandwidth=1000
       const satisUser = `satis${serverId}`;
       const satisConfigPath = gameConfig.configPath.replace(/{serverId}/g, serverId);
       const satisConfig = `[/Script/FactoryGame.FGServerSubsystem]\n` +
-        `mServerName=${serverName || 'Satisfactory Server'}\n` +
+        `mServerName=${config.name || 'Satisfactory Server'}\n` +
         `mMaxPlayers=${config.maxPlayers || 4}\n` +
         `mServerPassword=\n` +
         `mAdminPassword=${config.adminPassword || ''}\n` +
@@ -1010,7 +1010,7 @@ MinDynamicBandwidth=1000
       // DayZ serverDZ.cfg
       const dayzUser = `dayz${serverId}`;
       const dayzConfigPath = gameConfig.configPath.replace(/{serverId}/g, serverId);
-      const dayzConfig = `hostname = "${serverName || 'DayZ Server'}";\n` +
+      const dayzConfig = `hostname = "${config.name || 'DayZ Server'}";\n` +
         `password = "";\n` +
         `passwordAdmin = "${config.adminPassword || 'changeme'}";\n` +
         `maxPlayers = ${config.maxPlayers || 60};\n` +
