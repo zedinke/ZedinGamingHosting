@@ -215,6 +215,7 @@ echo "Sons of The Forest Docker környezet előkészítve"
         -p {port}:7777/udp \
         -p {beaconPort}:15000/udp \
         -p {queryPort}:15777/udp \
+        -p {port}:8888/tcp \
         -v /opt/servers/{serverId}/Saved:/opt/satisfactory/Saved \
         116.203.226.140:5000/satisfactory:latest`,
       configPath: '/opt/servers/{serverId}/Saved/Config/LinuxServer/Game.ini',
