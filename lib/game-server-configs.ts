@@ -68,8 +68,9 @@ function combineConfigsAndInstallers(): Partial<Record<GameType, GameServerConfi
         '  echo "Felhasználó már létezik: seven{serverId}"\n' +
         'fi\n' +
         '\n' +
-        '# Felhasználó hozzáadása a csoporthoz (ha még nincs benne)\n' +
+        '# Felhasználó hozzáadása a csoportokhoz (sfgames és docker)\n' +
         'usermod -a -G sfgames seven{serverId} 2>/dev/null || true\n' +
+        'usermod -a -G docker seven{serverId} 2>/dev/null || true\n' +
         '\n' +
         '# Docker image ellenőrzése\n' +
         'if ! docker images | grep -q "7days2die"; then\n' +
