@@ -50,36 +50,35 @@ function combineConfigsAndInstallers(): Partial<Record<GameType, GameServerConfi
       configPath: '/opt/servers/{serverId}/serverconfig.xml',
       requiresSteamCMD: false, // Docker image már tartalmazza a SteamCMD-t
       // Install script - Felhasználó és könyvtár létrehozása Docker-hez
-      installScript: `#!/bin/bash
-set -e
-cd /opt/servers/{serverId}
-
-# Felhasználó létrehozása, ha még nem létezik
-if ! id -u seven{serverId} >/dev/null 2>&1; then
-  echo "Felhasználó létrehozása: seven{serverId}"
-  useradd -r -s /bin/bash -d /opt/servers/{serverId} -g sfgames seven{serverId}
-else
-  echo "Felhasználó már létezik: seven{serverId}"
-fi
-
-# sfgames csoport létrehozása, ha még nem létezik
-if ! getent group sfgames >/dev/null 2>&1; then
-  echo "Csoport létrehozása: sfgames"
-  groupadd -r sfgames
-fi
-
-# Felhasználó hozzáadása a csoporthoz (ha még nincs benne)
-usermod -a -G sfgames seven{serverId} 2>/dev/null || true
-
-# Docker image ellenőrzése
-if ! docker images | grep -q '7days2die'; then
-  echo "HIBA: Docker image nem található: 7days2die:latest"
-  echo "Kérjük, építsd meg a Docker image-et először!"
-  exit 1
-fi
-
-echo "7 Days to Die Docker környezet előkészítve"
-`,
+      installScript: '#!/bin/bash\n' +
+        'set -e\n' +
+        'cd /opt/servers/{serverId}\n' +
+        '\n' +
+        '# sfgames csoport létrehozása, ha még nem létezik\n' +
+        'if ! getent group sfgames >/dev/null 2>&1; then\n' +
+        '  echo "Csoport létrehozása: sfgames"\n' +
+        '  groupadd -r sfgames\n' +
+        'fi\n' +
+        '\n' +
+        '# Felhasználó létrehozása, ha még nem létezik\n' +
+        'if ! id -u seven{serverId} >/dev/null 2>&1; then\n' +
+        '  echo "Felhasználó létrehozása: seven{serverId}"\n' +
+        '  useradd -r -s /bin/bash -d /opt/servers/{serverId} -g sfgames seven{serverId}\n' +
+        'else\n' +
+        '  echo "Felhasználó már létezik: seven{serverId}"\n' +
+        'fi\n' +
+        '\n' +
+        '# Felhasználó hozzáadása a csoporthoz (ha még nincs benne)\n' +
+        'usermod -a -G sfgames seven{serverId} 2>/dev/null || true\n' +
+        '\n' +
+        '# Docker image ellenőrzése\n' +
+        'if ! docker images | grep -q "7days2die"; then\n' +
+        '  echo "HIBA: Docker image nem található: 7days2die:latest"\n' +
+        '  echo "Kérjük, építsd meg a Docker image-et először!"\n' +
+        '  exit 1\n' +
+        'fi\n' +
+        '\n' +
+        'echo "7 Days to Die Docker környezet előkészítve"\n',
     },
   };
   return combined;
