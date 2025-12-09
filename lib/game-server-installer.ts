@@ -928,7 +928,7 @@ MinDynamicBandwidth=1000
         if (writeProgress) {
           await appendInstallLog(serverId, `Konfigurációs fájl létrehozva: ${sevenDaysConfigPath}`);
         }
-    } else if (gameType === 'RUST' && gameConfig.configPath) {
+    } else if (gameType === GameType.RUST && gameConfig.configPath) {
       // Rust server config (server.cfg)
       const rustUser = `rust${serverId}`;
       const rustConfigPath = gameConfig.configPath.replace(/{serverId}/g, serverId);
@@ -951,7 +951,7 @@ MinDynamicBandwidth=1000
       if (writeProgress) {
         await appendInstallLog(serverId, `Rust konfigurációs fájl létrehozva: ${rustConfigPath}`);
       }
-    } else if (gameType === 'SONS_OF_THE_FOREST' && gameConfig.configPath) {
+    } else if (gameType === GameType.SONS_OF_THE_FOREST && gameConfig.configPath) {
       // Sons of The Forest dedicatedserver.cfg
       const sotfUser = `sotf${serverId}`;
       const sotfConfigPath = gameConfig.configPath.replace(/{serverId}/g, serverId);
@@ -983,7 +983,7 @@ MinDynamicBandwidth=1000
       if (writeProgress) {
         await appendInstallLog(serverId, `Sons of The Forest config létrehozva: ${sotfConfigPath}`);
       }
-    } else if (gameType === 'SATISFACTORY' && gameConfig.configPath) {
+    } else if (gameType === GameType.SATISFACTORY && gameConfig.configPath) {
       // Satisfactory Game.ini
       const satisUser = `satis${serverId}`;
       const satisConfigPath = gameConfig.configPath.replace(/{serverId}/g, serverId);
@@ -1007,7 +1007,7 @@ MinDynamicBandwidth=1000
       if (writeProgress) {
         await appendInstallLog(serverId, `Satisfactory config létrehozva: ${satisConfigPath}`);
       }
-    } else if (gameType === 'DAYZ' && gameConfig.configPath) {
+    } else if (gameType === GameType.DAYZ && gameConfig.configPath) {
       // DayZ serverDZ.cfg
       const dayzUser = `dayz${serverId}`;
       const dayzConfigPath = gameConfig.configPath.replace(/{serverId}/g, serverId);
@@ -1833,7 +1833,7 @@ export async function createSystemdServiceForServer(
         }
         
         // Rust esetén rustPlusPort
-        if (gameType === 'RUST') {
+        if (gameType === GameType.RUST) {
           const serverWithPortsTyped = serverWithPorts as any;
           finalRustPlusPort = serverWithPortsTyped.rustPlusPort;
           // Ha nincs az adatbázisban, számoljuk ki
@@ -1878,7 +1878,7 @@ export async function createSystemdServiceForServer(
       }
       
       // Rust esetén rustPlusPort placeholder (ha van a startCommand-ban)
-      if (gameType === 'RUST' && finalRustPlusPort) {
+      if (gameType === GameType.RUST && finalRustPlusPort) {
         startCommand = startCommand.replace(/{rustPlusPort}/g, finalRustPlusPort.toString());
       }
       
@@ -1893,7 +1893,7 @@ export async function createSystemdServiceForServer(
       }
       
       // Rust esetén rconPort és rconPassword placeholder
-      if (gameType === 'RUST') {
+      if (gameType === GameType.RUST) {
         const rconPort = finalPort ? finalPort + 1 : 28016;
         const rconPassword = config.rconPassword || 'changeme';
         startCommand = startCommand
@@ -1903,7 +1903,7 @@ export async function createSystemdServiceForServer(
       }
       
       // Satisfactory esetén beaconPort és queryPort
-      if (gameType === 'SATISFACTORY') {
+      if (gameType === GameType.SATISFACTORY) {
         const beaconPort = finalPort ? finalPort + 7223 : 15000; // Default: 7777 + 7223 = 15000
         const satisfactoryQueryPort = finalPort ? finalPort + 8000 : 15777; // Default: 7777 + 8000 = 15777
         startCommand = startCommand
@@ -1912,13 +1912,13 @@ export async function createSystemdServiceForServer(
       }
       
       // Sons of The Forest esetén queryPort
-      if (gameType === 'SONS_OF_THE_FOREST') {
+      if (gameType === GameType.SONS_OF_THE_FOREST) {
         const sotfQueryPort = 27016; // Fixed query port
         startCommand = startCommand.replace(/{queryPort}/g, sotfQueryPort.toString());
       }
       
       // DayZ esetén queryPort és steamPort
-      if (gameType === 'DAYZ') {
+      if (gameType === GameType.DAYZ) {
         const dayzQueryPort = finalPort ? finalPort + 1 : 2303;
         const dayzSteamPort = finalPort ? finalPort + 2 : 2304;
         startCommand = startCommand
@@ -1927,7 +1927,7 @@ export async function createSystemdServiceForServer(
       }
       
       // The Forest esetén steamPort
-      if (gameType === 'THE_FOREST') {
+      if (gameType === GameType.THE_FOREST) {
         const forestSteamPort = 8766; // Fixed steam port
         startCommand = startCommand.replace(/{steamPort}/g, forestSteamPort.toString());
       }
