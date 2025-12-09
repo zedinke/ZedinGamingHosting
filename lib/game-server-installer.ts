@@ -2446,6 +2446,9 @@ RestartSec=10
 StandardOutput=journal
 StandardError=journal
 LimitNOFILE=100000
+# Graceful shutdown for Docker containers
+TimeoutStopSec=120
+KillMode=mixed
 # CPU limitáció (100% = 1 CPU core, 200% = 2 CPU core, stb.)
 CPUQuota=${cpuQuota}
 ${memoryLimit ? `# RAM limitáció (pl. "2G" = 2 GB RAM) - MemoryLimit deprecated, csak MemoryMax
