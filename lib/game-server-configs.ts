@@ -12,7 +12,14 @@ export type GameServerConfig = {
   name: string;
   displayName: string;
   dockerImage?: string;
-  ports: { game: number; query?: number; rcon?: number };
+  ports: { 
+    game: number; 
+    query?: number; 
+    rcon?: number;
+    steam?: number;
+    beacon?: number;
+    [key: string]: number | undefined; // Allow additional port types
+  };
   startCommand?: string;
   installScript?: string;
   requiresSteamCMD?: boolean;
