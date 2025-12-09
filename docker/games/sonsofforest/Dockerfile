@@ -11,16 +11,16 @@ RUN apt-get update && apt-get install -y \
     xvfb \
     && rm -rf /var/lib/apt/lists/*
 
-# Create steamcmd user
-RUN useradd -m -d /opt/steamcmd steamcmd
+# Create directories and user with proper permissions BEFORE switching user
+RUN mkdir -p /opt/sonsofforest && \
+    mkdir -p /opt/steamcmd && \
+    useradd -m -d /opt/steamcmd steamcmd && \
+    chown -R steamcmd:steamcmd /opt/steamcmd /opt/sonsofforest
 
 # Install SteamCMD
 USER steamcmd
 WORKDIR /opt/steamcmd
 RUN curl -sqL "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz" | tar zxvf -
-
-# Create Sons of The Forest server directory
-RUN mkdir -p /opt/sonsofforest
 
 # Install Sons of The Forest Server (AppID: 2465200)
 RUN /opt/steamcmd/steamcmd.sh +force_install_dir /opt/sonsofforest +login anonymous +app_update 2465200 validate +quit

@@ -8,16 +8,16 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Create steamcmd user
-RUN useradd -m -d /opt/steamcmd steamcmd
+# Create directories and user with proper permissions BEFORE switching user
+RUN mkdir -p /opt/dayz && \
+    mkdir -p /opt/steamcmd && \
+    useradd -m -d /opt/steamcmd steamcmd && \
+    chown -R steamcmd:steamcmd /opt/steamcmd /opt/dayz
 
 # Install SteamCMD
 USER steamcmd
 WORKDIR /opt/steamcmd
 RUN curl -sqL "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz" | tar zxvf -
-
-# Create DayZ server directory
-RUN mkdir -p /opt/dayz
 
 # Install DayZ Server (AppID: 223350)
 RUN /opt/steamcmd/steamcmd.sh +force_install_dir /opt/dayz +login anonymous +app_update 223350 validate +quit
