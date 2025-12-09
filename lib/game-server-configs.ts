@@ -57,36 +57,37 @@ function combineConfigsAndInstallers(): Partial<Record<GameType, GameServerConfi
       configPath: '/opt/servers/{serverId}/serverconfig.xml',
       requiresSteamCMD: false, // Docker image már tartalmazza a SteamCMD-t
       // Install script - Felhasználó és könyvtár létrehozása Docker-hez
-      installScript: '#!/bin/bash\n' +
-        'set -e\n' +
-        'cd /opt/servers/{serverId}\n' +
-        '\n' +
-        '# sfgames csoport létrehozása, ha még nem létezik\n' +
-        'if ! getent group sfgames >/dev/null 2>&1; then\n' +
-        '  echo "Csoport létrehozása: sfgames"\n' +
-        '  groupadd -r sfgames\n' +
-        'fi\n' +
-        '\n' +
-        '# Felhasználó létrehozása, ha még nem létezik\n' +
-        'if ! id -u seven{serverId} >/dev/null 2>&1; then\n' +
-        '  echo "Felhasználó létrehozása: seven{serverId}"\n' +
-        '  useradd -r -s /bin/bash -d /opt/servers/{serverId} -g sfgames seven{serverId}\n' +
-        'else\n' +
-        '  echo "Felhasználó már létezik: seven{serverId}"\n' +
-        'fi\n' +
-        '\n' +
-        '# Felhasználó hozzáadása a csoportokhoz (sfgames és docker)\n' +
-        'usermod -a -G sfgames seven{serverId} 2>/dev/null || true\n' +
-        'usermod -a -G docker seven{serverId} 2>/dev/null || true\n' +
-        '\n' +
-        '# Docker image ellenőrzése\n' +
-        'if ! docker images | grep -q "7days2die"; then\n' +
-        '  echo "HIBA: Docker image nem található: 7days2die:latest"\n' +
-        '  echo "Kérjük, építsd meg a Docker image-et először!"\n' +
-        '  exit 1\n' +
-        'fi\n' +
-        '\n' +
-        'echo "7 Days to Die Docker környezet előkészítve"\n',
+      installScript: `#!/bin/bash
+set -e
+cd /opt/servers/{serverId}
+
+# sfgames csoport létrehozása, ha még nem létezik
+if ! getent group sfgames >/dev/null 2>&1; then
+  echo "Csoport létrehozása: sfgames"
+  groupadd -r sfgames
+fi
+
+# Felhasználó létrehozása, ha még nem létezik
+if ! id -u seven{serverId} >/dev/null 2>&1; then
+  echo "Felhasználó létrehozása: seven{serverId}"
+  useradd -r -s /bin/bash -d /opt/servers/{serverId} -g sfgames seven{serverId}
+else
+  echo "Felhasználó már létezik: seven{serverId}"
+fi
+
+# Felhasználó hozzáadása a csoportokhoz (sfgames és docker)
+usermod -a -G sfgames seven{serverId} 2>/dev/null || true
+usermod -a -G docker seven{serverId} 2>/dev/null || true
+
+# Docker image ellenőrzése
+if ! docker images | grep -q "7days2die"; then
+  echo "HIBA: Docker image nem található: 7days2die:latest"
+  echo "Kérjük, építsd meg a Docker image-et először!"
+  exit 1
+fi
+
+echo "7 Days to Die Docker környezet előkészítve"
+`,
     },
     RUST: {
       name: 'RUST',
@@ -105,28 +106,29 @@ function combineConfigsAndInstallers(): Partial<Record<GameType, GameServerConfi
         /opt/rust/RustDedicated -batchmode +server.port 28015 +rcon.port 28016 +rcon.password {rconPassword} +server.hostname "{serverName}" +server.maxplayers {maxPlayers}`,
       configPath: '/opt/servers/{serverId}/server.cfg',
       requiresSteamCMD: false,
-      installScript: '#!/bin/bash\n' +
-        'set -e\n' +
-        'cd /opt/servers/{serverId}\n' +
-        '\n' +
-        '# sfgames csoport létrehozása\n' +
-        'if ! getent group sfgames >/dev/null 2>&1; then\n' +
-        '  groupadd -r sfgames\n' +
-        'fi\n' +
-        '\n' +
-        '# Felhasználó létrehozása\n' +
-        'if ! id -u rust{serverId} >/dev/null 2>&1; then\n' +
-        '  useradd -r -s /bin/bash -d /opt/servers/{serverId} -g sfgames rust{serverId}\n' +
-        'fi\n' +
-        '\n' +
-        '# Docker csoporthoz adás\n' +
-        'usermod -a -G sfgames rust{serverId} 2>/dev/null || true\n' +
-        'usermod -a -G docker rust{serverId} 2>/dev/null || true\n' +
-        '\n' +
-        '# Docker image pull a központi registry-ből\n' +
-        'docker pull 116.203.226.140:5000/rust:latest || echo "FIGYELEM: Docker image pull sikertelen"\n' +
-        '\n' +
-        'echo "Rust Docker környezet előkészítve"\n',
+      installScript: `#!/bin/bash
+set -e
+cd /opt/servers/{serverId}
+
+# sfgames csoport létrehozása
+if ! getent group sfgames >/dev/null 2>&1; then
+  groupadd -r sfgames
+fi
+
+# Felhasználó létrehozása
+if ! id -u rust{serverId} >/dev/null 2>&1; then
+  useradd -r -s /bin/bash -d /opt/servers/{serverId} -g sfgames rust{serverId}
+fi
+
+# Docker csoporthoz adás
+usermod -a -G sfgames rust{serverId} 2>/dev/null || true
+usermod -a -G docker rust{serverId} 2>/dev/null || true
+
+# Docker image pull a központi registry-ből
+docker pull 116.203.226.140:5000/rust:latest || echo "FIGYELEM: Docker image pull sikertelen"
+
+echo "Rust Docker környezet előkészítve"
+`,
     },
     THE_FOREST: {
       name: 'THE_FOREST',
@@ -145,24 +147,25 @@ function combineConfigsAndInstallers(): Partial<Record<GameType, GameServerConfi
         116.203.226.140:5000/theforest:latest`,
       configPath: '/opt/servers/{serverId}/config.cfg',
       requiresSteamCMD: false,
-      installScript: '#!/bin/bash\n' +
-        'set -e\n' +
-        'cd /opt/servers/{serverId}\n' +
-        '\n' +
-        'if ! getent group sfgames >/dev/null 2>&1; then\n' +
-        '  groupadd -r sfgames\n' +
-        'fi\n' +
-        '\n' +
-        'if ! id -u forest{serverId} >/dev/null 2>&1; then\n' +
-        '  useradd -r -s /bin/bash -d /opt/servers/{serverId} -g sfgames forest{serverId}\n' +
-        'fi\n' +
-        '\n' +
-        'usermod -a -G sfgames forest{serverId} 2>/dev/null || true\n' +
-        'usermod -a -G docker forest{serverId} 2>/dev/null || true\n' +
-        '\n' +
-        'docker pull 116.203.226.140:5000/theforest:latest || echo "FIGYELEM: Docker image pull sikertelen"\n' +
-        '\n' +
-        'echo "The Forest Docker környezet előkészítve"\n',
+      installScript: `#!/bin/bash
+set -e
+cd /opt/servers/{serverId}
+
+if ! getent group sfgames >/dev/null 2>&1; then
+  groupadd -r sfgames
+fi
+
+if ! id -u forest{serverId} >/dev/null 2>&1; then
+  useradd -r -s /bin/bash -d /opt/servers/{serverId} -g sfgames forest{serverId}
+fi
+
+usermod -a -G sfgames forest{serverId} 2>/dev/null || true
+usermod -a -G docker forest{serverId} 2>/dev/null || true
+
+docker pull 116.203.226.140:5000/theforest:latest || echo "FIGYELEM: Docker image pull sikertelen"
+
+echo "The Forest Docker környezet előkészítve"
+`,
     },
     SONS_OF_THE_FOREST: {
       name: 'SONS_OF_THE_FOREST',
@@ -179,24 +182,25 @@ function combineConfigsAndInstallers(): Partial<Record<GameType, GameServerConfi
         116.203.226.140:5000/sonsofforest:latest`,
       configPath: '/opt/servers/{serverId}/dedicatedserver.cfg',
       requiresSteamCMD: false,
-      installScript: '#!/bin/bash\n' +
-        'set -e\n' +
-        'cd /opt/servers/{serverId}\n' +
-        '\n' +
-        'if ! getent group sfgames >/dev/null 2>&1; then\n' +
-        '  groupadd -r sfgames\n' +
-        'fi\n' +
-        '\n' +
-        'if ! id -u sotf{serverId} >/dev/null 2>&1; then\n' +
-        '  useradd -r -s /bin/bash -d /opt/servers/{serverId} -g sfgames sotf{serverId}\n' +
-        'fi\n' +
-        '\n' +
-        'usermod -a -G sfgames sotf{serverId} 2>/dev/null || true\n' +
-        'usermod -a -G docker sotf{serverId} 2>/dev/null || true\n' +
-        '\n' +
-        'docker pull 116.203.226.140:5000/sonsofforest:latest || echo "FIGYELEM: Docker image pull sikertelen"\n' +
-        '\n' +
-        'echo "Sons of The Forest Docker környezet előkészítve"\n',
+      installScript: `#!/bin/bash
+set -e
+cd /opt/servers/{serverId}
+
+if ! getent group sfgames >/dev/null 2>&1; then
+  groupadd -r sfgames
+fi
+
+if ! id -u sotf{serverId} >/dev/null 2>&1; then
+  useradd -r -s /bin/bash -d /opt/servers/{serverId} -g sfgames sotf{serverId}
+fi
+
+usermod -a -G sfgames sotf{serverId} 2>/dev/null || true
+usermod -a -G docker sotf{serverId} 2>/dev/null || true
+
+docker pull 116.203.226.140:5000/sonsofforest:latest || echo "FIGYELEM: Docker image pull sikertelen"
+
+echo "Sons of The Forest Docker környezet előkészítve"
+`,
     },
     SATISFACTORY: {
       name: 'SATISFACTORY',
@@ -215,24 +219,25 @@ function combineConfigsAndInstallers(): Partial<Record<GameType, GameServerConfi
         116.203.226.140:5000/satisfactory:latest`,
       configPath: '/opt/servers/{serverId}/Saved/Config/LinuxServer/Game.ini',
       requiresSteamCMD: false,
-      installScript: '#!/bin/bash\n' +
-        'set -e\n' +
-        'cd /opt/servers/{serverId}\n' +
-        '\n' +
-        'if ! getent group sfgames >/dev/null 2>&1; then\n' +
-        '  groupadd -r sfgames\n' +
-        'fi\n' +
-        '\n' +
-        'if ! id -u satis{serverId} >/dev/null 2>&1; then\n' +
-        '  useradd -r -s /bin/bash -d /opt/servers/{serverId} -g sfgames satis{serverId}\n' +
-        'fi\n' +
-        '\n' +
-        'usermod -a -G sfgames satis{serverId} 2>/dev/null || true\n' +
-        'usermod -a -G docker satis{serverId} 2>/dev/null || true\n' +
-        '\n' +
-        'docker pull 116.203.226.140:5000/satisfactory:latest || echo "FIGYELEM: Docker image pull sikertelen"\n' +
-        '\n' +
-        'echo "Satisfactory Docker környezet előkészítve"\n',
+      installScript: `#!/bin/bash
+set -e
+cd /opt/servers/{serverId}
+
+if ! getent group sfgames >/dev/null 2>&1; then
+  groupadd -r sfgames
+fi
+
+if ! id -u satis{serverId} >/dev/null 2>&1; then
+  useradd -r -s /bin/bash -d /opt/servers/{serverId} -g sfgames satis{serverId}
+fi
+
+usermod -a -G sfgames satis{serverId} 2>/dev/null || true
+usermod -a -G docker satis{serverId} 2>/dev/null || true
+
+docker pull 116.203.226.140:5000/satisfactory:latest || echo "FIGYELEM: Docker image pull sikertelen"
+
+echo "Satisfactory Docker környezet előkészítve"
+`,
     },
     DAYZ: {
       name: 'DAYZ',
@@ -252,24 +257,25 @@ function combineConfigsAndInstallers(): Partial<Record<GameType, GameServerConfi
         /opt/dayz/DayZServer -config=serverDZ.cfg -port=2302 -profiles=/opt/dayz/profiles`,
       configPath: '/opt/servers/{serverId}/serverDZ.cfg',
       requiresSteamCMD: false,
-      installScript: '#!/bin/bash\n' +
-        'set -e\n' +
-        'cd /opt/servers/{serverId}\n' +
-        '\n' +
-        'if ! getent group sfgames >/dev/null 2>&1; then\n' +
-        '  groupadd -r sfgames\n' +
-        'fi\n' +
-        '\n' +
-        'if ! id -u dayz{serverId} >/dev/null 2>&1; then\n' +
-        '  useradd -r -s /bin/bash -d /opt/servers/{serverId} -g sfgames dayz{serverId}\n' +
-        'fi\n' +
-        '\n' +
-        'usermod -a -G sfgames dayz{serverId} 2>/dev/null || true\n' +
-        'usermod -a -G docker dayz{serverId} 2>/dev/null || true\n' +
-        '\n' +
-        'docker pull 116.203.226.140:5000/dayz:latest || echo "FIGYELEM: Docker image pull sikertelen"\n' +
-        '\n' +
-        'echo "DayZ Docker környezet előkészítve"\n',
+      installScript: `#!/bin/bash
+set -e
+cd /opt/servers/{serverId}
+
+if ! getent group sfgames >/dev/null 2>&1; then
+  groupadd -r sfgames
+fi
+
+if ! id -u dayz{serverId} >/dev/null 2>&1; then
+  useradd -r -s /bin/bash -d /opt/servers/{serverId} -g sfgames dayz{serverId}
+fi
+
+usermod -a -G sfgames dayz{serverId} 2>/dev/null || true
+usermod -a -G docker dayz{serverId} 2>/dev/null || true
+
+docker pull 116.203.226.140:5000/dayz:latest || echo "FIGYELEM: Docker image pull sikertelen"
+
+echo "DayZ Docker környezet előkészítve"
+`,
     },
   };
   return combined;

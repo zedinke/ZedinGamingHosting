@@ -438,8 +438,12 @@ fi
       // Placeholder-ek cseréje - biztosítjuk, hogy a config mezők létezzenek
       // The Forest esetén az adatbázisból kinyerjük az összes portot
       let port = config.port || 25565;
-      let queryPort = gameConfig.queryPort || port + 1;
-      let steamPeerPort: number | undefined;
+      let queryPort = config.port ? config.port + 1 : 25566;
+      let steamPeerPort: number | undefined = config.port ? config.port + 2 : 25567;
+      let beaconPort: number | undefined = config.port ? config.port + 1 : 25566;
+      let rconPort: number | undefined = config.port ? config.port + 1 : 25566;
+      let telnetPort: number | undefined = 8081; // 7DTD telnet port
+      let webMapPort: number | undefined = 8080;  // 7DTD webmap port
       
       // The Forest esetén az adatbázisból kinyerjük a portokat
       if (gameType === 'THE_FOREST') {
@@ -464,6 +468,7 @@ fi
           .replace(/{port}/g, port.toString())
           .replace(/{queryPort}/g, queryPort.toString())
           .replace(/{steamPeerPort}/g, (steamPeerPort || port + 2).toString())
+          .replace(/{steamPort}/g, (steamPeerPort || port + 2).toString())
           .replace(/{maxPlayers}/g, (config.maxPlayers || 10).toString())
           .replace(/{ram}/g, (config.ram || 2048).toString())
           .replace(/{name}/g, config.name || `Server-${serverId}`)
@@ -472,12 +477,27 @@ fi
           .replace(/{adminPassword}/g, config.adminPassword || 'changeme')
           .replace(/{difficulty}/g, difficulty)
           .replace(/{inittype}/g, inittype)
-          .replace(/{slot}/g, slot.toString());
+          .replace(/{slot}/g, slot.toString())
+          .replace(/{telnetPort}/g, telnetPort.toString())
+          .replace(/{webMapPort}/g, webMapPort.toString())
+          .replace(/{beaconPort}/g, beaconPort.toString())
+          .replace(/{rconPort}/g, rconPort.toString());
       } else {
-        // Más játékoknál az eredeti logika
+        // Más játékoknál az eredeti logika - összes port placeholder-t kezelni
         const maxPlayers = config.maxPlayers || 10;
         const ram = config.ram || 2048;
         const name = config.name || `Server-${serverId}`;
+        
+        // Docker játékoknál a portokra való hivatkozás
+        if (gameConfig.ports?.beacon) {
+          beaconPort = port + 1;
+        }
+        if (gameConfig.ports?.rcon) {
+          rconPort = port + 1;
+        }
+        if (gameConfig.ports?.steam) {
+          steamPeerPort = port + 1;
+        }
         
         installScript = installScript
           .replace(/{serverId}/g, serverId)
@@ -488,7 +508,12 @@ fi
           .replace(/{world}/g, config.world || 'Dedicated')
           .replace(/{password}/g, config.password || '')
           .replace(/{adminPassword}/g, config.adminPassword || 'changeme')
-          .replace(/{queryPort}/g, queryPort.toString());
+          .replace(/{queryPort}/g, queryPort.toString())
+          .replace(/{steamPort}/g, (steamPeerPort || port + 1).toString())
+          .replace(/{telnetPort}/g, telnetPort.toString())
+          .replace(/{webMapPort}/g, webMapPort.toString())
+          .replace(/{beaconPort}/g, (beaconPort || port + 1).toString())
+          .replace(/{rconPort}/g, (rconPort || port + 1).toString());
       }
 
       // Script fájl létrehozása és futtatása
